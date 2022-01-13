@@ -3,8 +3,8 @@ package obiconvert
 import (
 	"log"
 
-	"git.metabarcoding.org/lecasofts/go/oa2/pkg/obiformats"
-	"git.metabarcoding.org/lecasofts/go/oa2/pkg/obiseq"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiformats"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
 
 func WriteBioSequences(iterator obiseq.IBioSequence, filenames ...string) error {

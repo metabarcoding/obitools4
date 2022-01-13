@@ -10,7 +10,7 @@ import (
 	"errors"
 	"unsafe"
 
-	"git.metabarcoding.org/lecasofts/go/oa2/pkg/obiseq"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
 
 var MAX_PAT_LEN = int(C.MAX_PAT_LEN)

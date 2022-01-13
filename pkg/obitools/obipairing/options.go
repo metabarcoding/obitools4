@@ -1,8 +1,8 @@
 package obipairing
 
 import (
-	"git.metabarcoding.org/lecasofts/go/oa2/pkg/obiseq"
-	"git.metabarcoding.org/lecasofts/go/oa2/pkg/obitools/obiconvert"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obiconvert"
 	"github.com/DavidGamba/go-getoptions"
 )
 

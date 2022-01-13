@@ -6,10 +6,10 @@ import (
 	"os"
 	"runtime/trace"
 
-	"git.metabarcoding.org/lecasofts/go/oa2/pkg/obitools/obiconvert"
-	"git.metabarcoding.org/lecasofts/go/oa2/pkg/obitools/obicount"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obiconvert"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obicount"
 
-	"git.metabarcoding.org/lecasofts/go/oa2/pkg/obioptions"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obioptions"
 )
 
 func main() {

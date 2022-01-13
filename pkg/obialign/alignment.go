@@ -3,7 +3,7 @@ package obialign
 import (
 	"math"
 
-	"git.metabarcoding.org/lecasofts/go/oa2/pkg/obiseq"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
 
 type __build_align_arena__ struct {

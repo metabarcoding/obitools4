@@ -8,7 +8,7 @@ import (
 	"os"
 	"strings"
 
-	"git.metabarcoding.org/lecasofts/go/oa2/pkg/obiseq"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
 
 func GuessSeqFileType(firstline string) string {

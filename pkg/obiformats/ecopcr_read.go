@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	"git.metabarcoding.org/lecasofts/go/oa2/pkg/obiseq"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
 
 type __ecopcr_file__ struct {

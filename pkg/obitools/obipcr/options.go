@@ -3,8 +3,8 @@ package obipcr
 import (
 	"log"
 
-	"git.metabarcoding.org/lecasofts/go/oa2/pkg/obiapat"
-	"git.metabarcoding.org/lecasofts/go/oa2/pkg/obitools/obiconvert"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiapat"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obiconvert"
 	"github.com/DavidGamba/go-getoptions"
 )
 

@@ -6,8 +6,8 @@ import (
 	"os"
 	"runtime/trace"
 
-	"git.metabarcoding.org/lecasofts/go/oa2/pkg/obialign"
-	"git.metabarcoding.org/lecasofts/go/oa2/pkg/obiseq"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obialign"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
 
 func main() {

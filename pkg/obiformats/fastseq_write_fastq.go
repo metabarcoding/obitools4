@@ -8,7 +8,7 @@ import (
 	"os"
 	"time"
 
-	"git.metabarcoding.org/lecasofts/go/oa2/pkg/obiseq"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
 
 func FormatFastq(seq obiseq.BioSequence, quality_shift int, formater FormatHeader) string {

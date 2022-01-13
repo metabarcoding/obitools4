@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"crypto/md5"
 
-	"git.metabarcoding.org/lecasofts/go/oa2/pkg/goutils"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/goutils"
 )
 
 type Quality []uint8

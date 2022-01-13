@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"git.metabarcoding.org/lecasofts/go/oa2/pkg/goutils"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/goutils"
 )
 
 // Returns a sub sequence start from position 'from' included,

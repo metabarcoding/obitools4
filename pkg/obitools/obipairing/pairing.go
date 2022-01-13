@@ -6,8 +6,8 @@ import (
 	"os"
 	"time"
 
-	"git.metabarcoding.org/lecasofts/go/oa2/pkg/obialign"
-	"git.metabarcoding.org/lecasofts/go/oa2/pkg/obiseq"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obialign"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 	"github.com/schollz/progressbar/v3"
 )
 

@@ -3,8 +3,8 @@ package obialign
 import (
 	"log"
 
-	"git.metabarcoding.org/lecasofts/go/oa2/pkg/obikmer"
-	"git.metabarcoding.org/lecasofts/go/oa2/pkg/obiseq"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obikmer"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
 
 type __pe_align_arena__ struct {

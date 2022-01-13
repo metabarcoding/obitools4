@@ -1,8 +1,8 @@
 package obipcr
 
 import (
-	"git.metabarcoding.org/lecasofts/go/oa2/pkg/obiapat"
-	"git.metabarcoding.org/lecasofts/go/oa2/pkg/obiseq"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiapat"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
 
 func PCR(iterator obiseq.IBioSequenceBatch) (obiseq.IBioSequence, error) {

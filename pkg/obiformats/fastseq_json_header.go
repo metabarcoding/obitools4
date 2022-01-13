@@ -3,7 +3,7 @@ package obiformats
 import (
 	"strings"
 
-	"git.metabarcoding.org/lecasofts/go/oa2/pkg/obiseq"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 	"github.com/goccy/go-json"
 )
 

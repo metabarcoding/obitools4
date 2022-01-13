@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"git.metabarcoding.org/lecasofts/go/oa2/pkg/obioptions"
-	"git.metabarcoding.org/lecasofts/go/oa2/pkg/obitools/obifind"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obioptions"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obifind"
 )
 
 func main() {

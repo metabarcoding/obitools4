@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"git.metabarcoding.org/lecasofts/go/oa2/pkg/obiformats"
-	"git.metabarcoding.org/lecasofts/go/oa2/pkg/obiseq"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiformats"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
 
 func __expand_list_of_files__(check_ext bool, filenames ...string) ([]string, error) {

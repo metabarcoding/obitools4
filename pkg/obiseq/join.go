@@ -1,6 +1,6 @@
 package obiseq
 
-import "git.metabarcoding.org/lecasofts/go/oa2/pkg/goutils"
+import "git.metabarcoding.org/lecasofts/go/obitools/pkg/goutils"
 
 func (sequence BioSequence) Join(seq2 BioSequence, copy_annot bool) (BioSequence, error) {
 

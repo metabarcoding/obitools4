@@ -1,8 +1,8 @@
 package obiapat
 
 import (
-	"git.metabarcoding.org/lecasofts/go/oa2/pkg/goutils"
-	"git.metabarcoding.org/lecasofts/go/oa2/pkg/obiseq"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/goutils"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
 
 type __options__ struct {

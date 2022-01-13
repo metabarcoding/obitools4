@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"git.metabarcoding.org/lecasofts/go/oa2/pkg/obiseq"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
 
 var __FILE_CHUNK_SIZE__ = 1 << 20

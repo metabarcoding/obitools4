@@ -12,7 +12,7 @@ import (
 	"strconv"
 	"strings"
 
-	"git.metabarcoding.org/lecasofts/go/oa2/pkg/obitax"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitax"
 )
 
 func loadNodeTable(reader io.Reader, taxonomy *obitax.Taxonomy) {

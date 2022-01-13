@@ -5,9 +5,9 @@ import (
 	"os"
 	"runtime/pprof"
 
-	"git.metabarcoding.org/lecasofts/go/oa2/pkg/obiformats"
-	"git.metabarcoding.org/lecasofts/go/oa2/pkg/obioptions"
-	"git.metabarcoding.org/lecasofts/go/oa2/pkg/obitools/obipairing"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiformats"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obioptions"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obipairing"
 )
 
 func main() {

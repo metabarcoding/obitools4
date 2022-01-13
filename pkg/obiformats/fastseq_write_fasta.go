@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"git.metabarcoding.org/lecasofts/go/oa2/pkg/obiseq"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
 
 func min(x, y int) int {

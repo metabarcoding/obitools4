@@ -14,8 +14,8 @@ import (
 	"time"
 	"unsafe"
 
-	"git.metabarcoding.org/lecasofts/go/oa2/pkg/cutils"
-	"git.metabarcoding.org/lecasofts/go/oa2/pkg/obiseq"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/cutils"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
 
 func __fastseq_reader__(seqfile C.fast_kseq_p,
