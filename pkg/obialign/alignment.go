@@ -6,19 +6,27 @@ import (
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
 
-type __build_align_arena__ struct {
+type _BuildAlignArena struct {
 	bufferA []byte
 	bufferB []byte
 }
 
+// BuildAlignArena define memory arena usable by the
+// BuildAlignment function. The same arena can be reused
+// from alignment to alignment to limit memory allocation
+// and desallocation process.
 type BuildAlignArena struct {
-	pointer *__build_align_arena__
+	pointer *_BuildAlignArena
 }
 
+// NilBuildAlignArena is the nil instance of the BuildAlignArena
+// type.
 var NilBuildAlignArena = BuildAlignArena{nil}
 
+// MakeBuildAlignArena make a new arena for aligning two sequences
+// of maximum length indicated by lseqA and lseqB.
 func MakeBuildAlignArena(lseqA, lseqB int) BuildAlignArena {
-	a := __build_align_arena__{
+	a := _BuildAlignArena{
 		bufferA: make([]byte, lseqA+lseqB),
 		bufferB: make([]byte, lseqA+lseqB),
 	}
@@ -26,7 +34,7 @@ func MakeBuildAlignArena(lseqA, lseqB int) BuildAlignArena {
 	return BuildAlignArena{&a}
 }
 
-func __build_alignment__(seqA, seqB []byte, path []int, gap byte,
+func _BuildAlignment(seqA, seqB []byte, path []int, gap byte,
 	bufferA, bufferB *[]byte) ([]byte, []byte) {
 
 	if bufferA == nil {
@@ -44,38 +52,47 @@ func __build_alignment__(seqA, seqB []byte, path []int, gap byte,
 
 	lp := len(path)
 
-	pos_a := 0
-	pos_b := 0
+	posA := 0
+	posB := 0
 	for i := 0; i < lp; i++ {
 		step := path[i]
 		if step < 0 {
-			*bufferA = append(*bufferA, seqA[pos_a:(pos_a-step)]...)
+			*bufferA = append(*bufferA, seqA[posA:(posA-step)]...)
 			for j := 0; j < -step; j++ {
 				*bufferB = append(*bufferB, gap)
 			}
-			pos_a -= step
+			posA -= step
 		}
 		if step > 0 {
-			*bufferB = append(*bufferB, seqB[pos_b:(pos_b+step)]...)
+			*bufferB = append(*bufferB, seqB[posB:(posB+step)]...)
 			for j := 0; j < step; j++ {
 				*bufferA = append(*bufferA, gap)
 			}
-			pos_b += step
+			posB += step
 		}
 
 		i++
 		step = path[i]
 		if step > 0 {
-			*bufferA = append(*bufferA, seqA[pos_a:(pos_a+step)]...)
-			*bufferB = append(*bufferB, seqB[pos_b:(pos_b+step)]...)
-			pos_a += step
-			pos_b += step
+			*bufferA = append(*bufferA, seqA[posA:(posA+step)]...)
+			*bufferB = append(*bufferB, seqB[posB:(posB+step)]...)
+			posA += step
+			posB += step
 		}
 	}
 
 	return *bufferA, *bufferB
 }
 
+// BuildAlignment builds the aligned sequences from an alignemnt path
+// returned by one of the alignment procedure.
+// The user has to provide both sequences (seqA and seqB), the alignment
+// path (path), the symbole used to materialiaze gaps (gap) which is
+// usually the dash '-', and a BuildAlignArena (arena). It is always possible
+// to provide the NilBuildAlignArena instance for this last parameter.
+// In that case an arena will be allocated by the function but, it will not
+// be reusable for other alignments and desallocated at the BuildAlignment
+// return.
 func BuildAlignment(seqA, seqB obiseq.BioSequence,
 	path []int, gap byte, arena BuildAlignArena) (obiseq.BioSequence, obiseq.BioSequence) {
 
@@ -83,7 +100,7 @@ func BuildAlignment(seqA, seqB obiseq.BioSequence,
 		arena = MakeBuildAlignArena(seqA.Length(), seqB.Length())
 	}
 
-	A, B := __build_alignment__(seqA.Sequence(), seqB.Sequence(), path, gap,
+	A, B := _BuildAlignment(seqA.Sequence(), seqB.Sequence(), path, gap,
 		&arena.pointer.bufferA,
 		&arena.pointer.bufferB)
 
@@ -98,6 +115,19 @@ func BuildAlignment(seqA, seqB obiseq.BioSequence,
 	return seqA, seqB
 }
 
+// BuildQualityConsensus builds the consensus sequences corresponding to an
+// alignement between two sequences.
+// The consensus is built from an alignemnt path returned by one of the
+// alignment procedure and the quality score associated to the sequence.
+// In case of mismatches the nucleotide with the best score is conserved
+// in the consensus. In case of score equality, an IUPAC symbol correesponding
+// to the ambiguity is used.
+// The user has to provide both sequences (seqA and seqB), the alignment
+// path (path), and two BuildAlignArena (arena1 and arena2). It is always possible
+// to provide the NilBuildAlignArena instance for these two last parameters.
+// In that case arenas will be allocated by the function but, they will not
+// be reusable for other alignments and desallocated at the BuildQualityConsensus
+// return.
 func BuildQualityConsensus(seqA, seqB obiseq.BioSequence, path []int,
 	arena1, arena2 BuildAlignArena) (obiseq.BioSequence, int) {
 
@@ -108,11 +138,11 @@ func BuildQualityConsensus(seqA, seqB obiseq.BioSequence, path []int,
 		arena2 = MakeBuildAlignArena(seqA.Length(), seqB.Length())
 	}
 
-	sA, sB := __build_alignment__(seqA.Sequence(), seqB.Sequence(), path, ' ',
+	sA, sB := _BuildAlignment(seqA.Sequence(), seqB.Sequence(), path, ' ',
 		&arena1.pointer.bufferA,
 		&arena1.pointer.bufferB)
 
-	qsA, qsB := __build_alignment__(seqA.Qualities(), seqB.Qualities(), path, byte(0),
+	qsA, qsB := _BuildAlignment(seqA.Qualities(), seqB.Qualities(), path, byte(0),
 		&arena2.pointer.bufferA,
 		&arena2.pointer.bufferB)
 
