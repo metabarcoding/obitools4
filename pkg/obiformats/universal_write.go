@@ -52,28 +52,45 @@ func WriteSequencesToStdout(iterator obiseq.IBioSequence, options ...WithOption)
 	return WriteSequences(iterator, os.Stdout, options...)
 }
 
-// func WriteSequenceBatch(iterator obiseq.IBioSequenceBatch,
-// 	file io.Writer,
-// 	options ...WithOption) error {
+func WriteSequenceBatch(iterator obiseq.IBioSequenceBatch,
+	file io.Writer,
+	options ...WithOption) (obiseq.IBioSequenceBatch,error) {
 
-// 	opts := MakeOptions(options)
+	var newIter obiseq.IBioSequenceBatch
+	var err error
 
-// 	header_format := opts.FormatFastSeqHeader()
-// 	quality := opts.QualityShift()
+	ok := iterator.Next()
 
-// 	ok := iterator.Next()
+	if ok {
+		iterator.PushBack()
+		batch := iterator.Get()
+		if batch.Slice()[0].HasQualities() {
+			newIter,err = WriteFastqBatch(iterator, file, options...)
+		} else {
+			newIter,err = WriteFastaBatch(iterator, file, options...)
+		}
 
-// 	if ok {
-// 		batch := iterator.Get()
-// 		if batch.Slice()[0].HasQualities() {
-// 			file.Write()
-// 			fmt.Fprintln(file, FormatFastq(seq, quality, header_format))
-// 			WriteFastq(iterator, file, options...)
-// 		} else {
-// 			fmt.Fprintln(file, FormatFasta(seq, header_format))
-// 			WriteFasta(iterator, file, options...)
-// 		}
-// 	}
+		return newIter,err 
+	}
 
-// 	return nil
-// }
+	return obiseq.NilIBioSequenceBatch,fmt.Errorf("input iterator not ready")
+}
+
+func WriteSequencesBatchToStdout(iterator obiseq.IBioSequenceBatch, 
+	options ...WithOption) (obiseq.IBioSequenceBatch,error) {
+	return WriteSequenceBatch(iterator, os.Stdout, options...)
+}
+
+func WriteSequencesBatchToFile(iterator obiseq.IBioSequenceBatch,
+	filename string,
+	options ...WithOption) (obiseq.IBioSequenceBatch,error) {
+
+	file, err := os.Create(filename)
+
+	if err != nil {
+		log.Fatalf("open file error: %v", err)
+		return obiseq.NilIBioSequenceBatch, err
+	}
+
+	return WriteSequenceBatch(iterator, file, options...)
+}

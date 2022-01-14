@@ -7,10 +7,11 @@ import (
 	"strings"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiformats"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obioptions"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
 
-func __expand_list_of_files__(check_ext bool, filenames ...string) ([]string, error) {
+func _ExpandListOfFiles(check_ext bool, filenames ...string) ([]string, error) {
 	var err error
 	list_of_files := make([]string, 0, 100)
 	for _, fn := range filenames {
@@ -32,7 +33,7 @@ func __expand_list_of_files__(check_ext bool, filenames ...string) ([]string, er
 
 				if info.IsDir() {
 					if path != fn {
-						subdir, e := __expand_list_of_files__(true, path)
+						subdir, e := _ExpandListOfFiles(true, path)
 						if e != nil {
 							return e
 						}
@@ -80,6 +81,15 @@ func ReadBioSequencesBatch(filenames ...string) (obiseq.IBioSequenceBatch, error
 		opts = append(opts, obiformats.OptionsFastSeqHeaderParser(obiformats.ParseGuessedFastSeqHeader))
 	}
 
+	nworkers := obioptions.ParallelWorkers() / 4
+	if nworkers < 2 {
+		nworkers = 2
+	}
+
+	opts = append(opts, obiformats.OptionsParallelWorkers(nworkers))
+	opts = append(opts, obiformats.OptionsBufferSize(obioptions.BufferSize()))
+	opts = append(opts, obiformats.OptionsBatchSize(obioptions.BatchSize()))
+
 	opts = append(opts, obiformats.OptionsQualityShift(InputQualityShift()))
 
 	if len(filenames) == 0 {
@@ -94,7 +104,7 @@ func ReadBioSequencesBatch(filenames ...string) (obiseq.IBioSequenceBatch, error
 		}
 	} else {
 
-		list_of_files, err := __expand_list_of_files__(false, filenames...)
+		list_of_files, err := _ExpandListOfFiles(false, filenames...)
 		if err != nil {
 			return obiseq.NilIBioSequenceBatch, err
 		}

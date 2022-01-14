@@ -39,6 +39,7 @@ func (batch BioSequenceBatch) IsNil() bool {
 type __ibiosequencebatch__ struct {
 	channel     chan BioSequenceBatch
 	current     BioSequenceBatch
+	pushBack    bool
 	all_done    *sync.WaitGroup
 	buffer_size int
 	finished    bool
@@ -61,9 +62,11 @@ func MakeIBioSequenceBatch(sizes ...int) IBioSequenceBatch {
 	i := __ibiosequencebatch__{
 		channel:     make(chan BioSequenceBatch, buffsize),
 		current:     NilBioSequenceBatch,
+		pushBack:    false,
 		buffer_size: buffsize,
 		finished:    false,
-		p_finished:  nil}
+		p_finished:  nil,
+	}
 	i.p_finished = &i.finished
 	waiting := sync.WaitGroup{}
 	i.all_done = &waiting
@@ -99,6 +102,7 @@ func (iterator IBioSequenceBatch) Split() IBioSequenceBatch {
 	i := __ibiosequencebatch__{
 		channel:     iterator.pointer.channel,
 		current:     NilBioSequenceBatch,
+		pushBack:    false,
 		all_done:    iterator.pointer.all_done,
 		buffer_size: iterator.pointer.buffer_size,
 		finished:    false,
@@ -111,6 +115,12 @@ func (iterator IBioSequenceBatch) Next() bool {
 	if *(iterator.pointer.p_finished) {
 		return false
 	}
+
+	if iterator.pointer.pushBack {
+		iterator.pointer.pushBack = false
+		return true
+	}
+
 	next, ok := (<-iterator.pointer.channel)
 
 	if ok {
@@ -121,6 +131,12 @@ func (iterator IBioSequenceBatch) Next() bool {
 	iterator.pointer.current = NilBioSequenceBatch
 	*iterator.pointer.p_finished = true
 	return false
+}
+
+func (iterator IBioSequenceBatch) PushBack() {
+	if !iterator.pointer.current.IsNil() {
+		iterator.pointer.pushBack = true
+	}
 }
 
 // The 'Get' method returns the instance of BioSequenceBatch
@@ -303,14 +319,14 @@ func (iterator IBioSequenceBatch) Rebatch(size int, sizes ...int) IBioSequenceBa
 	return newIter
 }
 
-func (iterator IBioSequenceBatch) Destroy() {
+func (iterator IBioSequenceBatch) Recycle() {
 
 	log.Println("Start recycling of Bioseq objects")
 
 	for iterator.Next() {
 		batch := iterator.Get()
 		for _, seq := range batch.Slice() {
-			(&seq).Destroy()
+			(&seq).Recycle()
 		}
 	}
 	log.Println("End of the recycling of Bioseq objects")

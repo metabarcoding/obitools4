@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiformats"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obioptions"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
 
@@ -22,6 +23,15 @@ func WriteBioSequences(iterator obiseq.IBioSequence, filenames ...string) error 
 		log.Println("On output use JSON headers")
 		opts = append(opts, obiformats.OptionsFastSeqHeaderFormat(obiformats.FormatFastSeqJsonHeader))
 	}
+
+	nworkers := obioptions.ParallelWorkers() / 4
+	if nworkers < 2 {
+		nworkers = 2
+	}
+
+	opts = append(opts, obiformats.OptionsParallelWorkers(nworkers))
+	opts = append(opts, obiformats.OptionsBufferSize(obioptions.BufferSize()))
+	opts = append(opts, obiformats.OptionsBatchSize(obioptions.BatchSize()))
 
 	opts = append(opts, obiformats.OptionsQualityShift(OutputQualityShift()))
 
@@ -53,4 +63,69 @@ func WriteBioSequences(iterator obiseq.IBioSequence, filenames ...string) error 
 	}
 
 	return nil
+}
+
+func WriteBioSequencesBatch(iterator obiseq.IBioSequenceBatch,
+	terminalAction bool, filenames ...string) (obiseq.IBioSequenceBatch, error) {
+
+	var newIter obiseq.IBioSequenceBatch
+
+	opts := make([]obiformats.WithOption, 0, 10)
+
+	switch OutputFastHeaderFormat() {
+	case "json":
+		log.Println("On output use JSON headers")
+		opts = append(opts, obiformats.OptionsFastSeqHeaderFormat(obiformats.FormatFastSeqJsonHeader))
+	case "obi":
+		log.Println("On output use OBI headers")
+		opts = append(opts, obiformats.OptionsFastSeqHeaderFormat(obiformats.FormatFastSeqOBIHeader))
+	default:
+		log.Println("On output use JSON headers")
+		opts = append(opts, obiformats.OptionsFastSeqHeaderFormat(obiformats.FormatFastSeqJsonHeader))
+	}
+
+	nworkers := obioptions.ParallelWorkers() / 4
+	if nworkers < 2 {
+		nworkers = 2
+	}
+
+	opts = append(opts, obiformats.OptionsParallelWorkers(nworkers))
+	opts = append(opts, obiformats.OptionsBufferSize(obioptions.BufferSize()))
+	opts = append(opts, obiformats.OptionsBatchSize(obioptions.BatchSize()))
+
+	opts = append(opts, obiformats.OptionsQualityShift(OutputQualityShift()))
+
+	var err error
+
+	if len(filenames) == 0 {
+		switch OutputFormat() {
+		case "fastq":
+			newIter, err = obiformats.WriteFastqBatchToStdout(iterator, opts...)
+		case "fasta":
+			newIter, err = obiformats.WriteFastaBatchToStdout(iterator, opts...)
+		default:
+			newIter, err = obiformats.WriteSequencesBatchToStdout(iterator, opts...)
+		}
+	} else {
+		switch OutputFormat() {
+		case "fastq":
+			newIter, err = obiformats.WriteFastqBatchToFile(iterator, filenames[0], opts...)
+		case "fasta":
+			newIter, err = obiformats.WriteFastaBatchToFile(iterator, filenames[0], opts...)
+		default:
+			newIter, err = obiformats.WriteSequencesBatchToFile(iterator, filenames[0], opts...)
+		}
+	}
+
+	if err != nil {
+		log.Fatalf("Write file error: %v", err)
+		return obiseq.NilIBioSequenceBatch, err
+	}
+
+	if terminalAction {
+		newIter.Recycle()
+		return obiseq.NilIBioSequenceBatch, nil
+	}
+
+	return newIter, nil
 }

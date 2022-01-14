@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"runtime/trace"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obiconvert"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obicount"
@@ -21,12 +20,12 @@ func main() {
 	// pprof.StartCPUProfile(f)
 	// defer pprof.StopCPUProfile()
 
-	ftrace, err := os.Create("cpu.trace")
-	if err != nil {
-		log.Fatal(err)
-	}
-	trace.Start(ftrace)
-	defer trace.Stop()
+	// ftrace, err := os.Create("cpu.trace")
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// trace.Start(ftrace)
+	// defer trace.Stop()
 
 	optionParser := obioptions.GenerateOptionParser(
 		obiconvert.InputOptionSet,
@@ -47,6 +46,7 @@ func main() {
 		nread += s.Count()
 		nvariant++
 		nsymbol += s.Length()
+		(&s).Recycle()
 	}
 
 	if obicount.IsPrintingVariantCount() {

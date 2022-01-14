@@ -15,6 +15,8 @@ var _AllowedMismatch = 0
 var _MinimumLength = 0
 var _MaximumLength = -1
 
+// PCROptionSet adds to a command line option set every options
+// needed by the PCR algorithm.
 func PCROptionSet(options *getoptions.GetOpt) {
 	options.BoolVar(&_Circular, "circular", false,
 		options.Alias("c"),
@@ -40,11 +42,15 @@ func PCROptionSet(options *getoptions.GetOpt) {
 		options.Description("Maximum length of the barcode (primers excluded)."))
 }
 
+// OptionSet adds to the basic option set every options declared for
+// the obipcr command
 func OptionSet(options *getoptions.GetOpt) {
 	obiconvert.OptionSet(options)
 	PCROptionSet(options)
 }
 
+// ForwardPrimer returns the sequence of the forward primer as indicated by the
+// --forward command line option
 func ForwardPrimer() string {
 	pattern, err := obiapat.MakeApatPattern(_ForwardPrimer, _AllowedMismatch)
 
@@ -57,6 +63,8 @@ func ForwardPrimer() string {
 	return _ForwardPrimer
 }
 
+// ReversePrimer returns the sequence of the reverse primer as indicated by the
+// --reverse command line option
 func ReversePrimer() string {
 	pattern, err := obiapat.MakeApatPattern(_ReversePrimer, _AllowedMismatch)
 
@@ -69,18 +77,27 @@ func ReversePrimer() string {
 	return _ReversePrimer
 }
 
+// AllowedMismatch returns the allowed mistmatch count between each
+// primer and the sequences as indicated by the
+// --allowed-mismatches|-e command line option
 func AllowedMismatch() int {
 	return _AllowedMismatch
 }
 
+// Circular returns the considered sequence topology as indicated by the
+// --circular|-c command line option
 func Circular() bool {
 	return _Circular
 }
 
+// MinLength returns the amplicon minimum length as indicated by the
+// --min-length|-l command line option
 func MinLength() int {
 	return _MinimumLength
 }
 
+// MaxLength returns the amplicon maximum length as indicated by the
+// --max-length|-L command line option
 func MaxLength() int {
 	return _MaximumLength
 }

@@ -10,10 +10,11 @@ import (
 type __ibiosequence__ struct {
 	channel     chan BioSequence
 	current     BioSequence
+	pushBack    bool
 	all_done    *sync.WaitGroup
 	buffer_size int
 	finished    bool
-	p_finished  *bool
+	pFinished   *bool
 }
 
 type IBioSequence struct {
@@ -55,10 +56,13 @@ func MakeIBioSequence(sizes ...int) IBioSequence {
 	i := __ibiosequence__{
 		channel:     make(chan BioSequence, buffsize),
 		current:     NilBioSequence,
+		pushBack:    false,
 		buffer_size: buffsize,
 		finished:    false,
-		p_finished:  nil}
-	i.p_finished = &i.finished
+		pFinished:   nil,
+	}
+
+	i.pFinished = &i.finished
 	waiting := sync.WaitGroup{}
 	i.all_done = &waiting
 	ii := IBioSequence{&i}
@@ -66,21 +70,30 @@ func MakeIBioSequence(sizes ...int) IBioSequence {
 }
 
 func (iterator IBioSequence) Split() IBioSequence {
+
 	i := __ibiosequence__{
 		channel:     iterator.pointer.channel,
 		current:     NilBioSequence,
+		pushBack:    false,
 		finished:    false,
 		all_done:    iterator.pointer.all_done,
 		buffer_size: iterator.pointer.buffer_size,
-		p_finished:  iterator.pointer.p_finished}
+		pFinished:   iterator.pointer.pFinished,
+	}
+
 	newIter := IBioSequence{&i}
 	return newIter
 }
 
 func (iterator IBioSequence) Next() bool {
-	if iterator.IsNil() || *(iterator.pointer.p_finished) {
+	if iterator.IsNil() || *(iterator.pointer.pFinished) {
 		iterator.pointer.current = NilBioSequence
 		return false
+	}
+
+	if iterator.pointer.pushBack {
+		iterator.pointer.pushBack = false
+		return true
 	}
 
 	next, ok := (<-iterator.pointer.channel)
@@ -91,8 +104,14 @@ func (iterator IBioSequence) Next() bool {
 	}
 
 	iterator.pointer.current = NilBioSequence
-	*iterator.pointer.p_finished = true
+	*iterator.pointer.pFinished = true
 	return false
+}
+
+func (iterator IBioSequence) PushBack() {
+	if !iterator.pointer.current.IsNil() {
+		iterator.pointer.pushBack = true
+	}
 }
 
 // The 'Get' method returns the instance of BioSequence
@@ -106,7 +125,7 @@ func (iterator IBioSequence) Get() BioSequence {
 // Finished returns 'true' value if no more data is available
 // from the iterator.
 func (iterator IBioSequence) Finished() bool {
-	return *iterator.pointer.p_finished
+	return *iterator.pointer.pFinished
 }
 
 func (iterator IBioSequence) BufferSize() int {

@@ -82,11 +82,12 @@ type FileChunck struct {
 }
 
 func WriteFastqBatch(iterator obiseq.IBioSequenceBatch, file io.Writer, options ...WithOption) (obiseq.IBioSequenceBatch, error) {
+	opt := MakeOptions(options)
+
 	buffsize := iterator.BufferSize()
 	newIter := obiseq.MakeIBioSequenceBatch(buffsize)
 
-	opt := MakeOptions(options)
-	nwriters := 4
+	nwriters := opt.ParallelWorkers()
 
 	chunkchan := make(chan FileChunck)
 
@@ -110,19 +111,21 @@ func WriteFastqBatch(iterator obiseq.IBioSequenceBatch, file io.Writer, options 
 	ff := func(iterator obiseq.IBioSequenceBatch) {
 		for iterator.Next() {
 			batch := iterator.Get()
-			chunkchan <- FileChunck{
+			chunk := FileChunck{
 				FormatFastqBatch(batch, quality, header_format),
 				batch.Order(),
 			}
+			chunkchan <- chunk
 			newIter.Channel() <- batch
 		}
 		newIter.Done()
 	}
 
-	log.Println("Start of the fastq file reading")
-	for i := 0; i < nwriters; i++ {
+	log.Println("Start of the fastq file writing")
+	for i := 0; i < nwriters-1; i++ {
 		go ff(iterator.Split())
 	}
+	go ff(iterator)
 
 	next_to_send := 0
 	received := make(map[int]FileChunck, 100)

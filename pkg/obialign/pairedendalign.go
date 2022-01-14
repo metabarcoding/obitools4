@@ -282,6 +282,11 @@ func PEAlign(seqA, seqB obiseq.BioSequence,
 		_InitDNAScoreMatrix()
 	}
 
+	// log.Println("==============")
+	// log.Println(seqA.String())
+	// log.Println(seqB.String())
+	// log.Println("--------------")
+
 	index := obikmer.Index4mer(seqA,
 		&arena.pointer.fastIndex,
 		&arena.pointer.fastBuffer)
@@ -293,6 +298,10 @@ func PEAlign(seqA, seqB obiseq.BioSequence,
 	} else {
 		over = seqB.Length() + shift
 	}
+
+	// log.Println(seqA.String())
+	// log.Println(seqB.String())
+	// log.Printf("Shift : %d Score : %d Over : %d La : %d:%d Lb: %d:%d\n", shift, fastScore, over, seqA.Length(), len(seqA.Qualities()), seqB.Length(), len(seqB.Qualities()))
 
 	if fastScore+3 < over {
 		if shift > 0 {

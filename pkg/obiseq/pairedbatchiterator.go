@@ -55,6 +55,7 @@ func (batch PairedBioSequenceBatch) IsNil() bool {
 type __ipairedbiosequencebatch__ struct {
 	channel     chan PairedBioSequenceBatch
 	current     PairedBioSequenceBatch
+	pushBack    bool
 	all_done    *sync.WaitGroup
 	buffer_size int
 	finished    bool
@@ -77,9 +78,12 @@ func MakeIPairedBioSequenceBatch(sizes ...int) IPairedBioSequenceBatch {
 	i := __ipairedbiosequencebatch__{
 		channel:     make(chan PairedBioSequenceBatch, buffsize),
 		current:     NilPairedBioSequenceBatch,
+		pushBack:    false,
 		buffer_size: buffsize,
 		finished:    false,
-		p_finished:  nil}
+		p_finished:  nil,
+	}
+
 	i.p_finished = &i.finished
 	waiting := sync.WaitGroup{}
 	i.all_done = &waiting
@@ -115,6 +119,7 @@ func (iterator IPairedBioSequenceBatch) Split() IPairedBioSequenceBatch {
 	i := __ipairedbiosequencebatch__{
 		channel:     iterator.pointer.channel,
 		current:     NilPairedBioSequenceBatch,
+		pushBack:    false,
 		all_done:    iterator.pointer.all_done,
 		buffer_size: iterator.pointer.buffer_size,
 		finished:    false,
@@ -127,6 +132,12 @@ func (iterator IPairedBioSequenceBatch) Next() bool {
 	if *(iterator.pointer.p_finished) {
 		return false
 	}
+
+	if iterator.pointer.pushBack {
+		iterator.pointer.pushBack = false
+		return true
+	}
+
 	next, ok := (<-iterator.pointer.channel)
 
 	if ok {
@@ -137,6 +148,12 @@ func (iterator IPairedBioSequenceBatch) Next() bool {
 	iterator.pointer.current = NilPairedBioSequenceBatch
 	*iterator.pointer.p_finished = true
 	return false
+}
+
+func (iterator IPairedBioSequenceBatch) PushBack() {
+	if !iterator.pointer.current.IsNil() {
+		iterator.pointer.pushBack = true
+	}
 }
 
 // The 'Get' method returns the instance of BioSequenceBatch

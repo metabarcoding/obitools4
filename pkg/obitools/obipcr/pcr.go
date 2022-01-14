@@ -5,7 +5,10 @@ import (
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
 
-func PCR(iterator obiseq.IBioSequenceBatch) (obiseq.IBioSequence, error) {
+// PCR iterates over sequences provided by a obiseq.IBioSequenceBatch
+// and returns an other obiseq.IBioSequenceBatch distributing
+// obiseq.BioSequenceBatch containing the selected amplicon sequences.
+func PCR(iterator obiseq.IBioSequenceBatch) (obiseq.IBioSequenceBatch, error) {
 
 	forward := ForwardPrimer()
 	reverse := ReversePrimer()
@@ -28,5 +31,5 @@ func PCR(iterator obiseq.IBioSequenceBatch) (obiseq.IBioSequence, error) {
 
 	worker := obiapat.PCRSliceWorker(forward, reverse, opts...)
 
-	return iterator.MakeISliceWorker(worker).IBioSequence(), nil
+	return iterator.MakeISliceWorker(worker), nil
 }

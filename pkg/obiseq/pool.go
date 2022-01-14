@@ -14,7 +14,6 @@ var __bioseq__pool__ = sync.Pool{
 
 func MakeEmptyBioSequence() BioSequence {
 	bs := BioSequence{__bioseq__pool__.Get().(*__sequence__)}
-	bs.Reset()
 	return bs
 }
 
@@ -23,12 +22,13 @@ func MakeBioSequence(id string,
 	definition string) BioSequence {
 	bs := MakeEmptyBioSequence()
 	bs.SetId(id)
-	bs.SetSequence(sequence)
+	bs.Write(sequence)
 	bs.SetDefinition(definition)
 	return bs
 }
 
-func (sequence *BioSequence) Destroy() {
+func (sequence *BioSequence) Recycle() {
+	sequence.Reset()
 	__bioseq__pool__.Put(sequence.sequence)
 	sequence.sequence = nil
 }

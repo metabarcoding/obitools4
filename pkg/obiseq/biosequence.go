@@ -44,7 +44,7 @@ func (s BioSequence) IsNil() bool {
 	return s.sequence == nil
 }
 
-func (s BioSequence) Reset() {
+func (s *BioSequence) Reset() {
 	s.sequence.id.Reset()
 	s.sequence.definition.Reset()
 	s.sequence.sequence.Reset()
@@ -166,6 +166,10 @@ func (s BioSequence) SetSequence(sequence []byte) {
 func (s BioSequence) SetQualities(qualities Quality) {
 	s.sequence.qualities.Reset()
 	s.sequence.qualities.Write(qualities)
+}
+
+func (s BioSequence) WriteQualities(data []byte) (int, error) {
+	return s.sequence.qualities.Write(data)
 }
 
 func (s BioSequence) Write(data []byte) (int, error) {

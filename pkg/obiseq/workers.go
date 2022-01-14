@@ -84,9 +84,10 @@ func (iterator IBioSequenceBatch) MakeIWorker(worker SeqWorker, sizes ...int) IB
 	}
 
 	log.Println("Start of the batch workers")
-	for i := 0; i < nworkers; i++ {
+	for i := 0; i < nworkers-1; i++ {
 		go f(iterator.Split())
 	}
+	go f(iterator)
 
 	return newIter
 }
@@ -126,9 +127,10 @@ func (iterator IBioSequenceBatch) MakeISliceWorker(worker SeqSliceWorker, sizes 
 	}
 
 	log.Println("Start of the batch slice workers")
-	for i := 0; i < nworkers; i++ {
+	for i := 0; i < nworkers - 1; i++ {
 		go f(iterator.Split())
 	}
+	go f(iterator)
 
 	return newIter
 }

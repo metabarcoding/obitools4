@@ -59,4 +59,9 @@ func main() {
 	sA.ReverseComplement(true)
 	fmt.Println(string(sA.Sequence()))
 	fmt.Println(string(sA.Id()))
+
+	sA.Reset()
+	fmt.Println(sA.Length())
+	fmt.Println(sA.String())
+
 }

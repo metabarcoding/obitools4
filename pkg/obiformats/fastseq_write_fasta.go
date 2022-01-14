@@ -7,7 +7,6 @@ import (
 	"log"
 	"os"
 	"strings"
-	"sync"
 	"time"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
@@ -82,26 +81,30 @@ func WriteFastaToStdout(iterator obiseq.IBioSequence, options ...WithOption) err
 	return WriteFasta(iterator, os.Stdout, options...)
 }
 
-func WriteFastaBatch(iterator obiseq.IBioSequenceBatch, file io.Writer, options ...WithOption) error {
+func WriteFastaBatch(iterator obiseq.IBioSequenceBatch, file io.Writer, options ...WithOption) (obiseq.IBioSequenceBatch, error) {
+	opt := MakeOptions(options)
+
 	buffsize := iterator.BufferSize()
 	newIter := obiseq.MakeIBioSequenceBatch(buffsize)
 
-	opt := MakeOptions(options)
-	nwriters := 4
+	nwriters := opt.ParallelWorkers()
 
 	chunkchan := make(chan FileChunck)
-	chunkwait := sync.WaitGroup{}
 
 	header_format := opt.FormatFastSeqHeader()
 
-	chunkwait.Add(nwriters)
+	newIter.Add(nwriters)
 
 	go func() {
-		chunkwait.Wait()
+		newIter.Wait()
 		for len(chunkchan) > 0 {
 			time.Sleep(time.Millisecond)
 		}
 		close(chunkchan)
+		for len(newIter.Channel()) > 0 {
+			time.Sleep(time.Millisecond)
+		}
+		close(newIter.Channel())
 	}()
 
 	ff := func(iterator obiseq.IBioSequenceBatch) {
@@ -116,9 +119,11 @@ func WriteFastaBatch(iterator obiseq.IBioSequenceBatch, file io.Writer, options 
 		newIter.Done()
 	}
 
-	for i := 0; i < nwriters; i++ {
+	log.Println("Start of the fasta file writing")
+	for i := 0; i < nwriters-1; i++ {
 		go ff(iterator.Split())
 	}
+	go ff(iterator)
 
 	next_to_send := 0
 	received := make(map[int]FileChunck, 100)
@@ -142,22 +147,22 @@ func WriteFastaBatch(iterator obiseq.IBioSequenceBatch, file io.Writer, options 
 		}
 	}()
 
-	return nil
+	return newIter, nil
 }
 
-func WriteFastaBatchToStdout(iterator obiseq.IBioSequenceBatch, options ...WithOption) error {
+func WriteFastaBatchToStdout(iterator obiseq.IBioSequenceBatch, options ...WithOption) (obiseq.IBioSequenceBatch, error) {
 	return WriteFastaBatch(iterator, os.Stdout, options...)
 }
 
 func WriteFastaBatchToFile(iterator obiseq.IBioSequenceBatch,
 	filename string,
-	options ...WithOption) error {
+	options ...WithOption) (obiseq.IBioSequenceBatch, error) {
 
 	file, err := os.Create(filename)
 
 	if err != nil {
 		log.Fatalf("open file error: %v", err)
-		return err
+		return obiseq.NilIBioSequenceBatch, err
 	}
 
 	return WriteFastaBatch(iterator, file, options...)
