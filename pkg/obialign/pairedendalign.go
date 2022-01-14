@@ -51,17 +51,17 @@ func __get_matrix_from__(matrix *[]int, lenA, a, b int) (int, int, int) {
 }
 
 func __pairing_score_pe_align__(baseA, qualA, baseB, qualB byte) int {
-	part_match := __nuc_part_match__[baseA&31][baseB&31]
+	part_match := _NucPartMatch[baseA&31][baseB&31]
 	// log.Printf("id : %f A : %s %d B : %s %d\n", part_match, string(baseA), qualA, string(baseB), qualB)
 	switch {
 	case part_match == 1:
 		// log.Printf("match\n")
-		return __nuc_score_part_match_match__[qualA][qualB]
+		return _NucScorePartMatchMatch[qualA][qualB]
 	case part_match == 0:
-		return __nuc_score_part_match_mismatch__[qualA][qualB]
+		return _NucScorePartMatchMismatch[qualA][qualB]
 	default:
-		return int(part_match*float64(__nuc_score_part_match_match__[qualA][qualB]) +
-			(1-part_match)*float64(__nuc_score_part_match_mismatch__[qualA][qualB]) + 0.5)
+		return int(part_match*float64(_NucScorePartMatchMatch[qualA][qualB]) +
+			(1-part_match)*float64(_NucScorePartMatchMismatch[qualA][qualB]) + 0.5)
 	}
 }
 
@@ -73,7 +73,7 @@ func __fill_matrix_pe_left_align__(seqA, qualA, seqB, qualB []byte, gap int,
 
 	// The actual gap score is the gap score times the mismatch between
 	// two bases with a score of 40
-	gap = gap * __nuc_score_part_match_mismatch__[40][40]
+	gap = gap * _NucScorePartMatchMismatch[40][40]
 
 	needed := (la + 1) * (lb + 1)
 
@@ -144,7 +144,7 @@ func __fill_matrix_pe_right_align__(seqA, qualA, seqB, qualB []byte, gap int,
 
 	// The actual gap score is the gap score times the mismatch between
 	// two bases with a score of 40
-	gap = gap * __nuc_score_part_match_mismatch__[40][40]
+	gap = gap * _NucScorePartMatchMismatch[40][40]
 
 	needed := (la + 1) * (lb + 1)
 
@@ -215,9 +215,9 @@ func __fill_matrix_pe_right_align__(seqA, qualA, seqB, qualB []byte, gap int,
 
 func PELeftAlign(seqA, seqB obiseq.BioSequence, gap int, arena PEAlignArena) (int, []int) {
 
-	if !__initialized_dna_score__ {
+	if !_InitializedDnaScore {
 		log.Println("Initializing the DNA Scoring matrix")
-		InitDNAScoreMatrix()
+		_InitDNAScoreMatrix()
 	}
 
 	if arena.pointer == nil {
@@ -229,7 +229,7 @@ func PELeftAlign(seqA, seqB obiseq.BioSequence, gap int, arena PEAlignArena) (in
 		&arena.pointer.score_matrix,
 		&arena.pointer.path_matrix)
 
-	arena.pointer.path = __backtracking__(arena.pointer.path_matrix,
+	arena.pointer.path = _Backtracking(arena.pointer.path_matrix,
 		seqA.Length(), seqB.Length(),
 		&arena.pointer.path)
 
@@ -238,9 +238,9 @@ func PELeftAlign(seqA, seqB obiseq.BioSequence, gap int, arena PEAlignArena) (in
 
 func PERightAlign(seqA, seqB obiseq.BioSequence, gap int, arena PEAlignArena) (int, []int) {
 
-	if !__initialized_dna_score__ {
+	if !_InitializedDnaScore {
 		log.Println("Initializing the DNA Scoring matrix")
-		InitDNAScoreMatrix()
+		_InitDNAScoreMatrix()
 	}
 
 	if arena.pointer == nil {
@@ -252,7 +252,7 @@ func PERightAlign(seqA, seqB obiseq.BioSequence, gap int, arena PEAlignArena) (i
 		&arena.pointer.score_matrix,
 		&arena.pointer.path_matrix)
 
-	arena.pointer.path = __backtracking__(arena.pointer.path_matrix,
+	arena.pointer.path = _Backtracking(arena.pointer.path_matrix,
 		seqA.Length(), seqB.Length(),
 		&arena.pointer.path)
 
@@ -269,9 +269,9 @@ func PEAlign(seqA, seqB obiseq.BioSequence,
 	var raw_seqB, qual_seqB []byte
 	var extra5, extra3 int
 
-	if !__initialized_dna_score__ {
+	if !_InitializedDnaScore {
 		log.Println("Initializing the DNA Scoring matrix")
-		InitDNAScoreMatrix()
+		_InitDNAScoreMatrix()
 	}
 
 	index := obikmer.Index4mer(seqA,
@@ -323,7 +323,7 @@ func PEAlign(seqA, seqB obiseq.BioSequence,
 				&arena.pointer.path_matrix)
 		}
 
-		arena.pointer.path = __backtracking__(arena.pointer.path_matrix,
+		arena.pointer.path = _Backtracking(arena.pointer.path_matrix,
 			len(raw_seqA), len(raw_seqB),
 			&arena.pointer.path)
 
@@ -349,7 +349,7 @@ func PEAlign(seqA, seqB obiseq.BioSequence,
 		score = 0
 		for i, qualA := range qual_seqA {
 			qualB := qual_seqB[i]
-			score += __nuc_score_part_match_match__[qualA][qualB]
+			score += _NucScorePartMatchMatch[qualA][qualB]
 		}
 		arena.pointer.path = arena.pointer.path[:0]
 		arena.pointer.path = append(arena.pointer.path, 0, part_len)

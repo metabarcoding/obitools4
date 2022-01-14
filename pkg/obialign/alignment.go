@@ -169,8 +169,8 @@ func BuildQualityConsensus(seqA, seqB obiseq.BioSequence, path []int,
 			qm = qA
 		}
 		if qB == qA {
-			nuc := __four_bits_base_code__[sA[i]&31] | __four_bits_base_code__[sB[i]&31]
-			consensus = append(consensus, __four_bits_base_decode__[nuc])
+			nuc := _FourBitsBaseCode[sA[i]&31] | _FourBitsBaseCode[sB[i]&31]
+			consensus = append(consensus, _FourBitsBaseDecode[nuc])
 		}
 
 		q := qA + qB

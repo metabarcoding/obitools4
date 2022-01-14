@@ -74,8 +74,8 @@ func _MatchScoreRatio(a, b byte) (float64, float64) {
 
 func _InitNucPartMatch() {
 
-	for i, a := range __four_bits_base_code__ {
-		for j, b := range __four_bits_base_code__ {
+	for i, a := range _FourBitsBaseCode {
+		for j, b := range _FourBitsBaseCode {
 			_NucPartMatch[i][j] = _MatchRatio(a, b)
 		}
 	}

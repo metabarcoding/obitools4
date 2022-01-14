@@ -4,7 +4,7 @@ import (
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
 
-var __four_bits_base_code__ = []byte{0b0000,
+var _FourBitsBaseCode = []byte{0b0000,
 	// IUPAC nucleotide code	Base
 	0b0001, // A	Adenine
 	0b1110, // B	C or G or T
@@ -38,7 +38,7 @@ var __four_bits_base_code__ = []byte{0b0000,
 	0b0000,
 	0b0000}
 
-var __four_bits_base_decode__ = []byte{
+var _FourBitsBaseDecode = []byte{
 	// 	0b0000 0b0001 0b0010 0b0011
 	'.', 'a', 'c', 'm',
 	// 	0b0100 0b0101 0b0110 0b0111
@@ -49,6 +49,14 @@ var __four_bits_base_decode__ = []byte{
 	'k', 'd', 'b', 'n',
 }
 
+// Encode4bits encodes each nucleotide of a sequence into a binary
+// code where the four low weigth bit of a byte correspond respectively
+// to the four nucleotides A, C, G, T. Simple bases A, C, G, T are therefore
+// represented by a code with only a single bit on, when anbiguous symboles
+// like R, D or N have the bits corresponding to each nucleotide represented
+// by the ambiguity set to 1.
+// A byte slice can be provided (buffer) to preveent allocation of a new
+// memory chunk by th function.
 func Encode4bits(seq obiseq.BioSequence, buffer []byte) []byte {
 	length := seq.Length()
 	rawseq := seq.Sequence()
@@ -65,7 +73,7 @@ func Encode4bits(seq obiseq.BioSequence, buffer []byte) []byte {
 		if nuc == '.' || nuc == '-' {
 			code = 0
 		} else {
-			code = __four_bits_base_code__[nuc&31]
+			code = _FourBitsBaseCode[nuc&31]
 		}
 		buffer = append(buffer, code)
 	}
