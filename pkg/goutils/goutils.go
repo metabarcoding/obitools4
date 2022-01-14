@@ -5,14 +5,21 @@ import (
 	"encoding/gob"
 )
 
+// NotAnInteger defines a new type of Error : "NotAnInteger"
 type NotAnInteger struct {
 	message string
 }
 
+// Error() retreives the error message associated to the "NotAnInteger"
+// error. Tha addition of that Error message make the "NotAnInteger"
+// complying with the error interface
 func (m *NotAnInteger) Error() string {
 	return m.message
 }
 
+// InterfaceToInt converts a interface{} to an integer value if possible.
+// If not a "NotAnInteger" error is returned via the err
+// return value and val is set to 0.
 func InterfaceToInt(i interface{}) (val int, err error) {
 
 	err = nil
@@ -47,6 +54,7 @@ func InterfaceToInt(i interface{}) (val int, err error) {
 	return
 }
 
+// CopyMap makes a deep copy of a map[string]interface{}.
 func CopyMap(dest, src map[string]interface{}) {
 	buf := new(bytes.Buffer)
 	gob.NewEncoder(buf).Encode(src)
