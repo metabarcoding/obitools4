@@ -28,9 +28,9 @@ func main() {
 	// trace.Start(ftrace)
 	// defer trace.Stop()
 
-	option_parser := obioptions.GenerateOptionParser(obipairing.OptionSet)
+	optionParser := obioptions.GenerateOptionParser(obipairing.OptionSet)
 
-	option_parser(os.Args)
+	optionParser(os.Args)
 	pairs, _ := obipairing.IBatchPairedSequence()
 	paired := obipairing.IAssemblePESequencesBatch(pairs, 2, 50, 20, true)
 	written, _ := obiformats.WriteFastqBatchToStdout(paired)

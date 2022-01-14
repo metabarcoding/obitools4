@@ -24,9 +24,9 @@ func main() {
 	// trace.Start(ftrace)
 	// defer trace.Stop()
 
-	option_parser := obioptions.GenerateOptionParser(obipcr.OptionSet)
+	optionParser := obioptions.GenerateOptionParser(obipcr.OptionSet)
 
-	_, args, _ := option_parser(os.Args)
+	_, args, _ := optionParser(os.Args)
 
 	sequences, _ := obiconvert.ReadBioSequencesBatch(args...)
 	amplicons, _ := obipcr.PCR(sequences)

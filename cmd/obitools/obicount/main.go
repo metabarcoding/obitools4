@@ -28,12 +28,12 @@ func main() {
 	trace.Start(ftrace)
 	defer trace.Stop()
 
-	option_parser := obioptions.GenerateOptionParser(
+	optionParser := obioptions.GenerateOptionParser(
 		obiconvert.InputOptionSet,
 		obicount.OptionSet,
 	)
 
-	_, args, _ := option_parser(os.Args)
+	_, args, _ := optionParser(os.Args)
 
 	fs, _ := obiconvert.ReadBioSequences(args...)
 	nread := 0

@@ -9,9 +9,9 @@ import (
 )
 
 func main() {
-	option_parser := obioptions.GenerateOptionParser(obiconvert.OptionSet)
+	optionParser := obioptions.GenerateOptionParser(obiconvert.OptionSet)
 
-	_, args, _ := option_parser(os.Args)
+	_, args, _ := optionParser(os.Args)
 
 	fs, _ := obiconvert.ReadBioSequences(args...)
 	obiconvert.WriteBioSequences(fs)
