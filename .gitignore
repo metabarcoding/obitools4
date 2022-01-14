@@ -3,3 +3,5 @@ cpu.trace
 obicount
 obipairing
 bin
+*.fastq
+*.fasta
