@@ -39,7 +39,7 @@ func (set *TaxonSlice) Iterator() *ITaxonSet {
 	return i
 }
 
-func (taxonmy *Taxonomy) iterator() *ITaxonSet {
+func (taxonmy *Taxonomy) Iterator() *ITaxonSet {
 	return taxonmy.nodes.Iterator()
 }
 

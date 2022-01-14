@@ -3,7 +3,6 @@ package ncbitaxdump
 import (
 	"bufio"
 	"encoding/csv"
-	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -95,8 +94,8 @@ func LoadNCBITaxDump(directory string, onlysn bool) (*obitax.Taxonomy, error) {
 
 	nodefile, err := os.Open(path.Join(directory, "nodes.dmp"))
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("Cannot open nodes file from '%s'",
-			directory))
+		return nil, fmt.Errorf("cannot open nodes file from '%s'",
+			directory)
 	}
 	defer nodefile.Close()
 
@@ -112,8 +111,8 @@ func LoadNCBITaxDump(directory string, onlysn bool) (*obitax.Taxonomy, error) {
 
 	namefile, nerr := os.Open(path.Join(directory, "names.dmp"))
 	if nerr != nil {
-		return nil, errors.New(fmt.Sprintf("Cannot open names file from '%s'",
-			directory))
+		return nil, fmt.Errorf("cannot open names file from '%s'",
+			directory)
 	}
 	defer namefile.Close()
 
@@ -128,8 +127,8 @@ func LoadNCBITaxDump(directory string, onlysn bool) (*obitax.Taxonomy, error) {
 
 	aliasfile, aerr := os.Open(path.Join(directory, "merged.dmp"))
 	if aerr != nil {
-		return nil, errors.New(fmt.Sprintf("Cannot open merged file from '%s'",
-			directory))
+		return nil, fmt.Errorf("cannot open merged file from '%s'",
+			directory)
 	}
 	defer aliasfile.Close()
 

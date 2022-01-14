@@ -16,15 +16,6 @@ import (
 
 var __FILE_CHUNK_SIZE__ = 1 << 20
 
-func __slice_grow__(slice []string) []string {
-	return slice
-}
-
-type __embl_chunk__ struct {
-	entries [][]string
-	order   int
-}
-
 type __file_chunk__ struct {
 	raw   io.Reader
 	order int

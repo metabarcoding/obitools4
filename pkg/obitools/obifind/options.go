@@ -86,7 +86,7 @@ func LoadSelectedTaxonomy() (*obitax.Taxonomy, error) {
 		return __selected_taxonomy__, nil
 	}
 
-	return nil, errors.New("No NCBII taxdump selected using option -t|--taxdump")
+	return nil, errors.New("no NCBI taxdump selected using option -t|--taxdump")
 }
 
 func OptionSet(options *getoptions.GetOpt) {

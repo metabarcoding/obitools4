@@ -1,7 +1,6 @@
 package obitax
 
 import (
-	"errors"
 	"fmt"
 )
 
@@ -14,7 +13,7 @@ func (taxon *TaxNode) Path() (*TaxonSlice, error) {
 		taxon = taxon.pparent
 
 		if taxon == nil {
-			return nil, errors.New(fmt.Sprint("Taxonomy must be reindexed"))
+			return nil, fmt.Errorf("Taxonomy must be reindexed")
 		}
 
 		path = append(path, taxon)

@@ -17,24 +17,24 @@ func __expand_list_of_files__(check_ext bool, filenames ...string) ([]string, er
 
 		err = filepath.Walk(fn,
 			func(path string, info os.FileInfo, err error) error {
-
+				var e error
 				for info.Mode()&os.ModeSymlink == os.ModeSymlink {
-					path, err = filepath.EvalSymlinks(path)
-					if err != nil {
-						return err
+					path, e = filepath.EvalSymlinks(path)
+					if e != nil {
+						return e
 					}
 
-					info, err = os.Stat(path)
-					if err != nil {
-						return err
+					info, e = os.Stat(path)
+					if e != nil {
+						return e
 					}
 				}
 
 				if info.IsDir() {
 					if path != fn {
-						subdir, err := __expand_list_of_files__(true, path)
-						if err != nil {
-							return err
+						subdir, e := __expand_list_of_files__(true, path)
+						if e != nil {
+							return e
 						}
 						list_of_files = append(list_of_files, subdir...)
 					} else {

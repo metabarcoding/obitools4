@@ -8,7 +8,6 @@ import (
 )
 
 var __debug__ = false
-var __profiling__ = ""
 
 type ArgumentParser func([]string) (*getoptions.GetOpt, []string, error)
 
@@ -16,7 +15,6 @@ func GenerateOptionParser(optionset ...func(*getoptions.GetOpt)) ArgumentParser 
 	options := getoptions.New()
 	options.Bool("help", false, options.Alias("h", "?"))
 	options.BoolVar(&__debug__, "debug", false)
-	// options.StringVar(&__profiling__, "profile", "")
 
 	for _, o := range optionset {
 		o(options)
@@ -27,7 +25,7 @@ func GenerateOptionParser(optionset ...func(*getoptions.GetOpt)) ArgumentParser 
 		remaining, err := options.Parse(args[1:])
 
 		if options.Called("help") {
-			fmt.Fprintf(os.Stderr, options.Help())
+			fmt.Fprint(os.Stderr, options.Help())
 			os.Exit(1)
 		}
 		return options, remaining, err

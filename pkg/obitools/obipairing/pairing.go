@@ -153,6 +153,8 @@ func IAssemblePESequencesBatch(iterator obiseq.IPairedBioSequenceBatch,
 					bar.Add(59)
 					processed += 59
 				}
+				A.Destroy()
+				B.Destroy()
 			}
 			bar.Add(batch.Length() - processed)
 			new_iter.Channel() <- obiseq.MakeBioSequenceBatch(

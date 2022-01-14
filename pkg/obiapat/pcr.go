@@ -195,7 +195,7 @@ func __pcr__(seq ApatSequence, sequence obiseq.BioSequence,
 
 								match, _ := sequence.Subsequence(fm[0], fm[1], opt.pointer.circular)
 								annot["forward_match"] = match.String()
-								match.Revoke()
+								match.Destroy()
 
 								annot["forward_error"] = erri
 
@@ -203,7 +203,7 @@ func __pcr__(seq ApatSequence, sequence obiseq.BioSequence,
 								match, _ = sequence.Subsequence(rm[0], rm[1], opt.pointer.circular)
 								match = match.ReverseComplement(true)
 								annot["reverse_match"] = match.String()
-								match.Revoke()
+								match.Destroy()
 
 								annot["reverse_error"] = errj
 								results = append(results, amplicon)
@@ -269,14 +269,14 @@ func __pcr__(seq ApatSequence, sequence obiseq.BioSequence,
 								match, _ := sequence.Subsequence(rm[0], rm[1], opt.pointer.circular)
 								match.ReverseComplement(true)
 								annot["forward_match"] = match.String()
-								match.Revoke()
+								match.Destroy()
 
 								annot["forward_error"] = errj
 
 								annot["reverse_primer"] = reverse.String()
 								match, _ = sequence.Subsequence(fm[0], fm[1], opt.pointer.circular)
 								annot["reverse_match"] = match.String()
-								match.Revoke()
+								match.Destroy()
 
 								annot["reverse_error"] = erri
 								results = append(results, amplicon)

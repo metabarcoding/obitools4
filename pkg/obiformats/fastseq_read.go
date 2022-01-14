@@ -7,7 +7,6 @@ package obiformats
 import "C"
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -89,7 +88,7 @@ func ReadFastSeqBatchFromFile(filename string, options ...WithOption) (obiseq.IB
 	err = nil
 
 	if pointer == nil {
-		err = errors.New(fmt.Sprintf("Cannot open file %s", filename))
+		err = fmt.Errorf("cannot open file %s", filename)
 		return obiseq.NilIBioSequenceBatch, err
 	}
 
