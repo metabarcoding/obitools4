@@ -1,6 +1,6 @@
 package obialign
 
-func __backtracking__(path_matrix []int, lseqA, lseqB int, path *[]int) []int {
+func _Backtracking(pathMatrix []int, lseqA, lseqB int, path *[]int) []int {
 
 	needed := (lseqA + lseqB) * 2
 
@@ -19,7 +19,7 @@ func __backtracking__(path_matrix []int, lseqA, lseqB int, path *[]int) []int {
 	lleft := 0
 
 	for i > -1 || j > -1 {
-		step := __get_matrix__(&path_matrix, lseqA, i, j)
+		step := __get_matrix__(&pathMatrix, lseqA, i, j)
 		// log.Printf("I: %d J:%d -> %d\n", i, j, step)
 
 		switch {
