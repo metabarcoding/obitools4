@@ -13,19 +13,44 @@ import (
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
 
-var MAX_PAT_LEN = int(C.MAX_PAT_LEN)
+var _MaxPatLen = int(C.MAX_PAT_LEN)
 
+// ApatPattern stores a regular pattern usable by the
+// Apat algorithm functions and methods
 type ApatPattern struct {
 	pointer *C.Pattern
 }
 
+// ApatSequence stores sequence in structure usable by the
+// Apat algorithm functions and methods
 type ApatSequence struct {
 	pointer *C.Seq
 }
 
+// NilApatPattern is the nil instance of the BuildAlignArena
+// type.
 var NilApatPattern = ApatPattern{nil}
+
+// NilApatSequence is the nil instance of the ApatSequence
+// type.
 var NilApatSequence = ApatSequence{nil}
 
+// MakeApatPattern builds a new ApatPattern.
+// The created object wrap a C allocated structure.
+// Do not forget to free it when it is no more needed
+// to forbid memory leaks using the Free methode of the
+// ApatPattern.
+// The pattern is a short DNA sequence (up to 64 symboles).
+// Ambiguities can be represented or using UIPAC symboles,
+// or using the [...] classical in regular pattern grammar.
+// For example, the ambiguity A/T can be indicated using W
+// or [AT]. A nucleotide can be negated by preceding it with
+// a '!'. The APAT algorithm allows for error during the
+// matching process. The maximum number of tolerated error
+// is indicated at the construction of the pattern using
+// the errormax parameter. Some positions can be marked as not
+// allowed for mismatches. They have to be signaled using a '#'
+// sign after the corresponding nucleotide.
 func MakeApatPattern(pattern string, errormax int) (ApatPattern, error) {
 	cpattern := C.CString(pattern)
 	defer C.free(unsafe.Pointer(cpattern))
@@ -44,6 +69,9 @@ func MakeApatPattern(pattern string, errormax int) (ApatPattern, error) {
 	return ApatPattern{pointer: ap}, nil
 }
 
+// ReverseComplement method builds a new ApatPattern
+// matching the reverse complemented sequence of the original
+// pattern.
 func (pattern ApatPattern) ReverseComplement() (ApatPattern, error) {
 	var errno C.int32_t
 	var errmsg *C.char
@@ -58,22 +86,35 @@ func (pattern ApatPattern) ReverseComplement() (ApatPattern, error) {
 	return ApatPattern{pointer: ap}, nil
 }
 
+// String method casts the ApatPattern to a Go String.
 func (pattern ApatPattern) String() string {
 	return C.GoString(pattern.pointer.cpat)
 }
 
+// Length method returns the length of the matched pattern.
 func (pattern ApatPattern) Length() int {
 	return int(pattern.pointer.patlen)
 }
 
+// Free method ensure that the C structure wrapped is
+// desallocated
 func (pattern ApatPattern) Free() {
 	C.free(unsafe.Pointer(pattern.pointer))
+	pattern.pointer = nil
 }
 
+// Print method prints the ApatPattern to the standard output.
+// This is mainly a debug method.
 func (pattern ApatPattern) Print() {
 	C.PrintDebugPattern(C.PatternPtr(pattern.pointer))
 }
 
+// MakeApatSequence casts an obiseq.BioSequence to an ApatSequence.
+// The circular parameter indicates the topology of the sequence.
+// if sequence is circular (ciruclar = true), the match can occurs
+// at the junction. To limit memory allocation, it is possible to provide
+// an already allocated ApatSequence to recycle its allocated memory.
+// The provided sequence is no more usable after the call.
 func MakeApatSequence(sequence obiseq.BioSequence, circular bool, recycle ...ApatSequence) (ApatSequence, error) {
 	var errno C.int32_t
 	var errmsg *C.char
@@ -115,10 +156,13 @@ func MakeApatSequence(sequence obiseq.BioSequence, circular bool, recycle ...Apa
 	return seq, nil
 }
 
+// Length method returns the length of the ApatSequence.
 func (sequence ApatSequence) Length() int {
 	return int(sequence.pointer.seqlen)
 }
 
+// Free method ensure that the C structure wrapped is
+// desallocated
 func (sequence ApatSequence) Free() {
 	var errno C.int32_t
 	var errmsg *C.char
@@ -129,6 +173,17 @@ func (sequence ApatSequence) Free() {
 	sequence.pointer = nil
 }
 
+// FindAllIndex methood returns the position of every occurrences of the
+// pattern on the provided sequences. The search can be limited
+// to a portion of the sequence by adding one or two integer parameters
+// when calling the FindAllIndex method. The fisrt optional argument indicates
+// the starting point of the search. The first nucleotide of the sequence is
+// indexed as 0. The second optional argument indicates the length of the region
+// where the pattern is looked for.
+// The FindAllIndex methood returns return a slice of [3]int. The two firsts
+// values of the [3]int indicate respectively the start and the end position of
+// the match. Following the GO convention the end position is not included in the
+// match. The third value indicates the number of error detected for this occurrence.
 func (pattern ApatPattern) FindAllIndex(sequence ApatSequence, limits ...int) (loc [][3]int) {
 	begin := 0
 	length := sequence.Length()

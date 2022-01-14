@@ -5,65 +5,91 @@ import (
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
 
-type __options__ struct {
-	min_length       int
-	max_length       int
-	circular         bool
-	forward_error    int
-	reverse_error    int
-	buffer_size      int
-	batch_size       int
-	parallel_workers int
+type _Options struct {
+	minLength       int
+	maxLength       int
+	circular        bool
+	forwardError    int
+	reverseError    int
+	bufferSize      int
+	batchSize       int
+	parallelWorkers int
 }
 
+// Options stores a set of option usable by the
+// PCR simulation algotithm.
 type Options struct {
-	pointer *__options__
+	pointer *_Options
 }
 
+// WithOption is the standard type for function
+// declaring options.
 type WithOption func(Options)
 
+// MinLength method returns minimum length of
+// the searched amplicon (length of the primers
+// excluded)
 func (options Options) MinLength() int {
-	return options.pointer.min_length
+	return options.pointer.minLength
 }
 
+// MaxLength method returns maximum length of
+// the searched amplicon (length of the primers
+// excluded)
 func (options Options) MaxLength() int {
-	return options.pointer.max_length
+	return options.pointer.maxLength
 }
 
+// ForwardError method returns the number of
+// error allowed when matching the forward
+// primer.
 func (options Options) ForwardError() int {
-	return options.pointer.forward_error
+	return options.pointer.forwardError
 }
 
+// ReverseError method returns the number of
+// error allowed when matching the reverse
+// primer.
 func (options Options) ReverseError() int {
-	return options.pointer.reverse_error
+	return options.pointer.reverseError
 }
 
+// Circular method returns the topology option.
+// true for circular, false for linear
 func (options Options) Circular() bool {
 	return options.pointer.circular
 }
 
-func (opt Options) BufferSize() int {
-	return opt.pointer.buffer_size
+// BufferSize returns the size of the channel
+// buffer specified by the options
+func (options Options) BufferSize() int {
+	return options.pointer.bufferSize
 }
 
-func (opt Options) BatchSize() int {
-	return opt.pointer.batch_size
+// BatchSize returns the size of the
+// sequence batch used by the PCR algorithm
+func (options Options) BatchSize() int {
+	return options.pointer.batchSize
 }
 
-func (opt Options) ParallelWorkers() int {
-	return opt.pointer.parallel_workers
+// ParallelWorkers returns how many search
+// jobs will be run in parallel.
+func (options Options) ParallelWorkers() int {
+	return options.pointer.parallelWorkers
 }
 
+// MakeOptions buils a new default option set for
+// the PCR simulation algoithm.
 func MakeOptions(setters []WithOption) Options {
-	o := __options__{
-		min_length:       0,
-		max_length:       0,
-		forward_error:    0,
-		reverse_error:    0,
-		circular:         false,
-		parallel_workers: 4,
-		batch_size:       100,
-		buffer_size:      100,
+	o := _Options{
+		minLength:       0,
+		maxLength:       0,
+		forwardError:    0,
+		reverseError:    0,
+		circular:        false,
+		parallelWorkers: 4,
+		batchSize:       100,
+		bufferSize:      100,
 	}
 
 	opt := Options{&o}
@@ -75,38 +101,52 @@ func MakeOptions(setters []WithOption) Options {
 	return opt
 }
 
-func OptionMinLength(min_length int) WithOption {
+// OptionMinLength sets the minimum length of
+// the searched amplicon (length of the primers
+// excluded)
+func OptionMinLength(minLength int) WithOption {
 	f := WithOption(func(opt Options) {
-		opt.pointer.min_length = min_length
+		opt.pointer.minLength = minLength
 	})
 
 	return f
 }
 
-func OptionMaxLength(max_length int) WithOption {
+// OptionMaxLength sets the maximum length of
+// the searched amplicon (length of the primers
+// excluded)
+func OptionMaxLength(maxLength int) WithOption {
 	f := WithOption(func(opt Options) {
-		opt.pointer.max_length = max_length
+		opt.pointer.maxLength = maxLength
 	})
 
 	return f
 }
 
+// OptionForwardError sets the number of
+// error allowed when matching the forward
+// primer.
 func OptionForwardError(max int) WithOption {
 	f := WithOption(func(opt Options) {
-		opt.pointer.forward_error = max
+		opt.pointer.forwardError = max
 	})
 
 	return f
 }
 
+// OptionReverseError sets the number of
+// error allowed when matching the reverse
+// primer.
 func OptionReverseError(max int) WithOption {
 	f := WithOption(func(opt Options) {
-		opt.pointer.reverse_error = max
+		opt.pointer.reverseError = max
 	})
 
 	return f
 }
 
+// OptionCircular sets the topology option.
+// true for circular, false for linear
 func OptionCircular(circular bool) WithOption {
 	f := WithOption(func(opt Options) {
 		opt.pointer.circular = circular
@@ -115,55 +155,61 @@ func OptionCircular(circular bool) WithOption {
 	return f
 }
 
+// OptionBufferSize sets the requested channel
+// buffer size.
 func OptionBufferSize(size int) WithOption {
 	f := WithOption(func(opt Options) {
-		opt.pointer.buffer_size = size
+		opt.pointer.bufferSize = size
 	})
 
 	return f
 }
 
+// OptionParallelWorkers sets how many search
+// jobs will be run in parallel.
 func OptionParallelWorkers(nworkers int) WithOption {
 	f := WithOption(func(opt Options) {
-		opt.pointer.parallel_workers = nworkers
+		opt.pointer.parallelWorkers = nworkers
 	})
 
 	return f
 }
 
+// OptionBatchSize sets the requested sequence
+// batch size.
 func OptionBatchSize(size int) WithOption {
 	f := WithOption(func(opt Options) {
-		opt.pointer.batch_size = size
+		opt.pointer.batchSize = size
 	})
 
 	return f
 }
 
-func __pcr__(seq ApatSequence, sequence obiseq.BioSequence,
+func _Pcr(seq ApatSequence, sequence obiseq.BioSequence,
 	forward, cfwd, reverse, crev ApatPattern,
 	opt Options) obiseq.BioSequenceSlice {
 	results := make(obiseq.BioSequenceSlice, 0, 10)
 
-	forward_matches := forward.FindAllIndex(seq)
+	forwardMatches := forward.FindAllIndex(seq)
 
-	if forward_matches != nil {
+	if forwardMatches != nil {
 
-		begin := forward_matches[0][0]
+		begin := forwardMatches[0][0]
 		length := seq.Length() - begin
 
-		if opt.pointer.max_length > 0 {
-			length = forward_matches[len(forward_matches)-1][2] - begin + opt.MaxLength() + reverse.Length()
+		if opt.pointer.maxLength > 0 {
+			length = forwardMatches[len(forwardMatches)-1][2] - begin + opt.MaxLength() + reverse.Length()
 		}
 
 		if opt.Circular() {
 			begin = 0
-			length = seq.Length() + MAX_PAT_LEN
+			length = seq.Length() + _MaxPatLen
 		}
 
-		reverse_matches := crev.FindAllIndex(seq, begin, length)
+		reverseMatches := crev.FindAllIndex(seq, begin, length)
 
-		if reverse_matches != nil {
-			for _, fm := range forward_matches {
+		if reverseMatches != nil {
+			for _, fm := range forwardMatches {
 
 				posi := fm[0]
 
@@ -171,7 +217,7 @@ func __pcr__(seq ApatSequence, sequence obiseq.BioSequence,
 
 					erri := fm[2]
 
-					for _, rm := range reverse_matches {
+					for _, rm := range reverseMatches {
 						posj := rm[0]
 						if posj < seq.Length() {
 							posj := rm[1]
@@ -215,26 +261,26 @@ func __pcr__(seq ApatSequence, sequence obiseq.BioSequence,
 		}
 	}
 
-	forward_matches = reverse.FindAllIndex(seq)
+	forwardMatches = reverse.FindAllIndex(seq)
 
-	if forward_matches != nil {
+	if forwardMatches != nil {
 
-		begin := forward_matches[0][0]
+		begin := forwardMatches[0][0]
 		length := seq.Length() - begin
 
-		if opt.pointer.max_length > 0 {
-			length = forward_matches[len(forward_matches)-1][2] - begin + opt.MaxLength() + reverse.Length()
+		if opt.pointer.maxLength > 0 {
+			length = forwardMatches[len(forwardMatches)-1][2] - begin + opt.MaxLength() + reverse.Length()
 		}
 
 		if opt.Circular() {
 			begin = 0
-			length = seq.Length() + MAX_PAT_LEN
+			length = seq.Length() + _MaxPatLen
 		}
 
-		reverse_matches := cfwd.FindAllIndex(seq, begin, length)
+		reverseMatches := cfwd.FindAllIndex(seq, begin, length)
 
-		if reverse_matches != nil {
-			for _, fm := range forward_matches {
+		if reverseMatches != nil {
+			for _, fm := range forwardMatches {
 
 				posi := fm[0]
 
@@ -242,7 +288,7 @@ func __pcr__(seq ApatSequence, sequence obiseq.BioSequence,
 
 					erri := fm[2]
 
-					for _, rm := range reverse_matches {
+					for _, rm := range reverseMatches {
 						posj := rm[0]
 						if posj < seq.Length() {
 							posj := rm[1]
@@ -290,6 +336,10 @@ func __pcr__(seq ApatSequence, sequence obiseq.BioSequence,
 	return results
 }
 
+// PCR runs the PCR simulation algorithm on a single
+// obiseq.BioSequence instance. PCR parameters are
+// specified using the corresponding Option functions
+// defined for the PCR algorithm.
 func PCR(sequence obiseq.BioSequence,
 	forward, reverse string, options ...WithOption) obiseq.BioSequenceSlice {
 
@@ -302,7 +352,7 @@ func PCR(sequence obiseq.BioSequence,
 	cfwd, _ := fwd.ReverseComplement()
 	crev, _ := rev.ReverseComplement()
 
-	results := __pcr__(seq, sequence,
+	results := _Pcr(seq, sequence,
 		fwd, cfwd, rev, crev,
 		opt)
 
@@ -316,6 +366,11 @@ func PCR(sequence obiseq.BioSequence,
 	return results
 }
 
+// PCRSlice runs the PCR simulation algorithm on a set of
+// obiseq.BioSequence instances grouped in a obiseq.BioSequenceSlice.
+// PCR parameters are
+// specified using the corresponding Option functions
+// defined for the PCR algorithm.
 func PCRSlice(sequences obiseq.BioSequenceSlice,
 	forward, reverse string, options ...WithOption) obiseq.BioSequenceSlice {
 
@@ -330,7 +385,7 @@ func PCRSlice(sequences obiseq.BioSequenceSlice,
 
 	if len(sequences) > 0 {
 		seq, _ := MakeApatSequence(sequences[0], opt.Circular())
-		amplicons := __pcr__(seq, sequences[0],
+		amplicons := _Pcr(seq, sequences[0],
 			fwd, cfwd, rev, crev,
 			opt)
 
@@ -340,7 +395,7 @@ func PCRSlice(sequences obiseq.BioSequenceSlice,
 
 		for _, sequence := range sequences[1:] {
 			seq, _ := MakeApatSequence(sequence, opt.Circular(), seq)
-			amplicons = __pcr__(seq, sequence,
+			amplicons = _Pcr(seq, sequence,
 				fwd, cfwd, rev, crev,
 				opt)
 			if len(amplicons) > 0 {
@@ -359,6 +414,8 @@ func PCRSlice(sequences obiseq.BioSequenceSlice,
 	return results
 }
 
+// PCRSliceWorker is a worker function builder which produce
+// job function usable by the obiseq.MakeISliceWorker function.
 func PCRSliceWorker(forward, reverse string,
 	options ...WithOption) obiseq.SeqSliceWorker {
 
