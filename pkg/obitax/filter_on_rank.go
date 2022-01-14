@@ -1,19 +1,19 @@
 package obitax
 
 func (iterator *ITaxonSet) IFilterOnTaxRank(rank string) *ITaxonSet {
-	new_iter := NewITaxonSet()
+	newIter := NewITaxonSet()
 
 	go func() {
 		for iterator.Next() {
 			taxon := iterator.Get()
 			if taxon.rank == rank {
-				new_iter.source <- taxon
+				newIter.source <- taxon
 			}
 		}
-		close(new_iter.source)
+		close(newIter.source)
 	}()
 
-	return new_iter
+	return newIter
 }
 
 func (set *TaxonSet) IFilterOnTaxRank(rank string) *ITaxonSet {

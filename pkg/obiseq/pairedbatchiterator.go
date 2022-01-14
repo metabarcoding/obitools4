@@ -119,8 +119,8 @@ func (iterator IPairedBioSequenceBatch) Split() IPairedBioSequenceBatch {
 		buffer_size: iterator.pointer.buffer_size,
 		finished:    false,
 		p_finished:  iterator.pointer.p_finished}
-	new_iter := IPairedBioSequenceBatch{&i}
-	return new_iter
+	newIter := IPairedBioSequenceBatch{&i}
+	return newIter
 }
 
 func (iterator IPairedBioSequenceBatch) Next() bool {
@@ -160,13 +160,13 @@ func (iterator IPairedBioSequenceBatch) SortBatches(sizes ...int) IPairedBioSequ
 		buffsize = sizes[0]
 	}
 
-	new_iter := MakeIPairedBioSequenceBatch(buffsize)
+	newIter := MakeIPairedBioSequenceBatch(buffsize)
 
-	new_iter.Add(1)
+	newIter.Add(1)
 
 	go func() {
-		new_iter.Wait()
-		close(new_iter.pointer.channel)
+		newIter.Wait()
+		close(newIter.pointer.channel)
 	}()
 
 	next_to_send := 0
@@ -175,11 +175,11 @@ func (iterator IPairedBioSequenceBatch) SortBatches(sizes ...int) IPairedBioSequ
 		for iterator.Next() {
 			batch := iterator.Get()
 			if batch.order == next_to_send {
-				new_iter.pointer.channel <- batch
+				newIter.pointer.channel <- batch
 				next_to_send++
 				batch, ok := received[next_to_send]
 				for ok {
-					new_iter.pointer.channel <- batch
+					newIter.pointer.channel <- batch
 					delete(received, next_to_send)
 					next_to_send++
 					batch, ok = received[next_to_send]
@@ -188,9 +188,9 @@ func (iterator IPairedBioSequenceBatch) SortBatches(sizes ...int) IPairedBioSequ
 				received[batch.order] = batch
 			}
 		}
-		new_iter.Done()
+		newIter.Done()
 	}()
 
-	return new_iter
+	return newIter
 
 }

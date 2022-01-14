@@ -101,28 +101,28 @@ func ReadFastSeqBatchFromFile(filename string, options ...WithOption) (obiseq.IB
 		size = -1
 	}
 
-	new_iter := obiseq.MakeIBioSequenceBatch(opt.BufferSize())
-	new_iter.Add(1)
+	newIter := obiseq.MakeIBioSequenceBatch(opt.BufferSize())
+	newIter.Add(1)
 
 	go func() {
-		new_iter.Wait()
-		for len(new_iter.Channel()) > 0 {
+		newIter.Wait()
+		for len(newIter.Channel()) > 0 {
 			time.Sleep(time.Millisecond)
 		}
-		close(new_iter.Channel())
+		close(newIter.Channel())
 
 		log.Println("End of the fastq file reading")
 	}()
 
 	log.Println("Start of the fastq file reading")
 
-	go __fastseq_reader__(pointer, new_iter, opt.BatchSize())
+	go __fastseq_reader__(pointer, newIter, opt.BatchSize())
 	parser := opt.ParseFastSeqHeader()
 	if parser != nil {
-		return IParseFastSeqHeaderBatch(new_iter, options...), err
+		return IParseFastSeqHeaderBatch(newIter, options...), err
 	}
 
-	return new_iter, err
+	return newIter, err
 }
 
 func ReadFastSeqFromFile(filename string, options ...WithOption) (obiseq.IBioSequence, error) {
@@ -132,18 +132,18 @@ func ReadFastSeqFromFile(filename string, options ...WithOption) (obiseq.IBioSeq
 
 func ReadFastSeqBatchFromStdin(options ...WithOption) obiseq.IBioSequenceBatch {
 	opt := MakeOptions(options)
-	new_iter := obiseq.MakeIBioSequenceBatch(opt.BufferSize())
+	newIter := obiseq.MakeIBioSequenceBatch(opt.BufferSize())
 
-	new_iter.Add(1)
+	newIter.Add(1)
 
 	go func() {
-		new_iter.Wait()
-		close(new_iter.Channel())
+		newIter.Wait()
+		close(newIter.Channel())
 	}()
 
-	go __fastseq_reader__(C.open_fast_sek_stdin(C.int32_t(opt.QualityShift())), new_iter, opt.BatchSize())
+	go __fastseq_reader__(C.open_fast_sek_stdin(C.int32_t(opt.QualityShift())), newIter, opt.BatchSize())
 
-	return new_iter
+	return newIter
 }
 
 func ReadFastSeqFromStdin(options ...WithOption) obiseq.IBioSequence {

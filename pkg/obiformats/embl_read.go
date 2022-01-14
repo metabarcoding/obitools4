@@ -14,14 +14,14 @@ import (
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
 
-var __FILE_CHUNK_SIZE__ = 1 << 20
+var _FileChunkSize = 1 << 20
 
-type __file_chunk__ struct {
+type _FileChunk struct {
 	raw   io.Reader
 	order int
 }
 
-func __end_of_last_entry__(buff []byte) int {
+func _EndOfLastEntry(buff []byte) int {
 	//  6    5  43 2    1
 	// <CR>?<LF>//<CR>?<LF>
 	var i int
@@ -76,22 +76,22 @@ func __end_of_last_entry__(buff []byte) int {
 
 	if i > 0 {
 		return start
-	} else {
-		return -1
 	}
+
+	return -1
 }
 
-func __parse_embl_file__(input <-chan __file_chunk__, out obiseq.IBioSequenceBatch) {
+func _ParseEmblFile(input <-chan _FileChunk, out obiseq.IBioSequenceBatch) {
 
 	for chunks := range input {
 		scanner := bufio.NewScanner(chunks.raw)
 		order := chunks.order
 		sequences := make(obiseq.BioSequenceSlice, 0, 100)
 		id := ""
-		scientific_name := ""
-		def_bytes := new(bytes.Buffer)
-		feat_bytes := new(bytes.Buffer)
-		seq_bytes := new(bytes.Buffer)
+		scientificName := ""
+		defBytes := new(bytes.Buffer)
+		featBytes := new(bytes.Buffer)
+		seqBytes := new(bytes.Buffer)
 		taxid := 1
 		for scanner.Scan() {
 
@@ -101,43 +101,43 @@ func __parse_embl_file__(input <-chan __file_chunk__, out obiseq.IBioSequenceBat
 			case strings.HasPrefix(line, "ID   "):
 				id = strings.SplitN(line[5:], ";", 2)[0]
 			case strings.HasPrefix(line, "OS   "):
-				scientific_name = strings.TrimSpace(line[5:])
+				scientificName = strings.TrimSpace(line[5:])
 			case strings.HasPrefix(line, "DE   "):
-				if def_bytes.Len() > 0 {
-					def_bytes.WriteByte(' ')
+				if defBytes.Len() > 0 {
+					defBytes.WriteByte(' ')
 				}
-				def_bytes.WriteString(strings.TrimSpace(line[5:]))
+				defBytes.WriteString(strings.TrimSpace(line[5:]))
 			case strings.HasPrefix(line, "FH   "):
-				feat_bytes.WriteString(line)
+				featBytes.WriteString(line)
 			case line == "FH":
-				feat_bytes.WriteByte('\n')
-				feat_bytes.WriteString(line)
+				featBytes.WriteByte('\n')
+				featBytes.WriteString(line)
 			case strings.HasPrefix(line, "FT   "):
-				feat_bytes.WriteByte('\n')
-				feat_bytes.WriteString(line)
+				featBytes.WriteByte('\n')
+				featBytes.WriteString(line)
 				if strings.HasPrefix(line, `FT                   /db_xref="taxon:`) {
 					taxid, _ = strconv.Atoi(strings.SplitN(line[37:], `"`, 2)[0])
 				}
 			case strings.HasPrefix(line, "     "):
 				parts := strings.SplitN(line[5:], " ", 7)
 				for i := 0; i < 6; i++ {
-					seq_bytes.WriteString(parts[i])
+					seqBytes.WriteString(parts[i])
 				}
 			case line == "//":
 				sequence := obiseq.MakeBioSequence(id,
-					seq_bytes.Bytes(),
-					def_bytes.String())
+					seqBytes.Bytes(),
+					defBytes.String())
 
-				sequence.SetFeatures(feat_bytes.String())
+				sequence.SetFeatures(featBytes.String())
 
 				annot := sequence.Annotations()
-				annot["scientific_name"] = scientific_name
+				annot["scientific_name"] = scientificName
 				annot["taxid"] = taxid
 				// log.Println(FormatFasta(sequence, FormatFastSeqJsonHeader))
 				sequences = append(sequences, sequence)
-				def_bytes = new(bytes.Buffer)
-				feat_bytes = new(bytes.Buffer)
-				seq_bytes = new(bytes.Buffer)
+				defBytes = new(bytes.Buffer)
+				featBytes = new(bytes.Buffer)
+				seqBytes = new(bytes.Buffer)
 			}
 		}
 		out.Channel() <- obiseq.MakeBioSequenceBatch(order, sequences...)
@@ -148,7 +148,7 @@ func __parse_embl_file__(input <-chan __file_chunk__, out obiseq.IBioSequenceBat
 
 }
 
-func __read_flat_file_chunk__(reader io.Reader, readers chan __file_chunk__) {
+func _ReadFlatFileChunk(reader io.Reader, readers chan _FileChunk) {
 	var err error
 	var buff []byte
 
@@ -162,13 +162,13 @@ func __read_flat_file_chunk__(reader io.Reader, readers chan __file_chunk__) {
 			size, err = reader.Read(buff[l:])
 		}
 		buff = buff[:l]
-		end := __end_of_last_entry__(buff)
+		end := _EndOfLastEntry(buff)
 		remains := buff[end:]
 		buff = buff[:end]
 		io := bytes.NewBuffer(buff)
-		readers <- __file_chunk__{io, i}
+		readers <- _FileChunk{io, i}
 		i++
-		buff = make([]byte, __FILE_CHUNK_SIZE__)
+		buff = make([]byte, _FileChunkSize)
 		copy(buff, remains)
 		l = len(remains)
 	}
@@ -180,29 +180,29 @@ func __read_flat_file_chunk__(reader io.Reader, readers chan __file_chunk__) {
 // <CR>?<LF>//<CR>?<LF>
 func ReadEMBLBatch(reader io.Reader, options ...WithOption) obiseq.IBioSequenceBatch {
 	opt := MakeOptions(options)
-	entry_channel := make(chan __file_chunk__, opt.BufferSize())
+	entry_channel := make(chan _FileChunk, opt.BufferSize())
 
-	new_iter := obiseq.MakeIBioSequenceBatch(opt.BufferSize())
+	newIter := obiseq.MakeIBioSequenceBatch(opt.BufferSize())
 
-	// new_iter.Add(opt.ParallelWorkers())
-	new_iter.Add(2)
+	// newIter.Add(opt.ParallelWorkers())
+	newIter.Add(2)
 
 	go func() {
-		new_iter.Wait()
-		for len(new_iter.Channel()) > 0 {
+		newIter.Wait()
+		for len(newIter.Channel()) > 0 {
 			time.Sleep(time.Millisecond)
 		}
-		close(new_iter.Channel())
+		close(newIter.Channel())
 	}()
 
 	// for j := 0; j < opt.ParallelWorkers(); j++ {
 	for j := 0; j < 2; j++ {
-		go __parse_embl_file__(entry_channel, new_iter)
+		go _ParseEmblFile(entry_channel, newIter)
 	}
 
-	go __read_flat_file_chunk__(reader, entry_channel)
+	go _ReadFlatFileChunk(reader, entry_channel)
 
-	return new_iter
+	return newIter
 }
 
 func ReadEMBL(reader io.Reader, options ...WithOption) obiseq.IBioSequence {

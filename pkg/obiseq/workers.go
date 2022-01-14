@@ -25,25 +25,25 @@ func (iterator IBioSequence) MakeIWorker(worker SeqWorker, sizes ...int) IBioSeq
 		buffsize = sizes[0]
 	}
 
-	new_iter := MakeIBioSequence(buffsize)
+	newIter := MakeIBioSequence(buffsize)
 
-	new_iter.Add(1)
+	newIter.Add(1)
 
 	go func() {
-		new_iter.Wait()
-		close(new_iter.pointer.channel)
+		newIter.Wait()
+		close(newIter.pointer.channel)
 	}()
 
 	go func() {
 		for iterator.Next() {
 			seq := iterator.Get()
 			seq = worker(seq)
-			new_iter.pointer.channel <- seq
+			newIter.pointer.channel <- seq
 		}
-		new_iter.Done()
+		newIter.Done()
 	}()
 
-	return new_iter
+	return newIter
 }
 
 func (iterator IBioSequenceBatch) MakeIWorker(worker SeqWorker, sizes ...int) IBioSequenceBatch {
@@ -58,16 +58,16 @@ func (iterator IBioSequenceBatch) MakeIWorker(worker SeqWorker, sizes ...int) IB
 		buffsize = sizes[1]
 	}
 
-	new_iter := MakeIBioSequenceBatch(buffsize)
+	newIter := MakeIBioSequenceBatch(buffsize)
 
-	new_iter.Add(nworkers)
+	newIter.Add(nworkers)
 
 	go func() {
-		new_iter.Wait()
-		for len(new_iter.Channel()) > 0 {
+		newIter.Wait()
+		for len(newIter.Channel()) > 0 {
 			time.Sleep(time.Millisecond)
 		}
-		close(new_iter.pointer.channel)
+		close(newIter.pointer.channel)
 		log.Println("End of the batch workers")
 
 	}()
@@ -78,9 +78,9 @@ func (iterator IBioSequenceBatch) MakeIWorker(worker SeqWorker, sizes ...int) IB
 			for i, seq := range batch.slice {
 				batch.slice[i] = worker(seq)
 			}
-			new_iter.pointer.channel <- batch
+			newIter.pointer.channel <- batch
 		}
-		new_iter.Done()
+		newIter.Done()
 	}
 
 	log.Println("Start of the batch workers")
@@ -88,7 +88,7 @@ func (iterator IBioSequenceBatch) MakeIWorker(worker SeqWorker, sizes ...int) IB
 		go f(iterator.Split())
 	}
 
-	return new_iter
+	return newIter
 }
 
 func (iterator IBioSequenceBatch) MakeISliceWorker(worker SeqSliceWorker, sizes ...int) IBioSequenceBatch {
@@ -103,16 +103,16 @@ func (iterator IBioSequenceBatch) MakeISliceWorker(worker SeqSliceWorker, sizes 
 		buffsize = sizes[1]
 	}
 
-	new_iter := MakeIBioSequenceBatch(buffsize)
+	newIter := MakeIBioSequenceBatch(buffsize)
 
-	new_iter.Add(nworkers)
+	newIter.Add(nworkers)
 
 	go func() {
-		new_iter.Wait()
-		for len(new_iter.Channel()) > 0 {
+		newIter.Wait()
+		for len(newIter.Channel()) > 0 {
 			time.Sleep(time.Millisecond)
 		}
-		close(new_iter.pointer.channel)
+		close(newIter.pointer.channel)
 		log.Println("End of the batch slice workers")
 	}()
 
@@ -120,9 +120,9 @@ func (iterator IBioSequenceBatch) MakeISliceWorker(worker SeqSliceWorker, sizes 
 		for iterator.Next() {
 			batch := iterator.Get()
 			batch.slice = worker(batch.slice)
-			new_iter.pointer.channel <- batch
+			newIter.pointer.channel <- batch
 		}
-		new_iter.Done()
+		newIter.Done()
 	}
 
 	log.Println("Start of the batch slice workers")
@@ -130,5 +130,5 @@ func (iterator IBioSequenceBatch) MakeISliceWorker(worker SeqSliceWorker, sizes 
 		go f(iterator.Split())
 	}
 
-	return new_iter
+	return newIter
 }

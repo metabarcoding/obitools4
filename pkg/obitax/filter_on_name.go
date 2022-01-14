@@ -19,7 +19,7 @@ func (taxonomy *Taxonomy) IFilterOnName(name string, strict bool) *ITaxonSet {
 }
 
 func (iterator *ITaxonSet) IFilterOnName(name string, strict bool) *ITaxonSet {
-	new_iterator := NewITaxonSet()
+	newIterator := NewITaxonSet()
 	sentTaxa := make(map[int]bool)
 
 	if strict {
@@ -29,11 +29,11 @@ func (iterator *ITaxonSet) IFilterOnName(name string, strict bool) *ITaxonSet {
 				if _, ok := sentTaxa[taxon.taxid]; !ok {
 					if taxon.IsNameEqual(name) {
 						sentTaxa[taxon.taxid] = true
-						new_iterator.source <- taxon
+						newIterator.source <- taxon
 					}
 				}
 			}
-			close(new_iterator.source)
+			close(newIterator.source)
 		}()
 	} else {
 		pattern := regexp.MustCompile(name)
@@ -44,13 +44,13 @@ func (iterator *ITaxonSet) IFilterOnName(name string, strict bool) *ITaxonSet {
 				if _, ok := sentTaxa[taxon.taxid]; !ok {
 					if taxon.IsNameMatching(pattern) {
 						sentTaxa[taxon.taxid] = true
-						new_iterator.source <- taxon
+						newIterator.source <- taxon
 					}
 				}
 			}
-			close(new_iterator.source)
+			close(newIterator.source)
 		}()
 	}
 
-	return new_iterator
+	return newIterator
 }

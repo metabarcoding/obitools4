@@ -74,8 +74,8 @@ func (iterator *ITaxonSet) Finished() bool {
 }
 
 func (iterator *ITaxonSet) Split() *ITaxonSet {
-	new_iter := ITaxonSet{iterator.source, nil, false, iterator.p_finished}
-	return &new_iter
+	newIter := ITaxonSet{iterator.source, nil, false, iterator.p_finished}
+	return &newIter
 }
 
 func (iterator *ITaxonSet) TaxonSet() *TaxonSet {

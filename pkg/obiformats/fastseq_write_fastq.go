@@ -83,7 +83,7 @@ type FileChunck struct {
 
 func WriteFastqBatch(iterator obiseq.IBioSequenceBatch, file io.Writer, options ...WithOption) (obiseq.IBioSequenceBatch, error) {
 	buffsize := iterator.BufferSize()
-	new_iter := obiseq.MakeIBioSequenceBatch(buffsize)
+	newIter := obiseq.MakeIBioSequenceBatch(buffsize)
 
 	opt := MakeOptions(options)
 	nwriters := 4
@@ -93,18 +93,18 @@ func WriteFastqBatch(iterator obiseq.IBioSequenceBatch, file io.Writer, options 
 	header_format := opt.FormatFastSeqHeader()
 	quality := opt.QualityShift()
 
-	new_iter.Add(nwriters)
+	newIter.Add(nwriters)
 
 	go func() {
-		new_iter.Wait()
+		newIter.Wait()
 		for len(chunkchan) > 0 {
 			time.Sleep(time.Millisecond)
 		}
 		close(chunkchan)
-		for len(new_iter.Channel()) > 0 {
+		for len(newIter.Channel()) > 0 {
 			time.Sleep(time.Millisecond)
 		}
-		close(new_iter.Channel())
+		close(newIter.Channel())
 	}()
 
 	ff := func(iterator obiseq.IBioSequenceBatch) {
@@ -114,9 +114,9 @@ func WriteFastqBatch(iterator obiseq.IBioSequenceBatch, file io.Writer, options 
 				FormatFastqBatch(batch, quality, header_format),
 				batch.Order(),
 			}
-			new_iter.Channel() <- batch
+			newIter.Channel() <- batch
 		}
-		new_iter.Done()
+		newIter.Done()
 	}
 
 	log.Println("Start of the fastq file reading")
@@ -146,7 +146,7 @@ func WriteFastqBatch(iterator obiseq.IBioSequenceBatch, file io.Writer, options 
 		}
 	}()
 
-	return new_iter, nil
+	return newIter, nil
 }
 
 func WriteFastqBatchToStdout(iterator obiseq.IBioSequenceBatch, options ...WithOption) (obiseq.IBioSequenceBatch, error) {

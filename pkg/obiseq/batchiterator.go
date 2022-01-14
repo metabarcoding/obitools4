@@ -103,8 +103,8 @@ func (iterator IBioSequenceBatch) Split() IBioSequenceBatch {
 		buffer_size: iterator.pointer.buffer_size,
 		finished:    false,
 		p_finished:  iterator.pointer.p_finished}
-	new_iter := IBioSequenceBatch{&i}
-	return new_iter
+	newIter := IBioSequenceBatch{&i}
+	return newIter
 }
 
 func (iterator IBioSequenceBatch) Next() bool {
@@ -144,13 +144,13 @@ func (iterator IBioSequenceBatch) IBioSequence(sizes ...int) IBioSequence {
 		buffsize = sizes[0]
 	}
 
-	new_iter := MakeIBioSequence(buffsize)
+	newIter := MakeIBioSequence(buffsize)
 
-	new_iter.Add(1)
+	newIter.Add(1)
 
 	go func() {
-		new_iter.Wait()
-		close(new_iter.pointer.channel)
+		newIter.Wait()
+		close(newIter.pointer.channel)
 	}()
 
 	go func() {
@@ -158,13 +158,13 @@ func (iterator IBioSequenceBatch) IBioSequence(sizes ...int) IBioSequence {
 			batch := iterator.Get()
 
 			for _, s := range batch.slice {
-				new_iter.pointer.channel <- s
+				newIter.pointer.channel <- s
 			}
 		}
-		new_iter.Done()
+		newIter.Done()
 	}()
 
-	return new_iter
+	return newIter
 }
 
 func (iterator IBioSequenceBatch) SortBatches(sizes ...int) IBioSequenceBatch {
@@ -174,13 +174,13 @@ func (iterator IBioSequenceBatch) SortBatches(sizes ...int) IBioSequenceBatch {
 		buffsize = sizes[0]
 	}
 
-	new_iter := MakeIBioSequenceBatch(buffsize)
+	newIter := MakeIBioSequenceBatch(buffsize)
 
-	new_iter.Add(1)
+	newIter.Add(1)
 
 	go func() {
-		new_iter.Wait()
-		close(new_iter.pointer.channel)
+		newIter.Wait()
+		close(newIter.pointer.channel)
 	}()
 
 	next_to_send := 0
@@ -189,11 +189,11 @@ func (iterator IBioSequenceBatch) SortBatches(sizes ...int) IBioSequenceBatch {
 		for iterator.Next() {
 			batch := iterator.Get()
 			if batch.order == next_to_send {
-				new_iter.pointer.channel <- batch
+				newIter.pointer.channel <- batch
 				next_to_send++
 				batch, ok := received[next_to_send]
 				for ok {
-					new_iter.pointer.channel <- batch
+					newIter.pointer.channel <- batch
 					delete(received, next_to_send)
 					next_to_send++
 					batch, ok = received[next_to_send]
@@ -202,10 +202,10 @@ func (iterator IBioSequenceBatch) SortBatches(sizes ...int) IBioSequenceBatch {
 				received[batch.order] = batch
 			}
 		}
-		new_iter.Done()
+		newIter.Done()
 	}()
 
-	return new_iter
+	return newIter
 
 }
 
@@ -216,13 +216,13 @@ func (iterator IBioSequenceBatch) Concat(iterators ...IBioSequenceBatch) IBioSeq
 	}
 
 	buffsize := iterator.BufferSize()
-	new_iter := MakeIBioSequenceBatch(buffsize)
+	newIter := MakeIBioSequenceBatch(buffsize)
 
-	new_iter.Add(1)
+	newIter.Add(1)
 
 	go func() {
-		new_iter.Wait()
-		close(new_iter.Channel())
+		newIter.Wait()
+		close(newIter.Channel())
 	}()
 
 	go func() {
@@ -234,7 +234,7 @@ func (iterator IBioSequenceBatch) Concat(iterators ...IBioSequenceBatch) IBioSeq
 			if s.order > max_order {
 				max_order = s.order
 			}
-			new_iter.Channel() <- MakeBioSequenceBatch(s.order+previous_max, s.slice...)
+			newIter.Channel() <- MakeBioSequenceBatch(s.order+previous_max, s.slice...)
 		}
 
 		previous_max = max_order + 1
@@ -245,14 +245,14 @@ func (iterator IBioSequenceBatch) Concat(iterators ...IBioSequenceBatch) IBioSeq
 					max_order = s.order + previous_max
 				}
 
-				new_iter.Channel() <- MakeBioSequenceBatch(s.order+previous_max, s.slice...)
+				newIter.Channel() <- MakeBioSequenceBatch(s.order+previous_max, s.slice...)
 			}
 			previous_max = max_order + 1
 		}
-		new_iter.Done()
+		newIter.Done()
 	}()
 
-	return new_iter
+	return newIter
 }
 
 // Redistributes sequences from a IBioSequenceBatch into a new
@@ -266,13 +266,13 @@ func (iterator IBioSequenceBatch) Rebatch(size int, sizes ...int) IBioSequenceBa
 		buffsize = sizes[0]
 	}
 
-	new_iter := MakeIBioSequenceBatch(buffsize)
+	newIter := MakeIBioSequenceBatch(buffsize)
 
-	new_iter.Add(1)
+	newIter.Add(1)
 
 	go func() {
-		new_iter.Wait()
-		close(new_iter.pointer.channel)
+		newIter.Wait()
+		close(newIter.pointer.channel)
 	}()
 
 	go func() {
@@ -285,7 +285,7 @@ func (iterator IBioSequenceBatch) Rebatch(size int, sizes ...int) IBioSequenceBa
 			for _, s := range seqs.slice {
 				buffer = append(buffer, s)
 				if len(buffer) == size {
-					new_iter.Channel() <- MakeBioSequenceBatch(order, buffer...)
+					newIter.Channel() <- MakeBioSequenceBatch(order, buffer...)
 					order++
 					buffer = make(BioSequenceSlice, 0, size)
 				}
@@ -293,14 +293,14 @@ func (iterator IBioSequenceBatch) Rebatch(size int, sizes ...int) IBioSequenceBa
 		}
 
 		if len(buffer) > 0 {
-			new_iter.Channel() <- MakeBioSequenceBatch(order, buffer...)
+			newIter.Channel() <- MakeBioSequenceBatch(order, buffer...)
 		}
 
-		new_iter.Done()
+		newIter.Done()
 
 	}()
 
-	return new_iter
+	return newIter
 }
 
 func (iterator IBioSequenceBatch) Destroy() {
@@ -331,13 +331,13 @@ func (iterator IBioSequenceBatch) PairWith(reverse IBioSequenceBatch, sizes ...i
 	iterator = iterator.Rebatch(batchsize)
 	reverse = reverse.Rebatch(batchsize)
 
-	new_iter := MakeIPairedBioSequenceBatch(buffsize)
+	newIter := MakeIPairedBioSequenceBatch(buffsize)
 
-	new_iter.Add(1)
+	newIter.Add(1)
 
 	go func() {
-		new_iter.Wait()
-		close(new_iter.pointer.channel)
+		newIter.Wait()
+		close(newIter.pointer.channel)
 		log.Println("End of association of paired reads")
 	}()
 
@@ -347,12 +347,12 @@ func (iterator IBioSequenceBatch) PairWith(reverse IBioSequenceBatch, sizes ...i
 			if !reverse.Next() {
 				log.Panicln("Etrange reverse pas prêt")
 			}
-			new_iter.Channel() <- MakePairedBioSequenceBatch(iterator.Get(),
+			newIter.Channel() <- MakePairedBioSequenceBatch(iterator.Get(),
 				reverse.Get())
 		}
 
-		new_iter.Done()
+		newIter.Done()
 	}()
 
-	return new_iter
+	return newIter
 }

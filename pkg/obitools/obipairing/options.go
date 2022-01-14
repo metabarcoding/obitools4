@@ -6,32 +6,32 @@ import (
 	"github.com/DavidGamba/go-getoptions"
 )
 
-var __forward_files__ = make([]string, 0, 10)
-var __reverse_files__ = make([]string, 0, 10)
-var __delta__ = 5
-var __min_overlap__ = 20
-var __gap_penality__ = 2
-var __without_stats__ = false
+var _ForwardFiles = make([]string, 0, 10)
+var _ReverseFiles = make([]string, 0, 10)
+var _Delta = 5
+var _MinOverlap = 20
+var _GapPenality = 2
+var _WithoutStats = false
 
 func PairingOptionSet(options *getoptions.GetOpt) {
-	options.StringSliceVar(&__forward_files__, "forward-reads",
+	options.StringSliceVar(&_ForwardFiles, "forward-reads",
 		1, 1000,
 		options.Alias("F"),
 		options.Description("The file names containing the forward reads"))
-	options.StringSliceVar(&__reverse_files__, "reverse-reads",
+	options.StringSliceVar(&_ReverseFiles, "reverse-reads",
 		1, 1000,
 		options.Alias("R"),
 		options.Description("The file names containing the reverse reads"))
-	options.IntVar(&__delta__, "delta", 5,
+	options.IntVar(&_Delta, "delta", 5,
 		options.Alias("D"),
 		options.Description("Length added to the fast detected overlap for the precise alignement (default 5)."))
-	options.IntVar(&__min_overlap__, "min-overlap", 20,
+	options.IntVar(&_MinOverlap, "min-overlap", 20,
 		options.Alias("O"),
 		options.Description("Minimum ovelap between both the reads to consider the aligment (default 20)."))
-	options.IntVar(&__gap_penality__, "gap-penality", 2,
+	options.IntVar(&_GapPenality, "gap-penality", 2,
 		options.Alias("G"),
 		options.Description("Gap penality expressed as the multiply factor applied to the mismatch score between two nucleotides with a quality of 40 (default 2)."))
-	options.BoolVar(&__without_stats__, "without-stat", false,
+	options.BoolVar(&_WithoutStats, "without-stat", false,
 		options.Alias("S"),
 		options.Description("Remove alignment statistics from the produced consensus sequences."))
 }
@@ -42,12 +42,12 @@ func OptionSet(options *getoptions.GetOpt) {
 }
 
 func IBatchPairedSequence() (obiseq.IPairedBioSequenceBatch, error) {
-	forward, err := obiconvert.ReadBioSequencesBatch(__forward_files__...)
+	forward, err := obiconvert.ReadBioSequencesBatch(_ForwardFiles...)
 	if err != nil {
 		return obiseq.NilIPairedBioSequenceBatch, err
 	}
 
-	reverse, err := obiconvert.ReadBioSequencesBatch(__reverse_files__...)
+	reverse, err := obiconvert.ReadBioSequencesBatch(_ReverseFiles...)
 	if err != nil {
 		return obiseq.NilIPairedBioSequenceBatch, err
 	}
@@ -58,17 +58,17 @@ func IBatchPairedSequence() (obiseq.IPairedBioSequenceBatch, error) {
 }
 
 func Delta() int {
-	return __delta__
+	return _Delta
 }
 
 func MinOverlap() int {
-	return __min_overlap__
+	return _MinOverlap
 }
 
 func GapPenality() int {
-	return __gap_penality__
+	return _GapPenality
 }
 
 func WithStats() bool {
-	return !__without_stats__
+	return !_WithoutStats
 }

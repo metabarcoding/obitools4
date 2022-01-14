@@ -112,16 +112,16 @@ func IAssemblePESequencesBatch(iterator obiseq.IPairedBioSequenceBatch,
 		buffsize = sizes[1]
 	}
 
-	new_iter := obiseq.MakeIBioSequenceBatch(buffsize)
+	newIter := obiseq.MakeIBioSequenceBatch(buffsize)
 
-	new_iter.Add(nworkers)
+	newIter.Add(nworkers)
 
 	go func() {
-		new_iter.Wait()
-		for len(new_iter.Channel()) > 0 {
+		newIter.Wait()
+		for len(newIter.Channel()) > 0 {
 			time.Sleep(time.Millisecond)
 		}
-		close(new_iter.Channel())
+		close(newIter.Channel())
 		log.Printf("End of the sequence Pairing")
 	}()
 
@@ -157,14 +157,14 @@ func IAssemblePESequencesBatch(iterator obiseq.IPairedBioSequenceBatch,
 				B.Destroy()
 			}
 			bar.Add(batch.Length() - processed)
-			new_iter.Channel() <- obiseq.MakeBioSequenceBatch(
+			newIter.Channel() <- obiseq.MakeBioSequenceBatch(
 				batch.Order(),
 				cons...,
 			)
 			// log.Printf("\n==> %d Wait data to align\n", wid)
 			// start = time.Now()
 		}
-		new_iter.Done()
+		newIter.Done()
 	}
 
 	log.Printf("Start of the sequence Pairing")
@@ -173,6 +173,6 @@ func IAssemblePESequencesBatch(iterator obiseq.IPairedBioSequenceBatch,
 		go f(iterator.Split(), i)
 	}
 
-	return new_iter
+	return newIter
 
 }

@@ -73,8 +73,8 @@ func (iterator IBioSequence) Split() IBioSequence {
 		all_done:    iterator.pointer.all_done,
 		buffer_size: iterator.pointer.buffer_size,
 		p_finished:  iterator.pointer.p_finished}
-	new_iter := IBioSequence{&i}
-	return new_iter
+	newIter := IBioSequence{&i}
+	return newIter
 }
 
 func (iterator IBioSequence) Next() bool {
@@ -132,16 +132,16 @@ func (iterator IBioSequence) IBioSequenceBatch(sizes ...int) IBioSequenceBatch {
 		buffsize = sizes[1]
 	}
 
-	new_iter := MakeIBioSequenceBatch(buffsize)
+	newIter := MakeIBioSequenceBatch(buffsize)
 
-	new_iter.Add(1)
+	newIter.Add(1)
 
 	go func() {
-		new_iter.Wait()
-		for len(new_iter.Channel()) > 0 {
+		newIter.Wait()
+		for len(newIter.Channel()) > 0 {
 			time.Sleep(time.Millisecond)
 		}
-		close(new_iter.pointer.channel)
+		close(newIter.pointer.channel)
 	}()
 
 	go func() {
@@ -153,12 +153,12 @@ func (iterator IBioSequence) IBioSequenceBatch(sizes ...int) IBioSequenceBatch {
 				seq := iterator.Get()
 				batch.slice = append(batch.slice, seq)
 			}
-			new_iter.pointer.channel <- batch
+			newIter.pointer.channel <- batch
 		}
-		new_iter.Done()
+		newIter.Done()
 	}()
 
-	return new_iter
+	return newIter
 }
 
 func (iterator IBioSequence) IBioSequence(sizes ...int) IBioSequence {
@@ -168,24 +168,24 @@ func (iterator IBioSequence) IBioSequence(sizes ...int) IBioSequence {
 		buffsize = sizes[0]
 	}
 
-	new_iter := MakeIBioSequence(buffsize)
+	newIter := MakeIBioSequence(buffsize)
 
-	new_iter.Add(1)
+	newIter.Add(1)
 
 	go func() {
-		new_iter.Wait()
-		close(new_iter.pointer.channel)
+		newIter.Wait()
+		close(newIter.pointer.channel)
 	}()
 
 	go func() {
 		for iterator.Next() {
 			s := iterator.Get()
-			new_iter.pointer.channel <- s
+			newIter.pointer.channel <- s
 		}
-		new_iter.Done()
+		newIter.Done()
 	}()
 
-	return new_iter
+	return newIter
 }
 
 func (iterator IBioSequence) Skip(n int, sizes ...int) IBioSequence {
@@ -195,26 +195,26 @@ func (iterator IBioSequence) Skip(n int, sizes ...int) IBioSequence {
 		buffsize = sizes[0]
 	}
 
-	new_iter := MakeIBioSequence(buffsize)
+	newIter := MakeIBioSequence(buffsize)
 
-	new_iter.Add(1)
+	newIter.Add(1)
 
 	go func() {
-		new_iter.Wait()
-		close(new_iter.pointer.channel)
+		newIter.Wait()
+		close(newIter.pointer.channel)
 	}()
 
 	go func() {
 		for i := 0; iterator.Next(); i++ {
 			if i >= n {
 				s := iterator.Get()
-				new_iter.pointer.channel <- s
+				newIter.pointer.channel <- s
 			}
 		}
-		new_iter.Done()
+		newIter.Done()
 	}()
 
-	return new_iter
+	return newIter
 }
 
 func (iterator IBioSequence) Head(n int, sizes ...int) IBioSequence {
@@ -224,13 +224,13 @@ func (iterator IBioSequence) Head(n int, sizes ...int) IBioSequence {
 		buffsize = sizes[0]
 	}
 
-	new_iter := MakeIBioSequence(buffsize)
+	newIter := MakeIBioSequence(buffsize)
 
-	new_iter.Add(1)
+	newIter.Add(1)
 
 	go func() {
-		new_iter.Wait()
-		close(new_iter.pointer.channel)
+		newIter.Wait()
+		close(newIter.pointer.channel)
 	}()
 
 	go func() {
@@ -238,17 +238,17 @@ func (iterator IBioSequence) Head(n int, sizes ...int) IBioSequence {
 		for i := 0; iterator.Next(); i++ {
 			if i < n {
 				s := iterator.Get()
-				new_iter.pointer.channel <- s
+				newIter.pointer.channel <- s
 			} else {
 				if not_done {
-					new_iter.Done()
+					newIter.Done()
 					not_done = false
 				}
 			}
 		}
 	}()
 
-	return new_iter
+	return newIter
 }
 
 // The 'Tail' method discard every data from the source iterator
@@ -260,14 +260,14 @@ func (iterator IBioSequence) Tail(n int, sizes ...int) IBioSequence {
 		buffsize = sizes[0]
 	}
 
-	new_iter := MakeIBioSequence(buffsize)
+	newIter := MakeIBioSequence(buffsize)
 	buffseq := make(BioSequenceSlice, n)
 
-	new_iter.Add(1)
+	newIter.Add(1)
 
 	go func() {
-		new_iter.Wait()
-		close(new_iter.pointer.channel)
+		newIter.Wait()
+		close(newIter.pointer.channel)
 	}()
 
 	go func() {
@@ -277,18 +277,18 @@ func (iterator IBioSequence) Tail(n int, sizes ...int) IBioSequence {
 		}
 		if i > n {
 			for j := 0; j < n; j++ {
-				new_iter.Channel() <- buffseq[(i+j)%n]
+				newIter.Channel() <- buffseq[(i+j)%n]
 			}
 
 		} else {
 			for j := 0; j < i; j++ {
-				new_iter.Channel() <- buffseq[j]
+				newIter.Channel() <- buffseq[j]
 			}
 		}
-		new_iter.Done()
+		newIter.Done()
 	}()
 
-	return new_iter
+	return newIter
 }
 
 func (iterator IBioSequence) Concat(iterators ...IBioSequence) IBioSequence {
@@ -298,29 +298,29 @@ func (iterator IBioSequence) Concat(iterators ...IBioSequence) IBioSequence {
 	}
 
 	buffsize := iterator.BufferSize()
-	new_iter := MakeIBioSequence(buffsize)
+	newIter := MakeIBioSequence(buffsize)
 
-	new_iter.Add(1)
+	newIter.Add(1)
 
 	go func() {
-		new_iter.Wait()
-		close(new_iter.pointer.channel)
+		newIter.Wait()
+		close(newIter.pointer.channel)
 	}()
 
 	go func() {
 		for iterator.Next() {
 			s := iterator.Get()
-			new_iter.pointer.channel <- s
+			newIter.pointer.channel <- s
 		}
 
 		for _, iter := range iterators {
 			for iter.Next() {
 				s := iter.Get()
-				new_iter.pointer.channel <- s
+				newIter.pointer.channel <- s
 			}
 		}
-		new_iter.Done()
+		newIter.Done()
 	}()
 
-	return new_iter
+	return newIter
 }

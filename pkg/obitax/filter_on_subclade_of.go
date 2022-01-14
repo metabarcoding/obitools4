@@ -3,19 +3,19 @@ package obitax
 import "reflect"
 
 func (iterator *ITaxonSet) IFilterOnSubcladeOf(taxon *TaxNode) *ITaxonSet {
-	new_iter := NewITaxonSet()
+	newIter := NewITaxonSet()
 
 	go func() {
 		for iterator.Next() {
 			tx := iterator.Get()
 			if tx.IsSubCladeOf(taxon) {
-				new_iter.source <- tx
+				newIter.source <- tx
 			}
 		}
-		close(new_iter.source)
+		close(newIter.source)
 	}()
 
-	return new_iter
+	return newIter
 }
 
 func (set *TaxonSet) IFilterOnSubcladeOf(taxon *TaxNode) *ITaxonSet {
@@ -43,17 +43,17 @@ func (iterator *ITaxonSet) IFilterBelongingSubclades(clades *TaxonSet) *ITaxonSe
 		return iterator.IFilterOnSubcladeOf((*clades)[int(keys[0].Int())])
 	}
 
-	new_iter := NewITaxonSet()
+	newIter := NewITaxonSet()
 
 	go func() {
 		for iterator.Next() {
 			tx := iterator.Get()
 			if tx.IsBelongingSubclades(clades) {
-				new_iter.source <- tx
+				newIter.source <- tx
 			}
 		}
-		close(new_iter.source)
+		close(newIter.source)
 	}()
 
-	return new_iter
+	return newIter
 }

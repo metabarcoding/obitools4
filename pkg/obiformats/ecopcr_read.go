@@ -163,12 +163,12 @@ func ReadEcoPCRBatch(reader io.Reader, options ...WithOption) obiseq.IBioSequenc
 
 	opt := MakeOptions(options)
 
-	new_iter := obiseq.MakeIBioSequenceBatch(opt.BufferSize())
-	new_iter.Add(1)
+	newIter := obiseq.MakeIBioSequenceBatch(opt.BufferSize())
+	newIter.Add(1)
 
 	go func() {
-		new_iter.Wait()
-		close(new_iter.Channel())
+		newIter.Wait()
+		close(newIter.Channel())
 	}()
 
 	go func() {
@@ -181,7 +181,7 @@ func ReadEcoPCRBatch(reader io.Reader, options ...WithOption) obiseq.IBioSequenc
 			slice = append(slice, seq)
 			ii++
 			if ii >= opt.BatchSize() {
-				new_iter.Channel() <- obiseq.MakeBioSequenceBatch(i, slice...)
+				newIter.Channel() <- obiseq.MakeBioSequenceBatch(i, slice...)
 				slice = make(obiseq.BioSequenceSlice, 0, opt.BatchSize())
 
 				i++
@@ -192,10 +192,10 @@ func ReadEcoPCRBatch(reader io.Reader, options ...WithOption) obiseq.IBioSequenc
 		}
 
 		if len(slice) > 0 {
-			new_iter.Channel() <- obiseq.MakeBioSequenceBatch(i, slice...)
+			newIter.Channel() <- obiseq.MakeBioSequenceBatch(i, slice...)
 		}
 
-		new_iter.Done()
+		newIter.Done()
 
 		if err != nil && err != io.EOF {
 			log.Panicf("%+v", err)
@@ -203,7 +203,7 @@ func ReadEcoPCRBatch(reader io.Reader, options ...WithOption) obiseq.IBioSequenc
 
 	}()
 
-	return new_iter
+	return newIter
 }
 
 func ReadEcoPCR(reader io.Reader, options ...WithOption) obiseq.IBioSequence {

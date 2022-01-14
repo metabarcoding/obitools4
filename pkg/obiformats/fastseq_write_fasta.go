@@ -84,7 +84,7 @@ func WriteFastaToStdout(iterator obiseq.IBioSequence, options ...WithOption) err
 
 func WriteFastaBatch(iterator obiseq.IBioSequenceBatch, file io.Writer, options ...WithOption) error {
 	buffsize := iterator.BufferSize()
-	new_iter := obiseq.MakeIBioSequenceBatch(buffsize)
+	newIter := obiseq.MakeIBioSequenceBatch(buffsize)
 
 	opt := MakeOptions(options)
 	nwriters := 4
@@ -111,9 +111,9 @@ func WriteFastaBatch(iterator obiseq.IBioSequenceBatch, file io.Writer, options 
 				FormatFastaBatch(batch, header_format),
 				batch.Order(),
 			}
-			new_iter.Channel() <- batch
+			newIter.Channel() <- batch
 		}
-		new_iter.Done()
+		newIter.Done()
 	}
 
 	for i := 0; i < nwriters; i++ {
