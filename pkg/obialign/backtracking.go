@@ -19,7 +19,7 @@ func _Backtracking(pathMatrix []int, lseqA, lseqB int, path *[]int) []int {
 	lleft := 0
 
 	for i > -1 || j > -1 {
-		step := __get_matrix__(&pathMatrix, lseqA, i, j)
+		step := _GetMatrix(&pathMatrix, lseqA, i, j)
 		// log.Printf("I: %d J:%d -> %d\n", i, j, step)
 
 		switch {

@@ -11,7 +11,7 @@ type _BuildAlignArena struct {
 	bufferB []byte
 }
 
-// BuildAlignArena define memory arena usable by the
+// BuildAlignArena defines memory arena usable by the
 // BuildAlignment function. The same arena can be reused
 // from alignment to alignment to limit memory allocation
 // and desallocation process.
@@ -23,7 +23,7 @@ type BuildAlignArena struct {
 // type.
 var NilBuildAlignArena = BuildAlignArena{nil}
 
-// MakeBuildAlignArena make a new arena for aligning two sequences
+// MakeBuildAlignArena makes a new arena for aligning two sequences
 // of maximum length indicated by lseqA and lseqB.
 func MakeBuildAlignArena(lseqA, lseqB int) BuildAlignArena {
 	a := _BuildAlignArena{
