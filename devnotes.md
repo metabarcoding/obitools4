@@ -9,8 +9,8 @@ Principles are extracted from :
     - https://blog.otso.fr/2020-10-11-organisation-projet-go-standard
 
 ```bash
-$ go mod init git.metabarcoding.org/lecasofts/go/oa2.git
-go: creating new go.mod: module git.metabarcoding.org/lecasofts/go/oa2.git
+$ go mod init git.metabarcoding.org/lecasofts/go/obitools.git
+go: creating new go.mod: module git.metabarcoding.org/lecasofts/go/obitools.git
 ```
 
 ```bash
