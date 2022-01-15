@@ -123,7 +123,7 @@ func AssemblePESequences(seqA, seqB obiseq.BioSequence,
 func IAssemblePESequencesBatch(iterator obiseq.IPairedBioSequenceBatch,
 	gap, delta, overlapMin int, withStats bool, sizes ...int) obiseq.IBioSequenceBatch {
 
-	nworkers := runtime.NumCPU() - 1
+	nworkers := runtime.NumCPU() * 3 / 2
 	buffsize := iterator.BufferSize()
 
 	if len(sizes) > 0 {
@@ -185,7 +185,7 @@ func IAssemblePESequencesBatch(iterator obiseq.IPairedBioSequenceBatch,
 		newIter.Done()
 	}
 
-	log.Printf("Start of the sequence Pairing")
+	log.Printf("Start of the sequence Pairing using %d workers\n", nworkers)
 
 	for i := 0; i < nworkers-1; i++ {
 		go f(iterator.Split(), i)

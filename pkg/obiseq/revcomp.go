@@ -11,7 +11,7 @@ func (sequence BioSequence) ReverseComplement(inplace bool) BioSequence {
 		sequence = sequence.Copy()
 	}
 
-	s := sequence.sequence.sequence.Bytes()
+	s := sequence.sequence.sequence
 
 	for i, j := sequence.Length()-1, 0; i >= j; i-- {
 
@@ -19,8 +19,6 @@ func (sequence BioSequence) ReverseComplement(inplace bool) BioSequence {
 			__revcmp_dna__[s[j]&31]|(s[j]&0x20)
 		j++
 	}
-
-	sequence.sequence.id.WriteString("_revcomp")
 
 	return sequence
 }

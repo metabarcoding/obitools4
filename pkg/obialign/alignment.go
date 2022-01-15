@@ -68,22 +68,22 @@ func _BuildAlignment(seqA, seqB []byte, path []int, gap byte, bufferA, bufferB *
 func BuildAlignment(seqA, seqB obiseq.BioSequence,
 	path []int, gap byte) (obiseq.BioSequence, obiseq.BioSequence) {
 
-	bufferSA := _BuildAlignArenaPool.Get().(*[]byte)
-	defer _BuildAlignArenaPool.Put(bufferSA)
+	bufferSA := obiseq.GetSlice()
+	defer obiseq.RecycleSlice(bufferSA)
 
-	bufferSB := _BuildAlignArenaPool.Get().(*[]byte)
-	defer _BuildAlignArenaPool.Put(bufferSB)
+	bufferSB := obiseq.GetSlice()
+	defer obiseq.RecycleSlice(bufferSB)
 
 	_BuildAlignment(seqA.Sequence(), seqB.Sequence(), path, gap,
-		bufferSA,
-		bufferSB)
+		&bufferSA,
+		&bufferSB)
 
 	seqA = obiseq.MakeBioSequence(seqA.Id(),
-		*bufferSA,
+		bufferSA,
 		seqA.Definition())
 
 	seqB = obiseq.MakeBioSequence(seqB.Id(),
-		*bufferSB,
+		bufferSB,
 		seqB.Definition())
 
 	return seqA, seqB
@@ -112,27 +112,23 @@ func BuildAlignment(seqA, seqB obiseq.BioSequence,
 // return.
 func BuildQualityConsensus(seqA, seqB obiseq.BioSequence, path []int) (obiseq.BioSequence, int) {
 
-	bufferSA := _BuildAlignArenaPool.Get().(*[]byte)
-	defer _BuildAlignArenaPool.Put(bufferSA)
+	bufferSA := obiseq.GetSlice()
+	bufferSB := obiseq.GetSlice()
+	defer obiseq.RecycleSlice(bufferSB)
 
-	bufferSB := _BuildAlignArenaPool.Get().(*[]byte)
-	defer _BuildAlignArenaPool.Put(bufferSB)
-
-	bufferQA := _BuildAlignArenaPool.Get().(*[]byte)
-	defer _BuildAlignArenaPool.Put(bufferQA)
-
-	bufferQB := _BuildAlignArenaPool.Get().(*[]byte)
-	defer _BuildAlignArenaPool.Put(bufferQB)
+	bufferQA := obiseq.GetSlice()
+	bufferQB := obiseq.GetSlice()
+	defer obiseq.RecycleSlice(bufferQB)
 
 	_BuildAlignment(seqA.Sequence(), seqB.Sequence(), path, ' ',
-		bufferSA, bufferSB)
+		&bufferSA, &bufferSB)
 
 	// log.Printf("#1 %s--> la : %d,%p lb : %d,%p qa : %d,%p qb : %d,%p\n", stamp,
 	// 	len(*bufferSA), bufferSA, len(*bufferSB), bufferSB,
 	// 	len(*bufferQA), bufferQA, len(*bufferQB), bufferQB)
 
 	_BuildAlignment(seqA.Qualities(), seqB.Qualities(), path, byte(0),
-		bufferQA, bufferQB)
+		&bufferQA, &bufferQB)
 
 	// log.Printf("#2 %s--> la : %d,%p lb : %d,%p qa : %d,%p qb : %d,%p\n", stamp,
 	// 	len(*bufferSA), bufferSA, len(*bufferSB), bufferSB,
@@ -145,23 +141,23 @@ func BuildQualityConsensus(seqA, seqB obiseq.BioSequence, path []int) (obiseq.Bi
 
 	match := 0
 
-	for i, qA = range *bufferQA {
-		nA := (*bufferSA)[i]
-		nB := (*bufferSB)[i]
-		qB = (*bufferQB)[i]
+	for i, qA = range bufferQA {
+		nA := bufferSA[i]
+		nB := bufferSB[i]
+		qB = bufferQB[i]
 
 		if qA > qB {
 			qM = qA
 			qm = qB
 		}
 		if qB > qA {
-			(*bufferSA)[i] = (*bufferSB)[i]
+			bufferSA[i] = bufferSB[i]
 			qM = qB
 			qm = qA
 		}
 		if qB == qA && nA != nB {
 			nuc := _FourBitsBaseCode[nA&31] | _FourBitsBaseCode[nB&31]
-			(*bufferSA)[i] = _FourBitsBaseDecode[nuc]
+			bufferSA[i] = _FourBitsBaseDecode[nuc]
 		}
 
 		q := qA + qB
@@ -179,15 +175,15 @@ func BuildQualityConsensus(seqA, seqB obiseq.BioSequence, path []int) (obiseq.Bi
 			q = 90
 		}
 
-		(*bufferQA)[i] = q
+		bufferQA[i] = q
 	}
 
 	consSeq := obiseq.MakeBioSequence(
 		seqA.Id(),
-		(*bufferSA),
+		bufferSA,
 		seqA.Definition(),
 	)
-	consSeq.SetSequence((*bufferQA))
+	consSeq.SetQualities(bufferQA)
 
 	return consSeq, match
 }

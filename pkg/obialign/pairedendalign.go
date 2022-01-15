@@ -281,11 +281,6 @@ func PEAlign(seqA, seqB obiseq.BioSequence,
 		_InitDNAScoreMatrix()
 	}
 
-	// log.Println("==============")
-	// log.Println(seqA.String())
-	// log.Println(seqB.String())
-	// log.Println("--------------")
-
 	index := obikmer.Index4mer(seqA,
 		&arena.pointer.fastIndex,
 		&arena.pointer.fastBuffer)
@@ -303,6 +298,9 @@ func PEAlign(seqA, seqB obiseq.BioSequence,
 	// log.Printf("Shift : %d Score : %d Over : %d La : %d:%d Lb: %d:%d\n", shift, fastScore, over, seqA.Length(), len(seqA.Qualities()), seqB.Length(), len(seqB.Qualities()))
 
 	if fastScore+3 < over {
+
+		// At least one mismatch exists in the overlaping region
+
 		if shift > 0 {
 			startA = shift - delta
 			if startA < 0 {
@@ -321,6 +319,9 @@ func PEAlign(seqA, seqB obiseq.BioSequence,
 				&arena.pointer.scoreMatrix,
 				&arena.pointer.pathMatrix)
 		} else {
+
+			// Both overlaping regions are identicals
+
 			startA = 0
 			startB = -shift - delta
 			if startB < 0 {

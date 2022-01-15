@@ -17,7 +17,7 @@ import (
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
 
-func __fastseq_reader__(seqfile C.fast_kseq_p,
+func _FastseqReader(seqfile C.fast_kseq_p,
 	iterator obiseq.IBioSequenceBatch,
 	batch_size int) {
 	var comment string
@@ -30,8 +30,12 @@ func __fastseq_reader__(seqfile C.fast_kseq_p,
 
 		s := seqfile.seq
 
-		sequence := C.GoBytes(unsafe.Pointer(s.seq.s),
-			C.int(s.seq.l))
+		csequence := cutils.ByteSlice(unsafe.Pointer(s.seq.s), int(s.seq.l))
+		sequence := obiseq.GetSlice()
+		sequence = append(sequence, csequence...)
+
+		//sequence := C.GoBytes(unsafe.Pointer(s.seq.s),
+		//	C.int(s.seq.l))
 
 		name := C.GoString(s.name.s)
 
@@ -45,11 +49,11 @@ func __fastseq_reader__(seqfile C.fast_kseq_p,
 
 		if s.qual.l > C.ulong(0) {
 			cquality := cutils.ByteSlice(unsafe.Pointer(s.qual.s), int(s.qual.l))
-			quality := make(obiseq.Quality, s.qual.l)
 			l := int(s.qual.l)
+			quality := obiseq.GetSlice()
 			shift := uint8(seqfile.shift)
 			for j := 0; j < l; j++ {
-				quality[j] = uint8(cquality[j]) - shift
+				quality = append(quality, uint8(cquality[j])-shift)
 			}
 
 			rep.SetQualities(quality)
@@ -116,7 +120,7 @@ func ReadFastSeqBatchFromFile(filename string, options ...WithOption) (obiseq.IB
 
 	log.Println("Start of the fastq file reading")
 
-	go __fastseq_reader__(pointer, newIter, opt.BatchSize())
+	go _FastseqReader(pointer, newIter, opt.BatchSize())
 	parser := opt.ParseFastSeqHeader()
 	if parser != nil {
 		return IParseFastSeqHeaderBatch(newIter, options...), err
@@ -141,7 +145,7 @@ func ReadFastSeqBatchFromStdin(options ...WithOption) obiseq.IBioSequenceBatch {
 		close(newIter.Channel())
 	}()
 
-	go __fastseq_reader__(C.open_fast_sek_stdin(C.int32_t(opt.QualityShift())), newIter, opt.BatchSize())
+	go _FastseqReader(C.open_fast_sek_stdin(C.int32_t(opt.QualityShift())), newIter, opt.BatchSize())
 
 	return newIter
 }

@@ -1,7 +1,6 @@
 package obiseq
 
 import (
-	"bytes"
 	"crypto/md5"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/goutils"
@@ -23,20 +22,53 @@ func __make_default_qualities__(length int) Quality {
 
 type Annotation map[string]interface{}
 
-type __sequence__ struct {
-	id          bytes.Buffer
-	definition  bytes.Buffer
-	sequence    bytes.Buffer
-	qualities   bytes.Buffer
-	feature     bytes.Buffer
+type _BioSequence struct {
+	id          string
+	definition  string
+	sequence    []byte
+	qualities   []byte
+	feature     []byte
 	annotations Annotation
 }
 
 type BioSequence struct {
-	sequence *__sequence__
+	sequence *_BioSequence
 }
 
-type BioSequenceSlice []BioSequence
+func MakeEmptyBioSequence() BioSequence {
+	bs := _BioSequence{
+		id:          "",
+		definition:  "",
+		sequence:    nil,
+		qualities:   nil,
+		feature:     nil,
+		annotations: nil,
+	}
+	return BioSequence{&bs}
+}
+
+func MakeBioSequence(id string,
+	sequence []byte,
+	definition string) BioSequence {
+	bs := MakeEmptyBioSequence()
+	bs.SetId(id)
+	bs.SetSequence(sequence)
+	bs.SetDefinition(definition)
+	return bs
+}
+
+func (sequence *BioSequence) Recycle() {
+
+	pseq := sequence.sequence
+
+	RecycleSlice(pseq.sequence)
+	RecycleSlice(pseq.feature)
+	RecycleSlice(pseq.feature)
+
+	RecycleAnnotation(pseq.annotations)
+
+	sequence.sequence = nil
+}
 
 var NilBioSequence = BioSequence{sequence: nil}
 
@@ -44,75 +76,66 @@ func (s BioSequence) IsNil() bool {
 	return s.sequence == nil
 }
 
-func (s *BioSequence) Reset() {
-	s.sequence.id.Reset()
-	s.sequence.definition.Reset()
-	s.sequence.sequence.Reset()
-	s.sequence.qualities.Reset()
-	s.sequence.feature.Reset()
-
-	for k := range s.sequence.annotations {
-		delete(s.sequence.annotations, k)
-	}
-
-}
-
 func (s BioSequence) Copy() BioSequence {
-	new_seq := MakeEmptyBioSequence()
-	new_seq.sequence.id.Write(s.sequence.id.Bytes())
-	new_seq.sequence.definition.Write(s.sequence.definition.Bytes())
-	new_seq.sequence.sequence.Write(s.sequence.sequence.Bytes())
-	new_seq.sequence.qualities.Write(s.sequence.qualities.Bytes())
-	new_seq.sequence.feature.Write(s.sequence.feature.Bytes())
+	newSeq := MakeEmptyBioSequence()
+
+	newSeq.sequence.id = s.sequence.id
+	newSeq.sequence.definition = s.sequence.definition
+
+	newSeq.sequence.sequence = GetSlice(s.sequence.sequence...)
+	newSeq.sequence.qualities = GetSlice(s.sequence.qualities...)
+	newSeq.sequence.feature = GetSlice(s.sequence.feature...)
 
 	if len(s.sequence.annotations) > 0 {
-		goutils.CopyMap(new_seq.sequence.annotations,
-			s.sequence.annotations)
+		newSeq.sequence.annotations = GetAnnotation(s.sequence.annotations)
 	}
 
-	return new_seq
+	return newSeq
 }
 
 func (s BioSequence) Id() string {
-	return s.sequence.id.String()
+	return s.sequence.id
 }
 func (s BioSequence) Definition() string {
-	return s.sequence.definition.String()
+	return s.sequence.definition
 }
 
 func (s BioSequence) Sequence() []byte {
-	return s.sequence.sequence.Bytes()
+	return s.sequence.sequence
 }
 
 func (s BioSequence) String() string {
-	return s.sequence.sequence.String()
+	return string(s.sequence.sequence)
 }
 func (s BioSequence) Length() int {
-	return s.sequence.sequence.Len()
+	return len(s.sequence.sequence)
 }
 
 func (s BioSequence) HasQualities() bool {
-	return s.sequence.qualities.Len() > 0
+	return len(s.sequence.qualities) > 0
 }
 
 func (s BioSequence) Qualities() Quality {
 	if s.HasQualities() {
-		return s.sequence.qualities.Bytes()
+		return s.sequence.qualities
 	} else {
-		return __make_default_qualities__(s.sequence.sequence.Len())
+		return __make_default_qualities__(len(s.sequence.sequence))
 	}
 }
 
 func (s BioSequence) Features() string {
-	return s.sequence.feature.String()
+	return string(s.sequence.feature)
 }
 
 func (s BioSequence) Annotations() Annotation {
+	if s.sequence.annotations == nil {
+		s.sequence.annotations = GetAnnotation()
+	}
 	return s.sequence.annotations
 }
 
 func (s BioSequence) MD5() [16]byte {
-	return md5.Sum(s.sequence.sequence.Bytes())
+	return md5.Sum(s.sequence.sequence)
 }
 
 func (s BioSequence) Count() int {
@@ -144,50 +167,55 @@ func (s BioSequence) Taxid() int {
 }
 
 func (s BioSequence) SetId(id string) {
-	s.sequence.id.Reset()
-	s.sequence.id.WriteString(id)
+	s.sequence.id = id
 }
 
 func (s BioSequence) SetDefinition(definition string) {
-	s.sequence.definition.Reset()
-	s.sequence.definition.WriteString(definition)
+	s.sequence.definition = definition
 }
 
-func (s BioSequence) SetFeatures(feature string) {
-	s.sequence.feature.Reset()
-	s.sequence.feature.WriteString(feature)
+func (s BioSequence) SetFeatures(feature []byte) {
+	if cap(s.sequence.feature) >= 300 {
+		RecycleSlice(s.sequence.feature)
+	}
+	s.sequence.feature = feature
 }
 
 func (s BioSequence) SetSequence(sequence []byte) {
-	s.sequence.sequence.Reset()
-	s.sequence.sequence.Write(sequence)
+	if s.sequence.sequence != nil {
+		RecycleSlice(s.sequence.sequence)
+	}
+	s.sequence.sequence = sequence
 }
 
 func (s BioSequence) SetQualities(qualities Quality) {
-	s.sequence.qualities.Reset()
-	s.sequence.qualities.Write(qualities)
+	if s.sequence.qualities != nil {
+		RecycleSlice(s.sequence.qualities)
+	}
+	s.sequence.qualities = qualities
 }
 
 func (s BioSequence) WriteQualities(data []byte) (int, error) {
-	return s.sequence.qualities.Write(data)
+	s.sequence.qualities = append(s.sequence.qualities, data...)
+	return len(data), nil
 }
 
 func (s BioSequence) WriteByteQualities(data byte) error {
-	return s.sequence.qualities.WriteByte(data)
+	s.sequence.qualities = append(s.sequence.qualities, data)
+	return nil
 }
 
 func (s BioSequence) Write(data []byte) (int, error) {
-	return s.sequence.sequence.Write(data)
+	s.sequence.sequence = append(s.sequence.sequence, data...)
+	return len(data), nil
 }
 
 func (s BioSequence) WriteString(data string) (int, error) {
-	return s.sequence.sequence.WriteString(data)
+	bdata := []byte(data)
+	return s.Write(bdata)
 }
 
 func (s BioSequence) WriteByte(data byte) error {
-	return s.sequence.sequence.WriteByte(data)
-}
-
-func (s BioSequence) WriteRune(data rune) (int, error) {
-	return s.sequence.sequence.WriteRune(data)
+	s.sequence.sequence = append(s.sequence.sequence, data)
+	return nil
 }

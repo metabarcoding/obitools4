@@ -128,7 +128,7 @@ func _ParseEmblFile(input <-chan _FileChunk, out obiseq.IBioSequenceBatch) {
 					seqBytes.Bytes(),
 					defBytes.String())
 
-				sequence.SetFeatures(featBytes.String())
+				sequence.SetFeatures(featBytes.Bytes())
 
 				annot := sequence.Annotations()
 				annot["scientific_name"] = scientificName

@@ -3,8 +3,6 @@ package obiseq
 import (
 	"errors"
 	"fmt"
-
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/goutils"
 )
 
 // Returns a sub sequence start from position 'from' included,
@@ -23,21 +21,22 @@ func (sequence BioSequence) Subsequence(from, to int, circular bool) (BioSequenc
 		return NilBioSequence, errors.New("to out of bounds")
 	}
 
-	var new_seq BioSequence
+	var newSeq BioSequence
 
 	if from < to {
-		new_seq = MakeEmptyBioSequence()
-		new_seq.Write(sequence.Sequence()[from:to])
-		fmt.Fprintf(&new_seq.sequence.id, "%s_sub[%d..%d]", sequence.Id(), from+1, to)
-		new_seq.sequence.definition.Write(sequence.sequence.definition.Bytes())
+		newSeq = MakeEmptyBioSequence()
+		newSeq.Write(sequence.Sequence()[from:to])
+
+		newSeq.sequence.id = fmt.Sprintf("%s_sub[%d..%d]", sequence.Id(), from+1, to)
+		newSeq.sequence.definition = sequence.sequence.definition
 	} else {
-		new_seq, _ = sequence.Subsequence(from, sequence.Length(), false)
-		new_seq.Write(sequence.Sequence()[0:to])
+		newSeq, _ = sequence.Subsequence(from, sequence.Length(), false)
+		newSeq.Write(sequence.Sequence()[0:to])
 	}
 
 	if len(sequence.Annotations()) > 0 {
-		goutils.CopyMap(new_seq.Annotations(), sequence.Annotations())
+		newSeq.sequence.annotations = GetAnnotation(sequence.Annotations())
 	}
 
-	return new_seq, nil
+	return newSeq, nil
 }
