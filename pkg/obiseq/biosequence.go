@@ -172,6 +172,10 @@ func (s BioSequence) WriteQualities(data []byte) (int, error) {
 	return s.sequence.qualities.Write(data)
 }
 
+func (s BioSequence) WriteByteQualities(data byte) error {
+	return s.sequence.qualities.WriteByte(data)
+}
+
 func (s BioSequence) Write(data []byte) (int, error) {
 	return s.sequence.sequence.Write(data)
 }

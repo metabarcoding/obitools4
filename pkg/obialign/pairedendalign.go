@@ -61,11 +61,10 @@ func _GetMatrixFrom(matrix *[]int, lenA, a, b int) (int, int, int) {
 func _PairingScorePeAlign(baseA, qualA, baseB, qualB byte) int {
 	partMatch := _NucPartMatch[baseA&31][baseB&31]
 	// log.Printf("id : %f A : %s %d B : %s %d\n", part_match, string(baseA), qualA, string(baseB), qualB)
-	switch {
-	case partMatch == 1:
-		// log.Printf("match\n")
+	switch int(partMatch * 100) {
+	case 100:
 		return _NucScorePartMatchMatch[qualA][qualB]
-	case partMatch == 0:
+	case 0:
 		return _NucScorePartMatchMismatch[qualA][qualB]
 	default:
 		return int(partMatch*float64(_NucScorePartMatchMatch[qualA][qualB]) +

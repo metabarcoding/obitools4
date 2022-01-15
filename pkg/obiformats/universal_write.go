@@ -54,7 +54,7 @@ func WriteSequencesToStdout(iterator obiseq.IBioSequence, options ...WithOption)
 
 func WriteSequenceBatch(iterator obiseq.IBioSequenceBatch,
 	file io.Writer,
-	options ...WithOption) (obiseq.IBioSequenceBatch,error) {
+	options ...WithOption) (obiseq.IBioSequenceBatch, error) {
 
 	var newIter obiseq.IBioSequenceBatch
 	var err error
@@ -65,25 +65,25 @@ func WriteSequenceBatch(iterator obiseq.IBioSequenceBatch,
 		iterator.PushBack()
 		batch := iterator.Get()
 		if batch.Slice()[0].HasQualities() {
-			newIter,err = WriteFastqBatch(iterator, file, options...)
+			newIter, err = WriteFastqBatch(iterator, file, options...)
 		} else {
-			newIter,err = WriteFastaBatch(iterator, file, options...)
+			newIter, err = WriteFastaBatch(iterator, file, options...)
 		}
 
-		return newIter,err 
+		return newIter, err
 	}
 
-	return obiseq.NilIBioSequenceBatch,fmt.Errorf("input iterator not ready")
+	return obiseq.NilIBioSequenceBatch, fmt.Errorf("input iterator not ready")
 }
 
-func WriteSequencesBatchToStdout(iterator obiseq.IBioSequenceBatch, 
-	options ...WithOption) (obiseq.IBioSequenceBatch,error) {
+func WriteSequencesBatchToStdout(iterator obiseq.IBioSequenceBatch,
+	options ...WithOption) (obiseq.IBioSequenceBatch, error) {
 	return WriteSequenceBatch(iterator, os.Stdout, options...)
 }
 
 func WriteSequencesBatchToFile(iterator obiseq.IBioSequenceBatch,
 	filename string,
-	options ...WithOption) (obiseq.IBioSequenceBatch,error) {
+	options ...WithOption) (obiseq.IBioSequenceBatch, error) {
 
 	file, err := os.Create(filename)
 

@@ -30,5 +30,5 @@ func main() {
 
 	sequences, _ := obiconvert.ReadBioSequencesBatch(args...)
 	amplicons, _ := obipcr.PCR(sequences)
-	obiconvert.WriteBioSequencesBatch(amplicons,true)
+	obiconvert.WriteBioSequencesBatch(amplicons, true)
 }

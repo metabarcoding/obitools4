@@ -19,6 +19,13 @@ func _Abs(x int) int {
 	return x
 }
 
+// JoinPairedSequence paste two sequences putting 10 dots as separator.
+// if both sequences havee quality scores a quality of 0 is assoociated
+// to the added dot.
+// If the inplace argument is set to 'true', memory allocated to the
+// sequences provided are is used too limite reallocation. The two sequences
+// provided as arguments can therefore not anymore used after the return of
+// of the JoinPairedSequence. You have even noot to recycle them.
 func JoinPairedSequence(seqA, seqB obiseq.BioSequence, inplace bool) obiseq.BioSequence {
 
 	if !inplace {
@@ -28,8 +35,14 @@ func JoinPairedSequence(seqA, seqB obiseq.BioSequence, inplace bool) obiseq.BioS
 	seqA.WriteString("..........")
 	seqA.Write(seqB.Sequence())
 
-	seqA.WriteQualities(obiseq.Quality{0, 0, 0, 0, 0, 0, 0, 0, 0, 0})
-	seqA.WriteQualities(seqB.Qualities())
+	if seqA.HasQualities() && seqB.HasQualities() {
+		seqA.WriteQualities(obiseq.Quality{0, 0, 0, 0, 0, 0, 0, 0, 0, 0})
+		seqA.WriteQualities(seqB.Qualities())
+	}
+
+	if inplace {
+		(&seqB).Recycle()
+	}
 
 	return seqA
 }
@@ -38,21 +51,18 @@ func JoinPairedSequence(seqA, seqB obiseq.BioSequence, inplace bool) obiseq.BioS
 // the obipairing strategy implemented in obialign.PEAlign using
 // the gap and delta parametters.
 // If the length of the overlap between both sequences is less than
-// overlap_min, The alignment is substituted by a simple pasting
+// overlapMin, The alignment is substituted by a simple pasting
 // of the sequences with a strech of 10 dots in between them.
 // the quality of the dots is set to 0.
 // If the inplace parameter is set to true, the seqA and seqB are
 // destroyed during the assembling process and cannot be reuse later on.
 func AssemblePESequences(seqA, seqB obiseq.BioSequence,
-	gap, delta, overlap_min int, with_stats bool,
+	gap, delta, overlapMin int, withStats bool,
 	inplace bool,
-	arena_align obialign.PEAlignArena,
-	arena_cons obialign.BuildAlignArena,
-	arena_qual obialign.BuildAlignArena) obiseq.BioSequence {
+	arenaAlign obialign.PEAlignArena) obiseq.BioSequence {
 
-	score, path := obialign.PEAlign(seqA, seqB, gap, delta, arena_align)
-	cons, match := obialign.BuildQualityConsensus(seqA, seqB, path,
-		arena_cons, arena_qual)
+	score, path := obialign.PEAlign(seqA, seqB, gap, delta, arenaAlign)
+	cons, match := obialign.BuildQualityConsensus(seqA, seqB, path)
 
 	left := path[0]
 	right := 0
@@ -60,10 +70,10 @@ func AssemblePESequences(seqA, seqB obiseq.BioSequence,
 		right = path[len(path)-2]
 	}
 	lcons := cons.Length()
-	ali_length := lcons - _Abs(left) - _Abs(right)
+	aliLength := lcons - _Abs(left) - _Abs(right)
 
-	if ali_length >= overlap_min {
-		if with_stats {
+	if aliLength >= overlapMin {
+		if withStats {
 			annot := cons.Annotations()
 			annot["mode"] = "alignment"
 			annot["score"] = score
@@ -83,14 +93,14 @@ func AssemblePESequences(seqA, seqB obiseq.BioSequence,
 				annot["seq_b_single"] = right
 			}
 
-			score_norm := float64(0)
-			if ali_length > 0 {
-				score_norm = math.Round(float64(match)/float64(ali_length)*1000) / 1000
+			scoreNorm := float64(0)
+			if aliLength > 0 {
+				scoreNorm = math.Round(float64(match)/float64(aliLength)*1000) / 1000
 			}
 
-			annot["ali_length"] = ali_length
+			annot["ali_length"] = aliLength
 			annot["seq_ab_match"] = match
-			annot["score_norm"] = score_norm
+			annot["score_norm"] = scoreNorm
 
 			if inplace {
 				(&seqA).Recycle()
@@ -100,21 +110,18 @@ func AssemblePESequences(seqA, seqB obiseq.BioSequence,
 	} else {
 		cons = JoinPairedSequence(seqA, seqB, inplace)
 
-		if with_stats {
+		if withStats {
 			annot := cons.Annotations()
 			annot["mode"] = "join"
 		}
 
-		if inplace {
-			(&seqB).Recycle()
-		}
 	}
 
 	return cons
 }
 
 func IAssemblePESequencesBatch(iterator obiseq.IPairedBioSequenceBatch,
-	gap, delta, overlap_min int, with_stats bool, sizes ...int) obiseq.IBioSequenceBatch {
+	gap, delta, overlapMin int, withStats bool, sizes ...int) obiseq.IBioSequenceBatch {
 
 	nworkers := runtime.NumCPU() - 1
 	buffsize := iterator.BufferSize()
@@ -150,8 +157,6 @@ func IAssemblePESequencesBatch(iterator obiseq.IPairedBioSequenceBatch,
 
 	f := func(iterator obiseq.IPairedBioSequenceBatch, wid int) {
 		arena := obialign.MakePEAlignArena(150, 150)
-		barena1 := obialign.MakeBuildAlignArena(150, 150)
-		barena2 := obialign.MakeBuildAlignArena(150, 150)
 
 		// log.Printf("\n==> %d Wait data to align\n", wid)
 		// start := time.Now()
@@ -163,7 +168,7 @@ func IAssemblePESequencesBatch(iterator obiseq.IPairedBioSequenceBatch,
 			processed := 0
 			for i, A := range batch.Forward() {
 				B := batch.Reverse()[i]
-				cons[i] = AssemblePESequences(A, B, 2, 5, 20, true, true, arena, barena1, barena2)
+				cons[i] = AssemblePESequences(A, B, 2, 5, 20, true, true, arena)
 				if i%59 == 0 {
 					bar.Add(59)
 					processed += 59

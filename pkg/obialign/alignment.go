@@ -1,51 +1,24 @@
+// obialign : function for aligning two sequences
+//
+// The obialign package provides a set of functions
+// foor aligning two objects of type obiseq.BioSequence.
 package obialign
 
 import (
 	"math"
+	"sync"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
 
-type _BuildAlignArena struct {
-	bufferA []byte
-	bufferB []byte
+var _BuildAlignArenaPool = sync.Pool{
+	New: func() interface{} {
+		bs := make([]byte, 0, 300)
+		return &bs
+	},
 }
 
-// BuildAlignArena defines memory arena usable by the
-// BuildAlignment function. The same arena can be reused
-// from alignment to alignment to limit memory allocation
-// and desallocation process.
-type BuildAlignArena struct {
-	pointer *_BuildAlignArena
-}
-
-// NilBuildAlignArena is the nil instance of the BuildAlignArena
-// type.
-var NilBuildAlignArena = BuildAlignArena{nil}
-
-// MakeBuildAlignArena makes a new arena for aligning two sequences
-// of maximum length indicated by lseqA and lseqB.
-func MakeBuildAlignArena(lseqA, lseqB int) BuildAlignArena {
-	a := _BuildAlignArena{
-		bufferA: make([]byte, lseqA+lseqB),
-		bufferB: make([]byte, lseqA+lseqB),
-	}
-
-	return BuildAlignArena{&a}
-}
-
-func _BuildAlignment(seqA, seqB []byte, path []int, gap byte,
-	bufferA, bufferB *[]byte) ([]byte, []byte) {
-
-	if bufferA == nil {
-		b := make([]byte, 0, len(seqA)+len(seqB))
-		bufferA = &b
-	}
-
-	if bufferB == nil {
-		b := make([]byte, 0, len(seqA)+len(seqB))
-		bufferB = &b
-	}
+func _BuildAlignment(seqA, seqB []byte, path []int, gap byte, bufferA, bufferB *[]byte) {
 
 	*bufferA = (*bufferA)[:0]
 	*bufferB = (*bufferB)[:0]
@@ -81,7 +54,6 @@ func _BuildAlignment(seqA, seqB []byte, path []int, gap byte,
 		}
 	}
 
-	return *bufferA, *bufferB
 }
 
 // BuildAlignment builds the aligned sequences from an alignemnt path
@@ -94,26 +66,36 @@ func _BuildAlignment(seqA, seqB []byte, path []int, gap byte,
 // be reusable for other alignments and desallocated at the BuildAlignment
 // return.
 func BuildAlignment(seqA, seqB obiseq.BioSequence,
-	path []int, gap byte, arena BuildAlignArena) (obiseq.BioSequence, obiseq.BioSequence) {
+	path []int, gap byte) (obiseq.BioSequence, obiseq.BioSequence) {
 
-	if arena.pointer == nil {
-		arena = MakeBuildAlignArena(seqA.Length(), seqB.Length())
-	}
+	bufferSA := _BuildAlignArenaPool.Get().(*[]byte)
+	defer _BuildAlignArenaPool.Put(bufferSA)
 
-	A, B := _BuildAlignment(seqA.Sequence(), seqB.Sequence(), path, gap,
-		&arena.pointer.bufferA,
-		&arena.pointer.bufferB)
+	bufferSB := _BuildAlignArenaPool.Get().(*[]byte)
+	defer _BuildAlignArenaPool.Put(bufferSB)
+
+	_BuildAlignment(seqA.Sequence(), seqB.Sequence(), path, gap,
+		bufferSA,
+		bufferSB)
 
 	seqA = obiseq.MakeBioSequence(seqA.Id(),
-		A,
+		*bufferSA,
 		seqA.Definition())
 
 	seqB = obiseq.MakeBioSequence(seqB.Id(),
-		B,
+		*bufferSB,
 		seqB.Definition())
 
 	return seqA, seqB
 }
+
+// func _logSlice(x *[]byte) {
+// 	l := len(*x)
+// 	if l > 10 {
+// 		l = 10
+// 	}
+// 	log.Printf("%v (%10s): slice=%p array=%p cap=%d len=%d\n", (*x)[:l], string((*x)[:l]), x, (*x), cap(*x), len(*x))
+// }
 
 // BuildQualityConsensus builds the consensus sequences corresponding to an
 // alignement between two sequences.
@@ -128,26 +110,34 @@ func BuildAlignment(seqA, seqB obiseq.BioSequence,
 // In that case arenas will be allocated by the function but, they will not
 // be reusable for other alignments and desallocated at the BuildQualityConsensus
 // return.
-func BuildQualityConsensus(seqA, seqB obiseq.BioSequence, path []int,
-	arena1, arena2 BuildAlignArena) (obiseq.BioSequence, int) {
+func BuildQualityConsensus(seqA, seqB obiseq.BioSequence, path []int) (obiseq.BioSequence, int) {
 
-	if arena1.pointer == nil {
-		arena1 = MakeBuildAlignArena(seqA.Length(), seqB.Length())
-	}
-	if arena2.pointer == nil {
-		arena2 = MakeBuildAlignArena(seqA.Length(), seqB.Length())
-	}
+	bufferSA := _BuildAlignArenaPool.Get().(*[]byte)
+	defer _BuildAlignArenaPool.Put(bufferSA)
 
-	sA, sB := _BuildAlignment(seqA.Sequence(), seqB.Sequence(), path, ' ',
-		&arena1.pointer.bufferA,
-		&arena1.pointer.bufferB)
+	bufferSB := _BuildAlignArenaPool.Get().(*[]byte)
+	defer _BuildAlignArenaPool.Put(bufferSB)
 
-	qsA, qsB := _BuildAlignment(seqA.Qualities(), seqB.Qualities(), path, byte(0),
-		&arena2.pointer.bufferA,
-		&arena2.pointer.bufferB)
+	bufferQA := _BuildAlignArenaPool.Get().(*[]byte)
+	defer _BuildAlignArenaPool.Put(bufferQA)
 
-	consensus := make([]byte, 0, len(sA))
-	qualities := make([]byte, 0, len(sA))
+	bufferQB := _BuildAlignArenaPool.Get().(*[]byte)
+	defer _BuildAlignArenaPool.Put(bufferQB)
+
+	_BuildAlignment(seqA.Sequence(), seqB.Sequence(), path, ' ',
+		bufferSA, bufferSB)
+
+	// log.Printf("#1 %s--> la : %d,%p lb : %d,%p qa : %d,%p qb : %d,%p\n", stamp,
+	// 	len(*bufferSA), bufferSA, len(*bufferSB), bufferSB,
+	// 	len(*bufferQA), bufferQA, len(*bufferQB), bufferQB)
+
+	_BuildAlignment(seqA.Qualities(), seqB.Qualities(), path, byte(0),
+		bufferQA, bufferQB)
+
+	// log.Printf("#2 %s--> la : %d,%p lb : %d,%p qa : %d,%p qb : %d,%p\n", stamp,
+	// 	len(*bufferSA), bufferSA, len(*bufferSB), bufferSB,
+	// 	len(*bufferQA), bufferQA, len(*bufferQB), bufferQB)
+	// log.Printf("#3 %s--> la : %d lb : %d, qa : %d qb : %d\n", stamp, len(sA), len(sB), len(qsA), len(qsB))
 
 	var qA, qB byte
 	var qM, qm byte
@@ -155,31 +145,32 @@ func BuildQualityConsensus(seqA, seqB obiseq.BioSequence, path []int,
 
 	match := 0
 
-	for i, qA = range qsA {
-		qB = qsB[i]
+	for i, qA = range *bufferQA {
+		nA := (*bufferSA)[i]
+		nB := (*bufferSB)[i]
+		qB = (*bufferQB)[i]
 
 		if qA > qB {
-			consensus = append(consensus, sA[i])
 			qM = qA
 			qm = qB
 		}
 		if qB > qA {
-			consensus = append(consensus, sB[i])
+			(*bufferSA)[i] = (*bufferSB)[i]
 			qM = qB
 			qm = qA
 		}
-		if qB == qA {
-			nuc := _FourBitsBaseCode[sA[i]&31] | _FourBitsBaseCode[sB[i]&31]
-			consensus = append(consensus, _FourBitsBaseDecode[nuc])
+		if qB == qA && nA != nB {
+			nuc := _FourBitsBaseCode[nA&31] | _FourBitsBaseCode[nB&31]
+			(*bufferSA)[i] = _FourBitsBaseDecode[nuc]
 		}
 
 		q := qA + qB
 
 		if qA > 0 && qB > 0 {
-			if sA[i] != sB[i] {
+			if nA != nB {
 				q = qM - byte(math.Log10(1-math.Pow(10, -float64(qm)/30))*10+0.5)
 			}
-			if sA[i] == sB[i] {
+			if nA == nB {
 				match++
 			}
 		}
@@ -187,11 +178,16 @@ func BuildQualityConsensus(seqA, seqB obiseq.BioSequence, path []int,
 		if q > 90 {
 			q = 90
 		}
-		qualities = append(qualities, q)
+
+		(*bufferQA)[i] = q
 	}
 
-	seq := obiseq.MakeBioSequence(seqA.Id(), consensus, seqA.Definition())
-	seq.SetQualities(qualities)
+	consSeq := obiseq.MakeBioSequence(
+		seqA.Id(),
+		(*bufferSA),
+		seqA.Definition(),
+	)
+	consSeq.SetSequence((*bufferQA))
 
-	return seq, match
+	return consSeq, match
 }
