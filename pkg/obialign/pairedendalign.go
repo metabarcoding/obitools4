@@ -72,7 +72,7 @@ func _PairingScorePeAlign(baseA, qualA, baseB, qualB byte) int {
 	}
 }
 
-func _FillMatrixPeLeftAlign(seqA, qualA, seqB, qualB []byte, gap int,
+func _FillMatrixPeLeftAlign(seqA, qualA, seqB, qualB []byte, gap float64,
 	scoreMatrix, pathMatrix *[]int) int {
 
 	la := len(seqA)
@@ -80,7 +80,7 @@ func _FillMatrixPeLeftAlign(seqA, qualA, seqB, qualB []byte, gap int,
 
 	// The actual gap score is the gap score times the mismatch between
 	// two bases with a score of 40
-	gap = gap * _NucScorePartMatchMismatch[40][40]
+	gapPenalty := int(gap * float64(_NucScorePartMatchMismatch[40][40]))
 
 	needed := (la + 1) * (lb + 1)
 
@@ -106,13 +106,13 @@ func _FillMatrixPeLeftAlign(seqA, qualA, seqB, qualB []byte, gap int,
 
 	for j := 0; j < lb; j++ {
 
-		_SetMatrices(scoreMatrix, pathMatrix, la, -1, j, (j+1)*gap, 1)
+		_SetMatrices(scoreMatrix, pathMatrix, la, -1, j, (j+1)*gapPenalty, 1)
 
 		for i := 0; i < la1; i++ {
 			left, diag, top := _GetMatrixFrom(scoreMatrix, la, i, j)
 			diag += _PairingScorePeAlign(seqA[i], qualA[i], seqB[j], qualB[j])
-			left += gap
-			top += gap
+			left += gapPenalty
+			top += gapPenalty
 			switch {
 			case diag > left && diag > top:
 				_SetMatrices(scoreMatrix, pathMatrix, la, i, j, diag, 0)
@@ -127,7 +127,7 @@ func _FillMatrixPeLeftAlign(seqA, qualA, seqB, qualB []byte, gap int,
 
 		left, diag, top := _GetMatrixFrom(scoreMatrix, la, la1, j)
 		diag += _PairingScorePeAlign(seqA[la1], qualA[la1], seqB[j], qualB[j])
-		top += gap
+		top += gapPenalty
 
 		switch {
 		case diag > left && diag > top:
@@ -143,7 +143,7 @@ func _FillMatrixPeLeftAlign(seqA, qualA, seqB, qualB []byte, gap int,
 	return _GetMatrix(scoreMatrix, la, la1, lb-1)
 }
 
-func _FillMatrixPeRightAlign(seqA, qualA, seqB, qualB []byte, gap int,
+func _FillMatrixPeRightAlign(seqA, qualA, seqB, qualB []byte, gap float64,
 	scoreMatrix, pathMatrix *[]int) int {
 
 	la := len(seqA)
@@ -151,7 +151,7 @@ func _FillMatrixPeRightAlign(seqA, qualA, seqB, qualB []byte, gap int,
 
 	// The actual gap score is the gap score times the mismatch between
 	// two bases with a score of 40
-	gap = gap * _NucScorePartMatchMismatch[40][40]
+	gapPenalty := int(gap * float64(_NucScorePartMatchMismatch[40][40]))
 
 	needed := (la + 1) * (lb + 1)
 
@@ -170,7 +170,7 @@ func _FillMatrixPeRightAlign(seqA, qualA, seqB, qualB []byte, gap int,
 
 	// Fills the first column with score 0
 	for i := 0; i < la; i++ {
-		_SetMatrices(scoreMatrix, pathMatrix, la, i, -1, (i+1)*gap, -1)
+		_SetMatrices(scoreMatrix, pathMatrix, la, i, -1, (i+1)*gapPenalty, -1)
 	}
 
 	lb1 := lb - 1
@@ -183,8 +183,8 @@ func _FillMatrixPeRightAlign(seqA, qualA, seqB, qualB []byte, gap int,
 			left, diag, top := _GetMatrixFrom(scoreMatrix, la, i, j)
 
 			diag += _PairingScorePeAlign(seqA[i], qualA[i], seqB[j], qualB[j])
-			left += gap
-			top += gap
+			left += gapPenalty
+			top += gapPenalty
 
 			switch {
 			case diag > left && left > top:
@@ -205,7 +205,7 @@ func _FillMatrixPeRightAlign(seqA, qualA, seqB, qualB []byte, gap int,
 
 		left, diag, top := _GetMatrixFrom(scoreMatrix, la, i, lb1)
 		diag += _PairingScorePeAlign(seqA[i], qualA[i], seqB[lb1], qualB[lb1])
-		left += gap
+		left += gapPenalty
 
 		switch {
 		case diag > left && diag > top:
@@ -220,7 +220,8 @@ func _FillMatrixPeRightAlign(seqA, qualA, seqB, qualB []byte, gap int,
 	return _GetMatrix(scoreMatrix, la, la-1, lb1)
 }
 
-func PELeftAlign(seqA, seqB obiseq.BioSequence, gap int, arena PEAlignArena) (int, []int) {
+func PELeftAlign(seqA, seqB obiseq.BioSequence, gap float64,
+	arena PEAlignArena) (int, []int) {
 
 	if !_InitializedDnaScore {
 		log.Println("Initializing the DNA Scoring matrix")
@@ -243,7 +244,8 @@ func PELeftAlign(seqA, seqB obiseq.BioSequence, gap int, arena PEAlignArena) (in
 	return score, arena.pointer.path
 }
 
-func PERightAlign(seqA, seqB obiseq.BioSequence, gap int, arena PEAlignArena) (int, []int) {
+func PERightAlign(seqA, seqB obiseq.BioSequence, gap float64,
+	arena PEAlignArena) (int, []int) {
 
 	if !_InitializedDnaScore {
 		log.Println("Initializing the DNA Scoring matrix")
@@ -267,7 +269,7 @@ func PERightAlign(seqA, seqB obiseq.BioSequence, gap int, arena PEAlignArena) (i
 }
 
 func PEAlign(seqA, seqB obiseq.BioSequence,
-	gap, delta int,
+	gap float64, delta int,
 	arena PEAlignArena) (int, []int) {
 	var score, shift int
 	var startA, startB int

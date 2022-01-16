@@ -10,7 +10,7 @@ var _ForwardFiles = make([]string, 0, 10)
 var _ReverseFiles = make([]string, 0, 10)
 var _Delta = 5
 var _MinOverlap = 20
-var _GapPenality = 2
+var _GapPenality = float64(2.0)
 var _WithoutStats = false
 
 func PairingOptionSet(options *getoptions.GetOpt) {
@@ -28,7 +28,7 @@ func PairingOptionSet(options *getoptions.GetOpt) {
 	options.IntVar(&_MinOverlap, "min-overlap", 20,
 		options.Alias("O"),
 		options.Description("Minimum ovelap between both the reads to consider the aligment (default 20)."))
-	options.IntVar(&_GapPenality, "gap-penality", 2,
+	options.Float64Var(&_GapPenality, "gap-penality", 2,
 		options.Alias("G"),
 		options.Description("Gap penality expressed as the multiply factor applied to the mismatch score between two nucleotides with a quality of 40 (default 2)."))
 	options.BoolVar(&_WithoutStats, "without-stat", false,
@@ -65,7 +65,7 @@ func MinOverlap() int {
 	return _MinOverlap
 }
 
-func GapPenality() int {
+func GapPenality() float64 {
 	return _GapPenality
 }
 

@@ -15,8 +15,15 @@ var _AllowedMismatch = 0
 var _MinimumLength = 0
 var _MaximumLength = -1
 
-// PCROptionSet adds to a command line option set every options
-// needed by the PCR algorithm.
+// PCROptionSet defines every options related to a simulated PCR.
+//
+// The function adds to a CLI every options proposed to the user
+// to tune the parametters of the PCR simulation algorithm.
+//
+// Parameters
+//
+// - option : is a pointer to a getoptions.GetOpt instance normaly
+// produced by the
 func PCROptionSet(options *getoptions.GetOpt) {
 	options.BoolVar(&_Circular, "circular", false,
 		options.Alias("c"),

@@ -127,6 +127,10 @@ func (s BioSequence) Features() string {
 	return string(s.sequence.feature)
 }
 
+func (s BioSequence) HasAnnotation() bool {
+	return len(s.sequence.annotations) > 0
+}
+
 func (s BioSequence) Annotations() Annotation {
 	if s.sequence.annotations == nil {
 		s.sequence.annotations = GetAnnotation()

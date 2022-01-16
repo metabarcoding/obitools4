@@ -57,7 +57,7 @@ func JoinPairedSequence(seqA, seqB obiseq.BioSequence, inplace bool) obiseq.BioS
 // If the inplace parameter is set to true, the seqA and seqB are
 // destroyed during the assembling process and cannot be reuse later on.
 func AssemblePESequences(seqA, seqB obiseq.BioSequence,
-	gap, delta, overlapMin int, withStats bool,
+	gap float64, delta, overlapMin int, withStats bool,
 	inplace bool,
 	arenaAlign obialign.PEAlignArena) obiseq.BioSequence {
 
@@ -120,8 +120,42 @@ func AssemblePESequences(seqA, seqB obiseq.BioSequence,
 	return cons
 }
 
+// IAssemblePESequencesBatch aligns paired reads.
+//
+// The function consumes an iterator over batches of paired sequences and
+// aligns each pair of sequences if they overlap. If they do not, both
+// sequences are pasted together and a strech of ten dots is added at the
+// juction of both the sequences.
+//
+// Parameters
+//
+// - iterator is an iterator of paired sequences as produced by the method
+// IBioSequenceBatch.PairWith
+//
+// - gap the gap penality is expressed as a multiplicator factor of the cost
+// of a mismatch between two bases having a quality score of 40.
+//
+// - delta the extension in number of base pairs added on both sides of the
+// overlap detected by the FAST algorithm before the optimal alignment.
+//
+// - minOverlap the minimal length of the overlap to accept the alignment of
+// the paired reads as correct. If the actual length is below this limit. The
+// the alignment is discarded and both sequences are pasted.
+//
+// - withStats indicates (true value) if the algorithm adds annotation to each
+// sequence on the quality of the aligned overlap.
+//
+// Two extra interger parameters can be added during the call of the function.
+// The first one indicates how many parallel workers run for aligning the sequences.
+// The second allows too specify the size of the channel buffer.
+//
+// Returns
+//
+// The function returns an iterator over batches of obiseq.Biosequence object.
+// each pair of processed sequences produces one sequence in the result iterator.
+//
 func IAssemblePESequencesBatch(iterator obiseq.IPairedBioSequenceBatch,
-	gap, delta, overlapMin int, withStats bool, sizes ...int) obiseq.IBioSequenceBatch {
+	gap float64, delta, minOverlap int, withStats bool, sizes ...int) obiseq.IBioSequenceBatch {
 
 	nworkers := runtime.NumCPU() * 3 / 2
 	buffsize := iterator.BufferSize()
@@ -158,17 +192,13 @@ func IAssemblePESequencesBatch(iterator obiseq.IPairedBioSequenceBatch,
 	f := func(iterator obiseq.IPairedBioSequenceBatch, wid int) {
 		arena := obialign.MakePEAlignArena(150, 150)
 
-		// log.Printf("\n==> %d Wait data to align\n", wid)
-		// start := time.Now()
 		for iterator.Next() {
-			// elapsed := time.Since(start)
-			// log.Printf("\n==>%d got data to align after %s\n", wid, elapsed)
 			batch := iterator.Get()
 			cons := make(obiseq.BioSequenceSlice, len(batch.Forward()))
 			processed := 0
 			for i, A := range batch.Forward() {
 				B := batch.Reverse()[i]
-				cons[i] = AssemblePESequences(A, B, 2, 5, 20, true, true, arena)
+				cons[i] = AssemblePESequences(A, B, gap, delta, minOverlap, withStats, true, arena)
 				if i%59 == 0 {
 					bar.Add(59)
 					processed += 59
@@ -179,8 +209,6 @@ func IAssemblePESequencesBatch(iterator obiseq.IPairedBioSequenceBatch,
 				batch.Order(),
 				cons...,
 			)
-			// log.Printf("\n==> %d Wait data to align\n", wid)
-			// start = time.Now()
 		}
 		newIter.Done()
 	}
