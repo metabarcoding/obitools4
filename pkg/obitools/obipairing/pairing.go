@@ -19,13 +19,36 @@ func _Abs(x int) int {
 	return x
 }
 
-// JoinPairedSequence paste two sequences putting 10 dots as separator.
-// if both sequences havee quality scores a quality of 0 is assoociated
-// to the added dot.
-// If the inplace argument is set to 'true', memory allocated to the
-// sequences provided are is used too limite reallocation. The two sequences
-// provided as arguments can therefore not anymore used after the return of
-// of the JoinPairedSequence. You have even noot to recycle them.
+// JoinPairedSequence paste two sequences.
+//
+// Both input sequences are pasted and 10 dots are used as separator.
+// if both sequences have quality scores, a quality of 0 is associated
+// to the added dots.
+//
+// Parameters
+//
+// - seqA, seqB: the pair of sequences to align.
+//
+// - inplace: if  is set to true, the seqA and seqB are
+// destroyed during the assembling process and cannot be reuse later on.
+// the gap and delta parametters.
+//
+// Returns
+//
+// An obiseq.BioSequence corresponding to the pasting of the both
+// input sequences.
+//
+// Examples:
+//
+// .
+//  seqA := obiseq.BioSequence("A","cgatgcta","Sequence A")
+//  seqB := obiseq.BioSequence("B","aatcgtacga","Sequence B")
+//  seqC := obipairing.JoinPairedSequence(seqA, seqB, false)
+//  fmt.Println(seqC.String())
+//
+// Outputs:
+//  cgatgcta..........aatcgtacga
+//
 func JoinPairedSequence(seqA, seqB obiseq.BioSequence, inplace bool) obiseq.BioSequence {
 
 	if !inplace {
@@ -47,15 +70,40 @@ func JoinPairedSequence(seqA, seqB obiseq.BioSequence, inplace bool) obiseq.BioS
 	return seqA
 }
 
-// AssemblePESequences assembles two paired sequences following
-// the obipairing strategy implemented in obialign.PEAlign using
-// the gap and delta parametters.
-// If the length of the overlap between both sequences is less than
-// overlapMin, The alignment is substituted by a simple pasting
-// of the sequences with a strech of 10 dots in between them.
-// the quality of the dots is set to 0.
-// If the inplace parameter is set to true, the seqA and seqB are
+// AssemblePESequences assembles two paired sequences.
+//
+// The function assembles two paired sequences following
+// the obipairing strategy implemented in obialign.PEAlign.
+// If the alignment does not result in an overlap of at least
+// a given length, it is discarded and booth sequences are only
+// pasted using the obipairing.JoinPairedSequence function.
+//
+// Parameters
+//
+// - seqA, seqB: the pair of sequences to align.
+//
+// - gap: the gap penality is expressed as a multiplicator factor of the cost
+// of a mismatch between two bases having a quality score of 40.
+//
+// - delta: the extension in number of base pairs added on both sides of the
+// overlap detected by the FAST algorithm before the optimal alignment.
+//
+// - minOverlap: the minimal length of the overlap to accept the alignment of
+// the paired reads as correct. If the actual length is below this limit. The
+// the alignment is discarded and both sequences are pasted.
+//
+// - withStats: indicates (true value) if the algorithm adds annotation to each
+// sequence on the quality of the aligned overlap.
+//
+// - inplace: if  is set to true, the seqA and seqB are
 // destroyed during the assembling process and cannot be reuse later on.
+// the gap and delta parametters.
+//
+// Returns
+//
+// An obiseq.BioSequence corresponding to the assembling of the both
+// input sequence.
+//
 func AssemblePESequences(seqA, seqB obiseq.BioSequence,
 	gap float64, delta, overlapMin int, withStats bool,
 	inplace bool,
@@ -129,20 +177,20 @@ func AssemblePESequences(seqA, seqB obiseq.BioSequence,
 //
 // Parameters
 //
-// - iterator is an iterator of paired sequences as produced by the method
+// - iterator: is an iterator of paired sequences as produced by the method
 // IBioSequenceBatch.PairWith
 //
-// - gap the gap penality is expressed as a multiplicator factor of the cost
+// - gap: the gap penality is expressed as a multiplicator factor of the cost
 // of a mismatch between two bases having a quality score of 40.
 //
-// - delta the extension in number of base pairs added on both sides of the
+// - delta: the extension in number of base pairs added on both sides of the
 // overlap detected by the FAST algorithm before the optimal alignment.
 //
-// - minOverlap the minimal length of the overlap to accept the alignment of
+// - minOverlap: the minimal length of the overlap to accept the alignment of
 // the paired reads as correct. If the actual length is below this limit. The
 // the alignment is discarded and both sequences are pasted.
 //
-// - withStats indicates (true value) if the algorithm adds annotation to each
+// - withStats: indicates (true value) if the algorithm adds annotation to each
 // sequence on the quality of the aligned overlap.
 //
 // Two extra interger parameters can be added during the call of the function.

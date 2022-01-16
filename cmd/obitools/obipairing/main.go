@@ -36,7 +36,7 @@ func main() {
 		obipairing.GapPenality(),
 		obipairing.Delta(),
 		obipairing.MinOverlap(),
-		true,
+		obipairing.WithStats(),
 		obioptions.ParallelWorkers(),
 	)
 	obiconvert.WriteBioSequencesBatch(paired, true)
