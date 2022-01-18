@@ -2,6 +2,10 @@ cpu.pprof
 cpu.trace
 obicount
 obipairing
+test
 bin
+vendor
 *.fastq
 *.fasta
+obiconvert
+obipcr
