@@ -184,8 +184,8 @@ func ReadEMBLBatch(reader io.Reader, options ...WithOption) obiseq.IBioSequenceB
 
 	newIter := obiseq.MakeIBioSequenceBatch(opt.BufferSize())
 
-	// newIter.Add(opt.ParallelWorkers())
-	newIter.Add(2)
+	nworkers := opt.ParallelWorkers()
+	newIter.Add(nworkers)
 
 	go func() {
 		newIter.Wait()
@@ -196,7 +196,7 @@ func ReadEMBLBatch(reader io.Reader, options ...WithOption) obiseq.IBioSequenceB
 	}()
 
 	// for j := 0; j < opt.ParallelWorkers(); j++ {
-	for j := 0; j < 2; j++ {
+	for j := 0; j < nworkers; j++ {
 		go _ParseEmblFile(entry_channel, newIter)
 	}
 

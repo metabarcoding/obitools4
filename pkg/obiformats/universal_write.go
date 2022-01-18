@@ -56,16 +56,23 @@ func WriteSequenceBatch(iterator obiseq.IBioSequenceBatch,
 	file io.Writer,
 	options ...WithOption) (obiseq.IBioSequenceBatch, error) {
 
-	var newIter obiseq.IBioSequenceBatch
-	var err error
+	iterator = iterator.Rebatch(1000)
 
 	ok := iterator.Next()
 
 	if ok {
-		iterator.PushBack()
 		batch := iterator.Get()
-		if batch.Slice()[0].HasQualities() {
-			newIter, err = WriteFastqBatch(iterator, file, options...)
+		iterator.PushBack()
+
+		var newIter obiseq.IBioSequenceBatch
+		var err error
+
+		if len(batch.Slice()) > 0 {
+			if batch.Slice()[0].HasQualities() {
+				newIter, err = WriteFastqBatch(iterator, file, options...)
+			} else {
+				newIter, err = WriteFastaBatch(iterator, file, options...)
+			}
 		} else {
 			newIter, err = WriteFastaBatch(iterator, file, options...)
 		}

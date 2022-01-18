@@ -1,6 +1,8 @@
 package obiapat
 
 import (
+	"log"
+
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/goutils"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
@@ -14,6 +16,10 @@ type _Options struct {
 	bufferSize      int
 	batchSize       int
 	parallelWorkers int
+	forward         ApatPattern
+	cfwd            ApatPattern
+	reverse         ApatPattern
+	crev            ApatPattern
 }
 
 // Options stores a set of option usable by the
@@ -90,6 +96,10 @@ func MakeOptions(setters []WithOption) Options {
 		parallelWorkers: 4,
 		batchSize:       100,
 		bufferSize:      100,
+		forward:         NilApatPattern,
+		cfwd:            NilApatPattern,
+		reverse:         NilApatPattern,
+		crev:            NilApatPattern,
 	}
 
 	opt := Options{&o}
@@ -126,19 +136,41 @@ func OptionMaxLength(maxLength int) WithOption {
 // OptionForwardError sets the number of
 // error allowed when matching the forward
 // primer.
-func OptionForwardError(max int) WithOption {
+func OptionForwardPrimer(primer string, max int) WithOption {
 	f := WithOption(func(opt Options) {
+		var err error
+
+		opt.pointer.forward, err = MakeApatPattern(primer, max)
+		if err != nil {
+			log.Fatalf("error : %v\n", err)
+		}
+
+		opt.pointer.cfwd, err = opt.pointer.forward.ReverseComplement()
+		if err != nil {
+			log.Fatalf("error : %v\n", err)
+		}
 		opt.pointer.forwardError = max
 	})
 
 	return f
 }
 
-// OptionReverseError sets the number of
-// error allowed when matching the reverse
+// OptionForwardError sets the number of
+// error allowed when matching the forward
 // primer.
-func OptionReverseError(max int) WithOption {
+func OptionReversePrimer(primer string, max int) WithOption {
 	f := WithOption(func(opt Options) {
+		var err error
+
+		opt.pointer.reverse, err = MakeApatPattern(primer, max)
+		if err != nil {
+			log.Fatalf("error : %v\n", err)
+		}
+
+		opt.pointer.crev, err = opt.pointer.reverse.ReverseComplement()
+		if err != nil {
+			log.Fatalf("error : %v\n", err)
+		}
 		opt.pointer.reverseError = max
 	})
 
@@ -185,14 +217,37 @@ func OptionBatchSize(size int) WithOption {
 	return f
 }
 
-func _Pcr(seq ApatSequence, sequence obiseq.BioSequence,
-	forward, cfwd, reverse, crev ApatPattern,
+func (options Options) Free() {
+	if options.pointer.forward.pointer != nil {
+		options.pointer.forward.Free()
+	}
+
+	if options.pointer.cfwd.pointer != nil {
+		options.pointer.cfwd.Free()
+	}
+
+	if options.pointer.reverse.pointer != nil {
+		options.pointer.reverse.Free()
+	}
+
+	if options.pointer.crev.pointer != nil {
+		options.pointer.crev.Free()
+	}
+}
+
+func _Pcr(seq ApatSequence,
+	sequence obiseq.BioSequence,
 	opt Options) obiseq.BioSequenceSlice {
 	results := make(obiseq.BioSequenceSlice, 0, 10)
 
+	forward := opt.pointer.forward
+	cfwd := opt.pointer.cfwd
+	reverse := opt.pointer.reverse
+	crev := opt.pointer.crev
+
 	forwardMatches := forward.FindAllIndex(seq)
 
-	if forwardMatches != nil {
+	if len(forwardMatches) > 0 {
 
 		begin := forwardMatches[0][0]
 		length := seq.Length() - begin
@@ -262,7 +317,6 @@ func _Pcr(seq ApatSequence, sequence obiseq.BioSequence,
 	}
 
 	forwardMatches = reverse.FindAllIndex(seq)
-
 	if forwardMatches != nil {
 
 		begin := forwardMatches[0][0]
@@ -340,28 +394,15 @@ func _Pcr(seq ApatSequence, sequence obiseq.BioSequence,
 // obiseq.BioSequence instance. PCR parameters are
 // specified using the corresponding Option functions
 // defined for the PCR algorithm.
-func PCR(sequence obiseq.BioSequence,
-	forward, reverse string, options ...WithOption) obiseq.BioSequenceSlice {
+func PCR(sequence obiseq.BioSequence, options ...WithOption) obiseq.BioSequenceSlice {
 
 	opt := MakeOptions(options)
+	defer opt.Free()
 
 	seq, _ := MakeApatSequence(sequence, opt.Circular())
+	defer seq.Free()
 
-	fwd, _ := MakeApatPattern(forward, opt.ForwardError())
-	rev, _ := MakeApatPattern(reverse, opt.ReverseError())
-	cfwd, _ := fwd.ReverseComplement()
-	crev, _ := rev.ReverseComplement()
-
-	results := _Pcr(seq, sequence,
-		fwd, cfwd, rev, crev,
-		opt)
-
-	seq.Free()
-
-	fwd.Free()
-	rev.Free()
-	cfwd.Free()
-	crev.Free()
+	results := _Pcr(seq, sequence, opt)
 
 	return results
 }
@@ -372,32 +413,24 @@ func PCR(sequence obiseq.BioSequence,
 // specified using the corresponding Option functions
 // defined for the PCR algorithm.
 func PCRSlice(sequences obiseq.BioSequenceSlice,
-	forward, reverse string, options ...WithOption) obiseq.BioSequenceSlice {
+	options ...WithOption) obiseq.BioSequenceSlice {
 
 	results := make(obiseq.BioSequenceSlice, 0, len(sequences))
 
 	opt := MakeOptions(options)
-
-	fwd, _ := MakeApatPattern(forward, opt.ForwardError())
-	rev, _ := MakeApatPattern(reverse, opt.ReverseError())
-	cfwd, _ := fwd.ReverseComplement()
-	crev, _ := rev.ReverseComplement()
+	defer opt.Free()
 
 	if len(sequences) > 0 {
 		seq, _ := MakeApatSequence(sequences[0], opt.Circular())
-		amplicons := _Pcr(seq, sequences[0],
-			fwd, cfwd, rev, crev,
-			opt)
+		amplicons := _Pcr(seq, sequences[0], opt)
 
 		if len(amplicons) > 0 {
 			results = append(results, amplicons...)
 		}
 
 		for _, sequence := range sequences[1:] {
-			seq, _ := MakeApatSequence(sequence, opt.Circular(), seq)
-			amplicons = _Pcr(seq, sequence,
-				fwd, cfwd, rev, crev,
-				opt)
+			seq, _ = MakeApatSequence(sequence, opt.Circular(), seq)
+			amplicons = _Pcr(seq, sequence, opt)
 			if len(amplicons) > 0 {
 				results = append(results, amplicons...)
 			}
@@ -406,21 +439,15 @@ func PCRSlice(sequences obiseq.BioSequenceSlice,
 		seq.Free()
 	}
 
-	fwd.Free()
-	rev.Free()
-	cfwd.Free()
-	crev.Free()
-
 	return results
 }
 
 // PCRSliceWorker is a worker function builder which produce
 // job function usable by the obiseq.MakeISliceWorker function.
-func PCRSliceWorker(forward, reverse string,
-	options ...WithOption) obiseq.SeqSliceWorker {
+func PCRSliceWorker(options ...WithOption) obiseq.SeqSliceWorker {
 
 	worker := func(sequences obiseq.BioSequenceSlice) obiseq.BioSequenceSlice {
-		return PCRSlice(sequences, forward, reverse, options...)
+		return PCRSlice(sequences, options...)
 	}
 
 	return worker

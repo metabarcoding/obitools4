@@ -6,7 +6,8 @@ import (
 	"os"
 	"runtime/trace"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obialign"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiapat"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiformats"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
 
@@ -41,27 +42,17 @@ func main() {
 	// }
 
 	A := []byte("ccgcctccttagaacaggctcctctagaaaaccatagtgggatatctaaagaaggcggagatagaaagagcggttcagcaggaatgccgagatggacggcgtgtgacg")
-	B := []byte("cgccaccaccgagatctacactctttccctacacgacgctcttccgatctccgcctccttagaacaggctcctctagaaaagcatagtggggtatctaaaggaggcgg")
+	// B := []byte("cgccaccaccgagatctacactctttccctacacgacgctcttccgatctccgcctccttagaacaggctcctctagaaaagcatagtggggtatctaaaggaggcgg")
 	sA := obiseq.MakeBioSequence("A", A, "")
-	sB := obiseq.MakeBioSequence("B", B, "")
+	// sB := obiseq.MakeBioSequence("B", B, "")
 
-	fmt.Println(string(sA.Sequence()))
-	fmt.Println(sA.Qualities())
-	fmt.Println(string(sB.Sequence()))
-	fmt.Println(sB.Qualities())
+	pat, _ := obiapat.MakeApatPattern("TCCTTCCAACAGGCTCCTC", 3)
+	as, _ := obiapat.MakeApatSequence(sA, false)
+	fmt.Println(pat.FindAllIndex(as))
 
-	score, path := obialign.PELeftAlign(sA, sB, 2, obialign.NilPEAlignArena)
-	fmt.Printf("Score : %d Path : %v\n", score, path)
-	score, path = obialign.PERightAlign(sA, sB, 2, obialign.NilPEAlignArena)
-	fmt.Printf("Score : %d Path : %v\n", score, path)
+	file, _ := os.Open("sample/wolf_diet_ngsfilter.txt")
+	xxx, _ := obiformats.ReadNGSFilter(file)
 
-	fmt.Println(string(sA.Sequence()))
-	sA.ReverseComplement(true)
-	fmt.Println(string(sA.Sequence()))
-	fmt.Println(string(sA.Id()))
-
-	sA.Reset()
-	fmt.Println(sA.Length())
-	fmt.Println(sA.String())
+	fmt.Println(xxx)
 
 }

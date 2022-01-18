@@ -202,8 +202,6 @@ func (pattern ApatPattern) FindAllIndex(sequence ApatSequence, limits ...int) (l
 		C.int32_t(begin),
 		C.int32_t(length+C.MAX_PAT_LEN)))
 
-	//log.Printf("match count : %d\n", nhits)
-
 	if nhits == 0 {
 		return nil
 	}

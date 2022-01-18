@@ -173,16 +173,11 @@ func __is_false__(text []byte) bool {
 		bytes.Equal(text, __FALSE__)
 }
 
-func ParseFastSeqOBIHeader(sequence obiseq.BioSequence) {
-	definition := []byte(sequence.Definition())
-	annotations := sequence.Annotations()
+func ParseOBIFeatures(text string, annotations obiseq.Annotation) string {
 
-	// all_matches := __obi_header_pattern__.FindAllSubmatchIndex(definition, -1)
-
+	definition := []byte(text)
 	d := definition
 
-	//for m := __obi_header_key_pattern__.FindIndex(definition); len(m) > 0; {
-	//fmt.Println(string(definition[0:20]), __match__key__(definition))
 	for m := __match__key__(definition); len(m) > 0; {
 		var bvalue []byte
 		var value interface{}
@@ -263,7 +258,16 @@ func ParseFastSeqOBIHeader(sequence obiseq.BioSequence) {
 		m = __match__key__(d)
 	}
 
-	sequence.SetDefinition(string(bytes.TrimSpace(d)))
+	return string(bytes.TrimSpace(d))
+}
+
+func ParseFastSeqOBIHeader(sequence obiseq.BioSequence) {
+	annotations := sequence.Annotations()
+
+	definition := ParseOBIFeatures(sequence.Definition(),
+		annotations)
+
+	sequence.SetDefinition(definition)
 }
 
 func FormatFastSeqOBIHeader(sequence obiseq.BioSequence) string {

@@ -122,10 +122,10 @@ func WriteFastqBatch(iterator obiseq.IBioSequenceBatch, file io.Writer, options 
 	}
 
 	log.Println("Start of the fastq file writing")
+	go ff(iterator)
 	for i := 0; i < nwriters-1; i++ {
 		go ff(iterator.Split())
 	}
-	go ff(iterator)
 
 	next_to_send := 0
 	received := make(map[int]FileChunck, 100)
