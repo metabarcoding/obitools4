@@ -28,8 +28,12 @@ type ApatPattern struct {
 
 // ApatSequence stores sequence in structure usable by the
 // Apat algorithm functions and methods
-type ApatSequence struct {
+type _ApatSequence struct {
 	pointer *C.Seq
+}
+
+type ApatSequence struct {
+	pointer *_ApatSequence
 }
 
 // NilApatPattern is the nil instance of the BuildAlignArena
@@ -127,10 +131,12 @@ func (pattern ApatPattern) Length() int {
 //
 func (pattern ApatPattern) Free() {
 	// log.Printf("Free called on %s\n", C.GoString(pattern.pointer.pointer.cpat))
-	C.free(unsafe.Pointer(pattern.pointer.pointer))
-	runtime.SetFinalizer(pattern.pointer, nil)
+	if pattern.pointer != nil {
+		C.free(unsafe.Pointer(pattern.pointer.pointer))
+		runtime.SetFinalizer(pattern.pointer, nil)
 
-	pattern.pointer = nil
+		pattern.pointer = nil
+	}
 }
 
 // Print method prints the ApatPattern to the standard output.
@@ -163,32 +169,48 @@ func MakeApatSequence(sequence obiseq.BioSequence, circular bool, recycle ...Apa
 	var out *C.Seq
 
 	if len(recycle) > 0 {
-		out = recycle[0].pointer
+		out = recycle[0].pointer.pointer
 	} else {
 		out = nil
 	}
 
-	pseq := C.new_apatseq((*C.char)(p), C.int32_t(ic), C.int32_t(seqlen),
+	pseqc := C.new_apatseq((*C.char)(p), C.int32_t(ic), C.int32_t(seqlen),
 		(*C.Seq)(out),
 		&errno, &errmsg)
 
-	if pseq == nil {
+	if pseqc == nil {
 		message := C.GoString(errmsg)
 		C.free(unsafe.Pointer(errmsg))
 		return NilApatSequence, errors.New(message)
 	}
 
-	seq := ApatSequence{pointer: pseq}
+	if out == nil {
+		// log.Printf("Make ApatSeq called on %p -> %p\n", out, pseqc)
+		seq := _ApatSequence{pointer: pseqc}
+
+		runtime.SetFinalizer(&seq, func(p *_ApatSequence) {
+			var errno C.int32_t
+			var errmsg *C.char
+			// log.Printf("Finaliser called on %p\n", p.pointer)
+
+			if p != nil && p.pointer != nil {
+				C.delete_apatseq(p.pointer, &errno, &errmsg)
+			}
+		})
+
+		return ApatSequence{&seq}, nil
+	}
+
+	recycle[0].pointer.pointer = pseqc
 
 	//log.Println(C.GoString(pseq.cseq))
-	// runtime.SetFinalizer(&seq, __free_apat_sequence__)
 
-	return seq, nil
+	return ApatSequence{recycle[0].pointer}, nil
 }
 
 // Length method returns the length of the ApatSequence.
 func (sequence ApatSequence) Length() int {
-	return int(sequence.pointer.seqlen)
+	return int(sequence.pointer.pointer.seqlen)
 }
 
 // Free method ensure that the C structure wrapped is
@@ -197,10 +219,16 @@ func (sequence ApatSequence) Free() {
 	var errno C.int32_t
 	var errmsg *C.char
 
-	C.delete_apatseq(sequence.pointer,
-		&errno, &errmsg)
+	// log.Printf("Free called on %p\n", sequence.pointer.pointer)
 
-	sequence.pointer = nil
+	if sequence.pointer != nil && sequence.pointer.pointer != nil {
+		C.delete_apatseq(sequence.pointer.pointer,
+			&errno, &errmsg)
+
+		runtime.SetFinalizer(sequence.pointer, nil)
+
+		sequence.pointer = nil
+	}
 }
 
 // FindAllIndex methood returns the position of every occurrences of the
@@ -226,7 +254,7 @@ func (pattern ApatPattern) FindAllIndex(sequence ApatSequence, limits ...int) (l
 		length = limits[1]
 	}
 
-	nhits := int(C.ManberAll(sequence.pointer,
+	nhits := int(C.ManberAll(sequence.pointer.pointer,
 		pattern.pointer.pointer,
 		0,
 		C.int32_t(begin),
@@ -236,8 +264,8 @@ func (pattern ApatPattern) FindAllIndex(sequence ApatSequence, limits ...int) (l
 		return nil
 	}
 
-	stktmp := (*[1 << 30]int32)(unsafe.Pointer(sequence.pointer.hitpos[0].val))
-	errtmp := (*[1 << 30]int32)(unsafe.Pointer(sequence.pointer.hiterr[0].val))
+	stktmp := (*[1 << 30]int32)(unsafe.Pointer(sequence.pointer.pointer.hitpos[0].val))
+	errtmp := (*[1 << 30]int32)(unsafe.Pointer(sequence.pointer.pointer.hiterr[0].val))
 	patlen := int(pattern.pointer.pointer.patlen)
 
 	for i := 0; i < nhits; i++ {

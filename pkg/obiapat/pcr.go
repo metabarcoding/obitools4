@@ -409,7 +409,7 @@ func _PCRSlice(sequences obiseq.BioSequenceSlice,
 			}
 		}
 
-		seq.Free()
+		// seq.Free()
 	}
 
 	return results
