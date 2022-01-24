@@ -28,21 +28,21 @@ func OptionSet(options *getoptions.GetOpt) {
 
 // Returns true if the number of reads described in the
 // file has to be printed.
-func IsPrintingReadCount() bool {
+func CLIIsPrintingReadCount() bool {
 	return __read_count__ ||
 		!(__read_count__ || __variant_count__ || __symbol_count__)
 }
 
 // Returns true if the number of sequence variants described in the
 // file has to be printed.
-func IsPrintingVariantCount() bool {
+func CLIIsPrintingVariantCount() bool {
 	return __variant_count__ ||
 		!(__read_count__ || __variant_count__ || __symbol_count__)
 }
 
 // Returns true if the number of symbols (sum of the sequence lengths)
 // described in the file has to be printed.
-func IsPrintingSymbolCount() bool {
+func CLIIsPrintingSymbolCount() bool {
 	return __symbol_count__ ||
 		!(__read_count__ || __variant_count__ || __symbol_count__)
 }

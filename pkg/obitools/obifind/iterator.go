@@ -22,7 +22,7 @@ func IFilterRankRestriction() func(*obitax.ITaxonSet) *obitax.ITaxonSet {
 }
 
 func ITaxonNameMatcher() (func(string) *obitax.ITaxonSet, error) {
-	taxonomy, err := LoadSelectedTaxonomy()
+	taxonomy, err := CLILoadSelectedTaxonomy()
 
 	if err != nil {
 		return nil, err
@@ -37,7 +37,7 @@ func ITaxonNameMatcher() (func(string) *obitax.ITaxonSet, error) {
 
 func ITaxonRestrictions() (func(*obitax.ITaxonSet) *obitax.ITaxonSet, error) {
 
-	clades, err := TaxonomicalRestrictions()
+	clades, err := CLITaxonomicalRestrictions()
 
 	if err != nil {
 		return nil, err

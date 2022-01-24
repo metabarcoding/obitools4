@@ -44,16 +44,16 @@ func LoadTaxonomyOptionSet(options *getoptions.GetOpt, required, alternatiive bo
 		options.Description("Restrict output to some subclades."))
 }
 
-func SelectedNCBITaxDump() string {
+func CLISelectedNCBITaxDump() string {
 	return __taxdump__
 }
 
-func AreAlternativeNamesSelected() bool {
+func CLIAreAlternativeNamesSelected() bool {
 	return __alternative_name__
 }
 
-func TaxonomicalRestrictions() (*obitax.TaxonSet, error) {
-	taxonomy, err := LoadSelectedTaxonomy()
+func CLITaxonomicalRestrictions() (*obitax.TaxonSet, error) {
+	taxonomy, err := CLILoadSelectedTaxonomy()
 
 	if err != nil {
 		return nil, err
@@ -73,12 +73,12 @@ func TaxonomicalRestrictions() (*obitax.TaxonSet, error) {
 	return &ts, nil
 }
 
-func LoadSelectedTaxonomy() (*obitax.Taxonomy, error) {
-	if SelectedNCBITaxDump() != "" {
+func CLILoadSelectedTaxonomy() (*obitax.Taxonomy, error) {
+	if CLISelectedNCBITaxDump() != "" {
 		if __selected_taxonomy__ == nil {
 			var err error
-			__selected_taxonomy__, err = ncbitaxdump.LoadNCBITaxDump(SelectedNCBITaxDump(),
-				!AreAlternativeNamesSelected())
+			__selected_taxonomy__, err = ncbitaxdump.LoadNCBITaxDump(CLISelectedNCBITaxDump(),
+				!CLIAreAlternativeNamesSelected())
 			if err != nil {
 				return nil, err
 			}
@@ -105,10 +105,10 @@ func OptionSet(options *getoptions.GetOpt) {
 		options.Description("Restrict to the given taxonomic rank."))
 }
 
-func RequestsPathForTaxid() int {
+func CLIRequestsPathForTaxid() int {
 	return __taxid_path__
 }
 
-func RequestsSonsForTaxid() int {
+func CLIRequestsSonsForTaxid() int {
 	return __taxid_sons__
 }

@@ -49,15 +49,15 @@ func main() {
 		(&s).Recycle()
 	}
 
-	if obicount.IsPrintingVariantCount() {
+	if obicount.CLIIsPrintingVariantCount() {
 		fmt.Printf(" %d", nvariant)
 	}
 
-	if obicount.IsPrintingReadCount() {
+	if obicount.CLIIsPrintingReadCount() {
 		fmt.Printf(" %d", nread)
 	}
 
-	if obicount.IsPrintingSymbolCount() {
+	if obicount.CLIIsPrintingSymbolCount() {
 		fmt.Printf(" %d", nsymbol)
 	}
 

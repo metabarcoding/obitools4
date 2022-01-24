@@ -217,24 +217,6 @@ func OptionBatchSize(size int) WithOption {
 	return f
 }
 
-func (options Options) Free() {
-	if options.pointer.forward.pointer != nil {
-		options.pointer.forward.Free()
-	}
-
-	if options.pointer.cfwd.pointer != nil {
-		options.pointer.cfwd.Free()
-	}
-
-	if options.pointer.reverse.pointer != nil {
-		options.pointer.reverse.Free()
-	}
-
-	if options.pointer.crev.pointer != nil {
-		options.pointer.crev.Free()
-	}
-}
-
 func _Pcr(seq ApatSequence,
 	sequence obiseq.BioSequence,
 	opt Options) obiseq.BioSequenceSlice {
@@ -397,12 +379,38 @@ func _Pcr(seq ApatSequence,
 func PCR(sequence obiseq.BioSequence, options ...WithOption) obiseq.BioSequenceSlice {
 
 	opt := MakeOptions(options)
-	defer opt.Free()
 
 	seq, _ := MakeApatSequence(sequence, opt.Circular())
 	defer seq.Free()
 
 	results := _Pcr(seq, sequence, opt)
+
+	return results
+}
+
+func _PCRSlice(sequences obiseq.BioSequenceSlice,
+	options Options) obiseq.BioSequenceSlice {
+
+	results := make(obiseq.BioSequenceSlice, 0, len(sequences))
+
+	if len(sequences) > 0 {
+		seq, _ := MakeApatSequence(sequences[0], options.Circular())
+		amplicons := _Pcr(seq, sequences[0], options)
+
+		if len(amplicons) > 0 {
+			results = append(results, amplicons...)
+		}
+
+		for _, sequence := range sequences[1:] {
+			seq, _ = MakeApatSequence(sequence, options.Circular(), seq)
+			amplicons = _Pcr(seq, sequence, options)
+			if len(amplicons) > 0 {
+				results = append(results, amplicons...)
+			}
+		}
+
+		seq.Free()
+	}
 
 	return results
 }
@@ -415,39 +423,17 @@ func PCR(sequence obiseq.BioSequence, options ...WithOption) obiseq.BioSequenceS
 func PCRSlice(sequences obiseq.BioSequenceSlice,
 	options ...WithOption) obiseq.BioSequenceSlice {
 
-	results := make(obiseq.BioSequenceSlice, 0, len(sequences))
-
 	opt := MakeOptions(options)
-	defer opt.Free()
-
-	if len(sequences) > 0 {
-		seq, _ := MakeApatSequence(sequences[0], opt.Circular())
-		amplicons := _Pcr(seq, sequences[0], opt)
-
-		if len(amplicons) > 0 {
-			results = append(results, amplicons...)
-		}
-
-		for _, sequence := range sequences[1:] {
-			seq, _ = MakeApatSequence(sequence, opt.Circular(), seq)
-			amplicons = _Pcr(seq, sequence, opt)
-			if len(amplicons) > 0 {
-				results = append(results, amplicons...)
-			}
-		}
-
-		seq.Free()
-	}
-
-	return results
+	return _PCRSlice(sequences, opt)
 }
 
 // PCRSliceWorker is a worker function builder which produce
 // job function usable by the obiseq.MakeISliceWorker function.
 func PCRSliceWorker(options ...WithOption) obiseq.SeqSliceWorker {
 
+	opt := MakeOptions(options)
 	worker := func(sequences obiseq.BioSequenceSlice) obiseq.BioSequenceSlice {
-		return PCRSlice(sequences, options...)
+		return _PCRSlice(sequences, opt)
 	}
 
 	return worker

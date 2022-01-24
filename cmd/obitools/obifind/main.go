@@ -22,13 +22,13 @@ func main() {
 	}
 
 	switch {
-	case obifind.RequestsPathForTaxid() >= 0:
-		taxonomy, err := obifind.LoadSelectedTaxonomy()
+	case obifind.CLIRequestsPathForTaxid() >= 0:
+		taxonomy, err := obifind.CLILoadSelectedTaxonomy()
 		if err != nil {
 			fmt.Printf("%+v", err)
 		}
 
-		taxon, err := taxonomy.Taxon(obifind.RequestsPathForTaxid())
+		taxon, err := taxonomy.Taxon(obifind.CLIRequestsPathForTaxid())
 
 		if err != nil {
 			fmt.Printf("%+v", err)
@@ -44,7 +44,7 @@ func main() {
 			fmt.Sprintf("path:%d", taxon.Taxid()))
 
 	case len(args) == 0:
-		taxonomy, err := obifind.LoadSelectedTaxonomy()
+		taxonomy, err := obifind.CLILoadSelectedTaxonomy()
 		if err != nil {
 			fmt.Printf("%+v", err)
 		}

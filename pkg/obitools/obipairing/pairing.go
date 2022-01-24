@@ -105,7 +105,7 @@ func JoinPairedSequence(seqA, seqB obiseq.BioSequence, inplace bool) obiseq.BioS
 // input sequence.
 //
 func AssemblePESequences(seqA, seqB obiseq.BioSequence,
-	gap float64, delta, overlapMin int, withStats bool,
+	gap float64, delta, minOverlap int, minIdentity float64,withStats bool,
 	inplace bool,
 	arenaAlign obialign.PEAlignArena) obiseq.BioSequence {
 
@@ -119,8 +119,9 @@ func AssemblePESequences(seqA, seqB obiseq.BioSequence,
 	}
 	lcons := cons.Length()
 	aliLength := lcons - _Abs(left) - _Abs(right)
+	identity := float64(match)/float64(aliLength)
 
-	if aliLength >= overlapMin {
+	if aliLength >= minOverlap && identity >= minIdentity {
 		if withStats {
 			annot := cons.Annotations()
 			annot["mode"] = "alignment"
@@ -203,7 +204,7 @@ func AssemblePESequences(seqA, seqB obiseq.BioSequence,
 // each pair of processed sequences produces one sequence in the result iterator.
 //
 func IAssemblePESequencesBatch(iterator obiseq.IPairedBioSequenceBatch,
-	gap float64, delta, minOverlap int, withStats bool, sizes ...int) obiseq.IBioSequenceBatch {
+	gap float64, delta, minOverlap int, minIdentity float64, withStats bool, sizes ...int) obiseq.IBioSequenceBatch {
 
 	nworkers := runtime.NumCPU() * 3 / 2
 	buffsize := iterator.BufferSize()
@@ -246,7 +247,7 @@ func IAssemblePESequencesBatch(iterator obiseq.IPairedBioSequenceBatch,
 			processed := 0
 			for i, A := range batch.Forward() {
 				B := batch.Reverse()[i]
-				cons[i] = AssemblePESequences(A, B, gap, delta, minOverlap, withStats, true, arena)
+				cons[i] = AssemblePESequences(A, B, gap, delta, minOverlap, minIdentity, withStats, true, arena)
 				if i%59 == 0 {
 					bar.Add(59)
 					processed += 59
