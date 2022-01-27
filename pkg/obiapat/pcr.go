@@ -376,7 +376,7 @@ func _Pcr(seq ApatSequence,
 // obiseq.BioSequence instance. PCR parameters are
 // specified using the corresponding Option functions
 // defined for the PCR algorithm.
-func PCR(sequence obiseq.BioSequence, options ...WithOption) obiseq.BioSequenceSlice {
+func PCRSim(sequence obiseq.BioSequence, options ...WithOption) obiseq.BioSequenceSlice {
 
 	opt := MakeOptions(options)
 
