@@ -31,4 +31,5 @@ func main() {
 	sequences, _ := obiconvert.ReadBioSequencesBatch(args...)
 	amplicons, _ := obimultiplex.IExtractBarcodeBatches(sequences)
 	obiconvert.WriteBioSequencesBatch(amplicons, true)
+	amplicons.Wait()
 }

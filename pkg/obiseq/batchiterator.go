@@ -372,3 +372,70 @@ func (iterator IBioSequenceBatch) PairWith(reverse IBioSequenceBatch, sizes ...i
 
 	return newIter
 }
+
+func (iterator IBioSequenceBatch) DivideOn(predicate SequencePredicate,
+	size int, sizes ...int) (IBioSequenceBatch, IBioSequenceBatch) {
+	buffsize := iterator.BufferSize()
+
+	if len(sizes) > 0 {
+		buffsize = sizes[1]
+	}
+
+	trueIter := MakeIBioSequenceBatch(buffsize)
+	falseIter := MakeIBioSequenceBatch(buffsize)
+
+	trueIter.Add(1)
+	falseIter.Add(1)
+
+	go func() {
+		trueIter.Wait()
+		falseIter.Wait()
+		close(trueIter.Channel())
+		close(falseIter.Channel())
+	}()
+
+	go func() {
+		trueOrder := 0
+		falseOrder := 0
+		iterator = iterator.SortBatches()
+
+		trueSlice := make(BioSequenceSlice, 0, size)
+		falseSlice := make(BioSequenceSlice, 0, size)
+
+		for iterator.Next() {
+			seqs := iterator.Get()
+			for _, s := range seqs.slice {
+				if predicate(s) {
+					trueSlice = append(trueSlice, s)
+				} else {
+					falseSlice = append(falseSlice, s)
+				}
+
+				if len(trueSlice) == size {
+					trueIter.Channel() <- MakeBioSequenceBatch(trueOrder, trueSlice...)
+					trueOrder++
+					trueSlice = make(BioSequenceSlice, 0, size)
+				}
+
+				if len(falseSlice) == size {
+					falseIter.Channel() <- MakeBioSequenceBatch(falseOrder, falseSlice...)
+					falseOrder++
+					falseSlice = make(BioSequenceSlice, 0, size)
+				}
+			}
+		}
+
+		if len(trueSlice) > 0 {
+			trueIter.Channel() <- MakeBioSequenceBatch(trueOrder, trueSlice...)
+		}
+
+		if len(falseSlice) > 0 {
+			falseIter.Channel() <- MakeBioSequenceBatch(falseOrder, falseSlice...)
+		}
+
+		trueIter.Done()
+		falseIter.Done()
+	}()
+
+	return trueIter, falseIter
+}

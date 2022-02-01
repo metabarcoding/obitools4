@@ -80,6 +80,10 @@ func WriteSequenceBatch(iterator obiseq.IBioSequenceBatch,
 		return newIter, err
 	}
 
+	if iterator.Finished() {
+		return iterator, nil
+	}
+
 	return obiseq.NilIBioSequenceBatch, fmt.Errorf("input iterator not ready")
 }
 
