@@ -27,11 +27,20 @@ func (sequence BioSequence) Subsequence(from, to int, circular bool) (BioSequenc
 		newSeq = MakeEmptyBioSequence()
 		newSeq.Write(sequence.Sequence()[from:to])
 
+		if sequence.HasQualities() {
+			newSeq.WriteQualities(sequence.Qualities()[from:to])
+		}
+
 		newSeq.sequence.id = fmt.Sprintf("%s_sub[%d..%d]", sequence.Id(), from+1, to)
 		newSeq.sequence.definition = sequence.sequence.definition
 	} else {
 		newSeq, _ = sequence.Subsequence(from, sequence.Length(), false)
 		newSeq.Write(sequence.Sequence()[0:to])
+
+		if sequence.HasQualities() {
+			newSeq.WriteQualities(sequence.Qualities()[0:to])
+		}
+
 	}
 
 	if len(sequence.Annotations()) > 0 {
