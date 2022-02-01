@@ -61,11 +61,13 @@ func (sequence *BioSequence) Recycle() {
 
 	pseq := sequence.sequence
 
-	RecycleSlice(pseq.sequence)
-	RecycleSlice(pseq.feature)
-	RecycleSlice(pseq.feature)
+	if pseq != nil {
+		RecycleSlice(pseq.sequence)
+		RecycleSlice(pseq.feature)
+		RecycleSlice(pseq.feature)
 
-	RecycleAnnotation(pseq.annotations)
+		RecycleAnnotation(pseq.annotations)
+	}
 
 	sequence.sequence = nil
 }
@@ -132,9 +134,14 @@ func (s BioSequence) HasAnnotation() bool {
 }
 
 func (s BioSequence) Annotations() Annotation {
+	if s.sequence == nil {
+		return nil
+	}
+
 	if s.sequence.annotations == nil {
 		s.sequence.annotations = GetAnnotation()
 	}
+
 	return s.sequence.annotations
 }
 

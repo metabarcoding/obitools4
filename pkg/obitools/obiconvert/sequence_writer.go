@@ -24,14 +24,14 @@ func WriteBioSequences(iterator obiseq.IBioSequence, filenames ...string) error 
 		opts = append(opts, obiformats.OptionsFastSeqHeaderFormat(obiformats.FormatFastSeqJsonHeader))
 	}
 
-	nworkers := obioptions.ParallelWorkers() / 4
+	nworkers := obioptions.CLIParallelWorkers() / 4
 	if nworkers < 2 {
 		nworkers = 2
 	}
 
 	opts = append(opts, obiformats.OptionsParallelWorkers(nworkers))
-	opts = append(opts, obiformats.OptionsBufferSize(obioptions.BufferSize()))
-	opts = append(opts, obiformats.OptionsBatchSize(obioptions.BatchSize()))
+	opts = append(opts, obiformats.OptionsBufferSize(obioptions.CLIBufferSize()))
+	opts = append(opts, obiformats.OptionsBatchSize(obioptions.CLIBatchSize()))
 
 	opts = append(opts, obiformats.OptionsQualityShift(OutputQualityShift()))
 
@@ -84,14 +84,14 @@ func WriteBioSequencesBatch(iterator obiseq.IBioSequenceBatch,
 		opts = append(opts, obiformats.OptionsFastSeqHeaderFormat(obiformats.FormatFastSeqJsonHeader))
 	}
 
-	nworkers := obioptions.ParallelWorkers() / 4
+	nworkers := obioptions.CLIParallelWorkers() / 4
 	if nworkers < 2 {
 		nworkers = 2
 	}
 
 	opts = append(opts, obiformats.OptionsParallelWorkers(nworkers))
-	opts = append(opts, obiformats.OptionsBufferSize(obioptions.BufferSize()))
-	opts = append(opts, obiformats.OptionsBatchSize(obioptions.BatchSize()))
+	opts = append(opts, obiformats.OptionsBufferSize(obioptions.CLIBufferSize()))
+	opts = append(opts, obiformats.OptionsBatchSize(obioptions.CLIBatchSize()))
 
 	opts = append(opts, obiformats.OptionsQualityShift(OutputQualityShift()))
 

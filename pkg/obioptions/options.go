@@ -41,23 +41,23 @@ func GenerateOptionParser(optionset ...func(*getoptions.GetOpt)) ArgumentParser 
 }
 
 // Predicate indicating if the debug mode is activated.
-func IsDebugMode() bool {
+func CLIIsDebugMode() bool {
 	return _Debug
 }
 
-// ParallelWorkers returns the number of parallel workers requested by
+// CLIParallelWorkers returns the number of parallel workers requested by
 // the command line option --workers|-w.
-func ParallelWorkers() int {
+func CLIParallelWorkers() int {
 	return _ParallelWorkers
 }
 
-// BufferSize returns the expeted channel buffer size for obitools
-func BufferSize() int {
+// CLIBufferSize returns the expeted channel buffer size for obitools
+func CLIBufferSize() int {
 	return _BufferSize
 }
 
-// BatchSize returns the expeted size of the sequence batches
-func BatchSize() int {
+// CLIBatchSize returns the expeted size of the sequence batches
+func CLIBatchSize() int {
 	return _BatchSize
 }
 

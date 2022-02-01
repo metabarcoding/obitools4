@@ -36,10 +36,12 @@ var BioSequenceAnnotationPool = sync.Pool{
 }
 
 func RecycleAnnotation(a Annotation) {
-	for k := range a {
-		delete(a, k)
+	if a != nil {
+		for k := range a {
+			delete(a, k)
+		}
+		BioSequenceAnnotationPool.Put(&(a))
 	}
-	BioSequenceAnnotationPool.Put(&(a))
 }
 
 func GetAnnotation(values ...Annotation) Annotation {

@@ -39,7 +39,7 @@ func main() {
 		obipairing.MinOverlap(),
 		obipairing.MinIdentity(),
 		obipairing.WithStats(),
-		obioptions.ParallelWorkers(),
+		obioptions.CLIParallelWorkers(),
 	)
 	obiconvert.WriteBioSequencesBatch(paired, true)
 }

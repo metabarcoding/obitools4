@@ -52,7 +52,18 @@ func main() {
 
 	file, _ := os.Open("sample/wolf_diet_ngsfilter.txt")
 	xxx, _ := obiformats.ReadNGSFilter(file)
+	xxx.Compile(2)
+	fmt.Printf("%v\n==================\n", xxx)
 
-	fmt.Println(xxx)
+	for pp, m := range xxx {
+		fmt.Printf("%v %v\n", pp, *m)
+	}
 
+	seqfile, _ := obiformats.ReadFastSeqFromFile("xxxx.fastq")
+
+	for seqfile.Next() {
+		seq := seqfile.Get()
+		barcode, _ := xxx.ExtractBarcode(seq, true)
+		fmt.Println(obiformats.FormatFasta(barcode, obiformats.FormatFastSeqOBIHeader))
+	}
 }

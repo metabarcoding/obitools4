@@ -5,7 +5,7 @@ import (
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obioptions"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obiconvert"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obipcr"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obimultiplex"
 )
 
 func main() {
@@ -24,11 +24,11 @@ func main() {
 	// trace.Start(ftrace)
 	// defer trace.Stop()
 
-	optionParser := obioptions.GenerateOptionParser(obipcr.OptionSet)
+	optionParser := obioptions.GenerateOptionParser(obimultiplex.OptionSet)
 
 	_, args, _ := optionParser(os.Args)
 
 	sequences, _ := obiconvert.ReadBioSequencesBatch(args...)
-	amplicons, _ := obipcr.PCR(sequences)
+	amplicons, _ := obimultiplex.IExtractBarcodeBatches(sequences)
 	obiconvert.WriteBioSequencesBatch(amplicons, true)
 }
