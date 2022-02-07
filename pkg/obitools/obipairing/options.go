@@ -30,7 +30,7 @@ func PairingOptionSet(options *getoptions.GetOpt) {
 		options.Alias("O"),
 		options.Description("Minimum ovelap between both the reads to consider the aligment"))
 	options.Float64Var(&_MinIdentity, "min-identity", _MinIdentity,
-		options.Alias("O"),
+		options.Alias("X"),
 		options.Description("Minimum identity between ovelaped regions of the reads to consider the aligment"))
 	options.Float64Var(&_GapPenality, "gap-penality", _GapPenality,
 		options.Alias("G"),

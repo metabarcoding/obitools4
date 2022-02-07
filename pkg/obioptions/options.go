@@ -27,7 +27,6 @@ func GenerateOptionParser(optionset ...func(*getoptions.GetOpt)) ArgumentParser 
 		options.Description("Number of parallele threads computing the result"))
 
 	options.IntVar(&_MaxAllowedCPU, "max-cpu", _MaxAllowedCPU,
-		options.Alias("w"),
 		options.Description("Number of parallele threads computing the result"))
 
 	for _, o := range optionset {

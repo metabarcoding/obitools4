@@ -7,7 +7,6 @@ import (
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obioptions"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obiconvert"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obimultiplex"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obipairing"
 )
 
@@ -29,7 +28,7 @@ func main() {
 	trace.Start(ftrace)
 	defer trace.Stop()
 
-	optionParser := obioptions.GenerateOptionParser(obimultiplex.OptionSet)
+	optionParser := obioptions.GenerateOptionParser(obipairing.OptionSet)
 
 	optionParser(os.Args)
 	pairs, _ := obipairing.IBatchPairedSequence()

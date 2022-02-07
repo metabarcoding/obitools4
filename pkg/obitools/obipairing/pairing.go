@@ -105,7 +105,7 @@ func JoinPairedSequence(seqA, seqB obiseq.BioSequence, inplace bool) obiseq.BioS
 // input sequence.
 //
 func AssemblePESequences(seqA, seqB obiseq.BioSequence,
-	gap float64, delta, minOverlap int, minIdentity float64,withStats bool,
+	gap float64, delta, minOverlap int, minIdentity float64, withStats bool,
 	inplace bool,
 	arenaAlign obialign.PEAlignArena) obiseq.BioSequence {
 
@@ -119,7 +119,7 @@ func AssemblePESequences(seqA, seqB obiseq.BioSequence,
 	}
 	lcons := cons.Length()
 	aliLength := lcons - _Abs(left) - _Abs(right)
-	identity := float64(match)/float64(aliLength)
+	identity := float64(match) / float64(aliLength)
 
 	if aliLength >= minOverlap && identity >= minIdentity {
 		if withStats {
@@ -268,7 +268,6 @@ func IAssemblePESequencesBatch(iterator obiseq.IPairedBioSequenceBatch,
 		go f(iterator.Split(), i)
 	}
 	go f(iterator, nworkers-1)
-
 	return newIter
 
 }

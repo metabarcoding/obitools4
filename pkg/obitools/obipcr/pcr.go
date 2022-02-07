@@ -14,11 +14,11 @@ func PCR(iterator obiseq.IBioSequenceBatch) (obiseq.IBioSequenceBatch, error) {
 
 	opts = append(opts,
 		obiapat.OptionForwardPrimer(
-			ForwardPrimer(), 
+			ForwardPrimer(),
 			AllowedMismatch(),
 		),
 		obiapat.OptionReversePrimer(
-			ReversePrimer(), 
+			ReversePrimer(),
 			AllowedMismatch(),
 		),
 	)
