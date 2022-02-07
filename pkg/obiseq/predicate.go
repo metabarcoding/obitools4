@@ -2,7 +2,6 @@ package obiseq
 
 type SequencePredicate func(BioSequence) bool
 
-
 func (predicate1 SequencePredicate) And(predicate2 SequencePredicate) SequencePredicate {
 	f := func(sequence BioSequence) bool {
 		return predicate1(sequence) && predicate2(sequence)
@@ -74,4 +73,3 @@ func IsShorterOrEqualTo(length int) SequencePredicate {
 
 	return f
 }
-
