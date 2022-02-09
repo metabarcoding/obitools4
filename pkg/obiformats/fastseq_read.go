@@ -122,9 +122,10 @@ func ReadFastSeqBatchFromFile(filename string, options ...WithOption) (obiseq.IB
 
 	go _FastseqReader(pointer, newIter, opt.BatchSize())
 	parser := opt.ParseFastSeqHeader()
+
 	if parser != nil {
 		return IParseFastSeqHeaderBatch(newIter, options...), err
-	}
+	} 
 
 	return newIter, err
 }

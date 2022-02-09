@@ -1,6 +1,7 @@
 package obiformats
 
 import (
+	"log"
 	"strings"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
@@ -40,7 +41,11 @@ func _parse_json_header_(header string, annotations obiseq.Annotation) string {
 
 	stop++
 
-	json.Unmarshal([]byte(header)[start:stop], annotations)
+	err := json.Unmarshal([]byte(header)[start:stop], &annotations)
+	if err != nil {
+		log.Fatalf("annotation parsing error on %s : %v\n", header, err)
+	}
+
 	return strings.TrimSpace(header[stop:])
 }
 
