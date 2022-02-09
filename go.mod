@@ -5,7 +5,6 @@ go 1.17
 require (
 	github.com/DavidGamba/go-getoptions v0.25.3
 	github.com/goccy/go-json v0.9.4
-	github.com/renproject/surge v1.2.7
 	github.com/schollz/progressbar/v3 v3.8.6
 )
 
