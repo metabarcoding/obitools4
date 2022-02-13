@@ -54,6 +54,18 @@ func InterfaceToInt(i interface{}) (val int, err error) {
 	return
 }
 
+func IsAnInt(i interface{}) bool {
+
+	switch i.(type) {
+	case int,
+		int8, int16, int32, int64,
+		uint8, uint16, uint32, uint64:
+		return true
+	default:
+		return false
+	}
+}
+
 // CopyMap makes a deep copy of a map[string]interface{}.
 func CopyMap(dest, src map[string]interface{}) {
 	buf := new(bytes.Buffer)

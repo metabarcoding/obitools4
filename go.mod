@@ -6,6 +6,7 @@ require (
 	github.com/DavidGamba/go-getoptions v0.25.3
 	github.com/goccy/go-json v0.9.4
 	github.com/schollz/progressbar/v3 v3.8.6
+	github.com/tevino/abool/v2 v2.0.1
 )
 
 require (

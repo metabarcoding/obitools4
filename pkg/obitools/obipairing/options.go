@@ -18,10 +18,12 @@ func PairingOptionSet(options *getoptions.GetOpt) {
 	options.StringSliceVar(&_ForwardFiles, "forward-reads",
 		1, 1000,
 		options.Alias("F"),
+		options.Required("You must provide at least one forward file"),
 		options.Description("The file names containing the forward reads"))
 	options.StringSliceVar(&_ReverseFiles, "reverse-reads",
 		1, 1000,
 		options.Alias("R"),
+		options.Required("You must provide at least one reverse file"),
 		options.Description("The file names containing the reverse reads"))
 	options.IntVar(&_Delta, "delta", _Delta,
 		options.Alias("D"),

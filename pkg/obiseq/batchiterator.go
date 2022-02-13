@@ -1,8 +1,12 @@
 package obiseq
 
 import (
+	"fmt"
 	"log"
 	"sync"
+	"sync/atomic"
+
+	"github.com/tevino/abool/v2"
 )
 
 type BioSequenceBatch struct {
@@ -36,40 +40,45 @@ func (batch BioSequenceBatch) IsNil() bool {
 
 // Structure implementing an iterator over bioseq.BioSequenceBatch
 // based on a channel.
-type __ibiosequencebatch__ struct {
-	channel     chan BioSequenceBatch
-	current     BioSequenceBatch
-	pushBack    bool
-	all_done    *sync.WaitGroup
-	buffer_size int
-	finished    bool
-	p_finished  *bool
+type _IBioSequenceBatch struct {
+	channel         chan BioSequenceBatch
+	current         BioSequenceBatch
+	pushBack        *abool.AtomicBool
+	all_done        *sync.WaitGroup
+	lock            *sync.RWMutex
+	buffer_size     int32
+	batch_size      int32
+	sequence_format string
+	finished        *abool.AtomicBool
 }
 
 type IBioSequenceBatch struct {
-	pointer *__ibiosequencebatch__
+	pointer *_IBioSequenceBatch
 }
 
 var NilIBioSequenceBatch = IBioSequenceBatch{pointer: nil}
 
 func MakeIBioSequenceBatch(sizes ...int) IBioSequenceBatch {
-	buffsize := 1
+	buffsize := int32(1)
 
 	if len(sizes) > 0 {
-		buffsize = sizes[0]
+		buffsize = int32(sizes[0])
 	}
 
-	i := __ibiosequencebatch__{
-		channel:     make(chan BioSequenceBatch, buffsize),
-		current:     NilBioSequenceBatch,
-		pushBack:    false,
-		buffer_size: buffsize,
-		finished:    false,
-		p_finished:  nil,
+	i := _IBioSequenceBatch{
+		channel:         make(chan BioSequenceBatch, buffsize),
+		current:         NilBioSequenceBatch,
+		pushBack:        abool.New(),
+		buffer_size:     buffsize,
+		batch_size:      -1,
+		sequence_format: "",
+		finished:        abool.New(),
 	}
-	i.p_finished = &i.finished
+
 	waiting := sync.WaitGroup{}
 	i.all_done = &waiting
+	lock := sync.RWMutex{}
+	i.lock = &lock
 	ii := IBioSequenceBatch{&i}
 	return ii
 }
@@ -80,6 +89,22 @@ func (iterator IBioSequenceBatch) Add(n int) {
 
 func (iterator IBioSequenceBatch) Done() {
 	iterator.pointer.all_done.Done()
+}
+
+func (iterator IBioSequenceBatch) Unlock() {
+	iterator.pointer.lock.Unlock()
+}
+
+func (iterator IBioSequenceBatch) Lock() {
+	iterator.pointer.lock.Lock()
+}
+
+func (iterator IBioSequenceBatch) RLock() {
+	iterator.pointer.lock.RLock()
+}
+
+func (iterator IBioSequenceBatch) RUnlock() {
+	iterator.pointer.lock.RUnlock()
 }
 
 func (iterator IBioSequenceBatch) Wait() {
@@ -95,29 +120,48 @@ func (iterator IBioSequenceBatch) IsNil() bool {
 }
 
 func (iterator IBioSequenceBatch) BufferSize() int {
-	return iterator.pointer.buffer_size
+	return int(atomic.LoadInt32(&iterator.pointer.buffer_size))
+}
+
+func (iterator IBioSequenceBatch) BatchSize() int {
+	return int(atomic.LoadInt32(&iterator.pointer.batch_size))
+}
+
+func (iterator IBioSequenceBatch) SetBatchSize(size int) error {
+	if size >= 0 {
+		atomic.StoreInt32(&iterator.pointer.batch_size, int32(size))
+		return nil
+	}
+
+	return fmt.Errorf("size (%d) cannot be negative", size)
 }
 
 func (iterator IBioSequenceBatch) Split() IBioSequenceBatch {
-	i := __ibiosequencebatch__{
-		channel:     iterator.pointer.channel,
-		current:     NilBioSequenceBatch,
-		pushBack:    false,
-		all_done:    iterator.pointer.all_done,
-		buffer_size: iterator.pointer.buffer_size,
-		finished:    false,
-		p_finished:  iterator.pointer.p_finished}
+	iterator.pointer.lock.RLock()
+	defer iterator.pointer.lock.RUnlock()
+	i := _IBioSequenceBatch{
+		channel:         iterator.pointer.channel,
+		current:         NilBioSequenceBatch,
+		pushBack:        abool.New(),
+		all_done:        iterator.pointer.all_done,
+		buffer_size:     iterator.pointer.buffer_size,
+		batch_size:      iterator.pointer.batch_size,
+		sequence_format: iterator.pointer.sequence_format,
+		finished:        iterator.pointer.finished}
+	lock := sync.RWMutex{}
+	i.lock = &lock
+
 	newIter := IBioSequenceBatch{&i}
 	return newIter
 }
 
 func (iterator IBioSequenceBatch) Next() bool {
-	if *(iterator.pointer.p_finished) {
+	if iterator.pointer.finished.IsSet() {
 		return false
 	}
 
-	if iterator.pointer.pushBack {
-		iterator.pointer.pushBack = false
+	if iterator.pointer.pushBack.IsSet() {
+		iterator.pointer.pushBack.UnSet()
 		return true
 	}
 
@@ -129,13 +173,13 @@ func (iterator IBioSequenceBatch) Next() bool {
 	}
 
 	iterator.pointer.current = NilBioSequenceBatch
-	*iterator.pointer.p_finished = true
+	iterator.pointer.finished.Set()
 	return false
 }
 
 func (iterator IBioSequenceBatch) PushBack() {
 	if !iterator.pointer.current.IsNil() {
-		iterator.pointer.pushBack = true
+		iterator.pointer.pushBack.Set()
 	}
 }
 
@@ -150,7 +194,7 @@ func (iterator IBioSequenceBatch) Get() BioSequenceBatch {
 // Finished returns 'true' value if no more data is available
 // from the iterator.
 func (iterator IBioSequenceBatch) Finished() bool {
-	return *iterator.pointer.p_finished
+	return iterator.pointer.finished.IsSet()
 }
 
 func (iterator IBioSequenceBatch) IBioSequence(sizes ...int) IBioSequence {
@@ -378,7 +422,7 @@ func (iterator IBioSequenceBatch) DivideOn(predicate SequencePredicate,
 	buffsize := iterator.BufferSize()
 
 	if len(sizes) > 0 {
-		buffsize = sizes[1]
+		buffsize = sizes[0]
 	}
 
 	trueIter := MakeIBioSequenceBatch(buffsize)
