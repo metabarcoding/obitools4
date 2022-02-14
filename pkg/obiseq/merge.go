@@ -3,6 +3,7 @@ package obiseq
 import (
 	"fmt"
 	"log"
+	"strings"
 )
 
 type StatsOnValues map[string]int
@@ -98,9 +99,13 @@ func (sequence BioSequence) Merge(tomerge BioSequence, inplace bool, keys ...str
 		sequence = sequence.Copy()
 	}
 
+	if sequence.HasQualities() {
+		sequence.SetQualities(nil)
+	}
+
 	annotation := sequence.Annotations()
 
-	annotation["count"] = tomerge.Count() + sequence.Count()
+	count := tomerge.Count() + sequence.Count()
 
 	for _, key := range keys {
 		if tomerge.HasStatsOn(key) {
@@ -112,5 +117,113 @@ func (sequence BioSequence) Merge(tomerge BioSequence, inplace bool, keys ...str
 		}
 	}
 
+	if tomerge.HasAnnotation() {
+		ma := tomerge.Annotations()
+		for k, va := range annotation {
+			if !strings.HasPrefix(k, "merged_") {
+				vm, ok := ma[k]
+				if !ok || vm != va {
+					delete(annotation, k)
+				}
+			}
+		}
+	} else {
+		for k := range annotation {
+			if !strings.HasPrefix(k, "merged_") {
+				delete(annotation, k)
+			}
+		}
+	}
+
+	annotation["count"] = count
+
 	return sequence
+}
+
+func (sequences BioSequenceSlice) Unique(statsOn []string, keys ...string) BioSequenceSlice {
+	uniq := make(map[string]*BioSequenceSlice, len(sequences))
+	nVariant := 0
+
+	for _, seq := range sequences {
+
+		sstring := seq.String()
+		pgroup, ok := uniq[sstring]
+
+		if !ok {
+			group := make(BioSequenceSlice, 0, 10)
+			pgroup = &group
+			uniq[sstring] = pgroup
+		}
+
+		ok = false
+		i := 0
+		var s BioSequence
+
+		for i, s = range *pgroup {
+			ok = true
+			switch {
+			case seq.HasAnnotation() && s.HasAnnotation():
+				for _, k := range keys {
+					seqV, seqOk := seq.Annotations()[k]
+					sV, sOk := s.Annotations()[k]
+
+					ok = ok && ((!seqOk && !sOk) || ((seqOk && sOk) && (seqV == sV)))
+
+					if !ok {
+						break
+					}
+				}
+			case seq.HasAnnotation() && !s.HasAnnotation():
+				for _, k := range keys {
+					_, seqOk := seq.Annotations()[k]
+					ok = ok && !seqOk
+					if !ok {
+						break
+					}
+				}
+			case !seq.HasAnnotation() && s.HasAnnotation():
+				for _, k := range keys {
+					_, sOk := s.Annotations()[k]
+					ok = ok && !sOk
+					if !ok {
+						break
+					}
+				}
+			default:
+				ok = true
+			}
+
+			if ok {
+				break
+			}
+		}
+
+		if ok {
+			(*pgroup)[i] = s.Merge(seq, true, statsOn...)
+		} else {
+			seq.SetQualities(nil)
+			if seq.Count() == 1 {
+				seq.Annotations()["count"] = 1
+			}
+			*pgroup = append(*pgroup, seq)
+			nVariant++
+		}
+
+	}
+
+	output := make(BioSequenceSlice, 0, nVariant)
+	for _, seqs := range uniq {
+		output = append(output, *seqs...)
+	}
+
+	return output
+}
+
+func UniqueSliceWorker(statsOn []string, keys ...string) SeqSliceWorker {
+
+	worker := func(sequences BioSequenceSlice) BioSequenceSlice {
+		return sequences.Unique(statsOn, keys...)
+	}
+
+	return worker
 }

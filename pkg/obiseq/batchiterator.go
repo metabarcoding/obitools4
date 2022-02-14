@@ -156,13 +156,13 @@ func (iterator IBioSequenceBatch) Split() IBioSequenceBatch {
 }
 
 func (iterator IBioSequenceBatch) Next() bool {
-	if iterator.pointer.finished.IsSet() {
-		return false
-	}
-
 	if iterator.pointer.pushBack.IsSet() {
 		iterator.pointer.pushBack.UnSet()
 		return true
+	}
+
+	if iterator.pointer.finished.IsSet() {
+		return false
 	}
 
 	next, ok := (<-iterator.pointer.channel)

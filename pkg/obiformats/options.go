@@ -1,6 +1,8 @@
 package obiformats
 
-import "git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
+import (
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
+)
 
 type __options__ struct {
 	fastseq_header_parser obiseq.SeqAnnotator
@@ -10,6 +12,7 @@ type __options__ struct {
 	batch_size            int
 	quality_shift         int
 	parallel_workers      int
+	closefile             bool
 }
 
 type Options struct {
@@ -27,6 +30,7 @@ func MakeOptions(setters []WithOption) Options {
 		quality_shift:         33,
 		parallel_workers:      4,
 		batch_size:            5000,
+		closefile:             false,
 	}
 
 	opt := Options{&o}
@@ -66,9 +70,29 @@ func (opt Options) ProgressBar() bool {
 	return opt.pointer.with_progress_bar
 }
 
+func (opt Options) CloseFile() bool {
+	return opt.pointer.closefile
+}
+
 func OptionsBufferSize(size int) WithOption {
 	f := WithOption(func(opt Options) {
 		opt.pointer.buffer_size = size
+	})
+
+	return f
+}
+
+func OptionCloseFile() WithOption {
+	f := WithOption(func(opt Options) {
+		opt.pointer.closefile = true
+	})
+
+	return f
+}
+
+func OptionDontCloseFile() WithOption {
+	f := WithOption(func(opt Options) {
+		opt.pointer.closefile = false
 	})
 
 	return f

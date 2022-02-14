@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"sync"
-	"sync/atomic"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
@@ -22,26 +21,28 @@ func WriterDispatcher(prototypename string,
 	jobDone.Add(1)
 
 	go func() {
-		n := int32(0)
 		for newflux := range dispatcher.News() {
+			jobDone.Add(1)
 			go func(newflux string) {
-				data, _ := dispatcher.Outputs(newflux)
+				data, err := dispatcher.Outputs(newflux)
+
+				if err != nil {
+					log.Fatalf("Cannot retreive the new chanel : %v", err)
+				}
+
 				out, err := formater(data,
 					fmt.Sprintf(prototypename, newflux),
 					options...)
+
 				if err != nil {
 					log.Fatalf("cannot open the output file for key %s", newflux)
 				}
 
-				atomic.AddInt32(&n, 1)
-
-				if atomic.LoadInt32(&n) > 1 {
-					jobDone.Add(1)
-				}
 				out.Recycle()
 				jobDone.Done()
 			}(newflux)
 		}
+		jobDone.Done()
 	}()
 
 	jobDone.Wait()

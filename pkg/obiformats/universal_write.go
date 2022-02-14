@@ -89,6 +89,7 @@ func WriteSequenceBatch(iterator obiseq.IBioSequenceBatch,
 
 func WriteSequencesBatchToStdout(iterator obiseq.IBioSequenceBatch,
 	options ...WithOption) (obiseq.IBioSequenceBatch, error) {
+	options = append(options, OptionDontCloseFile())
 	return WriteSequenceBatch(iterator, os.Stdout, options...)
 }
 
@@ -103,5 +104,6 @@ func WriteSequencesBatchToFile(iterator obiseq.IBioSequenceBatch,
 		return obiseq.NilIBioSequenceBatch, err
 	}
 
+	options = append(options, OptionCloseFile())
 	return WriteSequenceBatch(iterator, file, options...)
 }

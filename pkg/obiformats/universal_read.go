@@ -64,6 +64,12 @@ func ReadSequencesBatchFromFile(filename string, options ...WithOption) (obiseq.
 
 	tag, _ := breader.Peek(30)
 
+	if len(tag) < 30 {
+		newIter := obiseq.MakeIBioSequenceBatch()
+		close(newIter.Channel())
+		return newIter, nil
+	}
+
 	filetype := GuessSeqFileType(string(tag))
 	log.Printf("File guessed format : %s (tag: %s)",
 		filetype, (strings.Split(string(tag), "\n"))[0])

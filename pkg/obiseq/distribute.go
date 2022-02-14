@@ -62,7 +62,7 @@ func (iterator IBioSequenceBatch) Distribute(class SequenceClassifier, sizes ...
 
 		for iterator.Next() {
 			seqs := iterator.Get()
-			for _, s := range seqs.slice {
+			for _, s := range seqs.Slice() {
 				key := class(s)
 				slice, ok := slices[key]
 
@@ -73,13 +73,14 @@ func (iterator IBioSequenceBatch) Distribute(class SequenceClassifier, sizes ...
 					orders[key] = 0
 
 					lock.Lock()
-					outputs[key] = MakeIBioSequenceBatch(batchsize, buffsize)
+					outputs[key] = MakeIBioSequenceBatch(buffsize)
 					lock.Unlock()
 
 					news <- key
 				}
 
 				*slice = append(*slice, s)
+				
 				if len(*slice) == batchsize {
 					outputs[key].Channel() <- MakeBioSequenceBatch(orders[key], *slice...)
 					orders[key]++

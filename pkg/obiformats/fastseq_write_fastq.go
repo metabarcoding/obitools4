@@ -55,6 +55,13 @@ func WriteFastq(iterator obiseq.IBioSequence, file io.Writer, options ...WithOpt
 		fmt.Fprintln(file, FormatFastq(seq, quality, header_format))
 	}
 
+	if opt.CloseFile() {
+		switch file := file.(type) {
+		case *os.File:
+			file.Close()
+		}
+	}
+
 	return nil
 }
 
@@ -69,10 +76,12 @@ func WriteFastqToFile(iterator obiseq.IBioSequence,
 		return err
 	}
 
+	options = append(options, OptionCloseFile())
 	return WriteFastq(iterator, file, options...)
 }
 
 func WriteFastqToStdout(iterator obiseq.IBioSequence, options ...WithOption) error {
+	options = append(options, OptionDontCloseFile())
 	return WriteFastq(iterator, os.Stdout, options...)
 }
 
@@ -122,10 +131,10 @@ func WriteFastqBatch(iterator obiseq.IBioSequenceBatch, file io.Writer, options 
 	}
 
 	log.Println("Start of the fastq file writing")
+	go ff(iterator)
 	for i := 0; i < nwriters-1; i++ {
 		go ff(iterator.Split())
 	}
-	go ff(iterator)
 
 	next_to_send := 0
 	received := make(map[int]FileChunck, 100)
@@ -147,12 +156,21 @@ func WriteFastqBatch(iterator obiseq.IBioSequenceBatch, file io.Writer, options 
 			}
 
 		}
+
+		if opt.CloseFile() {
+			switch file := file.(type) {
+			case *os.File:
+				file.Close()
+			}
+		}
+
 	}()
 
 	return newIter, nil
 }
 
 func WriteFastqBatchToStdout(iterator obiseq.IBioSequenceBatch, options ...WithOption) (obiseq.IBioSequenceBatch, error) {
+	options = append(options, OptionDontCloseFile())
 	return WriteFastqBatch(iterator, os.Stdout, options...)
 }
 
@@ -166,6 +184,8 @@ func WriteFastqBatchToFile(iterator obiseq.IBioSequenceBatch,
 		log.Fatalf("open file error: %v", err)
 		return obiseq.NilIBioSequenceBatch, err
 	}
+
+	options = append(options, OptionCloseFile())
 
 	return WriteFastqBatch(iterator, file, options...)
 }

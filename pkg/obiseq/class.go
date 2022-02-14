@@ -25,7 +25,7 @@ func AnnotationClassifier(key string) SequenceClassifier {
 		return ""
 	}
 
-	return SequenceClassifier(f)
+	return f
 }
 
 var SampleClassifier = AnnotationClassifier("sample")
@@ -39,7 +39,7 @@ func PredicateClassifier(predicate SequencePredicate) SequenceClassifier {
 		}
 	}
 
-	return SequenceClassifier(f)
+	return f
 }
 
 // Builds a classifier function based on CRC32 of the sequence
@@ -50,7 +50,7 @@ func HashClassifier(size int) SequenceClassifier {
 		return strconv.Itoa(int(h))
 	}
 
-	return SequenceClassifier(f)
+	return f
 }
 
 func RotateClassifier(size int) SequenceClassifier {
@@ -61,5 +61,5 @@ func RotateClassifier(size int) SequenceClassifier {
 		return strconv.Itoa(int(h))
 	}
 
-	return SequenceClassifier(f)
+	return f
 }
