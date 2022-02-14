@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"sync"
+	"sync/atomic"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
@@ -21,26 +22,25 @@ func WriterDispatcher(prototypename string,
 	jobDone.Add(1)
 
 	go func() {
-		n := 0
+		n := int32(0)
 		for newflux := range dispatcher.News() {
-			data, _ := dispatcher.Outputs(newflux)
-			out, err := formater(data,
-				fmt.Sprintf(prototypename, newflux),
-				options...)
-			if err != nil {
-				log.Fatalf("cannot open the output file for key %s", newflux)
-			}
+			go func(newflux string) {
+				data, _ := dispatcher.Outputs(newflux)
+				out, err := formater(data,
+					fmt.Sprintf(prototypename, newflux),
+					options...)
+				if err != nil {
+					log.Fatalf("cannot open the output file for key %s", newflux)
+				}
 
-			n++
+				atomic.AddInt32(&n, 1)
 
-			if n > 1 {
-				jobDone.Add(1)
-			}
-
-			go func() {
+				if atomic.LoadInt32(&n) > 1 {
+					jobDone.Add(1)
+				}
 				out.Recycle()
 				jobDone.Done()
-			}()
+			}(newflux)
 		}
 	}()
 

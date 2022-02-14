@@ -13,20 +13,29 @@ import (
 var _FilenamePattern = ""
 var _SequenceClassifierTag = ""
 var _BatchCount = 0
+var _HashSize = 0
 
 func DistributeOptionSet(options *getoptions.GetOpt) {
 	options.StringVar(&_FilenamePattern, "pattern", _FilenamePattern,
 		options.Alias("p"),
 		options.Required("You must provide at pattern for the file names "),
-		options.Description("The N first sequence records of the file are discarded from the analysis and not reported to the output file."))
+		options.Description("The template used to build the names of the output files. "+
+			"The variable part is represented by '%s'. "+
+			"Example : toto_%s.fastq."))
 
 	options.StringVar(&_SequenceClassifierTag, "classifier", _SequenceClassifierTag,
 		options.Alias("c"),
-		options.Description("The N first sequence records of the file are discarded from the analysis and not reported to the output file."))
+		options.Description("The name of a tag annotating thes sequences. "+
+			"The name must corresponds to a string, a integer or a boolean value. "+
+			"That value will be used to dispatch sequences amoong the different files"))
 
-	options.IntVar(&_BatchCount, "batch", 0,
+	options.IntVar(&_BatchCount, "batches", 0,
 		options.Alias("n"),
-		options.Description("The N first sequence records of the file are discarded from the analysis and not reported to the output file."))
+		options.Description("Indicates in how many batches the input file must bee splitted."))
+
+	options.IntVar(&_HashSize, "hash", 0,
+		options.Alias("H"),
+		options.Description("Indicates to split the input into at most <n> batch based on a hash code of the seequence."))
 }
 
 func OptionSet(options *getoptions.GetOpt) {
@@ -41,10 +50,11 @@ func CLISequenceClassifier() obiseq.SequenceClassifier {
 		return obiseq.AnnotationClassifier(_SequenceClassifierTag)
 	case _BatchCount > 0:
 		return obiseq.RotateClassifier(_BatchCount)
-
+	case _HashSize > 0:
+		return obiseq.HashClassifier(_HashSize)
 	}
 
-	log.Fatal("one of the options --classifier or --batch must be specified")
+	log.Fatal("one of the options --classifier, -- hash or --batch must be specified")
 	return nil
 }
 
