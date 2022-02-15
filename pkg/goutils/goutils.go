@@ -54,11 +54,12 @@ func InterfaceToInt(i interface{}) (val int, err error) {
 	return
 }
 
-func IsAnInt(i interface{}) bool {
+func CastableToInt(i interface{}) bool {
 
 	switch i.(type) {
 	case int,
 		int8, int16, int32, int64,
+		float32, float64,
 		uint8, uint16, uint32, uint64:
 		return true
 	default:

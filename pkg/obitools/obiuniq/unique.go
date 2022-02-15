@@ -10,7 +10,17 @@ import (
 
 func Unique(sequences obiseq.IBioSequenceBatch) obiseq.IBioSequenceBatch {
 
-	newIter, err := obichunk.ISequenceChunk(sequences, 100, 2)
+	classifier := obiseq.HashClassifier(CLINumberOfChunks())
+	var newIter obiseq.IBioSequenceBatch
+	var err error
+
+	if CLIUniqueInMemory() {
+		log.Printf("Running dereplication in memory on %d chunks", CLINumberOfChunks())
+		newIter, err = obichunk.ISequenceChunk(sequences, classifier, 2)
+	} else {
+		log.Printf("Running dereplication on disk with %d chunks", CLINumberOfChunks())
+		newIter, err = obichunk.ISequenceChunkOnDisk(sequences, classifier, 2)
+	}
 
 	if err != nil {
 		log.Fatalf("error in spliting the dataset : %v", err)
@@ -23,6 +33,6 @@ func Unique(sequences obiseq.IBioSequenceBatch) obiseq.IBioSequenceBatch {
 
 	newIter = newIter.MakeISliceWorker(obiseq.UniqueSliceWorker(statsOn, keys...),
 		parallelWorkers, buffSize)
-		
+
 	return newIter
 }

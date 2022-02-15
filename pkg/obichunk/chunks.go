@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"sync"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiformats"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
@@ -33,7 +34,9 @@ func find(root, ext string) []string {
 	return a
 }
 
-func ISequenceChunk(iterator obiseq.IBioSequenceBatch, size int, sizes ...int) (obiseq.IBioSequenceBatch, error) {
+func ISequenceChunkOnDisk(iterator obiseq.IBioSequenceBatch,
+	classifier obiseq.SequenceClassifier,
+	sizes ...int) (obiseq.IBioSequenceBatch, error) {
 	dir, err := tempDir()
 	if err != nil {
 		return obiseq.NilIBioSequenceBatch, err
@@ -50,15 +53,18 @@ func ISequenceChunk(iterator obiseq.IBioSequenceBatch, size int, sizes ...int) (
 	newIter.Add(1)
 
 	go func() {
+		defer func() {
+			os.RemoveAll(dir)
+			log.Println("Clear the cache directory")
+		}()
+
 		newIter.Wait()
 		close(newIter.Channel())
-		log.Println("====>> clear diectory")
-		os.RemoveAll(dir)
 	}()
 
 	go func() {
 		obiformats.WriterDispatcher(dir+"/chunk_%s.fastx",
-			iterator.Distribute(obiseq.HashClassifier(size)),
+			iterator.Distribute(classifier),
 			obiformats.WriteSequencesBatchToFile,
 		)
 
@@ -71,7 +77,7 @@ func ISequenceChunk(iterator obiseq.IBioSequenceBatch, size int, sizes ...int) (
 				panic(err)
 			}
 
-			chunck := make(obiseq.BioSequenceSlice, 0, 3*size)
+			chunck := make(obiseq.BioSequenceSlice, 0, 1000)
 
 			for iseq.Next() {
 				b := iseq.Get()
@@ -88,4 +94,71 @@ func ISequenceChunk(iterator obiseq.IBioSequenceBatch, size int, sizes ...int) (
 	}()
 
 	return newIter, err
+}
+
+func ISequenceChunk(iterator obiseq.IBioSequenceBatch,
+	classifier obiseq.SequenceClassifier,
+	sizes ...int) (obiseq.IBioSequenceBatch, error) {
+
+	bufferSize := iterator.BufferSize()
+
+	if len(sizes) > 0 {
+		bufferSize = sizes[0]
+	}
+
+	newIter := obiseq.MakeIBioSequenceBatch(bufferSize)
+
+	newIter.Add(1)
+
+	go func() {
+		newIter.Wait()
+		close(newIter.Channel())
+	}()
+
+	go func() {
+		lock := sync.Mutex{}
+
+		dispatcher := iterator.Distribute(classifier)
+
+		jobDone := sync.WaitGroup{}
+		chunks := make(map[string]*obiseq.BioSequenceSlice, 100)
+
+		for newflux := range dispatcher.News() {
+			jobDone.Add(1)
+			go func(newflux string) {
+				data, err := dispatcher.Outputs(newflux)
+
+				if err != nil {
+					log.Fatalf("Cannot retreive the new chanel : %v", err)
+				}
+
+				chunk := make(obiseq.BioSequenceSlice, 0, 1000)
+
+				for data.Next() {
+					b := data.Get()
+					chunk = append(chunk, b.Slice()...)
+				}
+
+				lock.Lock()
+				chunks[newflux] = &chunk
+				lock.Unlock()
+				jobDone.Done()
+			}(newflux)
+		}
+
+		jobDone.Wait()
+		order := 0
+
+		for _, chunck := range chunks {
+
+			if len(*chunck) > 0 {
+				newIter.Channel() <- obiseq.MakeBioSequenceBatch(order, *chunck...)
+				order++
+			}
+
+		}
+		newIter.Done()
+	}()
+
+	return newIter, nil
 }
