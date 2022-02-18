@@ -62,11 +62,11 @@ func (sequence *BioSequence) Recycle() {
 	pseq := sequence.sequence
 
 	if pseq != nil {
-		RecycleSlice(pseq.sequence)
-		RecycleSlice(pseq.feature)
-		RecycleSlice(pseq.qualities)
+		RecycleSlice(&pseq.sequence)
+		RecycleSlice(&pseq.feature)
+		RecycleSlice(&pseq.qualities)
 
-		RecycleAnnotation(pseq.annotations)
+		RecycleAnnotation(&pseq.annotations)
 	}
 
 	sequence.sequence = nil
@@ -187,21 +187,21 @@ func (s BioSequence) SetDefinition(definition string) {
 
 func (s BioSequence) SetFeatures(feature []byte) {
 	if cap(s.sequence.feature) >= 300 {
-		RecycleSlice(s.sequence.feature)
+		RecycleSlice(&s.sequence.feature)
 	}
 	s.sequence.feature = feature
 }
 
 func (s BioSequence) SetSequence(sequence []byte) {
 	if s.sequence.sequence != nil {
-		RecycleSlice(s.sequence.sequence)
+		RecycleSlice(&s.sequence.sequence)
 	}
 	s.sequence.sequence = sequence
 }
 
 func (s BioSequence) SetQualities(qualities Quality) {
 	if s.sequence.qualities != nil {
-		RecycleSlice(s.sequence.qualities)
+		RecycleSlice(&s.sequence.qualities)
 	}
 	s.sequence.qualities = qualities
 }

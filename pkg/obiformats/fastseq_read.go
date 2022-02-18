@@ -24,7 +24,7 @@ func _FastseqReader(seqfile C.fast_kseq_p,
 	i := 0
 	ii := 0
 
-	slice := make(obiseq.BioSequenceSlice, 0, batch_size)
+	slice := obiseq.GetBioSequenceSlice()
 
 	for l := int64(C.next_fast_sek(seqfile)); l > 0; l = int64(C.next_fast_sek(seqfile)) {
 
@@ -125,7 +125,7 @@ func ReadFastSeqBatchFromFile(filename string, options ...WithOption) (obiseq.IB
 
 	if parser != nil {
 		return IParseFastSeqHeaderBatch(newIter, options...), err
-	} 
+	}
 
 	return newIter, err
 }

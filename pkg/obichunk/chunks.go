@@ -8,7 +8,7 @@ import (
 )
 
 func ISequenceChunk(iterator obiseq.IBioSequenceBatch,
-	classifier obiseq.BioSequenceClassifier,
+	classifier *obiseq.BioSequenceClassifier,
 	sizes ...int) (obiseq.IBioSequenceBatch, error) {
 
 	bufferSize := iterator.BufferSize()
@@ -32,27 +32,28 @@ func ISequenceChunk(iterator obiseq.IBioSequenceBatch,
 		dispatcher := iterator.Distribute(classifier)
 
 		jobDone := sync.WaitGroup{}
-		chunks := make(map[string]*obiseq.BioSequenceSlice, 100)
+		chunks := make(map[int]*obiseq.BioSequenceSlice, 1000)
 
 		for newflux := range dispatcher.News() {
 			jobDone.Add(1)
-			go func(newflux string) {
+			go func(newflux int) {
 				data, err := dispatcher.Outputs(newflux)
 
 				if err != nil {
 					log.Fatalf("Cannot retreive the new chanel : %v", err)
 				}
 
-				chunk := make(obiseq.BioSequenceSlice, 0, 1000)
+				chunk := obiseq.GetBioSequenceSlicePtr()
+				lock.Lock()
+				chunks[newflux] = chunk
+				lock.Unlock()
 
 				for data.Next() {
 					b := data.Get()
-					chunk = append(chunk, b.Slice()...)
+					*chunk = append(*chunk, b.Slice()...)
+					b.Recycle()
 				}
 
-				lock.Lock()
-				chunks[newflux] = &chunk
-				lock.Unlock()
 				jobDone.Done()
 			}(newflux)
 		}

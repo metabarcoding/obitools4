@@ -48,7 +48,7 @@ func OptionSet(options *getoptions.GetOpt) {
 	DistributeOptionSet(options)
 }
 
-func CLISequenceClassifier() obiseq.BioSequenceClassifier {
+func CLISequenceClassifier() *obiseq.BioSequenceClassifier {
 	switch {
 	case _SequenceClassifierTag != "":
 		return obiseq.AnnotationClassifier(_SequenceClassifierTag, _NAValue)

@@ -13,9 +13,9 @@ var _BioSequenceByteSlicePool = sync.Pool{
 	},
 }
 
-func RecycleSlice(s []byte) {
-	s0 := s[:0]
-	_BioSequenceByteSlicePool.Put(&s0)
+func RecycleSlice(s *[]byte) {
+	*s = (*s)[:0]
+	_BioSequenceByteSlicePool.Put(s)
 }
 
 func GetSlice(values ...byte) []byte {
@@ -35,10 +35,10 @@ var BioSequenceAnnotationPool = sync.Pool{
 	},
 }
 
-func RecycleAnnotation(a Annotation) {
+func RecycleAnnotation(a *Annotation) {
 	if a != nil {
-		for k := range a {
-			delete(a, k)
+		for k := range *a {
+			delete(*a, k)
 		}
 		BioSequenceAnnotationPool.Put(&(a))
 	}
@@ -52,6 +52,32 @@ func GetAnnotation(values ...Annotation) Annotation {
 	}
 
 	return a
+}
+
+var _BioSequenceSlicePool = sync.Pool{
+	New: func() interface{} {
+		bs := make(BioSequenceSlice, 0, 5000)
+		return &bs
+	},
+}
+
+func (s *BioSequenceSlice) Recycle() {
+	*s = (*s)[:0]
+	_BioSequenceSlicePool.Put(s)
+}
+
+func GetBioSequenceSlicePtr(values ...BioSequence) *BioSequenceSlice {
+	s := _BioSequenceSlicePool.Get().(*BioSequenceSlice)
+
+	if len(values) > 0 {
+		*s = append(*s, values...)
+	}
+
+	return s
+}
+
+func GetBioSequenceSlice(values ...BioSequence) BioSequenceSlice {
+	return *GetBioSequenceSlicePtr(values...)
 }
 
 // var __bioseq__pool__ = sync.Pool{

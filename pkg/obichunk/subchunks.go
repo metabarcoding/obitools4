@@ -7,7 +7,7 @@ import (
 )
 
 func ISequenceSubChunk(iterator obiseq.IBioSequenceBatch,
-	classifier obiseq.BioSequenceClassifier,
+	classifier *obiseq.BioSequenceClassifier,
 	sizes ...int) (obiseq.IBioSequenceBatch, error) {
 
 	bufferSize := iterator.BufferSize()
@@ -42,33 +42,31 @@ func ISequenceSubChunk(iterator obiseq.IBioSequenceBatch,
 	}
 
 	ff := func(iterator obiseq.IBioSequenceBatch) {
-		chunks := make(map[string]*obiseq.BioSequenceSlice, 100)
+		chunks := make(map[int]*obiseq.BioSequenceSlice, 100)
 
 		for iterator.Next() {
 
 			batch := iterator.Get()
 
 			for _, s := range batch.Slice() {
-				key := classifier(s)
+				key := classifier.Code(s)
 
 				slice, ok := chunks[key]
 
 				if !ok {
-					is := make(obiseq.BioSequenceSlice, 0, len(batch.Slice()))
-					slice = &is
+					slice = obiseq.GetBioSequenceSlicePtr()
 					chunks[key] = slice
 				}
 
 				*slice = append(*slice, s)
 			}
 
-			n := 0
 			for k, chunck := range chunks {
-				n += len(*chunck)
 				newIter.Channel() <- obiseq.MakeBioSequenceBatch(nextOrder(), *chunck...)
 				delete(chunks, k)
 			}
 
+			batch.Recycle()
 		}
 
 		newIter.Done()

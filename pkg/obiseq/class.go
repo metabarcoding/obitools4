@@ -3,71 +3,163 @@ package obiseq
 import (
 	"fmt"
 	"hash/crc32"
+	"log"
 	"strconv"
+	"sync"
 )
 
-type BioSequenceClassifier func(sequence BioSequence) string
+type BioSequenceClassifier struct {
+	Code  func(BioSequence) int
+	Value func(int) string
+}
 
-func AnnotationClassifier(key string, na string) BioSequenceClassifier {
-	f := func(sequence BioSequence) string {
+//type BioSequenceClassifier func(sequence BioSequence) string
+
+func AnnotationClassifier(key string, na string) *BioSequenceClassifier {
+	encode := make(map[string]int, 1000)
+	decode := make([]string, 0, 1000)
+	locke := sync.RWMutex{}
+	maxcode := 0
+
+	code := func(sequence BioSequence) int {
+		var val string
 		if sequence.HasAnnotation() {
 			value, ok := sequence.Annotations()[key]
 
 			if ok {
 				switch value := value.(type) {
 				case string:
-					return value
+					val = value
 				default:
-					return fmt.Sprint(value)
+					val = fmt.Sprint(value)
 				}
-			} 
+			}
 		}
-		return na
+		val = na
+
+		locke.Lock()
+		defer locke.Unlock()
+
+		k, ok := encode[val]
+
+		if !ok {
+			k = maxcode
+			maxcode++
+			encode[val] = k
+			decode = append(decode, val)
+		}
+
+		return k
 	}
 
-	return f
+	value := func(k int) string {
+
+		locke.RLock()
+		defer locke.RUnlock()
+		if k >= maxcode {
+			log.Fatalf("value %d not register")
+		}
+		return decode[k]
+	}
+
+	c := BioSequenceClassifier{code, value}
+	return &c
 }
 
-func PredicateClassifier(predicate SequencePredicate) BioSequenceClassifier {
-	f := func(sequence BioSequence) string {
+func PredicateClassifier(predicate SequencePredicate) *BioSequenceClassifier {
+	code := func(sequence BioSequence) int {
 		if predicate(sequence) {
-			return "true"
+			return 1
 		} else {
-			return "false"
+			return 0
 		}
+
 	}
 
-	return f
+	value := func(k int) string {
+		if k == 0 {
+			return "false"
+		} else {
+			return "true"
+		}
+
+	}
+
+	c := BioSequenceClassifier{code, value}
+	return &c
 }
 
 // Builds a classifier function based on CRC32 of the sequence
 //
-func HashClassifier(size int) BioSequenceClassifier {
-	f := func(sequence BioSequence) string {
-		h := crc32.ChecksumIEEE(sequence.Sequence()) % uint32(size)
-		return strconv.Itoa(int(h))
+func HashClassifier(size int) *BioSequenceClassifier {
+	code := func(sequence BioSequence) int {
+		return int(crc32.ChecksumIEEE(sequence.Sequence()) % uint32(size))
 	}
 
-	return f
+	value := func(k int) string {
+		return strconv.Itoa(k)
+	}
+
+	c := BioSequenceClassifier{code, value}
+	return &c
 }
 
 // Builds a classifier function based on the sequence
 //
-func SequenceClassifier() BioSequenceClassifier {
-	f := func(sequence BioSequence) string {
-		return sequence.String()
+func SequenceClassifier() *BioSequenceClassifier {
+	encode := make(map[string]int, 1000)
+	decode := make([]string, 0, 1000)
+	locke := sync.RWMutex{}
+	maxcode := 0
+
+	code := func(sequence BioSequence) int {
+		val := sequence.String()
+
+		locke.Lock()
+		defer locke.Unlock()
+
+		k, ok := encode[val]
+
+		if !ok {
+			k = maxcode
+			maxcode++
+			encode[val] = k
+			decode = append(decode, val)
+		}
+
+		return k
 	}
 
-	return f
+	value := func(k int) string {
+		locke.RLock()
+		defer locke.RUnlock()
+
+		if k >= maxcode {
+			log.Fatalf("value %d not register")
+		}
+		return decode[k]
+	}
+
+	c := BioSequenceClassifier{code, value}
+	return &c
 }
 
-func RotateClassifier(size int) BioSequenceClassifier {
+func RotateClassifier(size int) *BioSequenceClassifier {
 	n := 0
-	f := func(sequence BioSequence) string {
-		h := n % size
+	lock := sync.Mutex{}
+
+	code := func(sequence BioSequence) int {
+		lock.Lock()
+		defer lock.Unlock()
+		n = n % size
 		n++
-		return strconv.Itoa(int(h))
+		return n
 	}
 
-	return f
+	value := func(k int) string {
+		return strconv.Itoa(k)
+	}
+
+	c := BioSequenceClassifier{code, value}
+	return &c
 }

@@ -43,6 +43,11 @@ func (batch BioSequenceBatch) IsNil() bool {
 	return batch.slice == nil
 }
 
+func (batch BioSequenceBatch) Recycle() {
+	batch.slice.Recycle()
+	batch.slice = nil
+}
+
 // Structure implementing an iterator over bioseq.BioSequenceBatch
 // based on a channel.
 type _IBioSequenceBatch struct {
@@ -343,7 +348,7 @@ func (iterator IBioSequenceBatch) Rebatch(size int, sizes ...int) IBioSequenceBa
 	go func() {
 		order := 0
 		iterator = iterator.SortBatches()
-		buffer := make(BioSequenceSlice, 0, size)
+		buffer := GetBioSequenceSlice()
 
 		for iterator.Next() {
 			seqs := iterator.Get()
@@ -352,9 +357,10 @@ func (iterator IBioSequenceBatch) Rebatch(size int, sizes ...int) IBioSequenceBa
 				if len(buffer) == size {
 					newIter.Channel() <- MakeBioSequenceBatch(order, buffer...)
 					order++
-					buffer = make(BioSequenceSlice, 0, size)
+					buffer = GetBioSequenceSlice()
 				}
 			}
+			seqs.Recycle()
 		}
 
 		if len(buffer) > 0 {
@@ -449,8 +455,8 @@ func (iterator IBioSequenceBatch) DivideOn(predicate SequencePredicate,
 		falseOrder := 0
 		iterator = iterator.SortBatches()
 
-		trueSlice := make(BioSequenceSlice, 0, size)
-		falseSlice := make(BioSequenceSlice, 0, size)
+		trueSlice := GetBioSequenceSlice()
+		falseSlice := GetBioSequenceSlice()
 
 		for iterator.Next() {
 			seqs := iterator.Get()
@@ -464,15 +470,16 @@ func (iterator IBioSequenceBatch) DivideOn(predicate SequencePredicate,
 				if len(trueSlice) == size {
 					trueIter.Channel() <- MakeBioSequenceBatch(trueOrder, trueSlice...)
 					trueOrder++
-					trueSlice = make(BioSequenceSlice, 0, size)
+					trueSlice = GetBioSequenceSlice()
 				}
 
 				if len(falseSlice) == size {
 					falseIter.Channel() <- MakeBioSequenceBatch(falseOrder, falseSlice...)
 					falseOrder++
-					falseSlice = make(BioSequenceSlice, 0, size)
+					falseSlice = GetBioSequenceSlice()
 				}
 			}
+			seqs.Recycle()
 		}
 
 		if len(trueSlice) > 0 {

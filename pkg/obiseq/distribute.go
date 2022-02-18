@@ -6,35 +6,35 @@ import (
 )
 
 type IDistribute struct {
-	outputs map[string]IBioSequenceBatch
-	news    chan string
+	outputs map[int]IBioSequenceBatch
+	news    chan int
 	lock    *sync.Mutex
 }
 
-func (dist *IDistribute) Outputs(key string) (IBioSequenceBatch, error) {
+func (dist *IDistribute) Outputs(key int) (IBioSequenceBatch, error) {
 	dist.lock.Lock()
 	iter, ok := dist.outputs[key]
 	dist.lock.Unlock()
 
 	if !ok {
-		return NilIBioSequenceBatch, fmt.Errorf("key %s unknown", key)
+		return NilIBioSequenceBatch, fmt.Errorf("code %d unknown", key)
 	}
 
 	return iter, nil
 }
 
-func (dist *IDistribute) News() chan string {
+func (dist *IDistribute) News() chan int {
 	return dist.news
 }
 
-func (iterator IBioSequenceBatch) Distribute(class BioSequenceClassifier, sizes ...int) IDistribute {
+func (iterator IBioSequenceBatch) Distribute(class *BioSequenceClassifier, sizes ...int) IDistribute {
 	batchsize := 5000
 	buffsize := 2
 
-	outputs := make(map[string]IBioSequenceBatch, 100)
-	slices := make(map[string]*BioSequenceSlice, 100)
-	orders := make(map[string]int, 100)
-	news := make(chan string)
+	outputs := make(map[int]IBioSequenceBatch, 100)
+	slices := make(map[int]*BioSequenceSlice, 100)
+	orders := make(map[int]int, 100)
+	news := make(chan int)
 
 	if len(sizes) > 0 {
 		batchsize = sizes[0]
@@ -63,11 +63,11 @@ func (iterator IBioSequenceBatch) Distribute(class BioSequenceClassifier, sizes 
 		for iterator.Next() {
 			seqs := iterator.Get()
 			for _, s := range seqs.Slice() {
-				key := class(s)
+				key := class.Code(s)
 				slice, ok := slices[key]
 
 				if !ok {
-					s := make(BioSequenceSlice, 0, batchsize)
+					s := GetBioSequenceSlice()
 					slice = &s
 					slices[key] = slice
 					orders[key] = 0
@@ -84,10 +84,11 @@ func (iterator IBioSequenceBatch) Distribute(class BioSequenceClassifier, sizes 
 				if len(*slice) == batchsize {
 					outputs[key].Channel() <- MakeBioSequenceBatch(orders[key], *slice...)
 					orders[key]++
-					s := make(BioSequenceSlice, 0, batchsize)
+					s := GetBioSequenceSlice()
 					slices[key] = &s
 				}
 			}
+			seqs.Recycle()
 		}
 
 		for key, slice := range slices {

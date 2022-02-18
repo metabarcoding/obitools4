@@ -34,7 +34,7 @@ func find(root, ext string) []string {
 }
 
 func ISequenceChunkOnDisk(iterator obiseq.IBioSequenceBatch,
-	classifier obiseq.BioSequenceClassifier,
+	classifier *obiseq.BioSequenceClassifier,
 	sizes ...int) (obiseq.IBioSequenceBatch, error) {
 	dir, err := tempDir()
 	if err != nil {
@@ -78,7 +78,7 @@ func ISequenceChunkOnDisk(iterator obiseq.IBioSequenceBatch,
 				panic(err)
 			}
 
-			chunck := make(obiseq.BioSequenceSlice, 0, 1000)
+			chunck := make(obiseq.BioSequenceSlice, 0, 10000)
 
 			for iseq.Next() {
 				b := iseq.Get()

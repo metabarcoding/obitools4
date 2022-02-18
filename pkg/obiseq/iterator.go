@@ -166,7 +166,7 @@ func (iterator IBioSequence) IBioSequenceBatch(sizes ...int) IBioSequenceBatch {
 	go func() {
 		for j := 0; !iterator.Finished(); j++ {
 			batch := BioSequenceBatch{
-				slice: make(BioSequenceSlice, 0, batchsize),
+				slice: GetBioSequenceSlice(),
 				order: j}
 			for i := 0; i < batchsize && iterator.Next(); i++ {
 				seq := iterator.Get()
@@ -280,7 +280,7 @@ func (iterator IBioSequence) Tail(n int, sizes ...int) IBioSequence {
 	}
 
 	newIter := MakeIBioSequence(buffsize)
-	buffseq := make(BioSequenceSlice, n)
+	buffseq := GetBioSequenceSlice()
 
 	newIter.Add(1)
 

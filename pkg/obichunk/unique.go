@@ -34,6 +34,7 @@ func IUniqueSequence(iterator obiseq.IBioSequenceBatch,
 	}
 
 	nworkers := opts.ParallelWorkers()
+
 	iUnique.Add(nworkers)
 
 	go func() {
@@ -52,17 +53,26 @@ func IUniqueSequence(iterator obiseq.IBioSequenceBatch,
 		return neworder
 	}
 
-	var ff func(obiseq.IBioSequenceBatch, obiseq.BioSequenceClassifier, int)
+	var ff func(obiseq.IBioSequenceBatch, *obiseq.BioSequenceClassifier, int)
 
 	cat := opts.Categories()
 	na := opts.NAValue()
 
+	// ff = func(input obiseq.IBioSequenceBatch,
+	// 	classifier obiseq.BioSequenceClassifier,
+	// 	icat int) {
+	// 	log.Println(na, nextOrder)
+	// 	input.Recycle()
+	// 	iUnique.Done()
+	// }
+
 	ff = func(input obiseq.IBioSequenceBatch,
-		classifier obiseq.BioSequenceClassifier,
+		classifier *obiseq.BioSequenceClassifier,
 		icat int) {
 		icat--
 		input, err = ISequenceSubChunk(input,
 			classifier,
+			1,
 			opts.BufferSize())
 
 		var next obiseq.IBioSequenceBatch

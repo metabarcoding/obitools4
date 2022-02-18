@@ -23,7 +23,7 @@ func WriterDispatcher(prototypename string,
 	go func() {
 		for newflux := range dispatcher.News() {
 			jobDone.Add(1)
-			go func(newflux string) {
+			go func(newflux int) {
 				data, err := dispatcher.Outputs(newflux)
 
 				if err != nil {
@@ -35,7 +35,7 @@ func WriterDispatcher(prototypename string,
 					options...)
 
 				if err != nil {
-					log.Fatalf("cannot open the output file for key %s", newflux)
+					log.Fatalf("cannot open the output file for key %d", newflux)
 				}
 
 				out.Recycle()
