@@ -20,7 +20,7 @@ func (sequence BioSequence) HasStatsOn(key string) bool {
 	return ok
 }
 
-func (sequence BioSequence) StatsOn(key string) StatsOnValues {
+func (sequence BioSequence) StatsOn(key string, na string) StatsOnValues {
 	mkey := "merged_" + key
 	annotations := sequence.Annotations()
 	istat, ok := annotations[mkey]
@@ -44,20 +44,22 @@ func (sequence BioSequence) StatsOn(key string) StatsOnValues {
 		newstat = true
 	}
 
-	if newstat && sequence.StatsPlusOne(key, sequence) {
+	if newstat && sequence.StatsPlusOne(key, sequence, na) {
 		delete(sequence.Annotations(), key)
 	}
 
 	return stats
 }
 
-func (sequence BioSequence) StatsPlusOne(key string, toAdd BioSequence) bool {
+func (sequence BioSequence) StatsPlusOne(key string, toAdd BioSequence, na string) bool {
+	sval := na
+	stats := sequence.StatsOn(key,na)
+	retval := false
+
 	if toAdd.HasAnnotation() {
-		stats := sequence.StatsOn(key)
 		value, ok := toAdd.Annotations()[key]
 
 		if ok {
-			var sval string
 
 			switch value := value.(type) {
 			case string:
@@ -69,17 +71,18 @@ func (sequence BioSequence) StatsPlusOne(key string, toAdd BioSequence) bool {
 			default:
 				log.Fatalf("Trying to make stats on a none string, integer or boolean value (%v)", value)
 			}
-			old, ok := stats[sval]
-			if !ok {
-				old = 0
-			}
-			stats[sval] = old + 1
-
-			return true
+			retval = true
 		}
+
 	}
 
-	return false
+	old, ok := stats[sval]
+	if !ok {
+		old = 0
+	}
+	stats[sval] = old + 1
+
+	return retval
 }
 
 func (stats StatsOnValues) Merge(toMerged StatsOnValues) StatsOnValues {
@@ -94,7 +97,7 @@ func (stats StatsOnValues) Merge(toMerged StatsOnValues) StatsOnValues {
 	return stats
 }
 
-func (sequence BioSequence) Merge(tomerge BioSequence, inplace bool, keys ...string) BioSequence {
+func (sequence BioSequence) Merge(tomerge BioSequence, na string, inplace bool, statsOn ...string) BioSequence {
 	if !inplace {
 		sequence = sequence.Copy()
 	}
@@ -105,15 +108,15 @@ func (sequence BioSequence) Merge(tomerge BioSequence, inplace bool, keys ...str
 
 	annotation := sequence.Annotations()
 
-	count := tomerge.Count() + sequence.Count()
+	count := sequence.Count() + tomerge.Count()
 
-	for _, key := range keys {
+	for _, key := range statsOn {
 		if tomerge.HasStatsOn(key) {
-			smk := sequence.StatsOn(key)
-			mmk := tomerge.StatsOn(key)
+			smk := sequence.StatsOn(key,na)
+			mmk := tomerge.StatsOn(key,na)
 			smk.Merge(mmk)
 		} else {
-			sequence.StatsPlusOne(key, tomerge)
+			sequence.StatsPlusOne(key, tomerge,na)
 		}
 	}
 
@@ -140,89 +143,23 @@ func (sequence BioSequence) Merge(tomerge BioSequence, inplace bool, keys ...str
 	return sequence
 }
 
-func (sequences BioSequenceSlice) Unique(statsOn []string, keys ...string) BioSequenceSlice {
-	uniq := make(map[string]*BioSequenceSlice, len(sequences))
-	nVariant := 0
+func (sequences BioSequenceSlice) Merge(na string, statsOn ...string) BioSequenceSlice {
+	seq := sequences[0]
+	seq.SetQualities(nil)
+	seq.Annotations()["count"] = 1
 
-	for _, seq := range sequences {
-
-		sstring := seq.String()
-		pgroup, ok := uniq[sstring]
-
-		if !ok {
-			group := make(BioSequenceSlice, 0, 10)
-			pgroup = &group
-			uniq[sstring] = pgroup
-		}
-
-		ok = false
-		i := 0
-		var s BioSequence
-
-		for i, s = range *pgroup {
-			ok = true
-			switch {
-			case seq.HasAnnotation() && s.HasAnnotation():
-				for _, k := range keys {
-					seqV, seqOk := seq.Annotations()[k]
-					sV, sOk := s.Annotations()[k]
-
-					ok = ok && ((!seqOk && !sOk) || ((seqOk && sOk) && (seqV == sV)))
-
-					if !ok {
-						break
-					}
-				}
-			case seq.HasAnnotation() && !s.HasAnnotation():
-				for _, k := range keys {
-					_, seqOk := seq.Annotations()[k]
-					ok = ok && !seqOk
-					if !ok {
-						break
-					}
-				}
-			case !seq.HasAnnotation() && s.HasAnnotation():
-				for _, k := range keys {
-					_, sOk := s.Annotations()[k]
-					ok = ok && !sOk
-					if !ok {
-						break
-					}
-				}
-			default:
-				ok = true
-			}
-
-			if ok {
-				break
-			}
-		}
-
-		if ok {
-			(*pgroup)[i] = s.Merge(seq, true, statsOn...)
-		} else {
-			seq.SetQualities(nil)
-			if seq.Count() == 1 {
-				seq.Annotations()["count"] = 1
-			}
-			*pgroup = append(*pgroup, seq)
-			nVariant++
-		}
-
+	for _, toMerge := range sequences[1:] {
+		seq.Merge(toMerge, na, true, statsOn...)
+		toMerge.Recycle()
 	}
 
-	output := make(BioSequenceSlice, 0, nVariant)
-	for _, seqs := range uniq {
-		output = append(output, *seqs...)
-	}
-
-	return output
+	return sequences[0:1]
 }
 
-func UniqueSliceWorker(statsOn []string, keys ...string) SeqSliceWorker {
+func MergeSliceWorker(na string, statsOn ...string) SeqSliceWorker {
 
 	worker := func(sequences BioSequenceSlice) BioSequenceSlice {
-		return sequences.Unique(statsOn, keys...)
+		return sequences.Merge(na, statsOn...)
 	}
 
 	return worker

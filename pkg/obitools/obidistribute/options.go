@@ -14,6 +14,7 @@ var _FilenamePattern = ""
 var _SequenceClassifierTag = ""
 var _BatchCount = 0
 var _HashSize = 0
+var _NAValue = "NA"
 
 func DistributeOptionSet(options *getoptions.GetOpt) {
 	options.StringVar(&_FilenamePattern, "pattern", _FilenamePattern,
@@ -28,6 +29,9 @@ func DistributeOptionSet(options *getoptions.GetOpt) {
 		options.Description("The name of a tag annotating thes sequences. "+
 			"The name must corresponds to a string, a integer or a boolean value. "+
 			"That value will be used to dispatch sequences amoong the different files"))
+
+	options.StringVar(&_NAValue, "na-value", _NAValue,
+		options.Description("Value used when the classifier tag is not defined for a sequence."))
 
 	options.IntVar(&_BatchCount, "batches", 0,
 		options.Alias("n"),
@@ -44,10 +48,10 @@ func OptionSet(options *getoptions.GetOpt) {
 	DistributeOptionSet(options)
 }
 
-func CLISequenceClassifier() obiseq.SequenceClassifier {
+func CLISequenceClassifier() obiseq.BioSequenceClassifier {
 	switch {
 	case _SequenceClassifierTag != "":
-		return obiseq.AnnotationClassifier(_SequenceClassifierTag)
+		return obiseq.AnnotationClassifier(_SequenceClassifierTag, _NAValue)
 	case _BatchCount > 0:
 		return obiseq.RotateClassifier(_BatchCount)
 	case _HashSize > 0:
@@ -65,4 +69,8 @@ func CLIFileNamePattern() string {
 	}
 
 	return _FilenamePattern
+}
+
+func CLINAValue() string {
+	return _NAValue
 }

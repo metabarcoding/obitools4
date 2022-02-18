@@ -6,9 +6,9 @@ import (
 	"strconv"
 )
 
-type SequenceClassifier func(sequence BioSequence) string
+type BioSequenceClassifier func(sequence BioSequence) string
 
-func AnnotationClassifier(key string) SequenceClassifier {
+func AnnotationClassifier(key string, na string) BioSequenceClassifier {
 	f := func(sequence BioSequence) string {
 		if sequence.HasAnnotation() {
 			value, ok := sequence.Annotations()[key]
@@ -20,17 +20,15 @@ func AnnotationClassifier(key string) SequenceClassifier {
 				default:
 					return fmt.Sprint(value)
 				}
-			}
+			} 
 		}
-		return ""
+		return na
 	}
 
 	return f
 }
 
-var SampleClassifier = AnnotationClassifier("sample")
-
-func PredicateClassifier(predicate SequencePredicate) SequenceClassifier {
+func PredicateClassifier(predicate SequencePredicate) BioSequenceClassifier {
 	f := func(sequence BioSequence) string {
 		if predicate(sequence) {
 			return "true"
@@ -44,7 +42,7 @@ func PredicateClassifier(predicate SequencePredicate) SequenceClassifier {
 
 // Builds a classifier function based on CRC32 of the sequence
 //
-func HashClassifier(size int) SequenceClassifier {
+func HashClassifier(size int) BioSequenceClassifier {
 	f := func(sequence BioSequence) string {
 		h := crc32.ChecksumIEEE(sequence.Sequence()) % uint32(size)
 		return strconv.Itoa(int(h))
@@ -53,7 +51,17 @@ func HashClassifier(size int) SequenceClassifier {
 	return f
 }
 
-func RotateClassifier(size int) SequenceClassifier {
+// Builds a classifier function based on the sequence
+//
+func SequenceClassifier() BioSequenceClassifier {
+	f := func(sequence BioSequence) string {
+		return sequence.String()
+	}
+
+	return f
+}
+
+func RotateClassifier(size int) BioSequenceClassifier {
 	n := 0
 	f := func(sequence BioSequence) string {
 		h := n % size

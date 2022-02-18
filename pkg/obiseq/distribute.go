@@ -27,7 +27,7 @@ func (dist *IDistribute) News() chan string {
 	return dist.news
 }
 
-func (iterator IBioSequenceBatch) Distribute(class SequenceClassifier, sizes ...int) IDistribute {
+func (iterator IBioSequenceBatch) Distribute(class BioSequenceClassifier, sizes ...int) IDistribute {
 	batchsize := 5000
 	buffsize := 2
 
@@ -80,7 +80,7 @@ func (iterator IBioSequenceBatch) Distribute(class SequenceClassifier, sizes ...
 				}
 
 				*slice = append(*slice, s)
-				
+
 				if len(*slice) == batchsize {
 					outputs[key].Channel() <- MakeBioSequenceBatch(orders[key], *slice...)
 					orders[key]++
