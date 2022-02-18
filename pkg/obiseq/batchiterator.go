@@ -27,6 +27,11 @@ func (batch BioSequenceBatch) Order() int {
 	return batch.order
 }
 
+func (batch BioSequenceBatch) Reorder(newOrder int) BioSequenceBatch {
+	batch.order = newOrder
+	return batch
+}
+
 func (batch BioSequenceBatch) Slice() BioSequenceSlice {
 	return batch.slice
 }
@@ -294,7 +299,7 @@ func (iterator IBioSequenceBatch) Concat(iterators ...IBioSequenceBatch) IBioSeq
 			if s.order > max_order {
 				max_order = s.order
 			}
-			newIter.Channel() <- MakeBioSequenceBatch(s.order+previous_max, s.slice...)
+			newIter.Channel() <- s.Reorder(s.order + previous_max)
 		}
 
 		previous_max = max_order + 1
@@ -305,7 +310,7 @@ func (iterator IBioSequenceBatch) Concat(iterators ...IBioSequenceBatch) IBioSeq
 					max_order = s.order + previous_max
 				}
 
-				newIter.Channel() <- MakeBioSequenceBatch(s.order+previous_max, s.slice...)
+				newIter.Channel() <- s.Reorder(s.order + previous_max)
 			}
 			previous_max = max_order + 1
 		}
@@ -368,6 +373,7 @@ func (iterator IBioSequenceBatch) Recycle() {
 	log.Println("Start recycling of Bioseq objects")
 
 	for iterator.Next() {
+		// iterator.Get()
 		batch := iterator.Get()
 		for _, seq := range batch.Slice() {
 			(&seq).Recycle()
