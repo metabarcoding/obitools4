@@ -155,8 +155,7 @@ func (marker *Marker) Match(sequence obiseq.BioSequence) *DemultiplexMatch {
 
 		}
 
-		err := fmt.Errorf("cannot locates reverse priming site")
-		m.Error = err
+		m.Error = fmt.Errorf("cannot locates reverse priming site")
 
 		return &m
 	}
@@ -211,8 +210,8 @@ func (marker *Marker) Match(sequence obiseq.BioSequence) *DemultiplexMatch {
 			return &m
 		}
 
-		err := fmt.Errorf("cannot locates forward priming site")
-		m.Error = err
+		m.Error = fmt.Errorf("cannot locates forward priming site")
+
 		return &m
 	}
 
@@ -232,10 +231,16 @@ func (match *DemultiplexMatch) ExtractBarcode(sequence obiseq.BioSequence, inpla
 
 	if match.ForwardMatch != "" && match.ReverseMatch != "" {
 		var err error
-		sequence, err = sequence.Subsequence(match.BarcodeStart, match.BarcodeEnd, false)
 
-		if err != nil {
-			log.Fatalf("cannot extract sub sequence %d..%d %v", match.BarcodeStart, match.BarcodeEnd, *match)
+		if match.BarcodeStart < match.BarcodeEnd {
+			sequence, err = sequence.Subsequence(match.BarcodeStart, match.BarcodeEnd, false)
+			if err != nil {
+				log.Fatalf("cannot extract sub sequence %d..%d %v", match.BarcodeStart, match.BarcodeEnd, *match)
+			}
+		} else {
+			annot := sequence.Annotations()
+			annot["demultiplex_error"] = "read correponding to a primer dimer"
+			return sequence, errors.New("read correponding to a primer dimer")
 		}
 	}
 
@@ -244,6 +249,7 @@ func (match *DemultiplexMatch) ExtractBarcode(sequence obiseq.BioSequence, inpla
 	}
 
 	annot := sequence.Annotations()
+
 	if annot == nil {
 		log.Fatalf("nil annot %v", sequence)
 	}
@@ -278,6 +284,9 @@ func (match *DemultiplexMatch) ExtractBarcode(sequence obiseq.BioSequence, inpla
 		for k, val := range match.Pcr.Annotations {
 			annot[k] = val
 		}
+	} else {
+		annot["demultiplex_error"] = "cannot assign the sequence to a sample"
+		match.Error = errors.New("cannot assign the sequence to a sample")
 	}
 
 	return sequence, match.Error
