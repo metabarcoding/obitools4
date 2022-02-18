@@ -64,7 +64,7 @@ func (sequence *BioSequence) Recycle() {
 	if pseq != nil {
 		RecycleSlice(pseq.sequence)
 		RecycleSlice(pseq.feature)
-		RecycleSlice(pseq.feature)
+		RecycleSlice(pseq.qualities)
 
 		RecycleAnnotation(pseq.annotations)
 	}
