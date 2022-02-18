@@ -9,18 +9,25 @@ var _StatsOn = make([]string, 0, 10)
 var _Keys = make([]string, 0, 10)
 var _OnDisk = false
 var _chunks = 100
+var _NAValue = "NA"
 
 func UniqueOptionSet(options *getoptions.GetOpt) {
 	options.StringSliceVar(&_StatsOn, "merge",
-		1, 1000,
+		1, 1,
 		options.Alias("m"),
 		options.Description("Adds a merged attribute containing the list of sequence record ids merged within this group."))
+
 	options.StringSliceVar(&_Keys, "category-attribute",
-		1, 1000,
+		1, 1,
 		options.Alias("c"),
 		options.Description("Adds one attribute to the list of attributes used to define sequence groups (this option can be used several times)."))
+
+	options.StringVar(&_NAValue, "na-value", _NAValue,
+		options.Description("Value used when the classifier tag is not defined for a sequence."))
+
 	options.BoolVar(&_OnDisk, "on-disk", true,
 		options.Description("Allows for using a disk cache during the dereplication process. "))
+
 	options.IntVar(&_chunks, "chunk-count", _chunks,
 		options.Description("In how many chunk the dataset is pre-devided for speeding up the process."))
 
@@ -51,4 +58,8 @@ func CLINumberOfChunks() int {
 	}
 
 	return _chunks
+}
+
+func CLINAValue() string {
+	return _NAValue
 }
