@@ -7,7 +7,6 @@ import (
 	"log"
 	"os"
 	"strings"
-	"time"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
@@ -19,8 +18,12 @@ func min(x, y int) int {
 	return y
 }
 
-func FormatFasta(seq obiseq.BioSequence, formater FormatHeader) string {
+func FormatFasta(seq *obiseq.BioSequence, formater FormatHeader) string {
 	var fragments strings.Builder
+
+	if seq==nil {
+		log.Panicln("try to format a nil BioSequence")
+	}
 
 	s := seq.Sequence()
 	l := len(s)
@@ -106,16 +109,8 @@ func WriteFastaBatch(iterator obiseq.IBioSequenceBatch, file io.Writer, options 
 	newIter.Add(nwriters)
 
 	go func() {
-		newIter.Wait()
-		for len(chunkchan) > 0 {
-			time.Sleep(time.Millisecond)
-		}
+		newIter.WaitAndClose()
 		close(chunkchan)
-		for len(newIter.Channel()) > 0 {
-			time.Sleep(time.Millisecond)
-		}
-		close(newIter.Channel())
-
 	}()
 
 	ff := func(iterator obiseq.IBioSequenceBatch) {
@@ -125,7 +120,7 @@ func WriteFastaBatch(iterator obiseq.IBioSequenceBatch, file io.Writer, options 
 				FormatFastaBatch(batch, header_format),
 				batch.Order(),
 			}
-			newIter.Channel() <- batch
+			newIter.Push(batch)
 		}
 		newIter.Done()
 	}
@@ -156,7 +151,7 @@ func WriteFastaBatch(iterator obiseq.IBioSequenceBatch, file io.Writer, options 
 			}
 
 		}
-		
+
 		if opt.CloseFile() {
 			switch file := file.(type) {
 			case *os.File:

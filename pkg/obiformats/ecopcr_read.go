@@ -35,12 +35,12 @@ func __readline__(stream io.Reader) string {
 	return string(line[0:i])
 }
 
-func __read_ecopcr_bioseq__(file *__ecopcr_file__) (obiseq.BioSequence, error) {
+func __read_ecopcr_bioseq__(file *__ecopcr_file__) (*obiseq.BioSequence, error) {
 
 	record, err := file.csv.Read()
 
 	if err != nil {
-		return obiseq.NilBioSequence, err
+		return nil, err
 	}
 
 	name := strings.TrimSpace(record[0])
@@ -65,7 +65,7 @@ func __read_ecopcr_bioseq__(file *__ecopcr_file__) (obiseq.BioSequence, error) {
 		comment = strings.TrimSpace(record[19])
 	}
 
-	bseq := obiseq.MakeBioSequence(name, sequence, comment)
+	bseq := obiseq.NewBioSequence(name, sequence, comment)
 	annotation := bseq.Annotations()
 
 	annotation["ac"] = name
@@ -168,7 +168,7 @@ func ReadEcoPCRBatch(reader io.Reader, options ...WithOption) obiseq.IBioSequenc
 
 	go func() {
 		newIter.Wait()
-		close(newIter.Channel())
+		newIter.Close()
 	}()
 
 	go func() {
@@ -181,9 +181,8 @@ func ReadEcoPCRBatch(reader io.Reader, options ...WithOption) obiseq.IBioSequenc
 			slice = append(slice, seq)
 			ii++
 			if ii >= opt.BatchSize() {
-				newIter.Channel() <- obiseq.MakeBioSequenceBatch(i, slice...)
-				slice = make(obiseq.BioSequenceSlice, 0, opt.BatchSize())
-
+				newIter.Push(obiseq.MakeBioSequenceBatch(i, slice))
+				slice = obiseq.MakeBioSequenceSlice()
 				i++
 				ii = 0
 			}
@@ -192,7 +191,7 @@ func ReadEcoPCRBatch(reader io.Reader, options ...WithOption) obiseq.IBioSequenc
 		}
 
 		if len(slice) > 0 {
-			newIter.Channel() <- obiseq.MakeBioSequenceBatch(i, slice...)
+			newIter.Push(obiseq.MakeBioSequenceBatch(i, slice))
 		}
 
 		newIter.Done()

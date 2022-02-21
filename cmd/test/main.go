@@ -43,7 +43,7 @@ func main() {
 
 	A := []byte("ccgcctccttagaacaggctcctctagaaaaccatagtgggatatctaaagaaggcggagatagaaagagcggttcagcaggaatgccgagatggacggcgtgtgacg")
 	// B := []byte("cgccaccaccgagatctacactctttccctacacgacgctcttccgatctccgcctccttagaacaggctcctctagaaaagcatagtggggtatctaaaggaggcgg")
-	sA := obiseq.MakeBioSequence("A", A, "")
+	sA := obiseq.NewBioSequence("A", A, "")
 	// sB := obiseq.MakeBioSequence("B", B, "")
 
 	pat, _ := obiapat.MakeApatPattern("TCCTTCCAACAGGCTCCTC", 3)

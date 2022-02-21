@@ -218,7 +218,7 @@ func OptionBatchSize(size int) WithOption {
 }
 
 func _Pcr(seq ApatSequence,
-	sequence obiseq.BioSequence,
+	sequence *obiseq.BioSequence,
 	opt Options) obiseq.BioSequenceSlice {
 	results := make(obiseq.BioSequenceSlice, 0, 10)
 
@@ -278,7 +278,7 @@ func _Pcr(seq ApatSequence,
 
 								match, _ := sequence.Subsequence(fm[0], fm[1], opt.pointer.circular)
 								annot["forward_match"] = match.String()
-								(&match).Recycle()
+								match.Recycle()
 
 								annot["forward_error"] = erri
 
@@ -286,7 +286,7 @@ func _Pcr(seq ApatSequence,
 								match, _ = sequence.Subsequence(rm[0], rm[1], opt.pointer.circular)
 								match = match.ReverseComplement(true)
 								annot["reverse_match"] = match.String()
-								(&match).Recycle()
+								match.Recycle()
 
 								annot["reverse_error"] = errj
 								results = append(results, amplicon)
@@ -351,14 +351,14 @@ func _Pcr(seq ApatSequence,
 								match, _ := sequence.Subsequence(rm[0], rm[1], opt.pointer.circular)
 								match.ReverseComplement(true)
 								annot["forward_match"] = match.String()
-								(&match).Recycle()
+								match.Recycle()
 
 								annot["forward_error"] = errj
 
 								annot["reverse_primer"] = reverse.String()
 								match, _ = sequence.Subsequence(fm[0], fm[1], opt.pointer.circular)
 								annot["reverse_match"] = match.String()
-								(&match).Recycle()
+								match.Recycle()
 
 								annot["reverse_error"] = erri
 								results = append(results, amplicon)
@@ -376,7 +376,7 @@ func _Pcr(seq ApatSequence,
 // obiseq.BioSequence instance. PCR parameters are
 // specified using the corresponding Option functions
 // defined for the PCR algorithm.
-func PCRSim(sequence obiseq.BioSequence, options ...WithOption) obiseq.BioSequenceSlice {
+func PCRSim(sequence *obiseq.BioSequence, options ...WithOption) obiseq.BioSequenceSlice {
 
 	opt := MakeOptions(options)
 

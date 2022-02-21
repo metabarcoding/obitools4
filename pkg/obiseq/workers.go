@@ -2,16 +2,15 @@ package obiseq
 
 import (
 	"log"
-	"time"
 )
 
-type SeqAnnotator func(BioSequence)
+type SeqAnnotator func(*BioSequence)
 
-type SeqWorker func(BioSequence) BioSequence
+type SeqWorker func(*BioSequence) *BioSequence
 type SeqSliceWorker func(BioSequenceSlice) BioSequenceSlice
 
 func AnnotatorToSeqWorker(function SeqAnnotator) SeqWorker {
-	f := func(seq BioSequence) BioSequence {
+	f := func(seq *BioSequence) *BioSequence {
 		function(seq)
 		return seq
 	}
@@ -63,11 +62,7 @@ func (iterator IBioSequenceBatch) MakeIWorker(worker SeqWorker, sizes ...int) IB
 	newIter.Add(nworkers)
 
 	go func() {
-		newIter.Wait()
-		for len(newIter.Channel()) > 0 {
-			time.Sleep(time.Millisecond)
-		}
-		close(newIter.pointer.channel)
+		newIter.WaitAndClose()
 		log.Println("End of the batch workers")
 
 	}()
@@ -78,7 +73,7 @@ func (iterator IBioSequenceBatch) MakeIWorker(worker SeqWorker, sizes ...int) IB
 			for i, seq := range batch.slice {
 				batch.slice[i] = worker(seq)
 			}
-			newIter.pointer.channel <- batch
+			newIter.Push(batch)
 		}
 		newIter.Done()
 	}
@@ -109,11 +104,7 @@ func (iterator IBioSequenceBatch) MakeISliceWorker(worker SeqSliceWorker, sizes 
 	newIter.Add(nworkers)
 
 	go func() {
-		newIter.Wait()
-		for len(newIter.Channel()) > 0 {
-			time.Sleep(time.Millisecond)
-		}
-		close(newIter.pointer.channel)
+		newIter.WaitAndClose()
 		log.Println("End of the batch slice workers")
 	}()
 

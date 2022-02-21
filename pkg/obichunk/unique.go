@@ -11,10 +11,12 @@ func IUniqueSequence(iterator obiseq.IBioSequenceBatch,
 
 	var err error
 	opts := MakeOptions(options)
+	nworkers := opts.ParallelWorkers()
 
 	iUnique := obiseq.MakeIBioSequenceBatch(opts.BufferSize())
 
 	if opts.SortOnDisk() {
+		nworkers = 1
 		iterator, err = ISequenceChunkOnDisk(iterator,
 			obiseq.HashClassifier(opts.BatchCount()),
 			opts.BufferSize())
@@ -33,13 +35,11 @@ func IUniqueSequence(iterator obiseq.IBioSequenceBatch,
 		}
 	}
 
-	nworkers := opts.ParallelWorkers()
-
 	iUnique.Add(nworkers)
 
 	go func() {
 		iUnique.Wait()
-		close(iUnique.Channel())
+		iUnique.Close()
 	}()
 
 	omutex := sync.Mutex{}
@@ -57,14 +57,6 @@ func IUniqueSequence(iterator obiseq.IBioSequenceBatch,
 
 	cat := opts.Categories()
 	na := opts.NAValue()
-
-	// ff = func(input obiseq.IBioSequenceBatch,
-	// 	classifier obiseq.BioSequenceClassifier,
-	// 	icat int) {
-	// 	log.Println(na, nextOrder)
-	// 	input.Recycle()
-	// 	iUnique.Done()
-	// }
 
 	ff = func(input obiseq.IBioSequenceBatch,
 		classifier *obiseq.BioSequenceClassifier,
@@ -88,16 +80,17 @@ func IUniqueSequence(iterator obiseq.IBioSequenceBatch,
 		o := 0
 		for input.Next() {
 			batch := input.Get()
+
 			if icat < 0 || len(batch.Slice()) == 1 {
-				iUnique.Channel() <- batch.Reorder(nextOrder())
+				iUnique.Push(batch.Reorder(nextOrder()))
 			} else {
-				next.Channel() <- batch.Reorder(o)
+				next.Push(batch.Reorder(o))
 				o++
 			}
 		}
 
 		if icat >= 0 {
-			close(next.Channel())
+			next.Close()
 		}
 
 		iUnique.Done()
@@ -112,12 +105,10 @@ func IUniqueSequence(iterator obiseq.IBioSequenceBatch,
 		obiseq.SequenceClassifier(),
 		len(cat))
 
-	iMerged := iUnique.MakeISliceWorker(
-		obiseq.MergeSliceWorker(
-			opts.NAValue(),
-			opts.StatsOn()...),
+	iMerged := iUnique.IMergeSequenceBatch(opts.NAValue(),
+		opts.StatsOn(),
 		opts.BufferSize(),
 	)
 
-	return iMerged.Rebatch(opts.BatchSize()), nil
+	return iMerged.Speed(), nil
 }

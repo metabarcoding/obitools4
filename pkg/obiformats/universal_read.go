@@ -66,7 +66,7 @@ func ReadSequencesBatchFromFile(filename string, options ...WithOption) (obiseq.
 
 	if len(tag) < 30 {
 		newIter := obiseq.MakeIBioSequenceBatch()
-		close(newIter.Channel())
+		newIter.Close()
 		return newIter, nil
 	}
 

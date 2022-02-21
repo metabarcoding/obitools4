@@ -8,7 +8,7 @@ import (
 
 type StatsOnValues map[string]int
 
-func (sequence BioSequence) HasStatsOn(key string) bool {
+func (sequence *BioSequence) HasStatsOn(key string) bool {
 	if !sequence.HasAnnotation() {
 		return false
 	}
@@ -20,7 +20,7 @@ func (sequence BioSequence) HasStatsOn(key string) bool {
 	return ok
 }
 
-func (sequence BioSequence) StatsOn(key string, na string) StatsOnValues {
+func (sequence *BioSequence) StatsOn(key string, na string) StatsOnValues {
 	mkey := "merged_" + key
 	annotations := sequence.Annotations()
 	istat, ok := annotations[mkey]
@@ -51,9 +51,9 @@ func (sequence BioSequence) StatsOn(key string, na string) StatsOnValues {
 	return stats
 }
 
-func (sequence BioSequence) StatsPlusOne(key string, toAdd BioSequence, na string) bool {
+func (sequence *BioSequence) StatsPlusOne(key string, toAdd *BioSequence, na string) bool {
 	sval := na
-	stats := sequence.StatsOn(key,na)
+	stats := sequence.StatsOn(key, na)
 	retval := false
 
 	if toAdd.HasAnnotation() {
@@ -97,7 +97,7 @@ func (stats StatsOnValues) Merge(toMerged StatsOnValues) StatsOnValues {
 	return stats
 }
 
-func (sequence BioSequence) Merge(tomerge BioSequence, na string, inplace bool, statsOn ...string) BioSequence {
+func (sequence *BioSequence) Merge(tomerge *BioSequence, na string, inplace bool, statsOn ...string) *BioSequence {
 	if !inplace {
 		sequence = sequence.Copy()
 	}
@@ -112,11 +112,11 @@ func (sequence BioSequence) Merge(tomerge BioSequence, na string, inplace bool, 
 
 	for _, key := range statsOn {
 		if tomerge.HasStatsOn(key) {
-			smk := sequence.StatsOn(key,na)
-			mmk := tomerge.StatsOn(key,na)
+			smk := sequence.StatsOn(key, na)
+			mmk := tomerge.StatsOn(key, na)
 			smk.Merge(mmk)
 		} else {
-			sequence.StatsPlusOne(key, tomerge,na)
+			sequence.StatsPlusOne(key, tomerge, na)
 		}
 	}
 
@@ -143,24 +143,63 @@ func (sequence BioSequence) Merge(tomerge BioSequence, na string, inplace bool, 
 	return sequence
 }
 
-func (sequences BioSequenceSlice) Merge(na string, statsOn ...string) BioSequenceSlice {
+func (sequences BioSequenceSlice) Merge(na string, statsOn []string) *BioSequence {
 	seq := sequences[0]
+	//sequences[0] = nil
 	seq.SetQualities(nil)
-	seq.Annotations()["count"] = 1
 
-	for _, toMerge := range sequences[1:] {
-		seq.Merge(toMerge, na, true, statsOn...)
-		toMerge.Recycle()
+	if len(sequences) == 1 {
+		seq.Annotations()["count"] = 1
+		for _, v := range statsOn {
+			seq.StatsOn(v, na)
+		}
+	} else {
+		for k, toMerge := range sequences[1:] {
+			seq.Merge(toMerge, na, true, statsOn...)
+			toMerge.Recycle()
+			sequences[1+k] = nil
+		}
 	}
 
-	return sequences[0:1]
+	sequences.Recycle()
+	return seq
+
 }
 
-func MergeSliceWorker(na string, statsOn ...string) SeqSliceWorker {
+func (iterator IBioSequenceBatch) IMergeSequenceBatch(na string, statsOn []string, sizes ...int) IBioSequenceBatch {
+	batchsize := 100
+	buffsize := iterator.BufferSize()
 
-	worker := func(sequences BioSequenceSlice) BioSequenceSlice {
-		return sequences.Merge(na, statsOn...)
+	if len(sizes) > 0 {
+		batchsize = sizes[0]
+	}
+	if len(sizes) > 1 {
+		buffsize = sizes[1]
 	}
 
-	return worker
+	newIter := MakeIBioSequenceBatch(buffsize)
+
+	newIter.Add(1)
+
+	go func() {
+		newIter.WaitAndClose()
+	}()
+
+	go func() {
+		for j := 0; !iterator.Finished(); j++ {
+			batch := BioSequenceBatch{
+				slice: MakeBioSequenceSlice(),
+				order: j}
+			for i := 0; i < batchsize && iterator.Next(); i++ {
+				seqs := iterator.Get()
+				batch.slice = append(batch.slice, seqs.slice.Merge(na, statsOn))
+			}
+			if batch.Length() > 0 {
+				newIter.Push(batch)
+			}
+		}
+		newIter.Done()
+	}()
+
+	return newIter
 }

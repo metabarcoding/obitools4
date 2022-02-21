@@ -9,7 +9,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"time"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
@@ -124,7 +123,7 @@ func _ParseEmblFile(input <-chan _FileChunk, out obiseq.IBioSequenceBatch) {
 					seqBytes.WriteString(parts[i])
 				}
 			case line == "//":
-				sequence := obiseq.MakeBioSequence(id,
+				sequence := obiseq.NewBioSequence(id,
 					seqBytes.Bytes(),
 					defBytes.String())
 
@@ -140,8 +139,7 @@ func _ParseEmblFile(input <-chan _FileChunk, out obiseq.IBioSequenceBatch) {
 				seqBytes = new(bytes.Buffer)
 			}
 		}
-		out.Channel() <- obiseq.MakeBioSequenceBatch(order, sequences...)
-
+		out.Push(obiseq.MakeBioSequenceBatch(order, sequences))
 	}
 
 	out.Done()
@@ -188,11 +186,7 @@ func ReadEMBLBatch(reader io.Reader, options ...WithOption) obiseq.IBioSequenceB
 	newIter.Add(nworkers)
 
 	go func() {
-		newIter.Wait()
-		for len(newIter.Channel()) > 0 {
-			time.Sleep(time.Millisecond)
-		}
-		close(newIter.Channel())
+		newIter.WaitAndClose()
 	}()
 
 	// for j := 0; j < opt.ParallelWorkers(); j++ {

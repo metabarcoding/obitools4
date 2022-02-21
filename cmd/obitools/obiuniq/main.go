@@ -6,11 +6,14 @@ import (
 	"runtime/pprof"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obioptions"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obiconvert"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obiuniq"
 )
 
 func main() {
+
+	defer obiseq.LogBioSeqStatus()
 
 	// go tool pprof -http=":8000" ./obipairing ./cpu.pprof
 	f, err := os.Create("cpu.pprof")

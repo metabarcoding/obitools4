@@ -31,11 +31,12 @@ func WriterDispatcher(prototypename string,
 				}
 
 				out, err := formater(data,
-					fmt.Sprintf(prototypename, newflux),
+					fmt.Sprintf(prototypename, dispatcher.Classifier().Value(newflux)),
 					options...)
 
 				if err != nil {
-					log.Fatalf("cannot open the output file for key %d", newflux)
+					log.Fatalf("cannot open the output file for key %s",
+						dispatcher.Classifier().Value(newflux))
 				}
 
 				out.Recycle()

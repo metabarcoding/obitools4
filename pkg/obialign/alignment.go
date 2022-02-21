@@ -65,24 +65,24 @@ func _BuildAlignment(seqA, seqB []byte, path []int, gap byte, bufferA, bufferB *
 // In that case an arena will be allocated by the function but, it will not
 // be reusable for other alignments and desallocated at the BuildAlignment
 // return.
-func BuildAlignment(seqA, seqB obiseq.BioSequence,
-	path []int, gap byte) (obiseq.BioSequence, obiseq.BioSequence) {
+func BuildAlignment(seqA, seqB *obiseq.BioSequence,
+	path []int, gap byte) (*obiseq.BioSequence, *obiseq.BioSequence) {
 
 	bufferSA := obiseq.GetSlice()
-	defer obiseq.RecycleSlice(bufferSA)
+	defer obiseq.RecycleSlice(&bufferSA)
 
 	bufferSB := obiseq.GetSlice()
-	defer obiseq.RecycleSlice(bufferSB)
+	defer obiseq.RecycleSlice(&bufferSB)
 
 	_BuildAlignment(seqA.Sequence(), seqB.Sequence(), path, gap,
 		&bufferSA,
 		&bufferSB)
 
-	seqA = obiseq.MakeBioSequence(seqA.Id(),
+	seqA = obiseq.NewBioSequence(seqA.Id(),
 		bufferSA,
 		seqA.Definition())
 
-	seqB = obiseq.MakeBioSequence(seqB.Id(),
+	seqB = obiseq.NewBioSequence(seqB.Id(),
 		bufferSB,
 		seqB.Definition())
 
@@ -110,15 +110,15 @@ func BuildAlignment(seqA, seqB obiseq.BioSequence,
 // In that case arenas will be allocated by the function but, they will not
 // be reusable for other alignments and desallocated at the BuildQualityConsensus
 // return.
-func BuildQualityConsensus(seqA, seqB obiseq.BioSequence, path []int) (obiseq.BioSequence, int) {
+func BuildQualityConsensus(seqA, seqB *obiseq.BioSequence, path []int) (*obiseq.BioSequence, int) {
 
 	bufferSA := obiseq.GetSlice()
 	bufferSB := obiseq.GetSlice()
-	defer obiseq.RecycleSlice(bufferSB)
+	defer obiseq.RecycleSlice(&bufferSB)
 
 	bufferQA := obiseq.GetSlice()
 	bufferQB := obiseq.GetSlice()
-	defer obiseq.RecycleSlice(bufferQB)
+	defer obiseq.RecycleSlice(&bufferQB)
 
 	_BuildAlignment(seqA.Sequence(), seqB.Sequence(), path, ' ',
 		&bufferSA, &bufferSB)
@@ -178,7 +178,7 @@ func BuildQualityConsensus(seqA, seqB obiseq.BioSequence, path []int) (obiseq.Bi
 		bufferQA[i] = q
 	}
 
-	consSeq := obiseq.MakeBioSequence(
+	consSeq := obiseq.NewBioSequence(
 		seqA.Id(),
 		bufferSA,
 		seqA.Definition(),

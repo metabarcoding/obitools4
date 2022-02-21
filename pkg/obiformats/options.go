@@ -6,7 +6,7 @@ import (
 
 type __options__ struct {
 	fastseq_header_parser obiseq.SeqAnnotator
-	fastseq_header_writer func(obiseq.BioSequence) string
+	fastseq_header_writer func(*obiseq.BioSequence) string
 	with_progress_bar     bool
 	buffer_size           int
 	batch_size            int
@@ -62,7 +62,7 @@ func (opt Options) ParseFastSeqHeader() obiseq.SeqAnnotator {
 	return opt.pointer.fastseq_header_parser
 }
 
-func (opt Options) FormatFastSeqHeader() func(obiseq.BioSequence) string {
+func (opt Options) FormatFastSeqHeader() func(*obiseq.BioSequence) string {
 	return opt.pointer.fastseq_header_writer
 }
 
@@ -141,7 +141,7 @@ func OptionsFastSeqDefaultHeaderParser() WithOption {
 
 // OptionsFastSeqHeaderFormat allows foor specifying the format
 // used to write FASTA and FASTQ sequence.
-func OptionsFastSeqHeaderFormat(format func(obiseq.BioSequence) string) WithOption {
+func OptionsFastSeqHeaderFormat(format func(*obiseq.BioSequence) string) WithOption {
 	f := WithOption(func(opt Options) {
 		opt.pointer.fastseq_header_writer = format
 	})

@@ -40,13 +40,13 @@ func main() {
 	nsymbol := 0
 	for fs.Next() {
 		s := fs.Get()
-		if s.IsNil() {
+		if s==nil {
 			log.Panicln("Read sequence is nil")
 		}
 		nread += s.Count()
 		nvariant++
 		nsymbol += s.Length()
-		(&s).Recycle()
+		s.Recycle()
 	}
 
 	if obicount.CLIIsPrintingVariantCount() {

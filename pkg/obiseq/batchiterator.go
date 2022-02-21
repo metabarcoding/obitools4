@@ -5,6 +5,7 @@ import (
 	"log"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/tevino/abool/v2"
 )
@@ -16,7 +17,7 @@ type BioSequenceBatch struct {
 
 var NilBioSequenceBatch = BioSequenceBatch{nil, -1}
 
-func MakeBioSequenceBatch(order int, sequences ...BioSequence) BioSequenceBatch {
+func MakeBioSequenceBatch(order int, sequences BioSequenceSlice) BioSequenceBatch {
 	return BioSequenceBatch{
 		slice: sequences,
 		order: order,
@@ -39,6 +40,15 @@ func (batch BioSequenceBatch) Slice() BioSequenceSlice {
 func (batch BioSequenceBatch) Length() int {
 	return len(batch.slice)
 }
+
+func (batch BioSequenceBatch) NotEmpty() bool {
+	return batch.slice.NotEmpty()
+}
+
+func (batch BioSequenceBatch) Pop0() *BioSequence {
+	return batch.slice.Pop0()
+}
+
 func (batch BioSequenceBatch) IsNil() bool {
 	return batch.slice == nil
 }
@@ -201,6 +211,30 @@ func (iterator IBioSequenceBatch) Get() BioSequenceBatch {
 	return iterator.pointer.current
 }
 
+func (iterator IBioSequenceBatch) Push(batch BioSequenceBatch) {
+	if batch.IsNil() {
+		log.Panicln("An Nil batch is pushed on the channel")
+	}
+	if batch.Length() == 0 {
+		log.Panicln("An empty batch is pushed on the channel")
+	}
+
+	iterator.pointer.channel <- batch
+}
+
+func (iterator IBioSequenceBatch) Close() {
+	close(iterator.pointer.channel)
+}
+
+func (iterator IBioSequenceBatch) WaitAndClose() {
+	iterator.Wait()
+
+	for len(iterator.Channel()) > 0 {
+		time.Sleep(time.Millisecond)
+	}
+	iterator.Close()
+}
+
 // Finished returns 'true' value if no more data is available
 // from the iterator.
 func (iterator IBioSequenceBatch) Finished() bool {
@@ -227,9 +261,10 @@ func (iterator IBioSequenceBatch) IBioSequence(sizes ...int) IBioSequence {
 		for iterator.Next() {
 			batch := iterator.Get()
 
-			for _, s := range batch.slice {
-				newIter.pointer.channel <- s
+			for batch.NotEmpty() {
+				newIter.pointer.channel <- batch.Pop0()
 			}
+			batch.Recycle()
 		}
 		newIter.Done()
 	}()
@@ -304,7 +339,7 @@ func (iterator IBioSequenceBatch) Concat(iterators ...IBioSequenceBatch) IBioSeq
 			if s.order > max_order {
 				max_order = s.order
 			}
-			newIter.Channel() <- s.Reorder(s.order + previous_max)
+			newIter.Push(s.Reorder(s.order + previous_max))
 		}
 
 		previous_max = max_order + 1
@@ -315,7 +350,7 @@ func (iterator IBioSequenceBatch) Concat(iterators ...IBioSequenceBatch) IBioSeq
 					max_order = s.order + previous_max
 				}
 
-				newIter.Channel() <- s.Reorder(s.order + previous_max)
+				newIter.Push(s.Reorder(s.order + previous_max))
 			}
 			previous_max = max_order + 1
 		}
@@ -348,23 +383,23 @@ func (iterator IBioSequenceBatch) Rebatch(size int, sizes ...int) IBioSequenceBa
 	go func() {
 		order := 0
 		iterator = iterator.SortBatches()
-		buffer := GetBioSequenceSlice()
+		buffer := MakeBioSequenceSlice()
 
 		for iterator.Next() {
 			seqs := iterator.Get()
 			for _, s := range seqs.slice {
 				buffer = append(buffer, s)
 				if len(buffer) == size {
-					newIter.Channel() <- MakeBioSequenceBatch(order, buffer...)
+					newIter.Push(MakeBioSequenceBatch(order, buffer))
 					order++
-					buffer = GetBioSequenceSlice()
+					buffer = MakeBioSequenceSlice()
 				}
 			}
 			seqs.Recycle()
 		}
 
 		if len(buffer) > 0 {
-			newIter.Channel() <- MakeBioSequenceBatch(order, buffer...)
+			newIter.Push(MakeBioSequenceBatch(order, buffer))
 		}
 
 		newIter.Done()
@@ -377,15 +412,17 @@ func (iterator IBioSequenceBatch) Rebatch(size int, sizes ...int) IBioSequenceBa
 func (iterator IBioSequenceBatch) Recycle() {
 
 	log.Println("Start recycling of Bioseq objects")
-
+	recycled := 0
 	for iterator.Next() {
 		// iterator.Get()
 		batch := iterator.Get()
 		for _, seq := range batch.Slice() {
-			(&seq).Recycle()
+			seq.Recycle()
+			recycled++
 		}
+		batch.Recycle()
 	}
-	log.Println("End of the recycling of Bioseq objects")
+	log.Printf("End of the recycling of %d Bioseq objects", recycled)
 }
 
 func (iterator IBioSequenceBatch) PairWith(reverse IBioSequenceBatch, sizes ...int) IPairedBioSequenceBatch {
@@ -444,10 +481,8 @@ func (iterator IBioSequenceBatch) DivideOn(predicate SequencePredicate,
 	falseIter.Add(1)
 
 	go func() {
-		trueIter.Wait()
-		falseIter.Wait()
-		close(trueIter.Channel())
-		close(falseIter.Channel())
+		trueIter.WaitAndClose()
+		falseIter.WaitAndClose()
 	}()
 
 	go func() {
@@ -455,8 +490,8 @@ func (iterator IBioSequenceBatch) DivideOn(predicate SequencePredicate,
 		falseOrder := 0
 		iterator = iterator.SortBatches()
 
-		trueSlice := GetBioSequenceSlice()
-		falseSlice := GetBioSequenceSlice()
+		trueSlice := MakeBioSequenceSlice()
+		falseSlice := MakeBioSequenceSlice()
 
 		for iterator.Next() {
 			seqs := iterator.Get()
@@ -468,26 +503,26 @@ func (iterator IBioSequenceBatch) DivideOn(predicate SequencePredicate,
 				}
 
 				if len(trueSlice) == size {
-					trueIter.Channel() <- MakeBioSequenceBatch(trueOrder, trueSlice...)
+					trueIter.Push(MakeBioSequenceBatch(trueOrder, trueSlice))
 					trueOrder++
-					trueSlice = GetBioSequenceSlice()
+					trueSlice = MakeBioSequenceSlice()
 				}
 
 				if len(falseSlice) == size {
-					falseIter.Channel() <- MakeBioSequenceBatch(falseOrder, falseSlice...)
+					falseIter.Push(MakeBioSequenceBatch(falseOrder, falseSlice))
 					falseOrder++
-					falseSlice = GetBioSequenceSlice()
+					falseSlice = MakeBioSequenceSlice()
 				}
 			}
 			seqs.Recycle()
 		}
 
 		if len(trueSlice) > 0 {
-			trueIter.Channel() <- MakeBioSequenceBatch(trueOrder, trueSlice...)
+			trueIter.Push(MakeBioSequenceBatch(trueOrder, trueSlice))
 		}
 
 		if len(falseSlice) > 0 {
-			falseIter.Channel() <- MakeBioSequenceBatch(falseOrder, falseSlice...)
+			falseIter.Push(MakeBioSequenceBatch(falseOrder, falseSlice))
 		}
 
 		trueIter.Done()

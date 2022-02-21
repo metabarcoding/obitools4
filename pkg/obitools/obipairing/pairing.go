@@ -5,7 +5,6 @@ import (
 	"math"
 	"os"
 	"runtime"
-	"time"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obialign"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
@@ -49,7 +48,7 @@ func _Abs(x int) int {
 // Outputs:
 //  cgatgcta..........aatcgtacga
 //
-func JoinPairedSequence(seqA, seqB obiseq.BioSequence, inplace bool) obiseq.BioSequence {
+func JoinPairedSequence(seqA, seqB *obiseq.BioSequence, inplace bool) *obiseq.BioSequence {
 
 	if !inplace {
 		seqA = seqA.Copy()
@@ -64,7 +63,7 @@ func JoinPairedSequence(seqA, seqB obiseq.BioSequence, inplace bool) obiseq.BioS
 	}
 
 	if inplace {
-		(&seqB).Recycle()
+		seqB.Recycle()
 	}
 
 	return seqA
@@ -104,10 +103,10 @@ func JoinPairedSequence(seqA, seqB obiseq.BioSequence, inplace bool) obiseq.BioS
 // An obiseq.BioSequence corresponding to the assembling of the both
 // input sequence.
 //
-func AssemblePESequences(seqA, seqB obiseq.BioSequence,
+func AssemblePESequences(seqA, seqB *obiseq.BioSequence,
 	gap float64, delta, minOverlap int, minIdentity float64, withStats bool,
 	inplace bool,
-	arenaAlign obialign.PEAlignArena) obiseq.BioSequence {
+	arenaAlign obialign.PEAlignArena) *obiseq.BioSequence {
 
 	score, path := obialign.PEAlign(seqA, seqB, gap, delta, arenaAlign)
 	cons, match := obialign.BuildQualityConsensus(seqA, seqB, path)
@@ -152,8 +151,8 @@ func AssemblePESequences(seqA, seqB obiseq.BioSequence,
 			annot["score_norm"] = scoreNorm
 
 			if inplace {
-				(&seqA).Recycle()
-				(&seqB).Recycle()
+				seqA.Recycle()
+				seqB.Recycle()
 			}
 		}
 	} else {
@@ -222,11 +221,7 @@ func IAssemblePESequencesBatch(iterator obiseq.IPairedBioSequenceBatch,
 	newIter.Add(nworkers)
 
 	go func() {
-		newIter.Wait()
-		for len(newIter.Channel()) > 0 {
-			time.Sleep(time.Millisecond)
-		}
-		close(newIter.Channel())
+		newIter.WaitAndClose()
 		log.Printf("End of the sequence Pairing")
 	}()
 
@@ -254,10 +249,10 @@ func IAssemblePESequencesBatch(iterator obiseq.IPairedBioSequenceBatch,
 				}
 			}
 			bar.Add(batch.Length() - processed)
-			newIter.Channel() <- obiseq.MakeBioSequenceBatch(
+			newIter.Push(obiseq.MakeBioSequenceBatch(
 				batch.Order(),
-				cons...,
-			)
+				cons,
+			))
 		}
 		newIter.Done()
 	}

@@ -57,7 +57,7 @@ var _FourBitsBaseDecode = []byte{
 // by the ambiguity set to 1.
 // A byte slice can be provided (buffer) to preveent allocation of a new
 // memory chunk by th function.
-func Encode4bits(seq obiseq.BioSequence, buffer []byte) []byte {
+func Encode4bits(seq *obiseq.BioSequence, buffer []byte) []byte {
 	length := seq.Length()
 	rawseq := seq.Sequence()
 

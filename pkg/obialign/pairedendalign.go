@@ -220,7 +220,7 @@ func _FillMatrixPeRightAlign(seqA, qualA, seqB, qualB []byte, gap float64,
 	return _GetMatrix(scoreMatrix, la, la-1, lb1)
 }
 
-func PELeftAlign(seqA, seqB obiseq.BioSequence, gap float64,
+func PELeftAlign(seqA, seqB *obiseq.BioSequence, gap float64,
 	arena PEAlignArena) (int, []int) {
 
 	if !_InitializedDnaScore {
@@ -244,7 +244,7 @@ func PELeftAlign(seqA, seqB obiseq.BioSequence, gap float64,
 	return score, arena.pointer.path
 }
 
-func PERightAlign(seqA, seqB obiseq.BioSequence, gap float64,
+func PERightAlign(seqA, seqB *obiseq.BioSequence, gap float64,
 	arena PEAlignArena) (int, []int) {
 
 	if !_InitializedDnaScore {
@@ -268,7 +268,7 @@ func PERightAlign(seqA, seqB obiseq.BioSequence, gap float64,
 	return score, arena.pointer.path
 }
 
-func PEAlign(seqA, seqB obiseq.BioSequence,
+func PEAlign(seqA, seqB *obiseq.BioSequence,
 	gap float64, delta int,
 	arena PEAlignArena) (int, []int) {
 	var score, shift int

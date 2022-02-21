@@ -49,12 +49,12 @@ func _parse_json_header_(header string, annotations obiseq.Annotation) string {
 	return strings.TrimSpace(header[stop:])
 }
 
-func ParseFastSeqJsonHeader(sequence obiseq.BioSequence) {
+func ParseFastSeqJsonHeader(sequence *obiseq.BioSequence) {
 	sequence.SetDefinition(_parse_json_header_(sequence.Definition(),
 		sequence.Annotations()))
 }
 
-func FormatFastSeqJsonHeader(sequence obiseq.BioSequence) string {
+func FormatFastSeqJsonHeader(sequence *obiseq.BioSequence) string {
 	annotations := sequence.Annotations()
 
 	if annotations != nil {

@@ -58,7 +58,7 @@ func ISequenceChunkOnDisk(iterator obiseq.IBioSequenceBatch,
 		}()
 
 		newIter.Wait()
-		close(newIter.Channel())
+		newIter.Close()
 	}()
 
 	obiformats.WriterDispatcher(dir+"/chunk_%s.fastx",
@@ -78,14 +78,15 @@ func ISequenceChunkOnDisk(iterator obiseq.IBioSequenceBatch,
 				panic(err)
 			}
 
-			chunck := make(obiseq.BioSequenceSlice, 0, 10000)
-
+			//chunck := make(obiseq.BioSequenceSlice, 0, 10000)
+			chunck := obiseq.MakeBioSequenceSlice()
 			for iseq.Next() {
 				b := iseq.Get()
 				chunck = append(chunck, b.Slice()...)
+				b.Recycle()
 			}
 
-			newIter.Channel() <- obiseq.MakeBioSequenceBatch(order, chunck...)
+			newIter.Push(obiseq.MakeBioSequenceBatch(order, chunck))
 
 		}
 

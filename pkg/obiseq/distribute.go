@@ -6,9 +6,10 @@ import (
 )
 
 type IDistribute struct {
-	outputs map[int]IBioSequenceBatch
-	news    chan int
-	lock    *sync.Mutex
+	outputs    map[int]IBioSequenceBatch
+	news       chan int
+	classifier *BioSequenceClassifier
+	lock       *sync.Mutex
 }
 
 func (dist *IDistribute) Outputs(key int) (IBioSequenceBatch, error) {
@@ -25,6 +26,10 @@ func (dist *IDistribute) Outputs(key int) (IBioSequenceBatch, error) {
 
 func (dist *IDistribute) News() chan int {
 	return dist.news
+}
+
+func (dist *IDistribute) Classifier() *BioSequenceClassifier {
+	return dist.classifier
 }
 
 func (iterator IBioSequenceBatch) Distribute(class *BioSequenceClassifier, sizes ...int) IDistribute {
@@ -53,7 +58,7 @@ func (iterator IBioSequenceBatch) Distribute(class *BioSequenceClassifier, sizes
 		jobDone.Wait()
 		close(news)
 		for _, i := range outputs {
-			close(i.Channel())
+			i.Close()
 		}
 	}()
 
@@ -67,7 +72,7 @@ func (iterator IBioSequenceBatch) Distribute(class *BioSequenceClassifier, sizes
 				slice, ok := slices[key]
 
 				if !ok {
-					s := GetBioSequenceSlice()
+					s := MakeBioSequenceSlice()
 					slice = &s
 					slices[key] = slice
 					orders[key] = 0
@@ -82,9 +87,9 @@ func (iterator IBioSequenceBatch) Distribute(class *BioSequenceClassifier, sizes
 				*slice = append(*slice, s)
 
 				if len(*slice) == batchsize {
-					outputs[key].Channel() <- MakeBioSequenceBatch(orders[key], *slice...)
+					outputs[key].Push(MakeBioSequenceBatch(orders[key], *slice))
 					orders[key]++
-					s := GetBioSequenceSlice()
+					s := MakeBioSequenceSlice()
 					slices[key] = &s
 				}
 			}
@@ -93,7 +98,7 @@ func (iterator IBioSequenceBatch) Distribute(class *BioSequenceClassifier, sizes
 
 		for key, slice := range slices {
 			if len(*slice) > 0 {
-				outputs[key].Channel() <- MakeBioSequenceBatch(orders[key], *slice...)
+				outputs[key].Push(MakeBioSequenceBatch(orders[key], *slice))
 			}
 		}
 
@@ -104,6 +109,7 @@ func (iterator IBioSequenceBatch) Distribute(class *BioSequenceClassifier, sizes
 	return IDistribute{
 		outputs,
 		news,
+		class,
 		&lock}
 
 }

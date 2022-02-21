@@ -33,7 +33,7 @@ func IsSubCladeOf(taxonomy Taxonomy, taxid int) obiseq.SequencePredicate {
 		log.Fatalf("Cannot find taxon : %d (%v)", taxid, err)
 	}
 
-	f := func(sequence obiseq.BioSequence) bool {
+	f := func(sequence *obiseq.BioSequence) bool {
 		taxon, err := taxonomy.Taxon(sequence.Taxid())
 		return err == nil && taxon.IsSubCladeOf(parent)
 	}

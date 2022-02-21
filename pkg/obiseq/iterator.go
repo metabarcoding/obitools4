@@ -2,14 +2,13 @@ package obiseq
 
 import (
 	"sync"
-	"time"
 )
 
 // Private structure implementing an iterator over
 // bioseq.BioSequence based on a channel.
 type __ibiosequence__ struct {
-	channel     chan BioSequence
-	current     BioSequence
+	channel     chan *BioSequence
+	current     *BioSequence
 	pushBack    bool
 	all_done    *sync.WaitGroup
 	buffer_size int
@@ -39,10 +38,10 @@ func (iterator IBioSequence) Wait() {
 	iterator.pointer.all_done.Wait()
 }
 
-func (iterator IBioSequence) Channel() chan BioSequence {
+func (iterator IBioSequence) Channel() chan *BioSequence {
 	return iterator.pointer.channel
 }
-func (iterator IBioSequence) PChannel() *chan BioSequence {
+func (iterator IBioSequence) PChannel() *chan *BioSequence {
 	return &(iterator.pointer.channel)
 }
 
@@ -54,8 +53,8 @@ func MakeIBioSequence(sizes ...int) IBioSequence {
 	}
 
 	i := __ibiosequence__{
-		channel:     make(chan BioSequence, buffsize),
-		current:     NilBioSequence,
+		channel:     make(chan *BioSequence, buffsize),
+		current:     nil,
 		pushBack:    false,
 		buffer_size: buffsize,
 		finished:    false,
@@ -73,7 +72,7 @@ func (iterator IBioSequence) Split() IBioSequence {
 
 	i := __ibiosequence__{
 		channel:     iterator.pointer.channel,
-		current:     NilBioSequence,
+		current:     nil,
 		pushBack:    false,
 		finished:    false,
 		all_done:    iterator.pointer.all_done,
@@ -87,7 +86,7 @@ func (iterator IBioSequence) Split() IBioSequence {
 
 func (iterator IBioSequence) Next() bool {
 	if iterator.IsNil() || *(iterator.pointer.pFinished) {
-		iterator.pointer.current = NilBioSequence
+		iterator.pointer.current = nil
 		return false
 	}
 
@@ -103,13 +102,13 @@ func (iterator IBioSequence) Next() bool {
 		return true
 	}
 
-	iterator.pointer.current = NilBioSequence
+	iterator.pointer.current = nil
 	*iterator.pointer.pFinished = true
 	return false
 }
 
 func (iterator IBioSequence) PushBack() {
-	if !iterator.pointer.current.IsNil() {
+	if !(iterator.pointer.current == nil) {
 		iterator.pointer.pushBack = true
 	}
 }
@@ -118,7 +117,7 @@ func (iterator IBioSequence) PushBack() {
 // currently pointed by the iterator. You have to use the
 // 'Next' method to move to the next entry before calling
 // 'Get' to retreive the following instance.
-func (iterator IBioSequence) Get() BioSequence {
+func (iterator IBioSequence) Get() *BioSequence {
 	return iterator.pointer.current
 }
 
@@ -156,17 +155,13 @@ func (iterator IBioSequence) IBioSequenceBatch(sizes ...int) IBioSequenceBatch {
 	newIter.Add(1)
 
 	go func() {
-		newIter.Wait()
-		for len(newIter.Channel()) > 0 {
-			time.Sleep(time.Millisecond)
-		}
-		close(newIter.pointer.channel)
+		newIter.WaitAndClose()
 	}()
 
 	go func() {
 		for j := 0; !iterator.Finished(); j++ {
 			batch := BioSequenceBatch{
-				slice: GetBioSequenceSlice(),
+				slice: MakeBioSequenceSlice(),
 				order: j}
 			for i := 0; i < batchsize && iterator.Next(); i++ {
 				seq := iterator.Get()
@@ -280,7 +275,7 @@ func (iterator IBioSequence) Tail(n int, sizes ...int) IBioSequence {
 	}
 
 	newIter := MakeIBioSequence(buffsize)
-	buffseq := GetBioSequenceSlice()
+	buffseq := MakeBioSequenceSlice()
 
 	newIter.Add(1)
 

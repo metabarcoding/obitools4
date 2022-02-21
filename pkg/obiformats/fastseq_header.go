@@ -6,7 +6,7 @@ import (
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
 
-func ParseGuessedFastSeqHeader(sequence obiseq.BioSequence) {
+func ParseGuessedFastSeqHeader(sequence *obiseq.BioSequence) {
 	if strings.HasPrefix(sequence.Definition(), "{") {
 		ParseFastSeqJsonHeader(sequence)
 	} else {

@@ -151,7 +151,7 @@ func (pattern ApatPattern) Print() {
 // at the junction. To limit memory allocation, it is possible to provide
 // an already allocated ApatSequence to recycle its allocated memory.
 // The provided sequence is no more usable after the call.
-func MakeApatSequence(sequence obiseq.BioSequence, circular bool, recycle ...ApatSequence) (ApatSequence, error) {
+func MakeApatSequence(sequence *obiseq.BioSequence, circular bool, recycle ...ApatSequence) (ApatSequence, error) {
 	var errno C.int32_t
 	var errmsg *C.char
 	seqlen := sequence.Length()

@@ -11,7 +11,7 @@ import (
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
 
-func FormatFastq(seq obiseq.BioSequence, quality_shift int, formater FormatHeader) string {
+func FormatFastq(seq *obiseq.BioSequence, quality_shift int, formater FormatHeader) string {
 
 	l := seq.Length()
 	q := seq.Qualities()
@@ -106,15 +106,11 @@ func WriteFastqBatch(iterator obiseq.IBioSequenceBatch, file io.Writer, options 
 	newIter.Add(nwriters)
 
 	go func() {
-		newIter.Wait()
+		newIter.WaitAndClose()
 		for len(chunkchan) > 0 {
 			time.Sleep(time.Millisecond)
 		}
 		close(chunkchan)
-		for len(newIter.Channel()) > 0 {
-			time.Sleep(time.Millisecond)
-		}
-		close(newIter.Channel())
 	}()
 
 	ff := func(iterator obiseq.IBioSequenceBatch) {
@@ -125,7 +121,7 @@ func WriteFastqBatch(iterator obiseq.IBioSequenceBatch, file io.Writer, options 
 				batch.Order(),
 			}
 			chunkchan <- chunk
-			newIter.Channel() <- batch
+			newIter.Push(batch)
 		}
 		newIter.Done()
 	}

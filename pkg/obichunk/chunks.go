@@ -23,7 +23,7 @@ func ISequenceChunk(iterator obiseq.IBioSequenceBatch,
 
 	go func() {
 		newIter.Wait()
-		close(newIter.Channel())
+		newIter.Close()
 	}()
 
 	go func() {
@@ -43,7 +43,7 @@ func ISequenceChunk(iterator obiseq.IBioSequenceBatch,
 					log.Fatalf("Cannot retreive the new chanel : %v", err)
 				}
 
-				chunk := obiseq.GetBioSequenceSlicePtr()
+				chunk := obiseq.NewBioSequenceSlice()
 				lock.Lock()
 				chunks[newflux] = chunk
 				lock.Unlock()
@@ -64,7 +64,7 @@ func ISequenceChunk(iterator obiseq.IBioSequenceBatch,
 		for _, chunck := range chunks {
 
 			if len(*chunck) > 0 {
-				newIter.Channel() <- obiseq.MakeBioSequenceBatch(order, *chunck...)
+				newIter.Push(obiseq.MakeBioSequenceBatch(order, *chunck))
 				order++
 			}
 

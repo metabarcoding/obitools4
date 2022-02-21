@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"time"
 	"unsafe"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/cutils"
@@ -24,7 +23,7 @@ func _FastseqReader(seqfile C.fast_kseq_p,
 	i := 0
 	ii := 0
 
-	slice := obiseq.GetBioSequenceSlice()
+	slice := obiseq.MakeBioSequenceSlice()
 
 	for l := int64(C.next_fast_sek(seqfile)); l > 0; l = int64(C.next_fast_sek(seqfile)) {
 
@@ -45,7 +44,7 @@ func _FastseqReader(seqfile C.fast_kseq_p,
 			comment = ""
 		}
 
-		rep := obiseq.MakeBioSequence(name, sequence, comment)
+		rep := obiseq.NewBioSequence(name, sequence, comment)
 
 		if s.qual.l > C.ulong(0) {
 			cquality := cutils.ByteSlice(unsafe.Pointer(s.qual.s), int(s.qual.l))
@@ -64,17 +63,17 @@ func _FastseqReader(seqfile C.fast_kseq_p,
 			// log.Printf("\n==> Pushing sequence batch\n")
 			// start := time.Now()
 
-			iterator.Channel() <- obiseq.MakeBioSequenceBatch(i, slice...)
+			iterator.Push(obiseq.MakeBioSequenceBatch(i, slice))
 			// elapsed := time.Since(start)
 			// log.Printf("\n==>sequences pushed after %s\n", elapsed)
 
-			slice = make(obiseq.BioSequenceSlice, 0, batch_size)
+			slice = obiseq.MakeBioSequenceSlice()
 			i++
 			ii = 0
 		}
 	}
 	if len(slice) > 0 {
-		iterator.Channel() <- obiseq.MakeBioSequenceBatch(i, slice...)
+		iterator.Push(obiseq.MakeBioSequenceBatch(i, slice))
 	}
 	iterator.Done()
 
@@ -109,12 +108,7 @@ func ReadFastSeqBatchFromFile(filename string, options ...WithOption) (obiseq.IB
 	newIter.Add(1)
 
 	go func() {
-		newIter.Wait()
-		for len(newIter.Channel()) > 0 {
-			time.Sleep(time.Millisecond)
-		}
-		close(newIter.Channel())
-
+		newIter.WaitAndClose()
 		log.Println("End of the fastq file reading")
 	}()
 
@@ -142,8 +136,7 @@ func ReadFastSeqBatchFromStdin(options ...WithOption) obiseq.IBioSequenceBatch {
 	newIter.Add(1)
 
 	go func() {
-		newIter.Wait()
-		close(newIter.Channel())
+		newIter.WaitAndClose()
 	}()
 
 	go _FastseqReader(C.open_fast_sek_stdin(C.int32_t(opt.QualityShift())), newIter, opt.BatchSize())

@@ -261,7 +261,7 @@ func ParseOBIFeatures(text string, annotations obiseq.Annotation) string {
 	return string(bytes.TrimSpace(d))
 }
 
-func ParseFastSeqOBIHeader(sequence obiseq.BioSequence) {
+func ParseFastSeqOBIHeader(sequence *obiseq.BioSequence) {
 	annotations := sequence.Annotations()
 
 	definition := ParseOBIFeatures(sequence.Definition(),
@@ -270,7 +270,7 @@ func ParseFastSeqOBIHeader(sequence obiseq.BioSequence) {
 	sequence.SetDefinition(definition)
 }
 
-func FormatFastSeqOBIHeader(sequence obiseq.BioSequence) string {
+func FormatFastSeqOBIHeader(sequence *obiseq.BioSequence) string {
 	annotations := sequence.Annotations()
 
 	if annotations != nil {

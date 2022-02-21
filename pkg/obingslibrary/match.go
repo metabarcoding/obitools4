@@ -38,7 +38,7 @@ func (library *NGSLibrary) Compile(maxError int) error {
 	return nil
 }
 
-func (library *NGSLibrary) Match(sequence obiseq.BioSequence) *DemultiplexMatch {
+func (library *NGSLibrary) Match(sequence *obiseq.BioSequence) *DemultiplexMatch {
 	for primers, marker := range *library {
 		m := marker.Match(sequence)
 		if m != nil {
@@ -50,7 +50,7 @@ func (library *NGSLibrary) Match(sequence obiseq.BioSequence) *DemultiplexMatch 
 	return nil
 }
 
-func (library *NGSLibrary) ExtractBarcode(sequence obiseq.BioSequence, inplace bool) (obiseq.BioSequence, error) {
+func (library *NGSLibrary) ExtractBarcode(sequence *obiseq.BioSequence, inplace bool) (*obiseq.BioSequence, error) {
 	match := library.Match(sequence)
 	return match.ExtractBarcode(sequence, inplace)
 }
@@ -103,7 +103,7 @@ func (marker *Marker) Compile(forward, reverse string, maxError int) error {
 	return nil
 }
 
-func (marker *Marker) Match(sequence obiseq.BioSequence) *DemultiplexMatch {
+func (marker *Marker) Match(sequence *obiseq.BioSequence) *DemultiplexMatch {
 	aseq, _ := obiapat.MakeApatSequence(sequence, false)
 	match := marker.forward.FindAllIndex(aseq, marker.taglength)
 
@@ -134,7 +134,7 @@ func (marker *Marker) Match(sequence obiseq.BioSequence) *DemultiplexMatch {
 			srtag := ""
 
 			if err != nil {
-				rtag = obiseq.NilBioSequence
+				rtag = nil
 			} else {
 				rtag.ReverseComplement(true)
 				srtag = strings.ToLower(rtag.String())
@@ -189,7 +189,7 @@ func (marker *Marker) Match(sequence obiseq.BioSequence) *DemultiplexMatch {
 			defer ftag.Recycle()
 			sftag := ""
 			if err != nil {
-				ftag = obiseq.NilBioSequence
+				ftag = nil
 
 			} else {
 				ftag = ftag.ReverseComplement(true)
@@ -218,7 +218,7 @@ func (marker *Marker) Match(sequence obiseq.BioSequence) *DemultiplexMatch {
 	return nil
 }
 
-func (match *DemultiplexMatch) ExtractBarcode(sequence obiseq.BioSequence, inplace bool) (obiseq.BioSequence, error) {
+func (match *DemultiplexMatch) ExtractBarcode(sequence *obiseq.BioSequence, inplace bool) (*obiseq.BioSequence, error) {
 	if !inplace {
 		sequence = sequence.Copy()
 	}

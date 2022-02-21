@@ -30,7 +30,7 @@ var __single_base_code__ = []byte{0,
 // in hexadecimal and 27 in decimal. If the buffer parameter is not nil
 // the slice is used to store the result, overwise a new slice is
 // created.
-func Encode4mer(seq obiseq.BioSequence, buffer *[]byte) []byte {
+func Encode4mer(seq *obiseq.BioSequence, buffer *[]byte) []byte {
 	slength := seq.Length()
 	length := slength - 3
 	rawseq := seq.Sequence()
@@ -65,7 +65,7 @@ func Encode4mer(seq obiseq.BioSequence, buffer *[]byte) []byte {
 	return *buffer
 }
 
-func Index4mer(seq obiseq.BioSequence, index *[][]int, buffer *[]byte) [][]int {
+func Index4mer(seq *obiseq.BioSequence, index *[][]int, buffer *[]byte) [][]int {
 
 	iternal_buffer := Encode4mer(seq, buffer)
 
@@ -85,7 +85,7 @@ func Index4mer(seq obiseq.BioSequence, index *[][]int, buffer *[]byte) [][]int {
 	return *index
 }
 
-func FastShiftFourMer(index [][]int, seq obiseq.BioSequence, buffer *[]byte) (int, int) {
+func FastShiftFourMer(index [][]int, seq *obiseq.BioSequence, buffer *[]byte) (int, int) {
 
 	iternal_buffer := Encode4mer(seq, buffer)
 
