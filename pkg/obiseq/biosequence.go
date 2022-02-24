@@ -2,8 +2,9 @@ package obiseq
 
 import (
 	"crypto/md5"
-	"log"
 	"sync/atomic"
+
+	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/goutils"
 )
@@ -15,7 +16,7 @@ var _MaxInMemSeq = int32(0)
 var _BioLogRate = int(100000)
 
 func LogBioSeqStatus() {
-	log.Printf("@@@@>>>> Created seq : %d Destroyed : %d  In Memory : %d", _NewSeq, _RecycleSeq, _InMemSeq)
+	log.Debugf("Created seq : %d Destroyed : %d  In Memory : %d", _NewSeq, _RecycleSeq, _InMemSeq)
 }
 
 type Quality []uint8

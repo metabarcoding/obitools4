@@ -4,9 +4,10 @@ import (
 	"bufio"
 	"compress/gzip"
 	"io"
-	"log"
 	"os"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
 )
@@ -57,7 +58,7 @@ func ReadSequencesBatchFromFile(filename string,
 	if err != nil {
 		file.Seek(0, 0)
 	} else {
-		log.Printf("File %s is gz compressed ", filename)
+		log.Debugf("File %s is gz compressed ", filename)
 		reader = greader
 	}
 
@@ -72,7 +73,7 @@ func ReadSequencesBatchFromFile(filename string,
 	}
 
 	filetype := GuessSeqFileType(string(tag))
-	log.Printf("File guessed format : %s (tag: %s)",
+	log.Debug("File guessed format : %s (tag: %s)",
 		filetype, (strings.Split(string(tag), "\n"))[0])
 	reader = breader
 

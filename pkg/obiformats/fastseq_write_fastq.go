@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
@@ -114,6 +115,7 @@ func WriteFastqBatch(iterator obiiter.IBioSequenceBatch,
 			time.Sleep(time.Millisecond)
 		}
 		close(chunkchan)
+		log.Debugln("End of the fastq file writing")
 	}()
 
 	ff := func(iterator obiiter.IBioSequenceBatch) {
@@ -129,7 +131,7 @@ func WriteFastqBatch(iterator obiiter.IBioSequenceBatch,
 		newIter.Done()
 	}
 
-	log.Println("Start of the fastq file writing")
+	log.Debugln("Start of the fastq file writing")
 	go ff(iterator)
 	for i := 0; i < nwriters-1; i++ {
 		go ff(iterator.Split())

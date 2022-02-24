@@ -2,7 +2,7 @@ package obiseq
 
 import (
 	"context"
-	"log"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/PaesslerAG/gval"
 )

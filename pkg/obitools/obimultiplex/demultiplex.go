@@ -1,7 +1,7 @@
 package obimultiplex
 
 import (
-	"log"
+	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obingslibrary"

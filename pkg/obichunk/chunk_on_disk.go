@@ -3,9 +3,10 @@ package obichunk
 import (
 	"io/fs"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
+
+	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiformats"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
@@ -55,7 +56,7 @@ func ISequenceChunkOnDisk(iterator obiiter.IBioSequenceBatch,
 	go func() {
 		defer func() {
 			os.RemoveAll(dir)
-			log.Println("Clear the cache directory")
+			log.Debugln("Clear the cache directory")
 		}()
 
 		newIter.Wait()
@@ -68,7 +69,8 @@ func ISequenceChunkOnDisk(iterator obiiter.IBioSequenceBatch,
 	)
 
 	fileNames := find(dir, ".fastx")
-	log.Println("batch count ", len(fileNames))
+	nbatch := len(fileNames)
+	log.Infof("Data splitted over %d batches", nbatch)
 
 	go func() {
 
@@ -88,6 +90,8 @@ func ISequenceChunkOnDisk(iterator obiiter.IBioSequenceBatch,
 			}
 
 			newIter.Push(obiiter.MakeBioSequenceBatch(order, chunck))
+			log.Infof("Start processing of batch %d/%d : %d sequences",
+				order, nbatch, len(chunck))
 
 		}
 

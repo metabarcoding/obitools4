@@ -8,9 +8,10 @@ import "C"
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"unsafe"
+
+	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/cutils"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
@@ -61,7 +62,7 @@ func _FastseqReader(seqfile C.fast_kseq_p,
 		slice = append(slice, rep)
 		ii++
 		if ii >= batch_size {
-			// log.Printf("\n==> Pushing sequence batch\n")
+			//log.Printf("\n==> Pushing sequence batch\n")
 			// start := time.Now()
 
 			iterator.Push(obiiter.MakeBioSequenceBatch(i, slice))
@@ -100,7 +101,7 @@ func ReadFastSeqBatchFromFile(filename string, options ...WithOption) (obiiter.I
 	fi, err := os.Stat(filename)
 	if err == nil {
 		size = fi.Size()
-		log.Printf("File size of %s is %d bytes\n", filename, size)
+		log.Debugf("File size of %s is %d bytes\n", filename, size)
 	} else {
 		size = -1
 	}
@@ -110,10 +111,10 @@ func ReadFastSeqBatchFromFile(filename string, options ...WithOption) (obiiter.I
 
 	go func() {
 		newIter.WaitAndClose()
-		log.Println("End of the fastq file reading")
+		log.Debugln("End of the fastq file reading")
 	}()
 
-	log.Println("Start of the fastq file reading")
+	log.Debugln("Start of the fastq file reading")
 
 	go _FastseqReader(pointer, newIter, opt.BatchSize())
 	parser := opt.ParseFastSeqHeader()

@@ -9,6 +9,7 @@ type __options__ struct {
 	bufferSize      int
 	batchSize       int
 	parallelWorkers int
+	noSingleton     bool
 }
 
 type Options struct {
@@ -27,6 +28,7 @@ func MakeOptions(setters []WithOption) Options {
 		bufferSize:      2,
 		batchSize:       5000,
 		parallelWorkers: 4,
+		noSingleton:     false,
 	}
 
 	opt := Options{&o}
@@ -77,6 +79,10 @@ func (opt Options) ParallelWorkers() int {
 
 func (opt Options) SortOnDisk() bool {
 	return opt.pointer.cacheOnDisk
+}
+
+func (opt Options) NoSingleton() bool {
+	return opt.pointer.noSingleton
 }
 
 func OptionSortOnDisk() WithOption {
@@ -145,6 +151,22 @@ func OptionsBatchSize(size int) WithOption {
 func OptionsBufferSize(size int) WithOption {
 	f := WithOption(func(opt Options) {
 		opt.pointer.bufferSize = size
+	})
+
+	return f
+}
+
+func OptionsNoSingleton() WithOption {
+	f := WithOption(func(opt Options) {
+		opt.pointer.noSingleton = true
+	})
+
+	return f
+}
+
+func OptionsWithSingleton() WithOption {
+	f := WithOption(func(opt Options) {
+		opt.pointer.noSingleton = false
 	})
 
 	return f

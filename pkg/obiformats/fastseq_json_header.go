@@ -1,7 +1,7 @@
 package obiformats
 
 import (
-	"log"
+	log "github.com/sirupsen/logrus"
 	"strings"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"

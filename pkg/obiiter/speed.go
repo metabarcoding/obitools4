@@ -6,7 +6,7 @@ import (
 	"github.com/schollz/progressbar/v3"
 )
 
-func (iterator IBioSequenceBatch) Speed() IBioSequenceBatch {
+func (iterator IBioSequenceBatch) Speed(message ...string) IBioSequenceBatch {
 	newIter := MakeIBioSequenceBatch()
 
 	newIter.Add(1)
@@ -15,13 +15,25 @@ func (iterator IBioSequenceBatch) Speed() IBioSequenceBatch {
 		newIter.WaitAndClose()
 	}()
 
-	bar := progressbar.NewOptions(
-		-1,
+	pbopt := make([]progressbar.Option, 0, 5)
+	pbopt = append(pbopt,
 		progressbar.OptionSetWriter(os.Stderr),
 		progressbar.OptionSetWidth(15),
 		progressbar.OptionShowCount(),
 		progressbar.OptionShowIts(),
-		progressbar.OptionSetDescription("[Sequence Processing]"))
+	)
+
+	if len(message) > 0 {
+		pbopt = append(pbopt,
+			progressbar.OptionSetDescription(message[0]),
+		)
+	} else {
+		pbopt = append(pbopt,
+			progressbar.OptionSetDescription("[Sequence Processing]"),
+		)
+	}
+
+	bar := progressbar.NewOptions(-1, pbopt...)
 
 	go func() {
 
@@ -37,7 +49,6 @@ func (iterator IBioSequenceBatch) Speed() IBioSequenceBatch {
 
 	return newIter
 }
-
 
 func SpeedPipe() Pipeable {
 	f := func(iterator IBioSequenceBatch) IBioSequenceBatch {

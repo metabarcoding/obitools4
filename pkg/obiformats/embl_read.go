@@ -5,7 +5,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"io"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"os"
 	"strconv"
 	"strings"

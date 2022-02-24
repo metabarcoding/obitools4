@@ -1,7 +1,7 @@
 package obipairing
 
 import (
-	"log"
+	log "github.com/sirupsen/logrus"
 	"math"
 	"os"
 	"runtime"

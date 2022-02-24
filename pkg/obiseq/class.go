@@ -3,7 +3,7 @@ package obiseq
 import (
 	"fmt"
 	"hash/crc32"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"strconv"
 	"sync"
 )

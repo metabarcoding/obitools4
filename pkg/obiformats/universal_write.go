@@ -3,7 +3,7 @@ package obiformats
 import (
 	"fmt"
 	"io"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"os"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"

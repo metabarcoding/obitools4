@@ -10,22 +10,29 @@ var _Keys = make([]string, 0, 10)
 var _OnDisk = false
 var _chunks = 100
 var _NAValue = "NA"
+var _NoSingleton = false
 
 func UniqueOptionSet(options *getoptions.GetOpt) {
 	options.StringSliceVar(&_StatsOn, "merge",
 		1, 1,
 		options.Alias("m"),
+		options.ArgName("KEY"),
 		options.Description("Adds a merged attribute containing the list of sequence record ids merged within this group."))
 
 	options.StringSliceVar(&_Keys, "category-attribute",
 		1, 1,
 		options.Alias("c"),
+		options.ArgName("CATEGORY"),
 		options.Description("Adds one attribute to the list of attributes used to define sequence groups (this option can be used several times)."))
 
 	options.StringVar(&_NAValue, "na-value", _NAValue,
+		options.ArgName("NA_NAME"),
 		options.Description("Value used when the classifier tag is not defined for a sequence."))
 
-	options.BoolVar(&_OnDisk, "on-disk", true,
+	options.BoolVar(&_NoSingleton, "no-singleton", _NoSingleton,
+		options.Description("If set, sequences occurring a single time in the data set are discarded."))
+
+	options.BoolVar(&_OnDisk, "on-disk", _OnDisk,
 		options.Description("Allows for using a disk cache during the dereplication process. "))
 
 	options.IntVar(&_chunks, "chunk-count", _chunks,
@@ -49,7 +56,7 @@ func CLIKeys() []string {
 }
 
 func CLIUniqueInMemory() bool {
-	return _OnDisk
+	return !_OnDisk
 }
 
 func CLINumberOfChunks() int {
@@ -62,4 +69,8 @@ func CLINumberOfChunks() int {
 
 func CLINAValue() string {
 	return _NAValue
+}
+
+func CLINoSingleton() bool {
+	return _NoSingleton
 }

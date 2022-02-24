@@ -3,6 +3,8 @@ package obichunk
 import (
 	"sync"
 
+	log "github.com/sirupsen/logrus"
+
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
@@ -15,6 +17,10 @@ func IUniqueSequence(iterator obiiter.IBioSequenceBatch,
 	nworkers := opts.ParallelWorkers()
 
 	iUnique := obiiter.MakeIBioSequenceBatch(opts.BufferSize())
+
+	iterator = iterator.Speed("Splitting data set")
+
+	log.Infoln("Starting data splitting")
 
 	if opts.SortOnDisk() {
 		nworkers = 1
@@ -35,6 +41,8 @@ func IUniqueSequence(iterator obiiter.IBioSequenceBatch,
 			return obiiter.NilIBioSequenceBatch, err
 		}
 	}
+
+	log.Infoln("End of the data splitting")
 
 	iUnique.Add(nworkers)
 
@@ -83,7 +91,12 @@ func IUniqueSequence(iterator obiiter.IBioSequenceBatch,
 			batch := input.Get()
 
 			if icat < 0 || len(batch.Slice()) == 1 {
-				iUnique.Push(batch.Reorder(nextOrder()))
+				if opts.NoSingleton() && len(batch.Slice()) == 1 && batch.Slice()[0].Count() == 1 {
+					batch.Slice()[0].Recycle()
+					batch.Recycle()
+				} else {
+					iUnique.Push(batch.Reorder(nextOrder()))
+				}
 			} else {
 				next.Push(batch.Reorder(o))
 				o++
@@ -111,5 +124,5 @@ func IUniqueSequence(iterator obiiter.IBioSequenceBatch,
 		opts.BufferSize(),
 	)
 
-	return iMerged.Speed(), nil
+	return iMerged.Speed("Variants identified"), nil
 }

@@ -1,7 +1,7 @@
 package obidistribute
 
 import (
-	"log"
+	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiformats"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"

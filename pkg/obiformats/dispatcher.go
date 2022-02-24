@@ -2,7 +2,7 @@ package obiformats
 
 import (
 	"fmt"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"sync"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"

@@ -2,10 +2,11 @@ package obiiter
 
 import (
 	"fmt"
-	"log"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 	"github.com/tevino/abool/v2"
@@ -413,7 +414,7 @@ func (iterator IBioSequenceBatch) Rebatch(size int, sizes ...int) IBioSequenceBa
 
 func (iterator IBioSequenceBatch) Recycle() {
 
-	log.Println("Start recycling of Bioseq objects")
+	log.Debugln("Start recycling of Bioseq objects")
 	recycled := 0
 	for iterator.Next() {
 		// iterator.Get()
@@ -424,7 +425,7 @@ func (iterator IBioSequenceBatch) Recycle() {
 		}
 		batch.Recycle()
 	}
-	log.Printf("End of the recycling of %d Bioseq objects", recycled)
+	log.Debugf("End of the recycling of %d Bioseq objects", recycled)
 }
 
 func (iterator IBioSequenceBatch) Count(recycle bool) (int, int, int) {
@@ -432,7 +433,7 @@ func (iterator IBioSequenceBatch) Count(recycle bool) (int, int, int) {
 	reads := 0
 	nucleotides := 0
 
-	log.Println("Start counting of Bioseq objects")
+	log.Debugln("Start counting of Bioseq objects")
 	for iterator.Next() {
 		// iterator.Get()
 		batch := iterator.Get()
@@ -447,7 +448,7 @@ func (iterator IBioSequenceBatch) Count(recycle bool) (int, int, int) {
 		}
 		batch.Recycle()
 	}
-	log.Printf("End of the counting of %d Bioseq objects", variants)
+	log.Debugf("End of the counting of %d Bioseq objects", variants)
 	return variants, reads, nucleotides
 }
 

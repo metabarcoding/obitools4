@@ -1,7 +1,7 @@
 package obipcr
 
 import (
-	"log"
+	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiapat"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obiconvert"

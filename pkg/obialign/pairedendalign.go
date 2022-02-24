@@ -1,7 +1,7 @@
 package obialign
 
 import (
-	"log"
+	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obikmer"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"

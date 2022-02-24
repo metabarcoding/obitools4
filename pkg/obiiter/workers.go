@@ -1,7 +1,7 @@
 package obiiter
 
 import (
-	"log"
+	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
@@ -39,7 +39,7 @@ func (iterator IBioSequenceBatch) MakeIWorker(worker SeqWorker, sizes ...int) IB
 
 	go func() {
 		newIter.WaitAndClose()
-		log.Println("End of the batch workers")
+		log.Debugln("End of the batch workers")
 
 	}()
 
@@ -54,7 +54,7 @@ func (iterator IBioSequenceBatch) MakeIWorker(worker SeqWorker, sizes ...int) IB
 		newIter.Done()
 	}
 
-	log.Println("Start of the batch workers")
+	log.Debugln("Start of the batch workers")
 	for i := 0; i < nworkers-1; i++ {
 		go f(iterator.Split())
 	}

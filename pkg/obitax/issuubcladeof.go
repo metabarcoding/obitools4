@@ -1,7 +1,7 @@
 package obitax
 
 import (
-	"log"
+	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )

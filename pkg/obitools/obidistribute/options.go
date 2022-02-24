@@ -2,7 +2,7 @@ package obidistribute
 
 import (
 	"fmt"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"strings"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"

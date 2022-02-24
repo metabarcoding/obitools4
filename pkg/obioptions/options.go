@@ -2,9 +2,10 @@ package obioptions
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"runtime"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/DavidGamba/go-getoptions"
 )
@@ -43,10 +44,21 @@ func GenerateOptionParser(optionset ...func(*getoptions.GetOpt)) ArgumentParser 
 			log.Printf("CPU number limited to %d", _MaxAllowedCPU)
 		}
 
+		if options.Called("no-singleton") {
+			log.Printf("No singleton option set")
+		}
+
 		if options.Called("help") {
 			fmt.Fprint(os.Stderr, options.Help())
 			os.Exit(1)
 		}
+
+		log.SetLevel(log.InfoLevel)
+		if options.Called("debug") {
+			log.SetLevel(log.DebugLevel)
+			log.Debugln("Switch to debug level logging")
+		}
+
 		return options, remaining, err
 	}
 }

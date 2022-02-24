@@ -1,9 +1,10 @@
 package obichunk
 
 import (
-	"log"
 	"sort"
 	"sync/atomic"
+
+	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
@@ -100,7 +101,7 @@ func ISequenceSubChunk(iterator obiiter.IBioSequenceBatch,
 				classifier.Reset()
 
 				if cap(ordered) < batch.Length() {
-					log.Println("Allocate a new ordered sequences : ", batch.Length())
+					log.Debugln("Allocate a new ordered sequences : ", batch.Length())
 					ordered = make([]sSS, batch.Length())
 				} else {
 					ordered = ordered[:batch.Length()]

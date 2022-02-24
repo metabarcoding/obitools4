@@ -1,7 +1,7 @@
 package obiuniq
 
 import (
-	"log"
+	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obichunk"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
@@ -22,6 +22,13 @@ func Unique(sequences obiiter.IBioSequenceBatch) obiiter.IBioSequenceBatch {
 	} else {
 		log.Printf("Running dereplication on disk with %d chunks", CLINumberOfChunks())
 		options = append(options, obichunk.OptionSortOnDisk())
+	}
+
+	if CLINoSingleton() {
+		log.Printf("Removing sigletons from the output")
+		options = append(options, obichunk.OptionsNoSingleton())
+	} else {
+		log.Printf("Keep sigletons in the output")
 	}
 
 	options = append(options,
