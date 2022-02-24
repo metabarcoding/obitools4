@@ -4,11 +4,11 @@ import (
 	"log"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obichunk"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obioptions"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
 
-func Unique(sequences obiseq.IBioSequenceBatch) obiseq.IBioSequenceBatch {
+func Unique(sequences obiiter.IBioSequenceBatch) obiiter.IBioSequenceBatch {
 
 	options := make([]obichunk.WithOption, 0, 30)
 

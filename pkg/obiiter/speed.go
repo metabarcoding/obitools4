@@ -1,4 +1,4 @@
-package obiseq
+package obiiter
 
 import (
 	"os"
@@ -36,4 +36,13 @@ func (iterator IBioSequenceBatch) Speed() IBioSequenceBatch {
 	}()
 
 	return newIter
+}
+
+
+func SpeedPipe() Pipeable {
+	f := func(iterator IBioSequenceBatch) IBioSequenceBatch {
+		return iterator.Speed()
+	}
+
+	return f
 }

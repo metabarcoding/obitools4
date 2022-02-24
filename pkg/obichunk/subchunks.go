@@ -5,6 +5,7 @@ import (
 	"sort"
 	"sync/atomic"
 
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
 
@@ -54,9 +55,9 @@ func (by _By) Sort(seqs []sSS) {
 // End of the sort interface
 //
 
-func ISequenceSubChunk(iterator obiseq.IBioSequenceBatch,
+func ISequenceSubChunk(iterator obiiter.IBioSequenceBatch,
 	classifier *obiseq.BioSequenceClassifier,
-	sizes ...int) (obiseq.IBioSequenceBatch, error) {
+	sizes ...int) (obiiter.IBioSequenceBatch, error) {
 
 	bufferSize := iterator.BufferSize()
 	nworkers := 4
@@ -69,7 +70,7 @@ func ISequenceSubChunk(iterator obiseq.IBioSequenceBatch,
 		bufferSize = sizes[1]
 	}
 
-	newIter := obiseq.MakeIBioSequenceBatch(bufferSize)
+	newIter := obiiter.MakeIBioSequenceBatch(bufferSize)
 
 	newIter.Add(nworkers)
 
@@ -86,7 +87,7 @@ func ISequenceSubChunk(iterator obiseq.IBioSequenceBatch,
 		return neworder
 	}
 
-	ff := func(iterator obiseq.IBioSequenceBatch,
+	ff := func(iterator obiiter.IBioSequenceBatch,
 		classifier *obiseq.BioSequenceClassifier) {
 
 		ordered := make([]sSS, 100)
@@ -121,7 +122,7 @@ func ISequenceSubChunk(iterator obiseq.IBioSequenceBatch,
 				ss := obiseq.MakeBioSequenceSlice()
 				for i, v := range ordered {
 					if v.code != last {
-						newIter.Push(obiseq.MakeBioSequenceBatch(nextOrder(), ss))
+						newIter.Push(obiiter.MakeBioSequenceBatch(nextOrder(), ss))
 						ss = obiseq.MakeBioSequenceSlice()
 						last = v.code
 					}
@@ -131,7 +132,7 @@ func ISequenceSubChunk(iterator obiseq.IBioSequenceBatch,
 				}
 
 				if len(ss) > 0 {
-					newIter.Push(obiseq.MakeBioSequenceBatch(nextOrder(), ss))
+					newIter.Push(obiiter.MakeBioSequenceBatch(nextOrder(), ss))
 				}
 			} else {
 				newIter.Push(batch.Reorder(nextOrder()))

@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
 
@@ -117,7 +118,7 @@ func __read_ecopcr_bioseq__(file *__ecopcr_file__) (*obiseq.BioSequence, error) 
 	return bseq, nil
 }
 
-func ReadEcoPCRBatch(reader io.Reader, options ...WithOption) obiseq.IBioSequenceBatch {
+func ReadEcoPCRBatch(reader io.Reader, options ...WithOption) obiiter.IBioSequenceBatch {
 	tag := make([]byte, 11)
 	n, _ := reader.Read(tag)
 
@@ -163,7 +164,7 @@ func ReadEcoPCRBatch(reader io.Reader, options ...WithOption) obiseq.IBioSequenc
 
 	opt := MakeOptions(options)
 
-	newIter := obiseq.MakeIBioSequenceBatch(opt.BufferSize())
+	newIter := obiiter.MakeIBioSequenceBatch(opt.BufferSize())
 	newIter.Add(1)
 
 	go func() {
@@ -181,7 +182,7 @@ func ReadEcoPCRBatch(reader io.Reader, options ...WithOption) obiseq.IBioSequenc
 			slice = append(slice, seq)
 			ii++
 			if ii >= opt.BatchSize() {
-				newIter.Push(obiseq.MakeBioSequenceBatch(i, slice))
+				newIter.Push(obiiter.MakeBioSequenceBatch(i, slice))
 				slice = obiseq.MakeBioSequenceSlice()
 				i++
 				ii = 0
@@ -191,7 +192,7 @@ func ReadEcoPCRBatch(reader io.Reader, options ...WithOption) obiseq.IBioSequenc
 		}
 
 		if len(slice) > 0 {
-			newIter.Push(obiseq.MakeBioSequenceBatch(i, slice))
+			newIter.Push(obiiter.MakeBioSequenceBatch(i, slice))
 		}
 
 		newIter.Done()
@@ -205,12 +206,12 @@ func ReadEcoPCRBatch(reader io.Reader, options ...WithOption) obiseq.IBioSequenc
 	return newIter
 }
 
-func ReadEcoPCR(reader io.Reader, options ...WithOption) obiseq.IBioSequence {
+func ReadEcoPCR(reader io.Reader, options ...WithOption) obiiter.IBioSequence {
 	ib := ReadEcoPCRBatch(reader, options...)
 	return ib.SortBatches().IBioSequence()
 }
 
-func ReadEcoPCRBatchFromFile(filename string, options ...WithOption) (obiseq.IBioSequenceBatch, error) {
+func ReadEcoPCRBatchFromFile(filename string, options ...WithOption) (obiiter.IBioSequenceBatch, error) {
 	var reader io.Reader
 	var greader io.Reader
 	var err error
@@ -218,7 +219,7 @@ func ReadEcoPCRBatchFromFile(filename string, options ...WithOption) (obiseq.IBi
 	reader, err = os.Open(filename)
 	if err != nil {
 		log.Printf("open file error: %+v", err)
-		return obiseq.NilIBioSequenceBatch, err
+		return obiiter.NilIBioSequenceBatch, err
 	}
 
 	// Test if the flux is compressed by gzip
@@ -230,7 +231,7 @@ func ReadEcoPCRBatchFromFile(filename string, options ...WithOption) (obiseq.IBi
 	return ReadEcoPCRBatch(reader, options...), nil
 }
 
-func ReadEcoPCRFromFile(filename string, options ...WithOption) (obiseq.IBioSequence, error) {
+func ReadEcoPCRFromFile(filename string, options ...WithOption) (obiiter.IBioSequence, error) {
 	ib, err := ReadEcoPCRBatchFromFile(filename, options...)
 	return ib.SortBatches().IBioSequence(), err
 

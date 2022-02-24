@@ -1,14 +1,16 @@
-package obiseq
+package obiiter
 
 import (
 	"sync"
+
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
 
 // Private structure implementing an iterator over
 // bioseq.BioSequence based on a channel.
 type __ibiosequence__ struct {
-	channel     chan *BioSequence
-	current     *BioSequence
+	channel     chan *obiseq.BioSequence
+	current     *obiseq.BioSequence
 	pushBack    bool
 	all_done    *sync.WaitGroup
 	buffer_size int
@@ -38,10 +40,10 @@ func (iterator IBioSequence) Wait() {
 	iterator.pointer.all_done.Wait()
 }
 
-func (iterator IBioSequence) Channel() chan *BioSequence {
+func (iterator IBioSequence) Channel() chan *obiseq.BioSequence {
 	return iterator.pointer.channel
 }
-func (iterator IBioSequence) PChannel() *chan *BioSequence {
+func (iterator IBioSequence) PChannel() *chan *obiseq.BioSequence {
 	return &(iterator.pointer.channel)
 }
 
@@ -53,7 +55,7 @@ func MakeIBioSequence(sizes ...int) IBioSequence {
 	}
 
 	i := __ibiosequence__{
-		channel:     make(chan *BioSequence, buffsize),
+		channel:     make(chan *obiseq.BioSequence, buffsize),
 		current:     nil,
 		pushBack:    false,
 		buffer_size: buffsize,
@@ -117,7 +119,7 @@ func (iterator IBioSequence) PushBack() {
 // currently pointed by the iterator. You have to use the
 // 'Next' method to move to the next entry before calling
 // 'Get' to retreive the following instance.
-func (iterator IBioSequence) Get() *BioSequence {
+func (iterator IBioSequence) Get() *obiseq.BioSequence {
 	return iterator.pointer.current
 }
 
@@ -161,7 +163,7 @@ func (iterator IBioSequence) IBioSequenceBatch(sizes ...int) IBioSequenceBatch {
 	go func() {
 		for j := 0; !iterator.Finished(); j++ {
 			batch := BioSequenceBatch{
-				slice: MakeBioSequenceSlice(),
+				slice: obiseq.MakeBioSequenceSlice(),
 				order: j}
 			for i := 0; i < batchsize && iterator.Next(); i++ {
 				seq := iterator.Get()
@@ -275,7 +277,7 @@ func (iterator IBioSequence) Tail(n int, sizes ...int) IBioSequence {
 	}
 
 	newIter := MakeIBioSequence(buffsize)
-	buffseq := MakeBioSequenceSlice()
+	buffseq := obiseq.MakeBioSequenceSlice()
 
 	newIter.Add(1)
 

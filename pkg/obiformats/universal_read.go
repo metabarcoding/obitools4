@@ -8,7 +8,7 @@ import (
 	"os"
 	"strings"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
 )
 
 func GuessSeqFileType(firstline string) string {
@@ -36,7 +36,8 @@ func GuessSeqFileType(firstline string) string {
 	}
 }
 
-func ReadSequencesBatchFromFile(filename string, options ...WithOption) (obiseq.IBioSequenceBatch, error) {
+func ReadSequencesBatchFromFile(filename string,
+	options ...WithOption) (obiiter.IBioSequenceBatch, error) {
 	var file *os.File
 	var reader io.Reader
 	var greader io.Reader
@@ -46,7 +47,7 @@ func ReadSequencesBatchFromFile(filename string, options ...WithOption) (obiseq.
 
 	if err != nil {
 		log.Fatalf("open file error: %v", err)
-		return obiseq.NilIBioSequenceBatch, err
+		return obiiter.NilIBioSequenceBatch, err
 	}
 
 	reader = file
@@ -65,7 +66,7 @@ func ReadSequencesBatchFromFile(filename string, options ...WithOption) (obiseq.
 	tag, _ := breader.Peek(30)
 
 	if len(tag) < 30 {
-		newIter := obiseq.MakeIBioSequenceBatch()
+		newIter := obiiter.MakeIBioSequenceBatch()
 		newIter.Close()
 		return newIter, nil
 	}
@@ -89,10 +90,11 @@ func ReadSequencesBatchFromFile(filename string, options ...WithOption) (obiseq.
 			filename, filetype)
 	}
 
-	return obiseq.NilIBioSequenceBatch, nil
+	return obiiter.NilIBioSequenceBatch, nil
 }
 
-func ReadSequencesFromFile(filename string, options ...WithOption) (obiseq.IBioSequence, error) {
+func ReadSequencesFromFile(filename string,
+	options ...WithOption) (obiiter.IBioSequence, error) {
 	ib, err := ReadSequencesBatchFromFile(filename, options...)
 	return ib.SortBatches().IBioSequence(), err
 

@@ -1,7 +1,7 @@
 package obipairing
 
 import (
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obiconvert"
 	"github.com/DavidGamba/go-getoptions"
 )
@@ -47,15 +47,15 @@ func OptionSet(options *getoptions.GetOpt) {
 	PairingOptionSet(options)
 }
 
-func IBatchPairedSequence() (obiseq.IPairedBioSequenceBatch, error) {
+func IBatchPairedSequence() (obiiter.IPairedBioSequenceBatch, error) {
 	forward, err := obiconvert.ReadBioSequencesBatch(_ForwardFiles...)
 	if err != nil {
-		return obiseq.NilIPairedBioSequenceBatch, err
+		return obiiter.NilIPairedBioSequenceBatch, err
 	}
 
 	reverse, err := obiconvert.ReadBioSequencesBatch(_ReverseFiles...)
 	if err != nil {
-		return obiseq.NilIPairedBioSequenceBatch, err
+		return obiiter.NilIPairedBioSequenceBatch, err
 	}
 
 	paired := forward.PairWith(reverse)

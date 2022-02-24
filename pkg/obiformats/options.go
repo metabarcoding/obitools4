@@ -1,11 +1,12 @@
 package obiformats
 
 import (
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
 
 type __options__ struct {
-	fastseq_header_parser obiseq.SeqAnnotator
+	fastseq_header_parser obiiter.SeqAnnotator
 	fastseq_header_writer func(*obiseq.BioSequence) string
 	with_progress_bar     bool
 	buffer_size           int
@@ -58,7 +59,7 @@ func (opt Options) ParallelWorkers() int {
 	return opt.pointer.parallel_workers
 }
 
-func (opt Options) ParseFastSeqHeader() obiseq.SeqAnnotator {
+func (opt Options) ParseFastSeqHeader() obiiter.SeqAnnotator {
 	return opt.pointer.fastseq_header_parser
 }
 
@@ -123,7 +124,7 @@ func OptionsQualitySolexa() WithOption {
 	return OptionsQualityShift(64)
 }
 
-func OptionsFastSeqHeaderParser(parser obiseq.SeqAnnotator) WithOption {
+func OptionsFastSeqHeaderParser(parser obiiter.SeqAnnotator) WithOption {
 	f := WithOption(func(opt Options) {
 		opt.pointer.fastseq_header_parser = parser
 	})

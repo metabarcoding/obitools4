@@ -1,49 +1,25 @@
-package obiseq
+package obiiter
 
 import (
 	"log"
+
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
 
-type SeqAnnotator func(*BioSequence)
+type SeqAnnotator func(*obiseq.BioSequence)
 
-type SeqWorker func(*BioSequence) *BioSequence
-type SeqSliceWorker func(BioSequenceSlice) BioSequenceSlice
+type SeqWorker func(*obiseq.BioSequence) *obiseq.BioSequence
+type SeqSliceWorker func(obiseq.BioSequenceSlice) obiseq.BioSequenceSlice
 
 func AnnotatorToSeqWorker(function SeqAnnotator) SeqWorker {
-	f := func(seq *BioSequence) *BioSequence {
+	f := func(seq *obiseq.BioSequence) *obiseq.BioSequence {
 		function(seq)
 		return seq
 	}
 	return f
 }
 
-func (iterator IBioSequence) MakeIWorker(worker SeqWorker, sizes ...int) IBioSequence {
-	buffsize := iterator.BufferSize()
 
-	if len(sizes) > 0 {
-		buffsize = sizes[0]
-	}
-
-	newIter := MakeIBioSequence(buffsize)
-
-	newIter.Add(1)
-
-	go func() {
-		newIter.Wait()
-		close(newIter.pointer.channel)
-	}()
-
-	go func() {
-		for iterator.Next() {
-			seq := iterator.Get()
-			seq = worker(seq)
-			newIter.pointer.channel <- seq
-		}
-		newIter.Done()
-	}()
-
-	return newIter
-}
 
 func (iterator IBioSequenceBatch) MakeIWorker(worker SeqWorker, sizes ...int) IBioSequenceBatch {
 	nworkers := 4
@@ -124,4 +100,49 @@ func (iterator IBioSequenceBatch) MakeISliceWorker(worker SeqSliceWorker, sizes 
 	go f(iterator)
 
 	return newIter
+}
+
+
+func (iterator IBioSequence) MakeIWorker(worker SeqWorker, sizes ...int) IBioSequence {
+	buffsize := iterator.BufferSize()
+
+	if len(sizes) > 0 {
+		buffsize = sizes[0]
+	}
+
+	newIter := MakeIBioSequence(buffsize)
+
+	newIter.Add(1)
+
+	go func() {
+		newIter.Wait()
+		close(newIter.pointer.channel)
+	}()
+
+	go func() {
+		for iterator.Next() {
+			seq := iterator.Get()
+			seq = worker(seq)
+			newIter.pointer.channel <- seq
+		}
+		newIter.Done()
+	}()
+
+	return newIter
+}
+
+func WorkerPipe(worker SeqWorker, sizes ...int) Pipeable {
+	f := func(iterator IBioSequenceBatch) IBioSequenceBatch {
+		return iterator.MakeIWorker(worker,sizes...)
+	}
+
+	return f
+}
+
+func SliceWorkerPipe(worker SeqSliceWorker, sizes ...int) Pipeable {
+	f := func(iterator IBioSequenceBatch) IBioSequenceBatch {
+		return iterator.MakeISliceWorker(worker,sizes...)
+	}
+
+	return f
 }

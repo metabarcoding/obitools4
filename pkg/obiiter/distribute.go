@@ -1,14 +1,16 @@
-package obiseq
+package obiiter
 
 import (
 	"fmt"
 	"sync"
+
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
 
 type IDistribute struct {
 	outputs    map[int]IBioSequenceBatch
 	news       chan int
-	classifier *BioSequenceClassifier
+	classifier *obiseq.BioSequenceClassifier
 	lock       *sync.Mutex
 }
 
@@ -28,16 +30,16 @@ func (dist *IDistribute) News() chan int {
 	return dist.news
 }
 
-func (dist *IDistribute) Classifier() *BioSequenceClassifier {
+func (dist *IDistribute) Classifier() *obiseq.BioSequenceClassifier {
 	return dist.classifier
 }
 
-func (iterator IBioSequenceBatch) Distribute(class *BioSequenceClassifier, sizes ...int) IDistribute {
+func (iterator IBioSequenceBatch) Distribute(class *obiseq.BioSequenceClassifier, sizes ...int) IDistribute {
 	batchsize := 5000
 	buffsize := 2
 
 	outputs := make(map[int]IBioSequenceBatch, 100)
-	slices := make(map[int]*BioSequenceSlice, 100)
+	slices := make(map[int]*obiseq.BioSequenceSlice, 100)
 	orders := make(map[int]int, 100)
 	news := make(chan int)
 
@@ -72,7 +74,7 @@ func (iterator IBioSequenceBatch) Distribute(class *BioSequenceClassifier, sizes
 				slice, ok := slices[key]
 
 				if !ok {
-					s := MakeBioSequenceSlice()
+					s := obiseq.MakeBioSequenceSlice()
 					slice = &s
 					slices[key] = slice
 					orders[key] = 0
@@ -89,7 +91,7 @@ func (iterator IBioSequenceBatch) Distribute(class *BioSequenceClassifier, sizes
 				if len(*slice) == batchsize {
 					outputs[key].Push(MakeBioSequenceBatch(orders[key], *slice))
 					orders[key]++
-					s := MakeBioSequenceSlice()
+					s := obiseq.MakeBioSequenceSlice()
 					slices[key] = &s
 				}
 			}

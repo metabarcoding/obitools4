@@ -7,6 +7,7 @@ import (
 	"runtime"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obialign"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 	"github.com/schollz/progressbar/v3"
 )
@@ -202,8 +203,10 @@ func AssemblePESequences(seqA, seqB *obiseq.BioSequence,
 // The function returns an iterator over batches of obiseq.Biosequence object.
 // each pair of processed sequences produces one sequence in the result iterator.
 //
-func IAssemblePESequencesBatch(iterator obiseq.IPairedBioSequenceBatch,
-	gap float64, delta, minOverlap int, minIdentity float64, withStats bool, sizes ...int) obiseq.IBioSequenceBatch {
+func IAssemblePESequencesBatch(iterator obiiter.IPairedBioSequenceBatch,
+	gap float64, delta, minOverlap int,
+	minIdentity float64,
+	withStats bool, sizes ...int) obiiter.IBioSequenceBatch {
 
 	nworkers := runtime.NumCPU() * 3 / 2
 	buffsize := iterator.BufferSize()
@@ -216,7 +219,7 @@ func IAssemblePESequencesBatch(iterator obiseq.IPairedBioSequenceBatch,
 		buffsize = sizes[1]
 	}
 
-	newIter := obiseq.MakeIBioSequenceBatch(buffsize)
+	newIter := obiiter.MakeIBioSequenceBatch(buffsize)
 
 	newIter.Add(nworkers)
 
@@ -233,7 +236,7 @@ func IAssemblePESequencesBatch(iterator obiseq.IPairedBioSequenceBatch,
 		progressbar.OptionShowIts(),
 		progressbar.OptionSetDescription("[Sequence Pairing]"))
 
-	f := func(iterator obiseq.IPairedBioSequenceBatch, wid int) {
+	f := func(iterator obiiter.IPairedBioSequenceBatch, wid int) {
 		arena := obialign.MakePEAlignArena(150, 150)
 
 		for iterator.Next() {
@@ -249,7 +252,7 @@ func IAssemblePESequencesBatch(iterator obiseq.IPairedBioSequenceBatch,
 				}
 			}
 			bar.Add(batch.Length() - processed)
-			newIter.Push(obiseq.MakeBioSequenceBatch(
+			newIter.Push(obiiter.MakeBioSequenceBatch(
 				batch.Order(),
 				cons,
 			))

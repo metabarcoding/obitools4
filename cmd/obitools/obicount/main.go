@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obiconvert"
@@ -34,20 +33,8 @@ func main() {
 
 	_, args, _ := optionParser(os.Args)
 
-	fs, _ := obiconvert.ReadBioSequences(args...)
-	nread := 0
-	nvariant := 0
-	nsymbol := 0
-	for fs.Next() {
-		s := fs.Get()
-		if s==nil {
-			log.Panicln("Read sequence is nil")
-		}
-		nread += s.Count()
-		nvariant++
-		nsymbol += s.Length()
-		s.Recycle()
-	}
+	fs, _ := obiconvert.ReadBioSequencesBatch(args...)
+	nread, nvariant, nsymbol := fs.Count(true)
 
 	if obicount.CLIIsPrintingVariantCount() {
 		fmt.Printf(" %d", nvariant)

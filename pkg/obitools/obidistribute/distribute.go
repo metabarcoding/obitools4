@@ -4,12 +4,12 @@ import (
 	"log"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiformats"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obioptions"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obiconvert"
 )
 
-func DistributeSequence(sequences obiseq.IBioSequenceBatch) {
+func DistributeSequence(sequences obiiter.IBioSequenceBatch) {
 
 	opts := make([]obiformats.WithOption, 0, 10)
 

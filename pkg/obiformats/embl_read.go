@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
 
@@ -80,7 +81,7 @@ func _EndOfLastEntry(buff []byte) int {
 	return -1
 }
 
-func _ParseEmblFile(input <-chan _FileChunk, out obiseq.IBioSequenceBatch) {
+func _ParseEmblFile(input <-chan _FileChunk, out obiiter.IBioSequenceBatch) {
 
 	for chunks := range input {
 		scanner := bufio.NewScanner(chunks.raw)
@@ -139,7 +140,7 @@ func _ParseEmblFile(input <-chan _FileChunk, out obiseq.IBioSequenceBatch) {
 				seqBytes = new(bytes.Buffer)
 			}
 		}
-		out.Push(obiseq.MakeBioSequenceBatch(order, sequences))
+		out.Push(obiiter.MakeBioSequenceBatch(order, sequences))
 	}
 
 	out.Done()
@@ -176,11 +177,11 @@ func _ReadFlatFileChunk(reader io.Reader, readers chan _FileChunk) {
 
 //  6    5  43 2    1
 // <CR>?<LF>//<CR>?<LF>
-func ReadEMBLBatch(reader io.Reader, options ...WithOption) obiseq.IBioSequenceBatch {
+func ReadEMBLBatch(reader io.Reader, options ...WithOption) obiiter.IBioSequenceBatch {
 	opt := MakeOptions(options)
 	entry_channel := make(chan _FileChunk, opt.BufferSize())
 
-	newIter := obiseq.MakeIBioSequenceBatch(opt.BufferSize())
+	newIter := obiiter.MakeIBioSequenceBatch(opt.BufferSize())
 
 	nworkers := opt.ParallelWorkers()
 	newIter.Add(nworkers)
@@ -199,12 +200,12 @@ func ReadEMBLBatch(reader io.Reader, options ...WithOption) obiseq.IBioSequenceB
 	return newIter
 }
 
-func ReadEMBL(reader io.Reader, options ...WithOption) obiseq.IBioSequence {
+func ReadEMBL(reader io.Reader, options ...WithOption) obiiter.IBioSequence {
 	ib := ReadEMBLBatch(reader, options...)
 	return ib.SortBatches().IBioSequence()
 }
 
-func ReadEMBLBatchFromFile(filename string, options ...WithOption) (obiseq.IBioSequenceBatch, error) {
+func ReadEMBLBatchFromFile(filename string, options ...WithOption) (obiiter.IBioSequenceBatch, error) {
 	var reader io.Reader
 	var greader io.Reader
 	var err error
@@ -212,7 +213,7 @@ func ReadEMBLBatchFromFile(filename string, options ...WithOption) (obiseq.IBioS
 	reader, err = os.Open(filename)
 	if err != nil {
 		log.Printf("open file error: %+v", err)
-		return obiseq.NilIBioSequenceBatch, err
+		return obiiter.NilIBioSequenceBatch, err
 	}
 
 	// Test if the flux is compressed by gzip
@@ -224,7 +225,7 @@ func ReadEMBLBatchFromFile(filename string, options ...WithOption) (obiseq.IBioS
 	return ReadEMBLBatch(reader, options...), nil
 }
 
-func ReadEMBLFromFile(filename string, options ...WithOption) (obiseq.IBioSequence, error) {
+func ReadEMBLFromFile(filename string, options ...WithOption) (obiiter.IBioSequence, error) {
 	ib, err := ReadEMBLBatchFromFile(filename, options...)
 	return ib.SortBatches().IBioSequence(), err
 

@@ -2,13 +2,13 @@ package obipcr
 
 import (
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiapat"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
 )
 
 // PCR iterates over sequences provided by a obiseq.IBioSequenceBatch
 // and returns an other obiseq.IBioSequenceBatch distributing
 // obiseq.BioSequenceBatch containing the selected amplicon sequences.
-func PCR(iterator obiseq.IBioSequenceBatch) (obiseq.IBioSequenceBatch, error) {
+func PCR(iterator obiiter.IBioSequenceBatch) (obiiter.IBioSequenceBatch, error) {
 
 	opts := make([]obiapat.WithOption, 0, 10)
 

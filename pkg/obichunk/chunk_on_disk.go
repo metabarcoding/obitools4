@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiformats"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
 
@@ -33,12 +34,12 @@ func find(root, ext string) []string {
 	return a
 }
 
-func ISequenceChunkOnDisk(iterator obiseq.IBioSequenceBatch,
+func ISequenceChunkOnDisk(iterator obiiter.IBioSequenceBatch,
 	classifier *obiseq.BioSequenceClassifier,
-	sizes ...int) (obiseq.IBioSequenceBatch, error) {
+	sizes ...int) (obiiter.IBioSequenceBatch, error) {
 	dir, err := tempDir()
 	if err != nil {
-		return obiseq.NilIBioSequenceBatch, err
+		return obiiter.NilIBioSequenceBatch, err
 	}
 
 	bufferSize := iterator.BufferSize()
@@ -47,7 +48,7 @@ func ISequenceChunkOnDisk(iterator obiseq.IBioSequenceBatch,
 		bufferSize = sizes[0]
 	}
 
-	newIter := obiseq.MakeIBioSequenceBatch(bufferSize)
+	newIter := obiiter.MakeIBioSequenceBatch(bufferSize)
 
 	newIter.Add(1)
 
@@ -86,7 +87,7 @@ func ISequenceChunkOnDisk(iterator obiseq.IBioSequenceBatch,
 				b.Recycle()
 			}
 
-			newIter.Push(obiseq.MakeBioSequenceBatch(order, chunck))
+			newIter.Push(obiiter.MakeBioSequenceBatch(order, chunck))
 
 		}
 

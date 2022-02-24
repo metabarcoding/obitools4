@@ -1,5 +1,12 @@
 package obiseq
 
+import (
+	"context"
+	"log"
+
+	"github.com/PaesslerAG/gval"
+)
+
 type SequencePredicate func(*BioSequence) bool
 
 func (predicate1 SequencePredicate) And(predicate2 SequencePredicate) SequencePredicate {
@@ -69,6 +76,36 @@ func IsLongerOrEqualTo(length int) SequencePredicate {
 func IsShorterOrEqualTo(length int) SequencePredicate {
 	f := func(sequence *BioSequence) bool {
 		return sequence.Length() <= length
+	}
+
+	return f
+}
+
+func ExrpessionPredicat(expression string) SequencePredicate {
+
+	exp, err := gval.Full().NewEvaluable(expression)
+
+	if err != nil {
+		log.Fatalf("Error in the expression : %s", expression)
+	}
+
+	f := func(sequence *BioSequence) bool {
+		value, err := exp.EvalBool(context.Background(),
+			map[string]interface{}{
+				"annot":    sequence.Annotations(),
+				"count":    sequence.Count(),
+				"length":   sequence.Length(),
+				"sequence": sequence,
+			},
+		)
+
+		if err != nil {
+			log.Fatalf("Expression '%s' cannot be evaluated on sequence %s",
+				expression,
+				sequence.Id())
+		}
+
+		return value
 	}
 
 	return f

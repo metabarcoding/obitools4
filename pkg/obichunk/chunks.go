@@ -4,12 +4,13 @@ import (
 	"log"
 	"sync"
 
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
 
-func ISequenceChunk(iterator obiseq.IBioSequenceBatch,
+func ISequenceChunk(iterator obiiter.IBioSequenceBatch,
 	classifier *obiseq.BioSequenceClassifier,
-	sizes ...int) (obiseq.IBioSequenceBatch, error) {
+	sizes ...int) (obiiter.IBioSequenceBatch, error) {
 
 	bufferSize := iterator.BufferSize()
 
@@ -17,7 +18,7 @@ func ISequenceChunk(iterator obiseq.IBioSequenceBatch,
 		bufferSize = sizes[0]
 	}
 
-	newIter := obiseq.MakeIBioSequenceBatch(bufferSize)
+	newIter := obiiter.MakeIBioSequenceBatch(bufferSize)
 
 	newIter.Add(1)
 
@@ -64,7 +65,7 @@ func ISequenceChunk(iterator obiseq.IBioSequenceBatch,
 		for _, chunck := range chunks {
 
 			if len(*chunck) > 0 {
-				newIter.Push(obiseq.MakeBioSequenceBatch(order, *chunck))
+				newIter.Push(obiiter.MakeBioSequenceBatch(order, *chunck))
 				order++
 			}
 

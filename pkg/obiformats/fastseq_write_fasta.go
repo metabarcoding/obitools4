@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
 
@@ -21,7 +22,7 @@ func min(x, y int) int {
 func FormatFasta(seq *obiseq.BioSequence, formater FormatHeader) string {
 	var fragments strings.Builder
 
-	if seq==nil {
+	if seq == nil {
 		log.Panicln("try to format a nil BioSequence")
 	}
 
@@ -44,7 +45,7 @@ func FormatFasta(seq *obiseq.BioSequence, formater FormatHeader) string {
 		folded)
 }
 
-func FormatFastaBatch(batch obiseq.BioSequenceBatch, formater FormatHeader) []byte {
+func FormatFastaBatch(batch obiiter.BioSequenceBatch, formater FormatHeader) []byte {
 	var bs bytes.Buffer
 	for _, seq := range batch.Slice() {
 		bs.WriteString(FormatFasta(seq, formater))
@@ -53,7 +54,7 @@ func FormatFastaBatch(batch obiseq.BioSequenceBatch, formater FormatHeader) []by
 	return bs.Bytes()
 }
 
-func WriteFasta(iterator obiseq.IBioSequence, file io.Writer, options ...WithOption) error {
+func WriteFasta(iterator obiiter.IBioSequence, file io.Writer, options ...WithOption) error {
 	opt := MakeOptions(options)
 
 	header_format := opt.FormatFastSeqHeader()
@@ -73,7 +74,7 @@ func WriteFasta(iterator obiseq.IBioSequence, file io.Writer, options ...WithOpt
 	return nil
 }
 
-func WriteFastaToFile(iterator obiseq.IBioSequence,
+func WriteFastaToFile(iterator obiiter.IBioSequence,
 	filename string,
 	options ...WithOption) error {
 
@@ -89,16 +90,18 @@ func WriteFastaToFile(iterator obiseq.IBioSequence,
 	return WriteFasta(iterator, file, options...)
 }
 
-func WriteFastaToStdout(iterator obiseq.IBioSequence, options ...WithOption) error {
+func WriteFastaToStdout(iterator obiiter.IBioSequence, options ...WithOption) error {
 	options = append(options, OptionDontCloseFile())
 	return WriteFasta(iterator, os.Stdout, options...)
 }
 
-func WriteFastaBatch(iterator obiseq.IBioSequenceBatch, file io.Writer, options ...WithOption) (obiseq.IBioSequenceBatch, error) {
+func WriteFastaBatch(iterator obiiter.IBioSequenceBatch,
+	file io.Writer,
+	options ...WithOption) (obiiter.IBioSequenceBatch, error) {
 	opt := MakeOptions(options)
 
 	buffsize := iterator.BufferSize()
-	newIter := obiseq.MakeIBioSequenceBatch(buffsize)
+	newIter := obiiter.MakeIBioSequenceBatch(buffsize)
 
 	nwriters := opt.ParallelWorkers()
 
@@ -113,7 +116,7 @@ func WriteFastaBatch(iterator obiseq.IBioSequenceBatch, file io.Writer, options 
 		close(chunkchan)
 	}()
 
-	ff := func(iterator obiseq.IBioSequenceBatch) {
+	ff := func(iterator obiiter.IBioSequenceBatch) {
 		for iterator.Next() {
 			batch := iterator.Get()
 			chunkchan <- FileChunck{
@@ -164,20 +167,21 @@ func WriteFastaBatch(iterator obiseq.IBioSequenceBatch, file io.Writer, options 
 	return newIter, nil
 }
 
-func WriteFastaBatchToStdout(iterator obiseq.IBioSequenceBatch, options ...WithOption) (obiseq.IBioSequenceBatch, error) {
+func WriteFastaBatchToStdout(iterator obiiter.IBioSequenceBatch,
+	options ...WithOption) (obiiter.IBioSequenceBatch, error) {
 	options = append(options, OptionDontCloseFile())
 	return WriteFastaBatch(iterator, os.Stdout, options...)
 }
 
-func WriteFastaBatchToFile(iterator obiseq.IBioSequenceBatch,
+func WriteFastaBatchToFile(iterator obiiter.IBioSequenceBatch,
 	filename string,
-	options ...WithOption) (obiseq.IBioSequenceBatch, error) {
+	options ...WithOption) (obiiter.IBioSequenceBatch, error) {
 
 	file, err := os.Create(filename)
 
 	if err != nil {
 		log.Fatalf("open file error: %v", err)
-		return obiseq.NilIBioSequenceBatch, err
+		return obiiter.NilIBioSequenceBatch, err
 	}
 
 	options = append(options, OptionCloseFile())

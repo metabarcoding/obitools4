@@ -4,11 +4,11 @@ import (
 	"log"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiformats"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obioptions"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
 
-func WriteBioSequences(iterator obiseq.IBioSequence, filenames ...string) error {
+func WriteBioSequences(iterator obiiter.IBioSequence, filenames ...string) error {
 
 	opts := make([]obiformats.WithOption, 0, 10)
 
@@ -65,10 +65,10 @@ func WriteBioSequences(iterator obiseq.IBioSequence, filenames ...string) error 
 	return nil
 }
 
-func WriteBioSequencesBatch(iterator obiseq.IBioSequenceBatch,
-	terminalAction bool, filenames ...string) (obiseq.IBioSequenceBatch, error) {
+func WriteBioSequencesBatch(iterator obiiter.IBioSequenceBatch,
+	terminalAction bool, filenames ...string) (obiiter.IBioSequenceBatch, error) {
 
-	var newIter obiseq.IBioSequenceBatch
+	var newIter obiiter.IBioSequenceBatch
 
 	opts := make([]obiformats.WithOption, 0, 10)
 
@@ -119,12 +119,12 @@ func WriteBioSequencesBatch(iterator obiseq.IBioSequenceBatch,
 
 	if err != nil {
 		log.Fatalf("Write file error: %v", err)
-		return obiseq.NilIBioSequenceBatch, err
+		return obiiter.NilIBioSequenceBatch, err
 	}
 
 	if terminalAction {
 		newIter.Recycle()
-		return obiseq.NilIBioSequenceBatch, nil
+		return obiiter.NilIBioSequenceBatch, nil
 	}
 
 	return newIter, nil

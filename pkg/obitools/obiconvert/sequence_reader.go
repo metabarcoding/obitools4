@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiformats"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obioptions"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
 
 func _ExpandListOfFiles(check_ext bool, filenames ...string) ([]string, error) {
@@ -66,9 +66,9 @@ func _ExpandListOfFiles(check_ext bool, filenames ...string) ([]string, error) {
 	return list_of_files, nil
 }
 
-func ReadBioSequencesBatch(filenames ...string) (obiseq.IBioSequenceBatch, error) {
-	var iterator obiseq.IBioSequenceBatch
-	var reader func(string, ...obiformats.WithOption) (obiseq.IBioSequenceBatch, error)
+func ReadBioSequencesBatch(filenames ...string) (obiiter.IBioSequenceBatch, error) {
+	var iterator obiiter.IBioSequenceBatch
+	var reader func(string, ...obiformats.WithOption) (obiiter.IBioSequenceBatch, error)
 
 	opts := make([]obiformats.WithOption, 0, 10)
 
@@ -106,7 +106,7 @@ func ReadBioSequencesBatch(filenames ...string) (obiseq.IBioSequenceBatch, error
 
 		list_of_files, err := _ExpandListOfFiles(false, filenames...)
 		if err != nil {
-			return obiseq.NilIBioSequenceBatch, err
+			return obiiter.NilIBioSequenceBatch, err
 		}
 
 		switch InputFormat() {
@@ -121,16 +121,16 @@ func ReadBioSequencesBatch(filenames ...string) (obiseq.IBioSequenceBatch, error
 		iterator, err = reader(list_of_files[0], opts...)
 
 		if err != nil {
-			return obiseq.NilIBioSequenceBatch, err
+			return obiiter.NilIBioSequenceBatch, err
 		}
 
 		list_of_files = list_of_files[1:]
-		others := make([]obiseq.IBioSequenceBatch, 0, len(list_of_files))
+		others := make([]obiiter.IBioSequenceBatch, 0, len(list_of_files))
 
 		for _, fn := range list_of_files {
 			r, err := reader(fn, opts...)
 			if err != nil {
-				return obiseq.NilIBioSequenceBatch, err
+				return obiiter.NilIBioSequenceBatch, err
 			}
 			others = append(others, r)
 		}
@@ -152,7 +152,7 @@ func ReadBioSequencesBatch(filenames ...string) (obiseq.IBioSequenceBatch, error
 	return iterator, nil
 }
 
-func ReadBioSequences(filenames ...string) (obiseq.IBioSequence, error) {
+func ReadBioSequences(filenames ...string) (obiiter.IBioSequence, error) {
 	ib, err := ReadBioSequencesBatch(filenames...)
 	return ib.SortBatches().IBioSequence(), err
 

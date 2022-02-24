@@ -3,26 +3,27 @@ package obichunk
 import (
 	"sync"
 
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
 
-func IUniqueSequence(iterator obiseq.IBioSequenceBatch,
-	options ...WithOption) (obiseq.IBioSequenceBatch, error) {
+func IUniqueSequence(iterator obiiter.IBioSequenceBatch,
+	options ...WithOption) (obiiter.IBioSequenceBatch, error) {
 
 	var err error
 	opts := MakeOptions(options)
 	nworkers := opts.ParallelWorkers()
 
-	iUnique := obiseq.MakeIBioSequenceBatch(opts.BufferSize())
+	iUnique := obiiter.MakeIBioSequenceBatch(opts.BufferSize())
 
 	if opts.SortOnDisk() {
 		nworkers = 1
 		iterator, err = ISequenceChunkOnDisk(iterator,
 			obiseq.HashClassifier(opts.BatchCount()),
-			opts.BufferSize())
+			0)
 
 		if err != nil {
-			return obiseq.NilIBioSequenceBatch, err
+			return obiiter.NilIBioSequenceBatch, err
 		}
 
 	} else {
@@ -31,7 +32,7 @@ func IUniqueSequence(iterator obiseq.IBioSequenceBatch,
 			opts.BufferSize())
 
 		if err != nil {
-			return obiseq.NilIBioSequenceBatch, err
+			return obiiter.NilIBioSequenceBatch, err
 		}
 	}
 
@@ -53,12 +54,12 @@ func IUniqueSequence(iterator obiseq.IBioSequenceBatch,
 		return neworder
 	}
 
-	var ff func(obiseq.IBioSequenceBatch, *obiseq.BioSequenceClassifier, int)
+	var ff func(obiiter.IBioSequenceBatch, *obiseq.BioSequenceClassifier, int)
 
 	cat := opts.Categories()
 	na := opts.NAValue()
 
-	ff = func(input obiseq.IBioSequenceBatch,
+	ff = func(input obiiter.IBioSequenceBatch,
 		classifier *obiseq.BioSequenceClassifier,
 		icat int) {
 		icat--
@@ -67,9 +68,9 @@ func IUniqueSequence(iterator obiseq.IBioSequenceBatch,
 			1,
 			opts.BufferSize())
 
-		var next obiseq.IBioSequenceBatch
+		var next obiiter.IBioSequenceBatch
 		if icat >= 0 {
-			next = obiseq.MakeIBioSequenceBatch(opts.BufferSize())
+			next = obiiter.MakeIBioSequenceBatch(opts.BufferSize())
 
 			iUnique.Add(1)
 			go ff(next,

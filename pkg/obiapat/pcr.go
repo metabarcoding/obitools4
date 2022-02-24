@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/goutils"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
 
@@ -429,7 +430,7 @@ func PCRSlice(sequences obiseq.BioSequenceSlice,
 
 // PCRSliceWorker is a worker function builder which produce
 // job function usable by the obiseq.MakeISliceWorker function.
-func PCRSliceWorker(options ...WithOption) obiseq.SeqSliceWorker {
+func PCRSliceWorker(options ...WithOption) obiiter.SeqSliceWorker {
 
 	opt := MakeOptions(options)
 	worker := func(sequences obiseq.BioSequenceSlice) obiseq.BioSequenceSlice {

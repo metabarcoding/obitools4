@@ -3,6 +3,7 @@ package obiformats
 import (
 	"strings"
 
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
 
@@ -14,14 +15,16 @@ func ParseGuessedFastSeqHeader(sequence *obiseq.BioSequence) {
 	}
 }
 
-func IParseFastSeqHeaderBatch(iterator obiseq.IBioSequenceBatch, options ...WithOption) obiseq.IBioSequenceBatch {
+func IParseFastSeqHeaderBatch(iterator obiiter.IBioSequenceBatch,
+	options ...WithOption) obiiter.IBioSequenceBatch {
 	opt := MakeOptions(options)
-	return iterator.MakeIWorker(obiseq.AnnotatorToSeqWorker(opt.ParseFastSeqHeader()),
+	return iterator.MakeIWorker(obiiter.AnnotatorToSeqWorker(opt.ParseFastSeqHeader()),
 		opt.ParallelWorkers(),
 		opt.BufferSize())
 }
 
-func IParseFastSeqHeader(iterator obiseq.IBioSequence, options ...WithOption) obiseq.IBioSequence {
+func IParseFastSeqHeader(iterator obiiter.IBioSequence,
+	options ...WithOption) obiiter.IBioSequence {
 	opt := MakeOptions(options)
 
 	return IParseFastSeqHeaderBatch(iterator.IBioSequenceBatch(opt.BatchSize(),

@@ -5,15 +5,15 @@ import (
 	"log"
 	"sync"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
 )
 
-type SequenceBatchWriterToFile func(iterator obiseq.IBioSequenceBatch,
+type SequenceBatchWriterToFile func(iterator obiiter.IBioSequenceBatch,
 	filename string,
-	options ...WithOption) (obiseq.IBioSequenceBatch, error)
+	options ...WithOption) (obiiter.IBioSequenceBatch, error)
 
 func WriterDispatcher(prototypename string,
-	dispatcher obiseq.IDistribute,
+	dispatcher obiiter.IDistribute,
 	formater SequenceBatchWriterToFile,
 	options ...WithOption) {
 
