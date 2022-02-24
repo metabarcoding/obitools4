@@ -29,7 +29,6 @@ func PairingOptionSet(options *getoptions.GetOpt) {
 		options.Alias("D"),
 		options.Description("Length added to the fast detected overlap for the precise alignement"))
 	options.IntVar(&_MinOverlap, "min-overlap", _MinOverlap,
-		options.Alias("O"),
 		options.Description("Minimum ovelap between both the reads to consider the aligment"))
 	options.Float64Var(&_MinIdentity, "min-identity", _MinIdentity,
 		options.Alias("X"),

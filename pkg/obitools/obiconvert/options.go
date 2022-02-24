@@ -54,6 +54,7 @@ func OutputOptionSet(options *getoptions.GetOpt) {
 	options.BoolVar(&__output_fastjson_format__, "output-json-header", false,
 		options.Description("output FASTA/FASTQ title line annotations follow json format."))
 	options.BoolVar(&__output_fastobi_format__, "output-OBI-header", false,
+		options.Alias("O"),
 		options.Description("output FASTA/FASTQ title line annotations follow OBI format."))
 
 	options.BoolVar(&__output_solexa_quality__, "solexa-output", false,
