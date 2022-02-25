@@ -32,6 +32,7 @@ var _IdList = ""
 
 var _Taxdump = ""
 var _Taxonomy = (*obitax.Taxonomy)(nil)
+
 var _RequiredAttributes = make([]string, 0)
 var _AttributePatterns = make(map[string]string, 0)
 
@@ -224,7 +225,7 @@ func CLIRestrictTaxonomyPredicate() obiseq.SequencePredicate {
 		p := obitax.IsSubCladeOf(*taxonomy, _BelongTaxa[0])
 
 		for _, taxid := range _BelongTaxa[1:] {
-			p.Or(obitax.IsSubCladeOf(*taxonomy, taxid))
+			p = p.Or(obitax.IsSubCladeOf(*taxonomy, taxid))
 		}
 
 		return p
@@ -240,7 +241,7 @@ func CLIAvoidTaxonomyPredicate() obiseq.SequencePredicate {
 		p := obitax.IsSubCladeOf(*taxonomy, _NotBelongTaxa[0])
 
 		for _, taxid := range _NotBelongTaxa[1:] {
-			p.Or(obitax.IsSubCladeOf(*taxonomy, taxid))
+			p = p.Or(obitax.IsSubCladeOf(*taxonomy, taxid))
 		}
 
 		return p.Not()
@@ -256,7 +257,7 @@ func CLIHasRankDefinedPredicate() obiseq.SequencePredicate {
 		p := obitax.HasRankDefined(*taxonomy, _RequiredRanks[0])
 
 		for _, rank := range _RequiredRanks[1:] {
-			p.And(obitax.HasRankDefined(*taxonomy, rank))
+			p = p.And(obitax.HasRankDefined(*taxonomy, rank))
 		}
 
 		return p
@@ -275,7 +276,7 @@ func CLIPredicatesPredicate() obiseq.SequencePredicate {
 		p := obiseq.ExpressionPredicat(_Predicats[0])
 
 		for _, expression := range _Predicats[1:] {
-			p.And(obiseq.ExpressionPredicat(expression))
+			p = p.And(obiseq.ExpressionPredicat(expression))
 		}
 
 		return p
@@ -290,7 +291,7 @@ func CLISequencePatternPredicate() obiseq.SequencePredicate {
 		p := obiseq.IsSequenceMatch(_SequencePatterns[0])
 
 		for _, pattern := range _SequencePatterns[1:] {
-			p.And(obiseq.IsSequenceMatch(pattern))
+			p = p.And(obiseq.IsSequenceMatch(pattern))
 		}
 
 		return p
@@ -305,7 +306,7 @@ func CLIDefinitionPatternPredicate() obiseq.SequencePredicate {
 		p := obiseq.IsDefinitionMatch(_DefinitionPatterns[0])
 
 		for _, pattern := range _DefinitionPatterns[1:] {
-			p.And(obiseq.IsDefinitionMatch(pattern))
+			p = p.And(obiseq.IsDefinitionMatch(pattern))
 		}
 
 		return p
@@ -320,7 +321,7 @@ func CLIIdPatternPredicate() obiseq.SequencePredicate {
 		p := obiseq.IsIdMatch(_IdPatterns[0])
 
 		for _, pattern := range _IdPatterns[1:] {
-			p.And(obiseq.IsIdMatch(pattern))
+			p = p.And(obiseq.IsIdMatch(pattern))
 		}
 
 		return p
@@ -349,6 +350,37 @@ func CLIIdListPredicate() obiseq.SequencePredicate {
 	return nil
 }
 
+func CLIHasAttibutePredicate() obiseq.SequencePredicate {
+
+	if len(_RequiredAttributes) > 0 {
+		p := obiseq.HasAttribute(_RequiredAttributes[0])
+
+		for _, rank := range _RequiredAttributes[1:] {
+			p = p.And(obiseq.HasAttribute(rank))
+		}
+
+		return p
+	}
+
+	return nil
+}
+
+func CLIIsAttibuteMatchPredicate() obiseq.SequencePredicate {
+
+	if len(_AttributePatterns) > 0 {
+		p := obiseq.SequencePredicate(nil)
+
+		for key, pattern := range _AttributePatterns {
+			log.Println(key, pattern)
+			p = p.And(obiseq.IsAttributeMatch(key, pattern))
+		}
+
+		return p
+	}
+
+	return nil
+}
+
 func CLISequenceSelectionPredicate() obiseq.SequencePredicate {
 	p := CLISequenceSizePredicate()
 	p = p.And(CLISequenceCountPredicate())
@@ -358,6 +390,8 @@ func CLISequenceSelectionPredicate() obiseq.SequencePredicate {
 	p = p.And(CLIDefinitionPatternPredicate())
 	p = p.And(CLIIdPatternPredicate())
 	p = p.And(CLIIdListPredicate())
+	p = p.And(CLIHasAttibutePredicate())
+	p = p.And(CLIIsAttibuteMatchPredicate())
 
 	if _InvertMatch {
 		p = p.Not()
