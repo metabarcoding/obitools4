@@ -559,3 +559,56 @@ func (iterator IBioSequenceBatch) DivideOn(predicate obiseq.SequencePredicate,
 
 	return trueIter, falseIter
 }
+
+func (iterator IBioSequenceBatch) FilterOn(predicate obiseq.SequencePredicate,
+	size int, sizes ...int) IBioSequenceBatch {
+	buffsize := iterator.BufferSize()
+	nworkers := 4
+
+	if len(sizes) > 0 {
+		nworkers = sizes[0]
+	}
+
+	if len(sizes) > 1 {
+		buffsize = sizes[1]
+	}
+
+	trueIter := MakeIBioSequenceBatch(buffsize)
+
+	trueIter.Add(nworkers)
+
+	go func() {
+		trueIter.WaitAndClose()
+	}()
+
+	ff := func(iterator IBioSequenceBatch) {
+		iterator = iterator.SortBatches()
+
+		for iterator.Next() {
+			seqs := iterator.Get()
+			slice := seqs.slice
+			j := 0
+			for _, s := range slice {
+				if predicate(s) {
+					slice[j] = s
+					j++
+				} else {
+					s.Recycle()
+				}
+			}
+
+			seqs.slice = slice[:j]
+			trueIter.Push(seqs)
+		}
+
+		trueIter.Done()
+	}
+
+	for i := 1; i < nworkers; i++ {
+		go ff(iterator.Split())
+	}
+
+	go ff(iterator)
+
+	return trueIter.Rebatch(size)
+}

@@ -1,8 +1,11 @@
 package goutils
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/gob"
+	"io"
+	"os"
 )
 
 // NotAnInteger defines a new type of Error : "NotAnInteger"
@@ -72,4 +75,34 @@ func CopyMap(dest, src map[string]interface{}) {
 	buf := new(bytes.Buffer)
 	gob.NewEncoder(buf).Encode(src)
 	gob.NewDecoder(buf).Decode(&dest)
+}
+
+// Read a whole file into the memory and store it as array of lines
+func ReadLines(path string) (lines []string, err error) {
+	var (
+		file   *os.File
+		part   []byte
+		prefix bool
+	)
+	if file, err = os.Open(path); err != nil {
+		return
+	}
+	defer file.Close()
+
+	reader := bufio.NewReader(file)
+	buffer := bytes.NewBuffer(make([]byte, 0))
+	for {
+		if part, prefix, err = reader.ReadLine(); err != nil {
+			break
+		}
+		buffer.Write(part)
+		if !prefix {
+			lines = append(lines, buffer.String())
+			buffer.Reset()
+		}
+	}
+	if err == io.EOF {
+		err = nil
+	}
+	return
 }

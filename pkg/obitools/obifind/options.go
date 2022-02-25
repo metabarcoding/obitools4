@@ -38,9 +38,10 @@ func LoadTaxonomyOptionSet(options *getoptions.GetOpt, required, alternatiive bo
 	}
 	options.BoolVar(&__rank_list__, "rank-list", false,
 		options.Alias("l"),
-		options.Description("List every taxonomic rank available iin the taxonomy."))
-	options.IntSliceVar(&__taxonomical_restriction__, "subclade-of", 1, 1,
-		options.Alias("s"),
+		options.Description("List every taxonomic rank available in the taxonomy."))
+
+	options.IntSliceVar(&__taxonomical_restriction__, "restrict-to-taxon", 1, 1,
+		options.Alias("r"),
 		options.Description("Restrict output to some subclades."))
 }
 
