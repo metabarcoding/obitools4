@@ -6,9 +6,9 @@ import (
 	"os"
 	"runtime/trace"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiapat"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiformats"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
+
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obialign"
 )
 
 func main() {
@@ -41,29 +41,38 @@ func main() {
 	// 	fmt.Printf("Shift : %d   Score : %d\n", maxshift, maxcount)
 	// }
 
-	A := []byte("ccgcctccttagaacaggctcctctagaaaaccatagtgggatatctaaagaaggcggagatagaaagagcggttcagcaggaatgccgagatggacggcgtgtgacg")
+	A := []byte("ccgcctccttagaacaggctcctctagaaaaccatgtgggatatctaaagaaggcggagatagaaagagcggttcagcaggaatgccgagatggacggcgtgtgacg")
+	B := []byte("ccgcctccttagaacaggctcctctagaaaaaccatgtgggatatctaaagaaggcggagatagaaagagcggttcagcaggaatgccgagatggacggcgtgtgacg")
 	// B := []byte("cgccaccaccgagatctacactctttccctacacgacgctcttccgatctccgcctccttagaacaggctcctctagaaaagcatagtggggtatctaaaggaggcgg")
 	sA := obiseq.NewBioSequence("A", A, "")
-	// sB := obiseq.MakeBioSequence("B", B, "")
+	sB := obiseq.MakeBioSequence("B", B, "")
 
-	pat, _ := obiapat.MakeApatPattern("TCCTTCCAACAGGCTCCTC", 3)
-	as, _ := obiapat.MakeApatSequence(sA, false)
-	fmt.Println(pat.FindAllIndex(as))
+	s, l := obialign.LCSScore(sA, &sB, 2, nil)
 
-	file, _ := os.Open("sample/wolf_diet_ngsfilter.txt")
-	xxx, _ := obiformats.ReadNGSFilter(file)
-	xxx.Compile(2)
-	fmt.Printf("%v\n==================\n", xxx)
+	fmt.Printf("score : %d  length : %d  error : %d\n", s, l, l-s)
 
-	for pp, m := range xxx {
-		fmt.Printf("%v %v\n", pp, *m)
-	}
+	s, l = obialign.LCSScore(&sB, &sB, 2, nil)
 
-	seqfile, _ := obiformats.ReadFastSeqFromFile("xxxx.fastq")
+	fmt.Printf("score : %d  length : %d  error : %d\n", s, l, l-s)
 
-	for seqfile.Next() {
-		seq := seqfile.Get()
-		barcode, _ := xxx.ExtractBarcode(seq, true)
-		fmt.Println(obiformats.FormatFasta(barcode, obiformats.FormatFastSeqOBIHeader))
-	}
+	// pat, _ := obiapat.MakeApatPattern("TCCTTCCAACAGGCTCCTC", 3)
+	// as, _ := obiapat.MakeApatSequence(sA, false)
+	// fmt.Println(pat.FindAllIndex(as))
+
+	// file, _ := os.Open("sample/wolf_diet_ngsfilter.txt")
+	// xxx, _ := obiformats.ReadNGSFilter(file)
+	// xxx.Compile(2)
+	// fmt.Printf("%v\n==================\n", xxx)
+
+	// for pp, m := range xxx {
+	// 	fmt.Printf("%v %v\n", pp, *m)
+	// }
+
+	// seqfile, _ := obiformats.ReadFastSeqFromFile("xxxx.fastq")
+
+	// for seqfile.Next() {
+	// 	seq := seqfile.Get()
+	// 	barcode, _ := xxx.ExtractBarcode(seq, true)
+	// 	fmt.Println(obiformats.FormatFasta(barcode, obiformats.FormatFastSeqOBIHeader))
+	// }
 }
