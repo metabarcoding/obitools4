@@ -612,3 +612,15 @@ func (iterator IBioSequenceBatch) FilterOn(predicate obiseq.SequencePredicate,
 
 	return trueIter.Rebatch(size)
 }
+
+func (iterator IBioSequenceBatch) Load() obiseq.BioSequenceSlice {
+
+	chunck := obiseq.MakeBioSequenceSlice()
+	for iterator.Next() {
+		b := iterator.Get()
+		chunck = append(chunck, b.Slice()...)
+		b.Recycle()
+	}
+
+	return chunck
+}

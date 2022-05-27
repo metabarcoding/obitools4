@@ -257,3 +257,4 @@ func (s *BioSequence) WriteByte(data byte) error {
 	s.sequence = append(s.sequence, data)
 	return nil
 }
+

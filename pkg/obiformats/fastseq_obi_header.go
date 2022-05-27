@@ -3,6 +3,8 @@ package obiformats
 import (
 	"bytes"
 	"fmt"
+	"log"
+	"math"
 	"regexp"
 	"strconv"
 	"strings"
@@ -251,9 +253,20 @@ func ParseOBIFeatures(text string, annotations obiseq.Annotation) string {
 			} // End of not string
 		} // End of not numeric
 
-		annotations[key] = value
+		switch vt := value.(type) {
+		case float64:
+			if vt == math.Floor(vt) {
+				annotations[key] = int(vt)
+			}
+		default:
+			annotations[key] = value
+		}
 
-		d = part[stop:]
+		if stop < len(part) {
+			d = part[stop:]
+		} else {
+			d = []byte{}
+		}
 		//m = __obi_header_key_pattern__.FindIndex(d)
 		m = __match__key__(d)
 	}
@@ -280,6 +293,16 @@ func FormatFastSeqOBIHeader(sequence *obiseq.BioSequence) string {
 			switch t := value.(type) {
 			case string:
 				text.WriteString(fmt.Sprintf("%s=%s; ", key, t))
+			case map[string]int,
+				map[string]interface{}:
+				tv, err := json.Marshal(t)
+				if err != nil {
+					log.Fatalf("Cannot convert %v value", value)
+				}
+				tv = bytes.ReplaceAll(tv, []byte(`"`), []byte("'"))
+				text.WriteString(fmt.Sprintf("%s=", key))
+				text.Write(tv)
+				text.WriteString("; ")
 			default:
 				text.WriteString(fmt.Sprintf("%s=%v; ", key, value))
 			}

@@ -15,7 +15,7 @@ OBITOOLS_SRC:= $(wildcard cmd/obitools/*/*.go)
 OBITOOLS_DIRS:=$(sort $(patsubst %/,%,$(dir $(OBITOOLS_SRC))))
 OBITOOLS:=$(notdir $(OBITOOLS_DIRS))
 
-.PHONY: all
+.PHONY: all obitools 
 
 define MAKE_PKG_RULE
 pkg-$(notdir $(1)): $(1)
@@ -42,6 +42,12 @@ all: obitools
 
 packages: $(patsubst %,pkg-%,$(PACKAGES))
 obitools: $(patsubst %,$(OBITOOLS_PREFIX)%,$(OBITOOLS)) 
+
+
+macos-pkg: 
+	@bash pkgs/macos/macos-installer-builder-master/macOS-x64/build-macos-x64.sh \
+		OBITools \
+		0.0.1
 
 $(BUILD_DIR):
 	mkdir -p $@

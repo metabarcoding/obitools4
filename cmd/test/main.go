@@ -1,14 +1,13 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"runtime/trace"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
-
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obialign"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obioptions"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obiclean"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obiconvert"
 )
 
 func main() {
@@ -20,13 +19,16 @@ func main() {
 	trace.Start(ftrace)
 	defer trace.Stop()
 
-	// option_parser := obioptions.GenerateOptionParser(
-	// 	obiconvert.InputOptionSet,
-	// )
+	option_parser := obioptions.GenerateOptionParser(
+		obiconvert.InputOptionSet,
+	)
 
-	//_, args, _ := option_parser(os.Args)
+	_, args, _ := option_parser(os.Args)
 
-	// fs, _ := obiconvert.ReadBioSequences(args...)
+	fs, _ := obiconvert.ReadBioSequencesBatch(args...)
+
+	obiclean.IOBIClean(fs)
+
 	// buffer := make([]byte, 0)
 	// fs.Next()
 	// s := fs.Get()
@@ -41,19 +43,19 @@ func main() {
 	// 	fmt.Printf("Shift : %d   Score : %d\n", maxshift, maxcount)
 	// }
 
-	A := []byte("ccgcctccttagaacaggctcctctagaaaaccatgtgggatatctaaagaaggcggagatagaaagagcggttcagcaggaatgccgagatggacggcgtgtgacg")
-	B := []byte("ccgcctccttagaacaggctcctctagaaaaaccatgtgggatatctaaagaaggcggagatagaaagagcggttcagcaggaatgccgagatggacggcgtgtgacg")
+	// A := []byte("ccgcctccttagaacaggctcctctagaaaaccatgtgggatatctaaagaaggcggagatagaaagagcggttcagcaggaatgccgagatggacggcgtgtgacg")
+	// B := []byte("ccgcctccttagaacaggctcctctagaaaaaccatgtgggatatctaaagaaggcggagatagaaagagcggttcagcaggaatgccgagatggacggcgtgtgacg")
 	// B := []byte("cgccaccaccgagatctacactctttccctacacgacgctcttccgatctccgcctccttagaacaggctcctctagaaaagcatagtggggtatctaaaggaggcgg")
-	sA := obiseq.NewBioSequence("A", A, "")
-	sB := obiseq.MakeBioSequence("B", B, "")
+	// sA := obiseq.NewBioSequence("A", A, "")
+	// sB := obiseq.MakeBioSequence("B", B, "")
 
-	s, l := obialign.LCSScore(sA, &sB, 2, nil)
+	// s, l := obialign.LCSScore(sA, &sB, 2, nil)
 
-	fmt.Printf("score : %d  length : %d  error : %d\n", s, l, l-s)
+	// fmt.Printf("score : %d  length : %d  error : %d\n", s, l, l-s)
 
-	s, l = obialign.LCSScore(&sB, &sB, 2, nil)
+	// s, l = obialign.LCSScore(&sB, &sB, 2, nil)
 
-	fmt.Printf("score : %d  length : %d  error : %d\n", s, l, l-s)
+	// fmt.Printf("score : %d  length : %d  error : %d\n", s, l, l-s)
 
 	// pat, _ := obiapat.MakeApatPattern("TCCTTCCAACAGGCTCCTC", 3)
 	// as, _ := obiapat.MakeApatSequence(sA, false)

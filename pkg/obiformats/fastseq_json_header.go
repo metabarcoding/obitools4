@@ -1,8 +1,10 @@
 package obiformats
 
 import (
-	log "github.com/sirupsen/logrus"
+	"math"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 	"github.com/goccy/go-json"
@@ -42,6 +44,16 @@ func _parse_json_header_(header string, annotations obiseq.Annotation) string {
 	stop++
 
 	err := json.Unmarshal([]byte(header)[start:stop], &annotations)
+
+	for k, v := range annotations {
+		switch vt := v.(type) {
+		case float64 :
+			if vt == math.Floor(vt) {
+				annotations[k] = int(vt)
+			}
+		}
+	}
+	
 	if err != nil {
 		log.Fatalf("annotation parsing error on %s : %v\n", header, err)
 	}

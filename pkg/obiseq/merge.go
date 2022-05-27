@@ -2,8 +2,10 @@ package obiseq
 
 import (
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"strings"
+
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/goutils"
+	log "github.com/sirupsen/logrus"
 )
 
 type StatsOnValues map[string]int
@@ -33,6 +35,16 @@ func (sequence *BioSequence) StatsOn(key string, na string) StatsOnValues {
 		case StatsOnValues:
 			stats = istat
 			newstat = false
+		case map[string]interface{}:
+			stats = make(StatsOnValues, len(istat))
+			var err error
+			for k, v := range istat {
+				stats[k], err = goutils.InterfaceToInt(v)
+				if err != nil {
+					log.Panicf("In sequence %s : %s stat tag not only containing integer values %s",
+						sequence.Id(), mkey, istat)
+				}
+			}
 		default:
 			stats = make(StatsOnValues, 100)
 			annotations[mkey] = stats
