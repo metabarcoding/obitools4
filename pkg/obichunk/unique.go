@@ -9,6 +9,9 @@ import (
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
 
+// Runs dereplication algorithm on a  obiiter.IBioSequenceBatch
+// iterator.  
+
 func IUniqueSequence(iterator obiiter.IBioSequenceBatch,
 	options ...WithOption) (obiiter.IBioSequenceBatch, error) {
 
@@ -62,7 +65,9 @@ func IUniqueSequence(iterator obiiter.IBioSequenceBatch,
 		return neworder
 	}
 
-	var ff func(obiiter.IBioSequenceBatch, *obiseq.BioSequenceClassifier, int)
+	var ff func(obiiter.IBioSequenceBatch,
+		*obiseq.BioSequenceClassifier,
+		int)
 
 	cat := opts.Categories()
 	na := opts.NAValue()

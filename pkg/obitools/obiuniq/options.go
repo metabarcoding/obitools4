@@ -41,7 +41,7 @@ func UniqueOptionSet(options *getoptions.GetOpt) {
 }
 
 // OptionSet adds to the basic option set every options declared for
-// the obipcr command
+// the obiuniq command
 func OptionSet(options *getoptions.GetOpt) {
 	obiconvert.OptionSet(options)
 	UniqueOptionSet(options)

@@ -16,6 +16,11 @@ func Unique(sequences obiiter.IBioSequenceBatch) obiiter.IBioSequenceBatch {
 		obichunk.OptionBatchCount(CLINumberOfChunks()),
 	)
 
+	//
+	// Considers if data splitting must be done on disk or in memory
+	//
+	// --on-disk command line option
+
 	if CLIUniqueInMemory() {
 		log.Printf("Running dereplication in memory on %d chunks", CLINumberOfChunks())
 		options = append(options, obichunk.OptionSortOnMemory())
@@ -23,6 +28,12 @@ func Unique(sequences obiiter.IBioSequenceBatch) obiiter.IBioSequenceBatch {
 		log.Printf("Running dereplication on disk with %d chunks", CLINumberOfChunks())
 		options = append(options, obichunk.OptionSortOnDisk())
 	}
+
+	//
+	// Considers if sequences observed a singletime in the dataset have to
+	// be conserved in the output
+	//
+	// --no-singleton
 
 	if CLINoSingleton() {
 		log.Printf("Removing sigletons from the output")

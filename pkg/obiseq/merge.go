@@ -37,6 +37,7 @@ func (sequence *BioSequence) StatsOn(key string, na string) StatsOnValues {
 			newstat = false
 		case map[string]interface{}:
 			stats = make(StatsOnValues, len(istat))
+			newstat = false
 			var err error
 			for k, v := range istat {
 				stats[k], err = goutils.InterfaceToInt(v)
@@ -161,7 +162,7 @@ func (sequences BioSequenceSlice) Merge(na string, statsOn []string) *BioSequenc
 	seq.SetQualities(nil)
 
 	if len(sequences) == 1 {
-		seq.Annotations()["count"] = 1
+		seq.Annotations()["count"] = seq.Count()
 		for _, v := range statsOn {
 			seq.StatsOn(v, na)
 		}

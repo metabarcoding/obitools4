@@ -11,7 +11,7 @@ import (
 )
 
 //
-// Interface for sorting a list of sequences accoording to
+// Interface for sorting a list of sequences according to
 // their classes
 //
 
