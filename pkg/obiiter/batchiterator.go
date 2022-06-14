@@ -598,7 +598,9 @@ func (iterator IBioSequenceBatch) FilterOn(predicate obiseq.SequencePredicate,
 			}
 
 			seqs.slice = slice[:j]
-			trueIter.Push(seqs)
+			if seqs.Length() > 0 {
+				trueIter.Push(seqs)
+			}
 		}
 
 		trueIter.Done()
