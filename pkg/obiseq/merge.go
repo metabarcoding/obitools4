@@ -10,12 +10,20 @@ import (
 
 type StatsOnValues map[string]int
 
+func StatsOnSlotName(key string) string {
+	return "merged_" + key
+}
+
+/*
+ 	Tests if the sequence has already a slot summarizing statistics
+	 of occurrence for a given attribute.
+*/
 func (sequence *BioSequence) HasStatsOn(key string) bool {
 	if !sequence.HasAnnotation() {
 		return false
 	}
 
-	mkey := "merged_" + key
+	mkey := StatsOnSlotName(key)
 	annotations := sequence.Annotations()
 	_, ok := annotations[mkey]
 
@@ -23,7 +31,7 @@ func (sequence *BioSequence) HasStatsOn(key string) bool {
 }
 
 func (sequence *BioSequence) StatsOn(key string, na string) StatsOnValues {
-	mkey := "merged_" + key
+	mkey := StatsOnSlotName(key)
 	annotations := sequence.Annotations()
 	istat, ok := annotations[mkey]
 
@@ -66,6 +74,7 @@ func (sequence *BioSequence) StatsOn(key string, na string) StatsOnValues {
 
 func (sequence *BioSequence) StatsPlusOne(key string, toAdd *BioSequence, na string) bool {
 	sval := na
+	annotations := sequence.Annotations()
 	stats := sequence.StatsOn(key, na)
 	retval := false
 
@@ -93,8 +102,8 @@ func (sequence *BioSequence) StatsPlusOne(key string, toAdd *BioSequence, na str
 	if !ok {
 		old = 0
 	}
-	stats[sval] = old + 1
-
+	stats[sval] = old + toAdd.Count()
+	annotations[StatsOnSlotName(key)] = stats
 	return retval
 }
 
@@ -110,6 +119,10 @@ func (stats StatsOnValues) Merge(toMerged StatsOnValues) StatsOnValues {
 	return stats
 }
 
+/*
+
+	Merges two sequences
+*/
 func (sequence *BioSequence) Merge(tomerge *BioSequence, na string, inplace bool, statsOn ...string) *BioSequence {
 	if !inplace {
 		sequence = sequence.Copy()
@@ -119,7 +132,7 @@ func (sequence *BioSequence) Merge(tomerge *BioSequence, na string, inplace bool
 		sequence.SetQualities(nil)
 	}
 
-	annotation := sequence.Annotations()
+	annotations := sequence.Annotations()
 
 	count := sequence.Count() + tomerge.Count()
 
@@ -127,7 +140,8 @@ func (sequence *BioSequence) Merge(tomerge *BioSequence, na string, inplace bool
 		if tomerge.HasStatsOn(key) {
 			smk := sequence.StatsOn(key, na)
 			mmk := tomerge.StatsOn(key, na)
-			smk.Merge(mmk)
+
+			annotations[StatsOnSlotName(key)] = smk.Merge(mmk)
 		} else {
 			sequence.StatsPlusOne(key, tomerge, na)
 		}
@@ -135,27 +149,35 @@ func (sequence *BioSequence) Merge(tomerge *BioSequence, na string, inplace bool
 
 	if tomerge.HasAnnotation() {
 		ma := tomerge.Annotations()
-		for k, va := range annotation {
+		for k, va := range annotations {
 			if !strings.HasPrefix(k, "merged_") {
 				vm, ok := ma[k]
 				if !ok || vm != va {
-					delete(annotation, k)
+					delete(annotations, k)
 				}
 			}
 		}
 	} else {
-		for k := range annotation {
+		for k := range annotations {
 			if !strings.HasPrefix(k, "merged_") {
-				delete(annotation, k)
+				delete(annotations, k)
 			}
 		}
 	}
 
-	annotation["count"] = count
-
+	annotations["count"] = count
 	return sequence
 }
 
+/**
+  Merges a set of sequence into a single sequence.
+
+  The function assumes that every sequence in the batch is
+  identical in term of sequence. Actually the function only
+  aggregates the annotations of the different sequences to be merged
+
+  Quality information is lost during the merge procedure.
+*/
 func (sequences BioSequenceSlice) Merge(na string, statsOn []string) *BioSequence {
 	seq := sequences[0]
 	//sequences[0] = nil
