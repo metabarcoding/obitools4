@@ -294,7 +294,8 @@ func FormatFastSeqOBIHeader(sequence *obiseq.BioSequence) string {
 			case string:
 				text.WriteString(fmt.Sprintf("%s=%s; ", key, t))
 			case map[string]int,
-				map[string]interface{}:
+				map[string]interface{},
+				obiseq.StatsOnValues:
 				tv, err := json.Marshal(t)
 				if err != nil {
 					log.Fatalf("Cannot convert %v value", value)
