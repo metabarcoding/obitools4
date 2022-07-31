@@ -11,6 +11,7 @@ import (
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
 
+// A pool of byte slices.
 var _BuildAlignArenaPool = sync.Pool{
 	New: func() interface{} {
 		bs := make([]byte, 0, 300)
@@ -18,6 +19,8 @@ var _BuildAlignArenaPool = sync.Pool{
 	},
 }
 
+// It takes two sequences, a path, a gap character, and two buffers, and it builds the alignment by
+// walking the path and copying the sequences into the buffers
 func _BuildAlignment(seqA, seqB []byte, path []int, gap byte, bufferA, bufferB *[]byte) {
 
 	*bufferA = (*bufferA)[:0]
