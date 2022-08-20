@@ -60,7 +60,7 @@ func OptionSet(options *getoptions.GetOpt) {
 // --forward command line option
 func ForwardPrimer() string {
 	pattern, err := obiapat.MakeApatPattern(_ForwardPrimer, _AllowedMismatch)
-
+	
 	if err != nil {
 		log.Fatalf("%+v", err)
 	}

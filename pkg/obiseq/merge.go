@@ -43,6 +43,9 @@ func (sequence *BioSequence) StatsOn(key string, na string) StatsOnValues {
 		case StatsOnValues:
 			stats = istat
 			newstat = false
+		case map[string]int:
+			stats = istat
+			newstat = false
 		case map[string]interface{}:
 			stats = make(StatsOnValues, len(istat))
 			newstat = false

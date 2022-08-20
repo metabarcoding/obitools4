@@ -12,6 +12,7 @@ import (
 
 func main() {
 
+	// Creating a file called cpu.trace.
 	ftrace, err := os.Create("cpu.trace")
 	if err != nil {
 		log.Fatal(err)

@@ -57,6 +57,7 @@ func InterfaceToInt(i interface{}) (val int, err error) {
 	return
 }
 
+// If the interface{} can be cast to an int, return true.
 func CastableToInt(i interface{}) bool {
 
 	switch i.(type) {
@@ -70,7 +71,10 @@ func CastableToInt(i interface{}) bool {
 	}
 }
 
-// CopyMap makes a deep copy of a map[string]interface{}.
+// "CopyMap copies the contents of a map[string]interface{} to another map[string]interface{}."
+// 
+// The function uses the gob package to encode the source map into a buffer and then decode the buffer
+// into the destination map
 func CopyMap(dest, src map[string]interface{}) {
 	buf := new(bytes.Buffer)
 	gob.NewEncoder(buf).Encode(src)
@@ -78,6 +82,7 @@ func CopyMap(dest, src map[string]interface{}) {
 }
 
 // Read a whole file into the memory and store it as array of lines
+// It reads a file line by line, and returns a slice of strings, one for each line
 func ReadLines(path string) (lines []string, err error) {
 	var (
 		file   *os.File

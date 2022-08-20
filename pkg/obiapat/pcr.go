@@ -138,6 +138,7 @@ func OptionMaxLength(maxLength int) WithOption {
 // error allowed when matching the forward
 // primer.
 func OptionForwardPrimer(primer string, max int) WithOption {
+
 	f := WithOption(func(opt Options) {
 		var err error
 

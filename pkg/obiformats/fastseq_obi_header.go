@@ -210,17 +210,22 @@ func ParseOBIFeatures(text string, annotations obiseq.Annotation) string {
 					bvalue = bytes.TrimSpace(part[m[0]:(m[1] - 1)])
 					j := bytes.ReplaceAll(bvalue, []byte("'"), []byte(`"`))
 					var err error
-					if strings.HasPrefix(key, "merged_") ||
-						strings.HasSuffix(key, "_count") {
+					switch {
+					case strings.HasPrefix(key, "merged_") ||
+						strings.HasSuffix(key, "_count"):
 						dict := make(map[string]int)
 						err = json.Unmarshal(j, &dict)
 						value = dict
-					} else {
+					case strings.HasSuffix(key, "_status"):
+						dict := make(map[string]string)
+						err = json.Unmarshal(j, &dict)
+						value = dict
+					default:
 						dict := make(map[string]interface{})
 						err = json.Unmarshal(j, &dict)
 						value = dict
 					}
-
+					
 					if err != nil {
 						value = string(bvalue)
 					}

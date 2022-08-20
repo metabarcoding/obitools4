@@ -494,6 +494,9 @@ func (iterator IBioSequenceBatch) PairWith(reverse IBioSequenceBatch,
 	return newIter
 }
 
+// A function that takes a predicate and returns two IBioSequenceBatch iterators.
+// Sequences extracted from the input iterator are distributed among both the
+// iterator following the predicate value.
 func (iterator IBioSequenceBatch) DivideOn(predicate obiseq.SequencePredicate,
 	size int, sizes ...int) (IBioSequenceBatch, IBioSequenceBatch) {
 	buffsize := iterator.BufferSize()
@@ -560,6 +563,8 @@ func (iterator IBioSequenceBatch) DivideOn(predicate obiseq.SequencePredicate,
 	return trueIter, falseIter
 }
 
+// Filtering a batch of sequences.
+// A function that takes a predicate and a batch of sequences and returns a filtered batch of sequences.
 func (iterator IBioSequenceBatch) FilterOn(predicate obiseq.SequencePredicate,
 	size int, sizes ...int) IBioSequenceBatch {
 	buffsize := iterator.BufferSize()
@@ -615,6 +620,8 @@ func (iterator IBioSequenceBatch) FilterOn(predicate obiseq.SequencePredicate,
 	return trueIter.Rebatch(size)
 }
 
+// Load every sequences availables from an IBioSequenceBatch iterator into 
+// a large obiseq.BioSequenceSlice.
 func (iterator IBioSequenceBatch) Load() obiseq.BioSequenceSlice {
 
 	chunck := obiseq.MakeBioSequenceSlice()
@@ -625,4 +632,42 @@ func (iterator IBioSequenceBatch) Load() obiseq.BioSequenceSlice {
 	}
 
 	return chunck
+}
+
+// It takes a slice of BioSequence objects, and returns an iterator that will return batches of
+// BioSequence objects
+func IBatchOver(data obiseq.BioSequenceSlice,
+	size int, sizes ...int) IBioSequenceBatch {
+
+	buffsize := 0
+
+	if len(sizes) > 0 {
+		buffsize = sizes[1]
+	}
+
+	trueIter := MakeIBioSequenceBatch(buffsize)
+
+	trueIter.Add(1)
+
+	go func() {
+		trueIter.WaitAndClose()
+	}()
+
+	go func() {
+		ldata := len(data)
+		batchid := 0
+		next := 0
+		for i:=0; i < ldata; i=next {
+			next = i + size
+			if next > ldata {
+				next = ldata
+			} 
+			trueIter.Push(MakeBioSequenceBatch(batchid,data[i:next]))
+			batchid++
+		}
+
+		trueIter.Done()
+	}()
+
+	return trueIter
 }
