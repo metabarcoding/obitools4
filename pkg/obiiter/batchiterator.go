@@ -34,7 +34,6 @@ type IBioSequenceBatch struct {
 //
 // NilIBioSequenceBatch is the nil instance for the
 // IBioSequenceBatch type.
-//
 var NilIBioSequenceBatch = IBioSequenceBatch{pointer: nil}
 
 func MakeIBioSequenceBatch(sizes ...int) IBioSequenceBatch {
@@ -329,8 +328,7 @@ func (iterator IBioSequenceBatch) Concat(iterators ...IBioSequenceBatch) IBioSeq
 	newIter.Add(1)
 
 	go func() {
-		newIter.Wait()
-		close(newIter.Channel())
+		newIter.WaitAndClose()
 	}()
 
 	go func() {
@@ -359,6 +357,52 @@ func (iterator IBioSequenceBatch) Concat(iterators ...IBioSequenceBatch) IBioSeq
 		}
 		newIter.Done()
 	}()
+
+	return newIter
+}
+
+func (iterator IBioSequenceBatch) Pool(iterators ...IBioSequenceBatch) IBioSequenceBatch {
+
+	niterator := len(iterators) + 1
+
+	if niterator == 1 {
+		return iterator
+	}
+
+	counterMutex := sync.Mutex{}
+	counter := 0
+
+	nextCounter := func() int {
+		counterMutex.Lock()
+		defer counterMutex.Unlock()
+
+		counter++
+
+		return counter
+	}
+
+	buffsize := iterator.BufferSize()
+	newIter := MakeIBioSequenceBatch(buffsize)
+
+	newIter.Add(niterator)
+
+	go func() {
+		newIter.WaitAndClose()
+	}()
+
+	ff := func(iterator IBioSequenceBatch) {
+
+		for iterator.Next() {
+			s := iterator.Get()
+			newIter.Push(s.Reorder(nextCounter()))
+		}
+		newIter.Done()
+	}
+
+	go ff(iterator)
+	for _, i := range iterators {
+		go ff(i)
+	}
 
 	return newIter
 }
@@ -620,7 +664,7 @@ func (iterator IBioSequenceBatch) FilterOn(predicate obiseq.SequencePredicate,
 	return trueIter.Rebatch(size)
 }
 
-// Load every sequences availables from an IBioSequenceBatch iterator into 
+// Load every sequences availables from an IBioSequenceBatch iterator into
 // a large obiseq.BioSequenceSlice.
 func (iterator IBioSequenceBatch) Load() obiseq.BioSequenceSlice {
 
@@ -657,12 +701,12 @@ func IBatchOver(data obiseq.BioSequenceSlice,
 		ldata := len(data)
 		batchid := 0
 		next := 0
-		for i:=0; i < ldata; i=next {
+		for i := 0; i < ldata; i = next {
 			next = i + size
 			if next > ldata {
 				next = ldata
-			} 
-			trueIter.Push(MakeBioSequenceBatch(batchid,data[i:next]))
+			}
+			trueIter.Push(MakeBioSequenceBatch(batchid, data[i:next]))
 			batchid++
 		}
 
