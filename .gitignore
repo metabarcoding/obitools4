@@ -16,3 +16,9 @@ vendor
 /obiuniq
 /build
 /Makefile.old
+.Rproj.user
+obitools.Rproj
+Stat_error.knit.md
+.Rhistory
+Stat_error.nb.html
+Stat_error.Rmd
