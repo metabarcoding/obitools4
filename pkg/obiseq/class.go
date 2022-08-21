@@ -3,9 +3,10 @@ package obiseq
 import (
 	"fmt"
 	"hash/crc32"
-	log "github.com/sirupsen/logrus"
 	"strconv"
 	"sync"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type BioSequenceClassifier struct {
@@ -15,6 +16,8 @@ type BioSequenceClassifier struct {
 	Clone func() *BioSequenceClassifier
 }
 
+// It creates a classifier that returns the value of the annotation key as an integer. If the
+// annotation key is not present, it returns the integer value of the string na
 func AnnotationClassifier(key string, na string) *BioSequenceClassifier {
 	encode := make(map[string]int, 1000)
 	decode := make([]string, 0, 1000)
@@ -22,10 +25,10 @@ func AnnotationClassifier(key string, na string) *BioSequenceClassifier {
 	maxcode := 0
 
 	code := func(sequence *BioSequence) int {
-		var val string
+		var val = na
+		var ok bool
 		if sequence.HasAnnotation() {
 			value, ok := sequence.Annotations()[key]
-
 			if ok {
 				switch value := value.(type) {
 				case string:
@@ -35,7 +38,6 @@ func AnnotationClassifier(key string, na string) *BioSequenceClassifier {
 				}
 			}
 		}
-		val = na
 
 		locke.Lock()
 		defer locke.Unlock()
@@ -80,6 +82,8 @@ func AnnotationClassifier(key string, na string) *BioSequenceClassifier {
 	return &c
 }
 
+// It takes a predicate function and returns a classifier that returns 1 if the predicate is true and 0
+// otherwise
 func PredicateClassifier(predicate SequencePredicate) *BioSequenceClassifier {
 	code := func(sequence *BioSequence) int {
 		if predicate(sequence) {
@@ -112,7 +116,6 @@ func PredicateClassifier(predicate SequencePredicate) *BioSequenceClassifier {
 }
 
 // Builds a classifier function based on CRC32 of the sequence
-//
 func HashClassifier(size int) *BioSequenceClassifier {
 	code := func(sequence *BioSequence) int {
 		return int(crc32.ChecksumIEEE(sequence.Sequence()) % uint32(size))
@@ -135,7 +138,6 @@ func HashClassifier(size int) *BioSequenceClassifier {
 }
 
 // Builds a classifier function based on the sequence
-//
 func SequenceClassifier() *BioSequenceClassifier {
 	encode := make(map[string]int, 1000)
 	decode := make([]string, 0, 1000)
@@ -190,6 +192,8 @@ func SequenceClassifier() *BioSequenceClassifier {
 	return &c
 }
 
+// It returns a classifier that assigns each sequence to a different class, cycling through the classes
+// in order
 func RotateClassifier(size int) *BioSequenceClassifier {
 	n := 0
 	lock := sync.Mutex{}
