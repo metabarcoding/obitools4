@@ -7,6 +7,8 @@ import (
 var __skipped_entries__ = 0
 var __read_only_entries__ = -1
 
+var __no_ordered_input__ = false
+
 var __input_fastjson_format__ = false
 var __input_fastobi_format__ = false
 
@@ -22,25 +24,29 @@ var __output_fastobi_format__ = false
 var __output_solexa_quality__ = false
 
 func InputOptionSet(options *getoptions.GetOpt) {
-	options.IntVar(&__skipped_entries__, "skip", 0,
+	options.IntVar(&__skipped_entries__, "skip", __skipped_entries__,
 		options.Description("The N first sequence records of the file are discarded from the analysis and not reported to the output file."))
 
-	options.IntVar(&__read_only_entries__, "only", -1,
+	options.IntVar(&__read_only_entries__, "only", __read_only_entries__,
 		options.Description("Only the N next sequence records of the file are analyzed. The following sequences in the file are neither analyzed, neither reported to the output file. This option can be used conjointly with the –skip option."))
 
-	options.BoolVar(&__input_fastjson_format__, "input-json-header", false,
+	options.BoolVar(&__input_fastjson_format__, "input-json-header", __input_fastjson_format__,
 		options.Description("FASTA/FASTQ title line annotations follow json format."))
-	options.BoolVar(&__input_fastobi_format__, "input-OBI-header", false,
+	options.BoolVar(&__input_fastobi_format__, "input-OBI-header", __input_fastobi_format__,
 		options.Description("FASTA/FASTQ title line annotations follow OBI format."))
 
-	options.BoolVar(&__input_ecopcr_format__, "ecopcr", false,
+	options.BoolVar(&__input_ecopcr_format__, "ecopcr", __input_ecopcr_format__,
 		options.Description("Read data following the ecoPCR output format."))
 
-	options.BoolVar(&__input_embl_format__, "embl", false,
+	options.BoolVar(&__input_embl_format__, "embl", __input_embl_format__,
 		options.Description("Read data following the EMBL flatfile format."))
 
-	options.BoolVar(&__input_solexa_quality__, "solexa", false,
+	options.BoolVar(&__input_solexa_quality__, "solexa", __input_solexa_quality__,
 		options.Description("Decodes quality string according to the Solexa specification."))
+
+	options.BoolVar(&__no_ordered_input__, "no-order", __no_ordered_input__,
+		options.Description("When several imput files are provided, "+
+			"indicates that there is no order among them."))
 
 }
 
@@ -77,6 +83,11 @@ func InputFormat() string {
 	default:
 		return "guessed"
 	}
+}
+
+// Returns true if the order among several imput files has not to be considered
+func NoInputOrder() bool {
+	return __no_ordered_input__
 }
 
 func OutputFormat() string {
