@@ -10,7 +10,7 @@ import (
 )
 
 // Runs dereplication algorithm on a  obiiter.IBioSequenceBatch
-// iterator.  
+// iterator.
 
 func IUniqueSequence(iterator obiiter.IBioSequenceBatch,
 	options ...WithOption) (obiiter.IBioSequenceBatch, error) {
@@ -86,6 +86,7 @@ func IUniqueSequence(iterator obiiter.IBioSequenceBatch,
 			next = obiiter.MakeIBioSequenceBatch(opts.BufferSize())
 
 			iUnique.Add(1)
+
 			go ff(next,
 				obiseq.AnnotationClassifier(cat[icat], na),
 				icat)
@@ -96,13 +97,16 @@ func IUniqueSequence(iterator obiiter.IBioSequenceBatch,
 			batch := input.Get()
 
 			if icat < 0 || len(batch.Slice()) == 1 {
+				// No more sub classification of sequence or only a single sequence
 				if opts.NoSingleton() && len(batch.Slice()) == 1 && batch.Slice()[0].Count() == 1 {
+					// We remove singleton from output
 					batch.Slice()[0].Recycle()
 					batch.Recycle()
 				} else {
 					iUnique.Push(batch.Reorder(nextOrder()))
 				}
 			} else {
+				// A new step of classification must du realized
 				next.Push(batch.Reorder(o))
 				o++
 			}

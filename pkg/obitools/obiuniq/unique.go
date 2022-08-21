@@ -30,7 +30,7 @@ func Unique(sequences obiiter.IBioSequenceBatch) obiiter.IBioSequenceBatch {
 	}
 
 	//
-	// Considers if sequences observed a singletime in the dataset have to
+	// Considers if sequences observed a single time in the dataset have to
 	// be conserved in the output
 	//
 	// --no-singleton
