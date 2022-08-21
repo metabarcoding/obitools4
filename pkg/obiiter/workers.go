@@ -19,8 +19,6 @@ func AnnotatorToSeqWorker(function SeqAnnotator) SeqWorker {
 	return f
 }
 
-
-
 func (iterator IBioSequenceBatch) MakeIWorker(worker SeqWorker, sizes ...int) IBioSequenceBatch {
 	nworkers := 4
 	buffsize := iterator.BufferSize()
@@ -93,7 +91,7 @@ func (iterator IBioSequenceBatch) MakeISliceWorker(worker SeqSliceWorker, sizes 
 		newIter.Done()
 	}
 
-	log.Println("Start of the batch slice workers")
+	log.Printf("Start of the batch slice workers on %d workers (buffer : %d)\n", nworkers, buffsize)
 	for i := 0; i < nworkers-1; i++ {
 		go f(iterator.Split())
 	}
@@ -101,7 +99,6 @@ func (iterator IBioSequenceBatch) MakeISliceWorker(worker SeqSliceWorker, sizes 
 
 	return newIter
 }
-
 
 func (iterator IBioSequence) MakeIWorker(worker SeqWorker, sizes ...int) IBioSequence {
 	buffsize := iterator.BufferSize()
@@ -133,7 +130,7 @@ func (iterator IBioSequence) MakeIWorker(worker SeqWorker, sizes ...int) IBioSeq
 
 func WorkerPipe(worker SeqWorker, sizes ...int) Pipeable {
 	f := func(iterator IBioSequenceBatch) IBioSequenceBatch {
-		return iterator.MakeIWorker(worker,sizes...)
+		return iterator.MakeIWorker(worker, sizes...)
 	}
 
 	return f
@@ -141,7 +138,7 @@ func WorkerPipe(worker SeqWorker, sizes ...int) Pipeable {
 
 func SliceWorkerPipe(worker SeqSliceWorker, sizes ...int) Pipeable {
 	f := func(iterator IBioSequenceBatch) IBioSequenceBatch {
-		return iterator.MakeISliceWorker(worker,sizes...)
+		return iterator.MakeISliceWorker(worker, sizes...)
 	}
 
 	return f
