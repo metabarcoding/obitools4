@@ -15,6 +15,8 @@ import (
 )
 
 var _MaxPatLen = int(C.MAX_PAT_LEN)
+var _AllocatedApaSequences = 0
+var _AllocatedApaPattern = 0
 
 // ApatPattern stores a regular pattern usable by the
 // Apat algorithm functions and methods
@@ -128,7 +130,6 @@ func (pattern ApatPattern) Length() int {
 // If you choose to call this method, it will disconnect
 // the finalizer associated to the ApatPattern instance
 // to avoid double freeing.
-//
 func (pattern ApatPattern) Free() {
 	// log.Printf("Free called on %s\n", C.GoString(pattern.pointer.pointer.cpat))
 	if pattern.pointer != nil {
@@ -156,13 +157,18 @@ func MakeApatSequence(sequence *obiseq.BioSequence, circular bool, recycle ...Ap
 	var errmsg *C.char
 	seqlen := sequence.Length()
 	p := C.malloc(C.size_t(seqlen) + 1)
+
+	if p != nil {
+		_AllocatedApaSequences++
+	}
+
 	ic := 0
 	if circular {
 		ic = 1
 	}
 
 	// copy the data into the buffer, by converting it to a Go array
-	cBuf := (*[1 << 30]byte)(p)
+	cBuf := (*[1 << 31]byte)(p)
 	copy(cBuf[:], sequence.Sequence())
 	cBuf[sequence.Length()] = 0
 
@@ -194,7 +200,9 @@ func MakeApatSequence(sequence *obiseq.BioSequence, circular bool, recycle ...Ap
 			// log.Printf("Finaliser called on %p\n", p.pointer)
 
 			if p != nil && p.pointer != nil {
+				C.free(unsafe.Pointer(p.pointer.cseq))
 				C.delete_apatseq(p.pointer, &errno, &errmsg)
+				_AllocatedApaSequences--
 			}
 		})
 
@@ -222,6 +230,7 @@ func (sequence ApatSequence) Free() {
 	// log.Printf("Free called on %p\n", sequence.pointer.pointer)
 
 	if sequence.pointer != nil && sequence.pointer.pointer != nil {
+		C.free(unsafe.Pointer(&sequence.pointer.pointer.cseq))
 		C.delete_apatseq(sequence.pointer.pointer,
 			&errno, &errmsg)
 
@@ -276,4 +285,8 @@ func (pattern ApatPattern) FindAllIndex(sequence ApatSequence, limits ...int) (l
 	}
 
 	return loc
+}
+
+func AllocatedApaSequences() int {
+	return _AllocatedApaSequences
 }
