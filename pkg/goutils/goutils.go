@@ -52,7 +52,56 @@ func InterfaceToInt(i interface{}) (val int, err error) {
 	case uint64:
 		val = int(t) // standardizes across systems
 	default:
-		err = &NotAnInteger{"count attribute is not an integer"}
+		err = &NotABoolean{"value attribute cannot be casted to an integer"}
+	}
+	return
+}
+
+// NotABoolean defines a new type of Error : "NotABoolean"
+type NotABoolean struct {
+	message string
+}
+
+// Error() retreives the error message associated to the "NotABoolean"
+// error. Tha addition of that Error message make the "NotABoolean"
+// complying with the error interface
+func (m *NotABoolean) Error() string {
+	return m.message
+}
+
+
+// It converts an interface{} to a bool, and returns an error if the interface{} cannot be converted
+// to a bool
+func InterfaceToBool(i interface{}) (val bool, err error) {
+
+	err = nil
+	val = false
+
+	switch t := i.(type) {
+	case int:
+		val = t!=0
+	case int8:
+		val = t!=0 // standardizes across systems
+	case int16:
+		val = t!=0 // standardizes across systems
+	case int32:
+		val = t!=0 // standardizes across systems
+	case int64:
+		val = t!=0 // standardizes across systems
+	case float32:
+		val = t!=0 // standardizes across systems
+	case float64:
+		val = t!=0 // standardizes across systems
+	case uint8:
+		val = t!=0 // standardizes across systems
+	case uint16:
+		val = t!=0 // standardizes across systems
+	case uint32:
+		val = t!=0 // standardizes across systems
+	case uint64:
+		val = t!=0 // standardizes across systems
+	default:
+		err = &NotABoolean{"value attribute cannot be casted to a boolean"}
 	}
 	return
 }
