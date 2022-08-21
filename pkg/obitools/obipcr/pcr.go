@@ -3,6 +3,7 @@ package obipcr
 import (
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiapat"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obioptions"
 )
 
 // PCR iterates over sequences provided by a obiseq.IBioSequenceBatch
@@ -37,5 +38,5 @@ func PCR(iterator obiiter.IBioSequenceBatch) (obiiter.IBioSequenceBatch, error) 
 
 	worker := obiapat.PCRSliceWorker(opts...)
 
-	return iterator.MakeISliceWorker(worker), nil
+	return iterator.MakeISliceWorker(worker, obioptions.CLIParallelWorkers(), 0), nil
 }
