@@ -631,7 +631,7 @@ func (iterator IBioSequenceBatch) FilterOn(predicate obiseq.SequencePredicate,
 	}()
 
 	ff := func(iterator IBioSequenceBatch) {
-		iterator = iterator.SortBatches()
+		// iterator = iterator.SortBatches()
 
 		for iterator.Next() {
 			seqs := iterator.Get()
@@ -661,7 +661,7 @@ func (iterator IBioSequenceBatch) FilterOn(predicate obiseq.SequencePredicate,
 
 	go ff(iterator)
 
-	return trueIter.Rebatch(size)
+	return trueIter.SortBatches().Rebatch(size)
 }
 
 // Load every sequences availables from an IBioSequenceBatch iterator into
