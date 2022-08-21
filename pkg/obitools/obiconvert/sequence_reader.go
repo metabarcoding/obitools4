@@ -1,10 +1,11 @@
 package obiconvert
 
 import (
-	log "github.com/sirupsen/logrus"
 	"os"
 	"path/filepath"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiformats"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
@@ -136,7 +137,11 @@ func ReadBioSequencesBatch(filenames ...string) (obiiter.IBioSequenceBatch, erro
 		}
 
 		if len(others) > 0 {
-			iterator = iterator.Concat(others...)
+			if NoInputOrder() {
+				iterator = iterator.Pool(others...)
+			} else {
+				iterator = iterator.Concat(others...)
+			}
 		}
 
 	}
