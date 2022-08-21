@@ -3,24 +3,27 @@ package obiformats
 import (
 	"bufio"
 	"bytes"
-	"compress/gzip"
 	"io"
-	log "github.com/sirupsen/logrus"
 	"os"
 	"strconv"
 	"strings"
+
+	gzip "github.com/klauspost/pgzip"
+
+	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
 
-var _FileChunkSize = 1 << 20
+var _FileChunkSize = 1 << 26
 
 type _FileChunk struct {
 	raw   io.Reader
 	order int
 }
 
+// It looks for the last occurrence of the pattern `<CR>?<LF>//<CR>?<LF>` in the buffer
 func _EndOfLastEntry(buff []byte) int {
 	//  6    5  43 2    1
 	// <CR>?<LF>//<CR>?<LF>
@@ -155,15 +158,35 @@ func _ReadFlatFileChunk(reader io.Reader, readers chan _FileChunk) {
 	l := 0
 	i := 0
 
-	buff = make([]byte, 1<<20)
+	buff = make([]byte, _FileChunkSize)
 	for err == nil {
 		for ; err == nil && l < len(buff); l += size {
 			size, err = reader.Read(buff[l:])
 		}
+
+		extbuff := make([]byte, 1<<20)
 		buff = buff[:l]
-		end := _EndOfLastEntry(buff)
+		end := 0
+		ic := 0
+		for end = _EndOfLastEntry(buff); err == nil && end < 0; end = _EndOfLastEntry(extbuff[:size]) {
+			ic++
+			size, err = reader.Read(extbuff)
+			buff = append(buff, extbuff[:size]...)
+		}
+
+		if ic > 0 {
+			end = _EndOfLastEntry(buff)
+		}
+
 		remains := buff[end:]
 		buff = buff[:end]
+
+		if ic > 0 {
+			log.Debugf("EMBL File chunck : final buff size %d bytes (%d extensions)\n",
+				len(buff),
+				ic)
+		}
+
 		io := bytes.NewBuffer(buff)
 		readers <- _FileChunk{io, i}
 		i++
@@ -175,7 +198,8 @@ func _ReadFlatFileChunk(reader io.Reader, readers chan _FileChunk) {
 	close(readers)
 }
 
-//  6    5  43 2    1
+//	6    5  43 2    1
+//
 // <CR>?<LF>//<CR>?<LF>
 func ReadEMBLBatch(reader io.Reader, options ...WithOption) obiiter.IBioSequenceBatch {
 	opt := MakeOptions(options)
@@ -217,7 +241,8 @@ func ReadEMBLBatchFromFile(filename string, options ...WithOption) (obiiter.IBio
 	}
 
 	// Test if the flux is compressed by gzip
-	greader, err = gzip.NewReader(reader)
+	//greader, err = gzip.NewReader(reader)
+	greader, err = gzip.NewReaderN(reader, 1<<24, 2)
 	if err == nil {
 		reader = greader
 	}
