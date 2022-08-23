@@ -1,5 +1,6 @@
 package obiseq
 
+// A method that concatenates two BioSequences.
 func (sequence *BioSequence) Join(seq2 *BioSequence, inplace bool) *BioSequence {
 
 	if !inplace {

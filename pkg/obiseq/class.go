@@ -9,6 +9,16 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// Defines an object able to classify a sequence in classes defined by an integer index.
+//
+// The first function is the classifier itself. It takes a BioSequence and returns
+// an integer. The integer is the class of the BioSequence.
+//
+// The second function is the classifier's value function. It takes an integer and
+// returns a string. The string is the original value used to define the class of the sequence.
+//
+// Moreover a third function resets the classifier, and fourth one
+// returns a clone of the classifier.
 type BioSequenceClassifier struct {
 	Code  func(*BioSequence) int
 	Value func(int) string

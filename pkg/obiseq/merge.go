@@ -30,6 +30,7 @@ func (sequence *BioSequence) HasStatsOn(key string) bool {
 	return ok
 }
 
+// A function that takes a BioSequence and a key and returns a StatsOnValues.
 func (sequence *BioSequence) StatsOn(key string, na string) StatsOnValues {
 	mkey := StatsOnSlotName(key)
 	annotations := sequence.Annotations()
@@ -75,6 +76,7 @@ func (sequence *BioSequence) StatsOn(key string, na string) StatsOnValues {
 	return stats
 }
 
+// Adding the count of the sequence to the count of the key in the stats.
 func (sequence *BioSequence) StatsPlusOne(key string, toAdd *BioSequence, na string) bool {
 	sval := na
 	annotations := sequence.Annotations()
@@ -122,10 +124,7 @@ func (stats StatsOnValues) Merge(toMerged StatsOnValues) StatsOnValues {
 	return stats
 }
 
-/*
-
-	Merges two sequences
-*/
+// Merging two sequences.
 func (sequence *BioSequence) Merge(tomerge *BioSequence, na string, inplace bool, statsOn ...string) *BioSequence {
 	if !inplace {
 		sequence = sequence.Copy()
