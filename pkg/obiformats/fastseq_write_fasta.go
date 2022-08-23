@@ -120,7 +120,9 @@ func WriteFastaBatch(iterator obiiter.IBioSequenceBatch,
 
 	ff := func(iterator obiiter.IBioSequenceBatch) {
 		for iterator.Next() {
+
 			batch := iterator.Get()
+
 			chunkchan <- FileChunck{
 				FormatFastaBatch(batch, header_format),
 				batch.Order(),

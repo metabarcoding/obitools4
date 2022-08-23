@@ -73,7 +73,7 @@ func ReadBioSequencesBatch(filenames ...string) (obiiter.IBioSequenceBatch, erro
 
 	opts := make([]obiformats.WithOption, 0, 10)
 
-	switch InputFastHeaderFormat() {
+	switch CLIInputFastHeaderFormat() {
 	case "json":
 		opts = append(opts, obiformats.OptionsFastSeqHeaderParser(obiformats.ParseFastSeqJsonHeader))
 	case "obi":
@@ -91,15 +91,17 @@ func ReadBioSequencesBatch(filenames ...string) (obiiter.IBioSequenceBatch, erro
 	opts = append(opts, obiformats.OptionsBufferSize(obioptions.CLIBufferSize()))
 	opts = append(opts, obiformats.OptionsBatchSize(obioptions.CLIBatchSize()))
 
-	opts = append(opts, obiformats.OptionsQualityShift(InputQualityShift()))
+	opts = append(opts, obiformats.OptionsQualityShift(CLIInputQualityShift()))
 
 	if len(filenames) == 0 {
 
-		switch InputFormat() {
+		switch CLIInputFormat() {
 		case "ecopcr":
 			iterator = obiformats.ReadEcoPCRBatch(os.Stdin, opts...)
 		case "embl":
 			iterator = obiformats.ReadEMBLBatch(os.Stdin, opts...)
+		case "genbank":
+			iterator = obiformats.ReadGenbankBatch(os.Stdin, opts...)
 		default:
 			iterator = obiformats.ReadFastSeqBatchFromStdin(opts...)
 		}
@@ -110,39 +112,56 @@ func ReadBioSequencesBatch(filenames ...string) (obiiter.IBioSequenceBatch, erro
 			return obiiter.NilIBioSequenceBatch, err
 		}
 
-		switch InputFormat() {
+		switch CLIInputFormat() {
 		case "ecopcr":
 			reader = obiformats.ReadEcoPCRBatchFromFile
 		case "embl":
 			reader = obiformats.ReadEMBLBatchFromFile
+		case "genbank":
+			reader = obiformats.ReadGenbankBatchFromFile
 		default:
 			reader = obiformats.ReadSequencesBatchFromFile
 		}
 
-		iterator, err = reader(list_of_files[0], opts...)
+		if len(list_of_files) > 1 {
+			nreader := 1
 
-		if err != nil {
-			return obiiter.NilIBioSequenceBatch, err
-		}
+			if CLINoInputOrder() {
+				nreader = obioptions.CLIParallelWorkers()
+			}
+			
+			iterator = obiformats.ReadSequencesBatchFromFiles(
+				filenames,
+				reader,
+				nreader,
+				opts...,
+			)
+		} else {
+			iterator, err = reader(list_of_files[0], opts...)
 
-		list_of_files = list_of_files[1:]
-		others := make([]obiiter.IBioSequenceBatch, 0, len(list_of_files))
-
-		for _, fn := range list_of_files {
-			r, err := reader(fn, opts...)
 			if err != nil {
 				return obiiter.NilIBioSequenceBatch, err
 			}
-			others = append(others, r)
 		}
 
-		if len(others) > 0 {
-			if NoInputOrder() {
-				iterator = iterator.Pool(others...)
-			} else {
-				iterator = iterator.Concat(others...)
-			}
-		}
+		// list_of_files = list_of_files[1:]
+		// others := make([]obiiter.IBioSequenceBatch, 0, len(list_of_files))
+
+		// for _, fn := range list_of_files {
+		// 	r, err := reader(fn, opts...)
+		// 	if err != nil {
+		// 		return obiiter.NilIBioSequenceBatch, err
+		// 	}
+		// 	others = append(others, r)
+		// }
+
+		// if len(others) > 0 {
+		// 	if CLINoInputOrder() {
+		// 		iterator = iterator.Pool(others...)
+		// 	} else {
+		// 		iterator = iterator.Concat(others...)
+		// 	}
+		// }
 
 	}
 

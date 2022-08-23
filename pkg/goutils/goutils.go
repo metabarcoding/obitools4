@@ -6,6 +6,7 @@ import (
 	"encoding/gob"
 	"io"
 	"os"
+	"sync"
 )
 
 // NotAnInteger defines a new type of Error : "NotAnInteger"
@@ -69,7 +70,6 @@ func (m *NotABoolean) Error() string {
 	return m.message
 }
 
-
 // It converts an interface{} to a bool, and returns an error if the interface{} cannot be converted
 // to a bool
 func InterfaceToBool(i interface{}) (val bool, err error) {
@@ -79,27 +79,27 @@ func InterfaceToBool(i interface{}) (val bool, err error) {
 
 	switch t := i.(type) {
 	case int:
-		val = t!=0
+		val = t != 0
 	case int8:
-		val = t!=0 // standardizes across systems
+		val = t != 0 // standardizes across systems
 	case int16:
-		val = t!=0 // standardizes across systems
+		val = t != 0 // standardizes across systems
 	case int32:
-		val = t!=0 // standardizes across systems
+		val = t != 0 // standardizes across systems
 	case int64:
-		val = t!=0 // standardizes across systems
+		val = t != 0 // standardizes across systems
 	case float32:
-		val = t!=0 // standardizes across systems
+		val = t != 0 // standardizes across systems
 	case float64:
-		val = t!=0 // standardizes across systems
+		val = t != 0 // standardizes across systems
 	case uint8:
-		val = t!=0 // standardizes across systems
+		val = t != 0 // standardizes across systems
 	case uint16:
-		val = t!=0 // standardizes across systems
+		val = t != 0 // standardizes across systems
 	case uint32:
-		val = t!=0 // standardizes across systems
+		val = t != 0 // standardizes across systems
 	case uint64:
-		val = t!=0 // standardizes across systems
+		val = t != 0 // standardizes across systems
 	default:
 		err = &NotABoolean{"value attribute cannot be casted to a boolean"}
 	}
@@ -121,7 +121,7 @@ func CastableToInt(i interface{}) bool {
 }
 
 // "CopyMap copies the contents of a map[string]interface{} to another map[string]interface{}."
-// 
+//
 // The function uses the gob package to encode the source map into a buffer and then decode the buffer
 // into the destination map
 func CopyMap(dest, src map[string]interface{}) {
@@ -161,12 +161,30 @@ func ReadLines(path string) (lines []string, err error) {
 	return
 }
 
-
 func Contains[T comparable](arr []T, x T) bool {
-    for _, v := range arr {
-        if v == x {
-            return true
-        }
-    }
-    return false
+	for _, v := range arr {
+		if v == x {
+			return true
+		}
+	}
+	return false
+}
+
+func AtomicCounter(initial ...int) func() int {
+	counterMutex := sync.Mutex{}
+	counter := 0
+	if len(initial) > 0 {
+		counter = initial[0]
+	}
+
+	nextCounter := func() int {
+		counterMutex.Lock()
+		defer counterMutex.Unlock()
+		val := counter
+		counter++
+
+		return val
+	}
+
+	return nextCounter
 }

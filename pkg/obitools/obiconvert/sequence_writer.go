@@ -12,7 +12,7 @@ func WriteBioSequences(iterator obiiter.IBioSequence, filenames ...string) error
 
 	opts := make([]obiformats.WithOption, 0, 10)
 
-	switch OutputFastHeaderFormat() {
+	switch CLIOutputFastHeaderFormat() {
 	case "json":
 		log.Println("On output use JSON headers")
 		opts = append(opts, obiformats.OptionsFastSeqHeaderFormat(obiformats.FormatFastSeqJsonHeader))
@@ -33,12 +33,12 @@ func WriteBioSequences(iterator obiiter.IBioSequence, filenames ...string) error
 	opts = append(opts, obiformats.OptionsBufferSize(obioptions.CLIBufferSize()))
 	opts = append(opts, obiformats.OptionsBatchSize(obioptions.CLIBatchSize()))
 
-	opts = append(opts, obiformats.OptionsQualityShift(OutputQualityShift()))
+	opts = append(opts, obiformats.OptionsQualityShift(CLIOutputQualityShift()))
 
 	var err error
 
 	if len(filenames) == 0 {
-		switch OutputFormat() {
+		switch CLIOutputFormat() {
 		case "fastq":
 			err = obiformats.WriteFastqToStdout(iterator, opts...)
 		case "fasta":
@@ -47,7 +47,7 @@ func WriteBioSequences(iterator obiiter.IBioSequence, filenames ...string) error
 			err = obiformats.WriteSequencesToStdout(iterator, opts...)
 		}
 	} else {
-		switch OutputFormat() {
+		switch CLIOutputFormat() {
 		case "fastq":
 			err = obiformats.WriteFastqToFile(iterator, filenames[0], opts...)
 		case "fasta":
@@ -72,7 +72,7 @@ func WriteBioSequencesBatch(iterator obiiter.IBioSequenceBatch,
 
 	opts := make([]obiformats.WithOption, 0, 10)
 
-	switch OutputFastHeaderFormat() {
+	switch CLIOutputFastHeaderFormat() {
 	case "json":
 		log.Println("On output use JSON headers")
 		opts = append(opts, obiformats.OptionsFastSeqHeaderFormat(obiformats.FormatFastSeqJsonHeader))
@@ -93,12 +93,12 @@ func WriteBioSequencesBatch(iterator obiiter.IBioSequenceBatch,
 	opts = append(opts, obiformats.OptionsBufferSize(obioptions.CLIBufferSize()))
 	opts = append(opts, obiformats.OptionsBatchSize(obioptions.CLIBatchSize()))
 
-	opts = append(opts, obiformats.OptionsQualityShift(OutputQualityShift()))
+	opts = append(opts, obiformats.OptionsQualityShift(CLIOutputQualityShift()))
 
 	var err error
 
 	if len(filenames) == 0 {
-		switch OutputFormat() {
+		switch CLIOutputFormat() {
 		case "fastq":
 			newIter, err = obiformats.WriteFastqBatchToStdout(iterator, opts...)
 		case "fasta":
@@ -107,7 +107,7 @@ func WriteBioSequencesBatch(iterator obiiter.IBioSequenceBatch,
 			newIter, err = obiformats.WriteSequencesBatchToStdout(iterator, opts...)
 		}
 	} else {
-		switch OutputFormat() {
+		switch CLIOutputFormat() {
 		case "fastq":
 			newIter, err = obiformats.WriteFastqBatchToFile(iterator, filenames[0], opts...)
 		case "fasta":
