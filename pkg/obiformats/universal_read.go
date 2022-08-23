@@ -30,7 +30,12 @@ func GuessSeqFileType(firstline string) string {
 		return "embl"
 
 	case strings.HasPrefix(firstline, "LOCUS       "):
-		return "genebank"
+		return "genbank"
+
+	// Special case for genbank release files
+	// I hope it is enougth stringeant
+	case strings.HasSuffix(firstline, " Genetic Se"):
+		return "genbank"
 
 	default:
 		return "unknown"
@@ -86,6 +91,8 @@ func ReadSequencesBatchFromFile(filename string,
 		return ReadEcoPCRBatch(reader, options...), nil
 	case "embl":
 		return ReadEMBLBatch(reader, options...), nil
+	case "genbank":
+		return ReadGenbankBatch(reader, options...), nil
 	default:
 		log.Fatalf("File %s has guessed format %s which is not yet implemented",
 			filename, filetype)
