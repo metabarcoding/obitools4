@@ -13,7 +13,7 @@ func DistributeSequence(sequences obiiter.IBioSequenceBatch) {
 
 	opts := make([]obiformats.WithOption, 0, 10)
 
-	switch obiconvert.OutputFastHeaderFormat() {
+	switch obiconvert.CLIOutputFastHeaderFormat() {
 	case "json":
 		log.Println("On output use JSON headers")
 		opts = append(opts, obiformats.OptionsFastSeqHeaderFormat(obiformats.FormatFastSeqJsonHeader))
@@ -34,11 +34,11 @@ func DistributeSequence(sequences obiiter.IBioSequenceBatch) {
 	opts = append(opts, obiformats.OptionsBufferSize(obioptions.CLIBufferSize()))
 	opts = append(opts, obiformats.OptionsBatchSize(obioptions.CLIBatchSize()))
 
-	opts = append(opts, obiformats.OptionsQualityShift(obiconvert.OutputQualityShift()))
+	opts = append(opts, obiformats.OptionsQualityShift(obiconvert.CLIOutputQualityShift()))
 
 	var formater obiformats.SequenceBatchWriterToFile
 
-	switch obiconvert.OutputFormat() {
+	switch obiconvert.CLIOutputFormat() {
 	case "fastq":
 		formater = obiformats.WriteFastqBatchToFile
 	case "fasta":

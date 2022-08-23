@@ -8,6 +8,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/goutils"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 	"github.com/tevino/abool/v2"
 )
@@ -37,7 +38,7 @@ type IBioSequenceBatch struct {
 var NilIBioSequenceBatch = IBioSequenceBatch{pointer: nil}
 
 func MakeIBioSequenceBatch(sizes ...int) IBioSequenceBatch {
-	buffsize := int32(1)
+	buffsize := int32(0)
 
 	if len(sizes) > 0 {
 		buffsize = int32(sizes[0])
@@ -215,7 +216,7 @@ func (iterator IBioSequenceBatch) Get() BioSequenceBatch {
 
 func (iterator IBioSequenceBatch) Push(batch BioSequenceBatch) {
 	if batch.IsNil() {
-		log.Panicln("An Nil batch is pushed on the channel")
+		log.Panicln("A Nil batch is pushed on the channel")
 	}
 	if batch.Length() == 0 {
 		log.Panicln("An empty batch is pushed on the channel")
@@ -369,18 +370,7 @@ func (iterator IBioSequenceBatch) Pool(iterators ...IBioSequenceBatch) IBioSeque
 		return iterator
 	}
 
-	counterMutex := sync.Mutex{}
-	counter := 0
-
-	nextCounter := func() int {
-		counterMutex.Lock()
-		defer counterMutex.Unlock()
-
-		counter++
-
-		return counter
-	}
-
+	nextCounter := goutils.AtomicCounter()
 	buffsize := iterator.BufferSize()
 	newIter := MakeIBioSequenceBatch(buffsize)
 
