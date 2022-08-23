@@ -2,8 +2,6 @@ package obitax
 
 import (
 	"regexp"
-
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
 
 type TaxNode struct {
@@ -72,17 +70,6 @@ func (node *TaxNode) HasRankDefined(rank string) bool {
 	for node.rank != rank && node.parent != node.taxid {
 		node = node.pparent
 	}
-
 	return node.rank == rank
 
-}
-
-func HasRankDefined(taxonomy Taxonomy, rank string) obiseq.SequencePredicate {
-
-	f := func(sequence *obiseq.BioSequence) bool {
-		taxon, err := taxonomy.Taxon(sequence.Taxid())
-		return err == nil && taxon.HasRankDefined(rank)
-	}
-
-	return f
 }

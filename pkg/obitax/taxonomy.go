@@ -2,7 +2,6 @@ package obitax
 
 import (
 	"fmt"
-	log "github.com/sirupsen/logrus"
 )
 
 type TaxName struct {
@@ -63,7 +62,6 @@ func (taxonomy *Taxonomy) Taxon(taxid int) (*TaxNode, error) {
 		if !aok {
 			return nil, fmt.Errorf("Taxid %d is not part of the taxonomy", taxid)
 		}
-		log.Printf("Taxid %d is deprecated and must be replaced by %d", taxid, a.taxid)
 		t = a
 	}
 	return t, nil
