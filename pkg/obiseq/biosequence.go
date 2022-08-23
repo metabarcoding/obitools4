@@ -1,3 +1,13 @@
+// A package that defines a BioSequence struct.
+//
+// BioSequence are used to représente biological DNA sequences.
+// The structure stores not only the sequence itself, but also some
+// complementaty information. Among them:
+//   - an identifier
+//   - a definition
+//   - the sequence quality scores
+//   - the features
+//   - the annotations
 package obiseq
 
 import (
@@ -260,13 +270,18 @@ func (s *BioSequence) Count() int {
 
 // Returning the taxid of the sequence.
 func (s *BioSequence) Taxid() int {
-	taxid, ok := s.GetInt("count")
+	taxid, ok := s.GetInt("taxid")
 
 	if !ok {
 		taxid = 1
 	}
 
 	return taxid
+}
+
+func (s *BioSequence) SetTaxid(taxid int) {
+	annot := s.Annotations()
+	annot["taxid"] = taxid
 }
 
 // Setting the id of the BioSequence.
