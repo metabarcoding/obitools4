@@ -14,6 +14,7 @@ var __input_fastobi_format__ = false
 
 var __input_ecopcr_format__ = false
 var __input_embl_format__ = false
+var __input_genbank_format__ = false
 
 var __input_solexa_quality__ = false
 
@@ -24,11 +25,11 @@ var __output_fastobi_format__ = false
 var __output_solexa_quality__ = false
 
 func InputOptionSet(options *getoptions.GetOpt) {
-	options.IntVar(&__skipped_entries__, "skip", __skipped_entries__,
-		options.Description("The N first sequence records of the file are discarded from the analysis and not reported to the output file."))
+	// options.IntVar(&__skipped_entries__, "skip", __skipped_entries__,
+	// 	options.Description("The N first sequence records of the file are discarded from the analysis and not reported to the output file."))
 
-	options.IntVar(&__read_only_entries__, "only", __read_only_entries__,
-		options.Description("Only the N next sequence records of the file are analyzed. The following sequences in the file are neither analyzed, neither reported to the output file. This option can be used conjointly with the –skip option."))
+	// options.IntVar(&__read_only_entries__, "only", __read_only_entries__,
+	// 	options.Description("Only the N next sequence records of the file are analyzed. The following sequences in the file are neither analyzed, neither reported to the output file. This option can be used conjointly with the –skip option."))
 
 	options.BoolVar(&__input_fastjson_format__, "input-json-header", __input_fastjson_format__,
 		options.Description("FASTA/FASTQ title line annotations follow json format."))
@@ -40,6 +41,9 @@ func InputOptionSet(options *getoptions.GetOpt) {
 
 	options.BoolVar(&__input_embl_format__, "embl", __input_embl_format__,
 		options.Description("Read data following the EMBL flatfile format."))
+
+	options.BoolVar(&__input_genbank_format__, "genbank", __input_genbank_format__,
+		options.Description("Read data following the Genbank flatfile format."))
 
 	options.BoolVar(&__input_solexa_quality__, "solexa", __input_solexa_quality__,
 		options.Description("Decodes quality string according to the Solexa specification."))
@@ -74,23 +78,25 @@ func OptionSet(options *getoptions.GetOpt) {
 
 // Returns true if the number of reads described in the
 // file has to be printed.
-func InputFormat() string {
+func CLIInputFormat() string {
 	switch {
 	case __input_ecopcr_format__:
 		return "ecopcr"
 	case __input_embl_format__:
 		return "embl"
+	case __input_genbank_format__:
+		return "genbank"
 	default:
 		return "guessed"
 	}
 }
 
 // Returns true if the order among several imput files has not to be considered
-func NoInputOrder() bool {
+func CLINoInputOrder() bool {
 	return __no_ordered_input__
 }
 
-func OutputFormat() string {
+func CLIOutputFormat() string {
 	switch {
 	case __output_in_fastq__:
 		return "fastq"
@@ -101,7 +107,7 @@ func OutputFormat() string {
 	}
 }
 
-func InputFastHeaderFormat() string {
+func CLIInputFastHeaderFormat() string {
 	switch {
 	case __input_fastjson_format__:
 		return "json"
@@ -112,7 +118,7 @@ func InputFastHeaderFormat() string {
 	}
 }
 
-func OutputFastHeaderFormat() string {
+func CLIOutputFastHeaderFormat() string {
 	switch {
 	case __output_fastjson_format__:
 		return "json"
@@ -125,15 +131,15 @@ func OutputFastHeaderFormat() string {
 
 // Returns the count of sequences to skip at the beginning of the
 // processing.
-func SequencesToSkip() int {
+func CLISequencesToSkip() int {
 	return __skipped_entries__
 }
 
-func AnalyzeOnly() int {
+func CLIAnalyzeOnly() int {
 	return __read_only_entries__
 }
 
-func InputQualityShift() int {
+func CLIInputQualityShift() int {
 	if __input_solexa_quality__ {
 		return 64
 	} else {
@@ -141,7 +147,7 @@ func InputQualityShift() int {
 	}
 }
 
-func OutputQualityShift() int {
+func CLIOutputQualityShift() int {
 	if __output_solexa_quality__ {
 		return 64
 	} else {
