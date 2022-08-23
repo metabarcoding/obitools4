@@ -1,8 +1,9 @@
 package obigrep
 
 import (
-	"log"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/goutils"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiformats/ncbitaxdump"
@@ -177,6 +178,10 @@ func CLIMaxSequenceCount() int {
 	return _MaximumCount
 }
 
+func CLIRequiredRanks() []string {
+	return _RequiredRanks
+}
+
 func CLISequenceCountPredicate() obiseq.SequencePredicate {
 	if _MinimumCount > 1 {
 		p := obiseq.IsMoreAbundantOrEqualTo(_MinimumCount)
@@ -222,10 +227,10 @@ func CLIRestrictTaxonomyPredicate() obiseq.SequencePredicate {
 
 	if len(_BelongTaxa) > 0 {
 		taxonomy := CLILoadSelectedTaxonomy()
-		p := obitax.IsSubCladeOf(*taxonomy, _BelongTaxa[0])
+		p := taxonomy.IsSubCladeOf(_BelongTaxa[0])
 
 		for _, taxid := range _BelongTaxa[1:] {
-			p = p.Or(obitax.IsSubCladeOf(*taxonomy, taxid))
+			p = p.Or(taxonomy.IsSubCladeOf(taxid))
 		}
 
 		return p
@@ -238,10 +243,10 @@ func CLIAvoidTaxonomyPredicate() obiseq.SequencePredicate {
 
 	if len(_NotBelongTaxa) > 0 {
 		taxonomy := CLILoadSelectedTaxonomy()
-		p := obitax.IsSubCladeOf(*taxonomy, _NotBelongTaxa[0])
+		p := taxonomy.IsSubCladeOf(_NotBelongTaxa[0])
 
 		for _, taxid := range _NotBelongTaxa[1:] {
-			p = p.Or(obitax.IsSubCladeOf(*taxonomy, taxid))
+			p = p.Or(taxonomy.IsSubCladeOf(taxid))
 		}
 
 		return p.Not()
@@ -254,10 +259,10 @@ func CLIHasRankDefinedPredicate() obiseq.SequencePredicate {
 
 	if len(_RequiredRanks) > 0 {
 		taxonomy := CLILoadSelectedTaxonomy()
-		p := obitax.HasRankDefined(*taxonomy, _RequiredRanks[0])
+		p := taxonomy.HasRequiredRank(_RequiredRanks[0])
 
 		for _, rank := range _RequiredRanks[1:] {
-			p = p.And(obitax.HasRankDefined(*taxonomy, rank))
+			p = p.And(taxonomy.HasRequiredRank(rank))
 		}
 
 		return p

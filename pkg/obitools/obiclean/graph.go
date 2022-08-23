@@ -3,13 +3,14 @@ package obiclean
 import (
 	"bytes"
 	"fmt"
-	"log"
 	"math"
 	"os"
 	"path"
 	"sort"
 	"sync"
 	"text/template"
+
+	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obialign"
 	"github.com/schollz/progressbar/v3"
