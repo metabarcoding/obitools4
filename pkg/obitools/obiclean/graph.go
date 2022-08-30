@@ -94,11 +94,11 @@ func Gml(seqs *[]*seqPCR, sample string, statThreshold int) string {
 		comment "Obiclean graph for sample {{ Name }}"
 		directed 1
 		{{range $index, $data:= .}}
-		{{ if or $data.Fathers $data.HasSon}}
+		{{ if or $data.Fathers (gt $data.SonCount 0)}}
 	node [ id {{$index}} 
 			graphics [
 				type "{{ Shape $data.Count }}"
-				fill "{{ if and $data.HasSon (not $data.Fathers)}}#0000FF{{  else }}#00FF00{{ end }}"
+				fill "{{ if and (gt $data.SonCount 0) (not $data.Fathers)}}#0000FF{{  else }}#00FF00{{ end }}"
 				h {{ Sqrt $data.Count }}
 				w {{ Sqrt $data.Count }}
 			]
