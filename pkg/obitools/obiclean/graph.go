@@ -17,10 +17,33 @@ import (
 )
 
 type Ratio struct {
+	Sample string
 	From   int
 	To     int
+	CFrom  int
+	CTo    int
 	Pos    int
 	Length int
+}
+
+type Edge struct {
+	Father  int
+	From    byte
+	To      byte
+	Pos     int
+	NucPair int
+	Dist    int
+}
+
+func makeEdge(father, dist, pos int, from, to byte) Edge {
+	return Edge{
+		Father:  father,
+		Dist:    dist,
+		Pos:     pos,
+		From:    from,
+		To:      to,
+		NucPair: nucPair(from, to),
+	}
 }
 
 func abs(x int) int {
@@ -74,11 +97,19 @@ func EmpiricalDistCsv(filename string, data [][]Ratio) {
 
 	bar := progressbar.NewOptions(len(data), pbopt...)
 
-	fmt.Fprintln(file, "From,To,Count_from,Count_to,Position,length")
+	fmt.Fprintln(file, "Sample,From,To,Weight_from,Weight_to,Count_from,Count_to,Position,length")
 	for code, dist := range data {
 		a1, a2 := intToNucPair(code)
 		for _, ratio := range dist {
-			fmt.Fprintf(file, "%c,%c,%d,%d,%d,%d\n", a1, a2, ratio.From, ratio.To, ratio.Pos, ratio.Length)
+			fmt.Fprintf(file, "%s,%c,%c,%d,%d,%d,%d,%d,%d\n",
+				ratio.Sample,
+				a1, a2,
+				ratio.From,
+				ratio.To,
+				ratio.CFrom,
+				ratio.CTo,
+				ratio.Pos,
+				ratio.Length)
 		}
 		bar.Add(1)
 	}
@@ -94,11 +125,11 @@ func Gml(seqs *[]*seqPCR, sample string, statThreshold int) string {
 		comment "Obiclean graph for sample {{ Name }}"
 		directed 1
 		{{range $index, $data:= .}}
-		{{ if or $data.Fathers (gt $data.SonCount 0)}}
+		{{ if or $data.Edges (gt $data.SonCount 0)}}
 	node [ id {{$index}} 
 			graphics [
 				type "{{ Shape $data.Count }}"
-				fill "{{ if and (gt $data.SonCount 0) (not $data.Fathers)}}#0000FF{{  else }}#00FF00{{ end }}"
+				fill "{{ if and (gt $data.SonCount 0) (not $data.Edges)}}#0000FF{{  else }}#00FF00{{ end }}"
 				h {{ Sqrt $data.Count }}
 				w {{ Sqrt $data.Count }}
 			]
@@ -108,11 +139,11 @@ func Gml(seqs *[]*seqPCR, sample string, statThreshold int) string {
 		 {{ end }}
 
 		 {{range $index, $data:= .}}
-				{{range $i, $father:= $data.Fathers}}
+				{{range $i, $edge:= $data.Edges}}
 	edge [ source {{$index}} 
-	       target {{$father}} 
-		   color "{{ if gt (index $data.Dist $i) 1 }}#FF0000{{  else }}#00FF00{{ end }}"
-		   label "{{(index $data.Dist $i)}}"
+	       target {{$edge.Father}} 
+		   color "{{ if gt (index $data.Edges $i).Dist 1 }}#FF0000{{  else }}#00FF00{{ end }}"
+		   label "{{(index $data.Edges $i).Dist}}"
 		   ]
 				{{ end }}
 				{{ end }}
@@ -226,50 +257,82 @@ func intToNucPair(code int) (a, b byte) {
 	return decode[c1], decode[c2]
 }
 
-func buildSamplePairs(seqs *[]*seqPCR, minStatRatio int, workers int) ([][]Ratio, int) {
+func reweightSequences(seqs *[]*seqPCR) {
+
+	for _, node := range *seqs {
+		node.Weight = node.Count
+	}
+
+	//var rfunc func(*seqPCR)
+
+	rfunc := func(node *seqPCR) {
+		node.AddedSons=0
+		nedges := len(node.Edges)
+		if nedges > 0 {
+			swf := 0.0
+
+			for k := 0; k < nedges; k++ {
+				swf += float64((*seqs)[node.Edges[k].Father].Count)
+			}
+
+			for k := 0; k < nedges; k++ {
+				father := (*seqs)[node.Edges[k].Father]
+				father.Weight += int(math.Round(float64(node.Weight) * float64(father.Count) / swf))
+				father.AddedSons++
+				// log.Println(father.AddedSons, father.SonCount)
+			}
+
+		}
+	}
+
+	for _, node := range *seqs {
+		if node.SonCount == 0 {
+			rfunc(node)
+		}
+	}
+
+	for done := true; done; {
+		done = false
+		for _, node := range *seqs {
+			if node.SonCount > 0 && node.SonCount == node.AddedSons {
+				// log.Println(node.AddedSons, node.SonCount)
+				rfunc(node)
+				done = true
+			}
+		}
+	}
+}
+
+func buildSamplePairs(seqs *[]*seqPCR, workers int) int {
 	nseq := len(*seqs)
 	running := sync.WaitGroup{}
 
-	linePairs := func(i int) [][]Ratio {
+	linePairs := func(i int) {
 
-		ratio := make([][]Ratio, 25)
 		son := (*seqs)[i]
 
 		for j := i + 1; j < nseq; j++ {
 			father := (*seqs)[j]
 			d, pos, a1, a2 := obialign.D1Or0(son.Sequence, father.Sequence)
 			if d > 0 {
-				son.Fathers = append(son.Fathers, j)
-				son.Dist = append(son.Dist, d)
+				son.Edges = append(son.Edges, makeEdge(j, d, pos, a1, a2))
 				father.SonCount++
 
-				if father.Count > minStatRatio {
-					n := nucPair(a1, a2)
-					ratio[n] = append(ratio[n], Ratio{father.Count, son.Count, pos, father.Sequence.Length()})
-				}
 			}
 		}
 
-		return ratio
 	}
 
 	lineChan := make(chan int)
-	idxChan := make(chan [][]Ratio)
 
 	ff := func() {
 		for i := range lineChan {
-			idxChan <- linePairs(i)
+			linePairs(i)
 		}
-
 		running.Done()
 	}
 
 	running.Add(workers)
-
-	go func() {
-		running.Wait()
-		close(idxChan)
-	}()
 
 	for i := 0; i < workers; i++ {
 		go ff()
@@ -283,15 +346,12 @@ func buildSamplePairs(seqs *[]*seqPCR, minStatRatio int, workers int) ([][]Ratio
 	}()
 
 	np := nseq * (nseq - 1) / 2
-	ratio := make([][]Ratio, 25)
-	for data := range idxChan {
-		for i, r := range data {
-			ratio[i] = append(ratio[i], r...)
-		}
 
-	}
+	running.Wait()
 
-	return ratio, np
+	reweightSequences(seqs)
+
+	return np
 }
 
 func extendSimilarityGraph(seqs *[]*seqPCR, step int, workers int) int {
@@ -310,8 +370,7 @@ func extendSimilarityGraph(seqs *[]*seqPCR, step int, workers int) int {
 					matrix)
 				d := (lali - lcs)
 				if lcs >= 0 && d <= step && step > 0 {
-					son.Fathers = append(son.Fathers, j)
-					son.Dist = append(son.Dist, d)
+					son.Edges = append(son.Edges, makeEdge(j, d, -1, '-', '-'))
 					father.SonCount++
 					//a, b := minMax((*seqs)[i].Count, (*seqs)[j].Count)
 				}
@@ -340,7 +399,7 @@ func extendSimilarityGraph(seqs *[]*seqPCR, step int, workers int) int {
 
 	go func() {
 		for i := 0; i < nseq; i++ {
-			if len((*seqs)[i].Fathers) == 0 {
+			if len((*seqs)[i].Edges) == 0 {
 				lineChan <- i
 			}
 		}
@@ -354,21 +413,18 @@ func extendSimilarityGraph(seqs *[]*seqPCR, step int, workers int) int {
 
 func FilterGraphOnRatio(seqs *[]*seqPCR, ratio float64) {
 	for _, s1 := range *seqs {
-		c1 := float64(s1.Count)
-		f := s1.Fathers
-		d := s1.Dist
+		c1 := float64(s1.Weight)
+		e := s1.Edges
 		j := 0
-		for i, s2 := range f {
-			f[j] = f[i]
-			d[j] = d[i]
-			if (c1 / float64((*seqs)[s2].Count)) <= math.Pow(ratio, float64(d[i])) {
+		for i, s2 := range e {
+			e[j] = e[i]
+			if (c1 / float64((*seqs)[s2.Father].Weight)) <= math.Pow(ratio, float64(e[i].Dist)) {
 				j++
 			} else {
-				(*seqs)[s2].SonCount--
+				(*seqs)[s2.Father].SonCount--
 			}
 		}
-		s1.Fathers = f[0:j]
-		s1.Dist = d[0:j]
+		s1.Edges = e[0:j]
 	}
 }
 
@@ -384,7 +440,7 @@ func sortSamples(samples map[string]*([]*seqPCR)) {
 }
 
 func ObicleanStatus(seq *seqPCR) string {
-	if len(seq.Fathers) == 0 {
+	if len(seq.Edges) == 0 {
 		if seq.SonCount > 0 {
 			return "h"
 		} else {
@@ -395,8 +451,28 @@ func ObicleanStatus(seq *seqPCR) string {
 	}
 }
 
+func EstimateRatio(samples map[string]*[]*seqPCR, minStatRatio int) [][]Ratio {
+	ratio := make([][]Ratio, 25)
+
+	for name, seqs := range samples {
+
+		for _, seq := range *seqs {
+			for _, edge := range seq.Edges {
+				father := (*seqs)[edge.Father]
+				if father.Weight >= minStatRatio && edge.Dist == 1 {
+					ratio[edge.NucPair] = append(ratio[edge.NucPair], Ratio{name, father.Weight, seq.Weight, father.Count, seq.Count, edge.Pos, father.Sequence.Length()})
+				}
+			}
+
+		}
+	}
+
+	return ratio
+
+}
+
 func BuildSeqGraph(samples map[string]*[]*seqPCR,
-	maxError, minStatRatio, workers int) [][]Ratio {
+	maxError, workers int) {
 
 	sortSamples(samples)
 
@@ -416,13 +492,8 @@ func BuildSeqGraph(samples map[string]*[]*seqPCR,
 	)
 
 	bar := progressbar.NewOptions(npairs, pbopt...)
-	all_ratio := make([][]Ratio, 25)
 	for _, seqs := range samples {
-		ratio, np := buildSamplePairs(seqs, minStatRatio, workers)
-
-		for i, r := range ratio {
-			all_ratio[i] = append(all_ratio[i], r...)
-		}
+		np := buildSamplePairs(seqs, workers)
 
 		bar.Add(np)
 	}
@@ -444,6 +515,4 @@ func BuildSeqGraph(samples map[string]*[]*seqPCR,
 			bar.Add(np)
 		}
 	}
-
-	return all_ratio
 }

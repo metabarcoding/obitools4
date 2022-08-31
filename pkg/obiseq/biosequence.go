@@ -199,7 +199,7 @@ func (s *BioSequence) Annotations() Annotation {
 }
 
 // A method that returns the value of the key in the annotation map.
-func (s *BioSequence) Get(key string) (interface{}, bool) {
+func (s *BioSequence) GetAttribute(key string) (interface{}, bool) {
 	var val interface{}
 	ok := s.annotations != nil
 
@@ -210,12 +210,17 @@ func (s *BioSequence) Get(key string) (interface{}, bool) {
 	return val, ok
 }
 
+func (s *BioSequence) SetAttribute(key string, value interface{}) {
+	annot := s.Annotations()
+	annot[key] = value
+}
+
 // A method that returns the value of the key in the annotation map.
-func (s *BioSequence) GetInt(key string) (int, bool) {
+func (s *BioSequence) GetIntAttribute(key string) (int, bool) {
 	var val int
 	var err error
 
-	v, ok := s.Get(key)
+	v, ok := s.GetAttribute(key)
 
 	if ok {
 		val, err = goutils.InterfaceToInt(v)
@@ -226,9 +231,9 @@ func (s *BioSequence) GetInt(key string) (int, bool) {
 }
 
 // A method that returns the value of the key in the annotation map.
-func (s *BioSequence) GetString(key string) (string, bool) {
+func (s *BioSequence) GetStringAttribute(key string) (string, bool) {
 	var val string
-	v, ok := s.Get(key)
+	v, ok := s.GetAttribute(key)
 
 	if ok {
 		val = fmt.Sprint(v)
@@ -242,7 +247,7 @@ func (s *BioSequence) GetBool(key string) (bool, bool) {
 	var val bool
 	var err error
 
-	v, ok := s.Get(key)
+	v, ok := s.GetAttribute(key)
 
 	if ok {
 		val, err = goutils.InterfaceToBool(v)
@@ -259,7 +264,7 @@ func (s *BioSequence) MD5() [16]byte {
 
 // Returning the number of times the sequence has been observed.
 func (s *BioSequence) Count() int {
-	count, ok := s.GetInt("count")
+	count, ok := s.GetIntAttribute("count")
 
 	if !ok {
 		count = 1
@@ -270,7 +275,7 @@ func (s *BioSequence) Count() int {
 
 // Returning the taxid of the sequence.
 func (s *BioSequence) Taxid() int {
-	taxid, ok := s.GetInt("taxid")
+	taxid, ok := s.GetIntAttribute("taxid")
 
 	if !ok {
 		taxid = 1
@@ -330,6 +335,12 @@ func (s *BioSequence) WriteByteQualities(data byte) error {
 	return nil
 }
 
+// Clearing the sequence.
+func (s *BioSequence) ClearQualities() {
+	s.qualities = s.qualities[0:0]
+}
+
+
 // A method that appends a byte slice to the sequence.
 func (s *BioSequence) Write(data []byte) (int, error) {
 	s.sequence = append(s.sequence, data...)
@@ -346,4 +357,9 @@ func (s *BioSequence) WriteString(data string) (int, error) {
 func (s *BioSequence) WriteByte(data byte) error {
 	s.sequence = append(s.sequence, data)
 	return nil
+}
+
+// Clearing the sequence.
+func (s *BioSequence) Clear() {
+	s.sequence = s.sequence[0:0]
 }

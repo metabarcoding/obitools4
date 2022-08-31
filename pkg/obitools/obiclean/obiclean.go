@@ -13,11 +13,12 @@ import (
 )
 
 type seqPCR struct {
-	Count    int                 // number of reads associated to a sequence in a PCR
-	Sequence *obiseq.BioSequence // pointer to the corresponding sequence
-	SonCount int
-	Fathers  []int
-	Dist     []int
+	Count     int                 // number of reads associated to a sequence in a PCR
+	Weight    int                 // Number of reads associated to a sequence after clustering
+	Sequence  *obiseq.BioSequence // pointer to the corresponding sequence
+	SonCount  int
+	AddedSons int
+	Edges     []Edge
 }
 
 // buildSamples sorts the sequences by samples
@@ -43,9 +44,10 @@ func buildSamples(dataset obiseq.BioSequenceSlice,
 			}
 
 			*pcr = append(*pcr, &seqPCR{
-				Count:    v,
-				Sequence: s,
-				SonCount: 0,
+				Count:     v,
+				Sequence:  s,
+				SonCount:  0,
+				AddedSons: 0,
 			})
 		}
 	}
@@ -181,6 +183,33 @@ func Status(sequence *obiseq.BioSequence) map[string]string {
 	return obistatus
 }
 
+func Weight(sequence *obiseq.BioSequence) map[string]int {
+	annotation := sequence.Annotations()
+	iobistatus, ok := annotation["obiclean_weight"]
+	var weight map[string]int
+	var err error
+
+	if ok {
+		switch iobistatus := iobistatus.(type) {
+		case map[string]int:
+			weight = iobistatus
+		case map[string]interface{}:
+			weight = make(map[string]int)
+			for k, v := range iobistatus {
+				weight[k], err = goutils.InterfaceToInt(v)
+				if err != nil {
+					log.Panicf("Weight value %v cannnot be casted to an integer value\n", v)
+				}
+			}
+		}
+	} else {
+		weight = make(map[string]int)
+		annotation["obiclean_weight"] = weight
+	}
+
+	return weight
+}
+
 func IOBIClean(itertator obiiter.IBioSequenceBatch) obiiter.IBioSequenceBatch {
 
 	db := itertator.Load()
@@ -191,9 +220,8 @@ func IOBIClean(itertator obiiter.IBioSequenceBatch) obiiter.IBioSequenceBatch {
 
 	log.Infof("Dataset composed of %d samples\n", len(samples))
 
-	all_ratio := BuildSeqGraph(samples,
+	BuildSeqGraph(samples,
 		DistStepMax(),
-		MinCountToEvalMutationRate(),
 		obioptions.CLIParallelWorkers())
 
 	if RatioMax() < 1.0 {
@@ -215,6 +243,7 @@ func IOBIClean(itertator obiiter.IBioSequenceBatch) obiiter.IBioSequenceBatch {
 	}
 
 	if IsSaveRatioTable() {
+		all_ratio := EstimateRatio(samples, MinCountToEvalMutationRate())
 		EmpiricalDistCsv(RatioTableFilename(), all_ratio)
 	}
 
@@ -237,6 +266,9 @@ func IOBIClean(itertator obiiter.IBioSequenceBatch) obiiter.IBioSequenceBatch {
 		for _, pcr := range *seqs {
 			obistatus := Status(pcr.Sequence)
 			obistatus[name] = ObicleanStatus(pcr)
+
+			obiweight := Weight(pcr.Sequence)
+			obiweight[name] = pcr.Weight
 		}
 		bar.Add(1)
 	}

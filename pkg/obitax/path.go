@@ -2,6 +2,8 @@ package obitax
 
 import (
 	"fmt"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func (taxon *TaxNode) Path() (*TaxonSlice, error) {
@@ -20,6 +22,34 @@ func (taxon *TaxNode) Path() (*TaxonSlice, error) {
 	}
 
 	return &path, nil
+}
+
+func (taxon *TaxNode) TaxonAtRank(rank string) *TaxNode {
+	for taxon.rank != rank && taxon != taxon.pparent {
+		taxon = taxon.pparent
+
+		if taxon == nil {
+			log.Panicln("Taxonomy must be reindexed")
+		}
+	}
+
+	if taxon == taxon.pparent {
+		taxon = nil
+	}
+
+	return taxon
+}
+
+func (taxon *TaxNode) Species() *TaxNode {
+	return taxon.TaxonAtRank("species")
+}
+
+func (taxon *TaxNode) Genus() *TaxNode {
+	return taxon.TaxonAtRank("genus")
+}
+
+func (taxon *TaxNode) Family() *TaxNode {
+	return taxon.TaxonAtRank("family")
 }
 
 // Returns a TaxonSet listing the requested taxon and all

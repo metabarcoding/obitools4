@@ -22,7 +22,10 @@ func (taxonomy *Taxonomy) IsAValidTaxon(withAutoCorrection ...bool) obiseq.Seque
 		if err == nil && taxon.taxid != taxid {
 			if autocorrection {
 				sequence.SetTaxid(taxon.taxid)
-				log.Printf("Sequence %s : Taxid %d updated with %d", taxid, taxon.taxid)
+				log.Printf("Sequence %s : Taxid %d updated with %d",
+					sequence.Id(),
+					taxid,
+					taxon.taxid)
 			} else {
 				if _, ok := deprecatedTaxidsWarning[taxid]; !ok {
 					deprecatedTaxidsWarning[taxid] = true
