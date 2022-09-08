@@ -2,6 +2,7 @@ package obiseq
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/goutils"
@@ -15,8 +16,8 @@ func StatsOnSlotName(key string) string {
 }
 
 /*
- 	Tests if the sequence has already a slot summarizing statistics
-	 of occurrence for a given attribute.
+	 	Tests if the sequence has already a slot summarizing statistics
+		 of occurrence for a given attribute.
 */
 func (sequence *BioSequence) HasStatsOn(key string) bool {
 	if !sequence.HasAnnotation() {
@@ -154,7 +155,19 @@ func (sequence *BioSequence) Merge(tomerge *BioSequence, na string, inplace bool
 		for k, va := range annotations {
 			if !strings.HasPrefix(k, "merged_") {
 				vm, ok := ma[k]
-				if !ok || vm != va {
+				if ok {
+					switch vm := vm.(type) {
+					case int, float64, string, bool:
+						if va != vm {
+							delete(annotations, k)
+						}
+					default:
+						if !reflect.DeepEqual(va, vm) {
+							delete(annotations, k)
+						}
+					}
+
+				} else {
 					delete(annotations, k)
 				}
 			}
@@ -171,14 +184,16 @@ func (sequence *BioSequence) Merge(tomerge *BioSequence, na string, inplace bool
 	return sequence
 }
 
-/**
-  Merges a set of sequence into a single sequence.
+/*
+*
 
-  The function assumes that every sequence in the batch is
-  identical in term of sequence. Actually the function only
-  aggregates the annotations of the different sequences to be merged
+	Merges a set of sequence into a single sequence.
 
-  Quality information is lost during the merge procedure.
+	The function assumes that every sequence in the batch is
+	identical in term of sequence. Actually the function only
+	aggregates the annotations of the different sequences to be merged
+
+	Quality information is lost during the merge procedure.
 */
 func (sequences BioSequenceSlice) Merge(na string, statsOn []string) *BioSequence {
 	seq := sequences[0]
