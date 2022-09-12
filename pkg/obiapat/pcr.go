@@ -291,6 +291,9 @@ func _Pcr(seq ApatSequence,
 								match.Recycle()
 
 								annot["reverse_error"] = errj
+
+								// log.Debugf("amplicon sequence capacity : %d", cap(amplicon.Sequence()))
+
 								results = append(results, amplicon)
 							}
 						}
@@ -364,6 +367,7 @@ func _Pcr(seq ApatSequence,
 
 								annot["reverse_error"] = erri
 								results = append(results, amplicon)
+								// log.Debugf("amplicon sequence capacity : %d", cap(amplicon.Sequence()))
 							}
 						}
 					}
@@ -397,6 +401,10 @@ func _PCRSlice(sequences obiseq.BioSequenceSlice,
 
 	if len(sequences) > 0 {
 		seq, _ := MakeApatSequence(sequences[0], options.Circular())
+
+		// if AllocatedApaSequences() == 0 {
+		// 	log.Panicln("Bizarre....")
+		// }
 		amplicons := _Pcr(seq, sequences[0], options)
 
 		if len(amplicons) > 0 {
@@ -410,6 +418,8 @@ func _PCRSlice(sequences obiseq.BioSequenceSlice,
 				results = append(results, amplicons...)
 			}
 		}
+
+		// log.Println(AllocatedApaSequences())
 
 		// seq.Free()
 	}

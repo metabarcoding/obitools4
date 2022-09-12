@@ -11,11 +11,14 @@ import (
 	"runtime"
 	"unsafe"
 
+	log "github.com/sirupsen/logrus"
+
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
 
 var _MaxPatLen = int(C.MAX_PAT_LEN)
-var _AllocatedApaSequences = 0
+
+// var _AllocatedApaSequences = int64(0)
 var _AllocatedApaPattern = 0
 
 // ApatPattern stores a regular pattern usable by the
@@ -155,30 +158,44 @@ func (pattern ApatPattern) Print() {
 func MakeApatSequence(sequence *obiseq.BioSequence, circular bool, recycle ...ApatSequence) (ApatSequence, error) {
 	var errno C.int32_t
 	var errmsg *C.char
+	var p unsafe.Pointer
 	seqlen := sequence.Length()
-	p := C.malloc(C.size_t(seqlen) + 1)
-
-	if p != nil {
-		_AllocatedApaSequences++
-	}
 
 	ic := 0
 	if circular {
 		ic = 1
 	}
 
-	// copy the data into the buffer, by converting it to a Go array
-	cBuf := (*[1 << 31]byte)(p)
-	copy(cBuf[:], sequence.Sequence())
-	cBuf[sequence.Length()] = 0
-
 	var out *C.Seq
 
 	if len(recycle) > 0 {
 		out = recycle[0].pointer.pointer
+		if (int(out.seqlen) < seqlen || int(out.seqlen) > 5*seqlen) && out.cseq != nil {
+			C.free(unsafe.Pointer(out.cseq))
+			out.cseq = nil
+		}
 	} else {
 		out = nil
 	}
+
+	if out == nil || out.cseq == nil {
+
+		p = C.malloc(C.size_t(seqlen) + 1)
+		// if p != nil {
+		// 	// atomic.AddInt64(&_AllocatedApaSequences, 1)
+		// }
+	} else {
+		p = unsafe.Pointer(out.cseq)
+	}
+
+	if p == nil {
+		log.Panicln("Cannot allocate memory chunk for Cseq Apat sequecence")
+	}
+
+	// copy the data into the buffer, by converting it to a Go array
+	cBuf := (*[1 << 31]byte)(p)
+	copy(cBuf[:], sequence.Sequence())
+	cBuf[sequence.Length()] = 0
 
 	pseqc := C.new_apatseq((*C.char)(p), C.int32_t(ic), C.int32_t(seqlen),
 		(*C.Seq)(out),
@@ -187,6 +204,10 @@ func MakeApatSequence(sequence *obiseq.BioSequence, circular bool, recycle ...Ap
 	if pseqc == nil {
 		message := C.GoString(errmsg)
 		C.free(unsafe.Pointer(errmsg))
+		if p != nil {
+			C.free(p)
+			// atomic.AddInt64(&_AllocatedApaSequences, -1)
+		}
 		return NilApatSequence, errors.New(message)
 	}
 
@@ -194,15 +215,18 @@ func MakeApatSequence(sequence *obiseq.BioSequence, circular bool, recycle ...Ap
 		// log.Printf("Make ApatSeq called on %p -> %p\n", out, pseqc)
 		seq := _ApatSequence{pointer: pseqc}
 
-		runtime.SetFinalizer(&seq, func(p *_ApatSequence) {
+		runtime.SetFinalizer(&seq, func(apat_p *_ApatSequence) {
 			var errno C.int32_t
 			var errmsg *C.char
-			// log.Printf("Finaliser called on %p\n", p.pointer)
+			// log.Printf("Finaliser called on %p\n", apat_p.pointer)
 
-			if p != nil && p.pointer != nil {
-				C.free(unsafe.Pointer(p.pointer.cseq))
-				C.delete_apatseq(p.pointer, &errno, &errmsg)
-				_AllocatedApaSequences--
+			if apat_p != nil && apat_p.pointer != nil {
+				if apat_p.pointer.cseq != nil {
+					C.free(unsafe.Pointer(apat_p.pointer.cseq))
+					apat_p.pointer.cseq = nil
+					// atomic.AddInt64(&_AllocatedApaSequences, -1)
+				}
+				C.delete_apatseq(apat_p.pointer, &errno, &errmsg)
 			}
 		})
 
@@ -230,7 +254,13 @@ func (sequence ApatSequence) Free() {
 	// log.Printf("Free called on %p\n", sequence.pointer.pointer)
 
 	if sequence.pointer != nil && sequence.pointer.pointer != nil {
-		C.free(unsafe.Pointer(&sequence.pointer.pointer.cseq))
+
+		if sequence.pointer.pointer.cseq != nil {
+			C.free(unsafe.Pointer(sequence.pointer.pointer.cseq))
+			sequence.pointer.pointer.cseq = nil
+			// atomic.AddInt64(&_AllocatedApaSequences, -1)
+		}
+
 		C.delete_apatseq(sequence.pointer.pointer,
 			&errno, &errmsg)
 
@@ -287,6 +317,6 @@ func (pattern ApatPattern) FindAllIndex(sequence ApatSequence, limits ...int) (l
 	return loc
 }
 
-func AllocatedApaSequences() int {
-	return _AllocatedApaSequences
-}
+// func AllocatedApaSequences() int {
+// 	return int(_AllocatedApaSequences)
+// }
