@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/goutils"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 	"github.com/goccy/go-json"
 )
@@ -216,16 +217,18 @@ func ParseOBIFeatures(text string, annotations obiseq.Annotation) string {
 						dict := make(map[string]int)
 						err = json.Unmarshal(j, &dict)
 						value = dict
-					case strings.HasSuffix(key, "_status"):
+					case strings.HasSuffix(key, "_status") ||
+						strings.HasSuffix(key, "_mutation"):
 						dict := make(map[string]string)
 						err = json.Unmarshal(j, &dict)
 						value = dict
+
 					default:
 						dict := make(map[string]interface{})
 						err = json.Unmarshal(j, &dict)
 						value = dict
 					}
-					
+
 					if err != nil {
 						value = string(bvalue)
 					}
@@ -299,9 +302,10 @@ func FormatFastSeqOBIHeader(sequence *obiseq.BioSequence) string {
 			case string:
 				text.WriteString(fmt.Sprintf("%s=%s; ", key, t))
 			case map[string]int,
+				map[string]string,
 				map[string]interface{},
 				obiseq.StatsOnValues:
-				tv, err := json.Marshal(t)
+				tv, err := goutils.JsonMarshal(t)
 				if err != nil {
 					log.Fatalf("Cannot convert %v value", value)
 				}

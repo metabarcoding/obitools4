@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/gob"
+	"encoding/json"
 	"io"
 	"os"
 	"sync"
@@ -187,4 +188,18 @@ func AtomicCounter(initial ...int) func() int {
 	}
 
 	return nextCounter
+}
+
+// Marshal is a UTF-8 friendly marshaler.  Go's json.Marshal is not UTF-8
+// friendly because it replaces the valid UTF-8 and JSON characters "&". "<",
+// ">" with the "slash u" unicode escaped forms (e.g. \u0026).  It preemptively
+// escapes for HTML friendliness.  Where text may include any of these
+// characters, json.Marshal should not be used. Playground of Go breaking a
+// title: https://play.golang.org/p/o2hiX0c62oN
+func JsonMarshal(i interface{}) ([]byte, error) {
+    buffer := &bytes.Buffer{}
+    encoder := json.NewEncoder(buffer)
+    encoder.SetEscapeHTML(false)
+    err := encoder.Encode(i)
+    return bytes.TrimRight(buffer.Bytes(), "\n"), err
 }
