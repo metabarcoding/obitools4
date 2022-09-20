@@ -160,6 +160,41 @@ func SingletonCount(sequence *obiseq.BioSequence) int {
 	return value
 }
 
+func GetMutation(sequence *obiseq.BioSequence) map[string]string {
+	annotation := sequence.Annotations()
+	imutation, ok := annotation["obiclean_mutation"]
+	var mutation map[string]string
+
+	if ok {
+		switch imutation := imutation.(type) {
+		case map[string]string:
+			mutation = imutation
+		case map[string]interface{}:
+			mutation = make(map[string]string)
+			for k, v := range imutation {
+				mutation[k] = fmt.Sprint(v)
+			}
+		}
+	} else {
+		mutation = make(map[string]string)
+		annotation["obiclean_mutation"] = mutation
+	}
+
+	return mutation
+}
+
+func Mutation(sample map[string]*([]*seqPCR)) {
+	for _, graph := range sample {
+		for _, s := range *graph {
+			for _, f := range s.Edges {
+				id := (*graph)[f.Father].Sequence.Id()
+				GetMutation(s.Sequence)[id] = fmt.Sprintf("(%c)->(%c)@%d",
+					f.From, f.To, f.Pos + 1)
+			}
+		}
+	}
+}
+
 func Status(sequence *obiseq.BioSequence) map[string]string {
 	annotation := sequence.Annotations()
 	iobistatus, ok := annotation["obiclean_status"]
@@ -250,6 +285,8 @@ func IOBIClean(itertator obiiter.IBioSequenceBatch) obiiter.IBioSequenceBatch {
 	if SaveGraphToFiles() {
 		SaveGMLGraphs(GraphFilesDirectory(), samples, MinCountToEvalMutationRate())
 	}
+
+	Mutation(samples)
 
 	pbopt := make([]progressbar.Option, 0, 5)
 	pbopt = append(pbopt,
