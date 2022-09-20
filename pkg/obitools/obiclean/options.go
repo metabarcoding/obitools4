@@ -42,7 +42,7 @@ func ObicleanOptionSet(options *getoptions.GetOpt) {
 
 	options.BoolVar(&_onlyHead, "head", _onlyHead,
 		options.Alias("H"),
-		options.Description("Select only sequences with the head status in a least one sample."),
+		options.Description("Select only sequences with the head status in at least one sample."),
 	)
 
 	options.StringVar(&_saveGraph, "save-graph", _saveGraph,

@@ -49,7 +49,7 @@ func InputOptionSet(options *getoptions.GetOpt) {
 		options.Description("Decodes quality string according to the Solexa specification."))
 
 	options.BoolVar(&__no_ordered_input__, "no-order", __no_ordered_input__,
-		options.Description("When several imput files are provided, "+
+		options.Description("When several input files are provided, "+
 			"indicates that there is no order among them."))
 
 }
