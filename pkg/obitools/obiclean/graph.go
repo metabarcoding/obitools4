@@ -315,7 +315,7 @@ func buildSamplePairs(seqs *[]*seqPCR, workers int) int {
 			father := (*seqs)[j]
 			d, pos, a1, a2 := obialign.D1Or0(son.Sequence, father.Sequence)
 			if d > 0 {
-				son.Edges = append(son.Edges, makeEdge(j, d, pos, a1, a2))
+				son.Edges = append(son.Edges, makeEdge(j, d, pos, a2, a1))
 				father.SonCount++
 
 			}
