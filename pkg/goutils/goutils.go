@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"io"
 	"os"
+	"reflect"
 	"sync"
 )
 
@@ -197,9 +198,34 @@ func AtomicCounter(initial ...int) func() int {
 // characters, json.Marshal should not be used. Playground of Go breaking a
 // title: https://play.golang.org/p/o2hiX0c62oN
 func JsonMarshal(i interface{}) ([]byte, error) {
-    buffer := &bytes.Buffer{}
-    encoder := json.NewEncoder(buffer)
-    encoder.SetEscapeHTML(false)
-    err := encoder.Encode(i)
-    return bytes.TrimRight(buffer.Bytes(), "\n"), err
+	buffer := &bytes.Buffer{}
+	encoder := json.NewEncoder(buffer)
+	encoder.SetEscapeHTML(false)
+	err := encoder.Encode(i)
+	return bytes.TrimRight(buffer.Bytes(), "\n"), err
+}
+
+func IsAMap(value interface{}) bool {
+	return reflect.TypeOf(value).Kind() == reflect.Map
+}
+
+func IsAnArray(value interface{}) bool {
+	return reflect.TypeOf(value).Kind() == reflect.Array
+}
+
+func IsASlice(value interface{}) bool {
+	return reflect.TypeOf(value).Kind() == reflect.Slice
+}
+
+func HasLength(value interface{}) bool {
+	return IsAMap(value) || IsAnArray(value) || IsASlice(value)
+}
+func Length(value interface{}) int {
+	l := 1
+	if HasLength(value) {
+		vc := reflect.ValueOf(value)
+		l = vc.Len()
+	}
+
+	return l
 }

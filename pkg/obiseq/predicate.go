@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"regexp"
 
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/goutils"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/PaesslerAG/gval"
@@ -20,7 +21,11 @@ func (predicate1 SequencePredicate) And(predicate2 SequencePredicate) SequencePr
 		return predicate1
 	default:
 		return func(sequence *BioSequence) bool {
-			return predicate1(sequence) && predicate2(sequence)
+			if !predicate1(sequence) {
+				return false
+			}
+
+			return predicate2(sequence)
 		}
 	}
 }
@@ -33,7 +38,10 @@ func (predicate1 SequencePredicate) Or(predicate2 SequencePredicate) SequencePre
 		return predicate1
 	default:
 		return func(sequence *BioSequence) bool {
-			return predicate1(sequence) || predicate2(sequence)
+			if predicate1(sequence) {
+				return true
+			}
+			return predicate2(sequence)
 		}
 	}
 }
@@ -195,8 +203,17 @@ func IsIdIn(ids ...string) SequencePredicate {
 
 func ExpressionPredicat(expression string) SequencePredicate {
 
-	exp, err := gval.Full().NewEvaluable(expression)
-
+	lang := gval.NewLanguage(
+		gval.Full(),
+		gval.Function("len", func(args ...interface{}) (interface{}, error) {
+			length := goutils.Length(args[0])
+			return (float64)(length), nil
+		}),
+		gval.Function("ismap", func(args ...interface{}) (interface{}, error) {
+			ismap := goutils.IsAMap(args[0])
+			return ismap, nil
+		}))
+	exp, err := lang.NewEvaluable(expression)
 	if err != nil {
 		log.Fatalf("Error in the expression : %s", expression)
 	}
@@ -204,10 +221,10 @@ func ExpressionPredicat(expression string) SequencePredicate {
 	f := func(sequence *BioSequence) bool {
 		value, err := exp.EvalBool(context.Background(),
 			map[string]interface{}{
-				"annot":    sequence.Annotations(),
-				"count":    sequence.Count(),
-				"length":   sequence.Length(),
-				"sequence": sequence,
+				"annot":     sequence.Annotations(),
+				"count":     sequence.Count(),
+				"seqlength": sequence.Length(),
+				"sequence":  sequence,
 			},
 		)
 
