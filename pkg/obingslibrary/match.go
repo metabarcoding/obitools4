@@ -3,8 +3,9 @@ package obingslibrary
 import (
 	"errors"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiapat"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
@@ -110,7 +111,7 @@ func (marker *Marker) Match(sequence *obiseq.BioSequence) *DemultiplexMatch {
 	if len(match) > 0 {
 		sseq := sequence.String()
 		direct := sseq[match[0][0]:match[0][1]]
-		ftag := sseq[(match[0][0] - marker.taglength):match[0][0]]
+		ftag := strings.ToLower(sseq[(match[0][0] - marker.taglength):match[0][0]])
 
 		m := DemultiplexMatch{
 			ForwardMatch:      direct,
@@ -193,7 +194,7 @@ func (marker *Marker) Match(sequence *obiseq.BioSequence) *DemultiplexMatch {
 
 			} else {
 				ftag = ftag.ReverseComplement(true)
-				sftag = ftag.String()
+				sftag = strings.ToLower(ftag.String())
 			}
 
 			m.ForwardMatch = direct.String()

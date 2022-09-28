@@ -54,8 +54,8 @@ func _parseMainNGSFilterTags(text string) obingslibrary.TagPair {
 	}
 
 	return obingslibrary.TagPair{
-		Forward: tags[0],
-		Reverse: tags[1],
+		Forward: strings.ToLower(tags[0]),
+		Reverse: strings.ToLower(tags[1]),
 	}
 }
 
