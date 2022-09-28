@@ -129,9 +129,9 @@ func (s *BioSequence) Copy() *BioSequence {
 	newSeq.id = s.id
 	newSeq.definition = s.definition
 
-	newSeq.sequence = GetSlice(s.sequence...)
-	newSeq.qualities = GetSlice(s.qualities...)
-	newSeq.feature = GetSlice(s.feature...)
+	newSeq.sequence = CopySlice(s.sequence)
+	newSeq.qualities = CopySlice(s.qualities)
+	newSeq.feature = CopySlice(s.feature)
 
 	if len(s.annotations) > 0 {
 		newSeq.annotations = GetAnnotation(s.annotations)
@@ -339,7 +339,6 @@ func (s *BioSequence) WriteByteQualities(data byte) error {
 func (s *BioSequence) ClearQualities() {
 	s.qualities = s.qualities[0:0]
 }
-
 
 // A method that appends a byte slice to the sequence.
 func (s *BioSequence) Write(data []byte) (int, error) {

@@ -1,6 +1,7 @@
 package obiseq
 
 import (
+	"log"
 	"sync"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/goutils"
@@ -14,20 +15,34 @@ var _BioSequenceByteSlicePool = sync.Pool{
 }
 
 func RecycleSlice(s *[]byte) {
-	if s != nil && *s != nil {
+	if s != nil && cap(*s) > 0 {
 		*s = (*s)[:0]
+		if cap(*s) == 0 {
+			log.Panicln("trying to store a NIL slice in the pool", s == nil, *s == nil, cap(*s))
+		}
 		_BioSequenceByteSlicePool.Put(s)
 	}
 }
 
-func GetSlice(values ...byte) []byte {
-	s := *(_BioSequenceByteSlicePool.Get().(*[]byte))
+// It returns a slice of bytes from a pool of slices.
+//
+// the slice can be prefilled with the provided values
+func GetSlice(capacity int) []byte {
+	p := _BioSequenceByteSlicePool.Get().(*[]byte)
 
-	if len(values) > 0 {
-		s = append(s, values...)
+	if p == nil || *p == nil || cap(*p) < capacity {
+		s := make([]byte, 0, capacity)
+		p = &s
 	}
+	s := *p
 
 	return s
+}
+
+func CopySlice(src []byte) []byte {
+	sl := GetSlice(len(src))
+	copy(sl,src)
+	return sl
 }
 
 var BioSequenceAnnotationPool = sync.Pool{

@@ -13,7 +13,6 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/cutils"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
@@ -31,13 +30,7 @@ func _FastseqReader(seqfile C.fast_kseq_p,
 
 		s := seqfile.seq
 
-		csequence := cutils.ByteSlice(unsafe.Pointer(s.seq.s), int(s.seq.l))
-		sequence := obiseq.GetSlice()
-		sequence = append(sequence, csequence...)
-
-		//sequence := C.GoBytes(unsafe.Pointer(s.seq.s),
-		//	C.int(s.seq.l))
-
+		sequence := C.GoBytes(unsafe.Pointer(s.seq.s), C.int(s.seq.l))
 		name := C.GoString(s.name.s)
 
 		if s.comment.l > C.ulong(0) {
@@ -49,12 +42,23 @@ func _FastseqReader(seqfile C.fast_kseq_p,
 		rep := obiseq.NewBioSequence(name, sequence, comment)
 
 		if s.qual.l > C.ulong(0) {
-			cquality := cutils.ByteSlice(unsafe.Pointer(s.qual.s), int(s.qual.l))
+			cquality := unsafe.Slice(s.qual.s, C.int(s.qual.l))
 			l := int(s.qual.l)
-			quality := obiseq.GetSlice()
+			quality := obiseq.GetSlice(l)
 			shift := uint8(seqfile.shift)
+
 			for j := 0; j < l; j++ {
-				quality = append(quality, uint8(cquality[j])-shift)
+				func() {
+					defer func() {
+						if err := recover(); err != nil {
+							log.Println("cquality:", cquality,
+								"s.qual.s:", s.qual.s,
+								"quality:", quality)
+							log.Panic("panic occurred:", err)
+						}
+					}()
+					quality = append(quality, uint8(cquality[j])-shift)
+				}()
 			}
 
 			rep.SetQualities(quality)
