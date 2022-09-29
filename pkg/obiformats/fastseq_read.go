@@ -26,8 +26,7 @@ func _FastseqReader(seqfile C.fast_kseq_p,
 
 	slice := obiseq.MakeBioSequenceSlice()
 
-	for l := int64(C.next_fast_sek(seqfile)); l > 0; l = int64(C.next_fast_sek(seqfile)) {
-
+	for l := int64(C.next_fast_sek(seqfile)); l != 0; l = int64(C.next_fast_sek(seqfile)) {
 		s := seqfile.seq
 
 		sequence := C.GoBytes(unsafe.Pointer(s.seq.s), C.int(s.seq.l))
@@ -77,6 +76,9 @@ func _FastseqReader(seqfile C.fast_kseq_p,
 			i++
 			ii = 0
 		}
+
+		// log.Println("longueur : ",l,rep.Length())
+
 	}
 	if len(slice) > 0 {
 		iterator.Push(obiiter.MakeBioSequenceBatch(i, slice))
@@ -147,6 +149,12 @@ func ReadFastSeqBatchFromStdin(options ...WithOption) obiiter.IBioSequenceBatch 
 
 	go _FastseqReader(C.open_fast_sek_stdin(C.int32_t(opt.QualityShift())),
 		newIter, opt.BatchSize())
+
+	parser := opt.ParseFastSeqHeader()
+
+	if parser != nil {
+		return IParseFastSeqHeaderBatch(newIter, options...)
+	}
 
 	return newIter
 }

@@ -52,6 +52,7 @@ fast_kseq_p open_fast_sek_fd(int fd, bool keep_open, int shift) {
         fd = dup(fd);
 
     fp = gzdopen(fd, "r"); 
+
     return _open_fast_sek(fp, shift);
 }
 
@@ -67,8 +68,11 @@ int64_t next_fast_sek(fast_kseq_t* iterator) {
         return -3;
 
     l = kseq_read(iterator->seq);
+    if (l < 0) l = 0;
+
     iterator->finished = l==0;
     if (l>0) l = gzoffset(iterator->filez);
+
     return l;
 }
 

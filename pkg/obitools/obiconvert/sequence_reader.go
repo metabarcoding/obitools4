@@ -82,7 +82,7 @@ func ReadBioSequencesBatch(filenames ...string) (obiiter.IBioSequenceBatch, erro
 		opts = append(opts, obiformats.OptionsFastSeqHeaderParser(obiformats.ParseGuessedFastSeqHeader))
 	}
 
-	nworkers := obioptions.CLIParallelWorkers() / 4
+	nworkers := obioptions.CLIParallelWorkers() // / 4
 	if nworkers < 2 {
 		nworkers = 2
 	}
@@ -94,7 +94,7 @@ func ReadBioSequencesBatch(filenames ...string) (obiiter.IBioSequenceBatch, erro
 	opts = append(opts, obiformats.OptionsQualityShift(CLIInputQualityShift()))
 
 	if len(filenames) == 0 {
-
+		log.Printf("Reading sequences from stdin in %s\n", CLIInputFormat())
 		switch CLIInputFormat() {
 		case "ecopcr":
 			iterator = obiformats.ReadEcoPCRBatch(os.Stdin, opts...)
@@ -129,7 +129,7 @@ func ReadBioSequencesBatch(filenames ...string) (obiiter.IBioSequenceBatch, erro
 			if CLINoInputOrder() {
 				nreader = obioptions.CLIParallelWorkers()
 			}
-			
+
 			iterator = obiformats.ReadSequencesBatchFromFiles(
 				filenames,
 				reader,
