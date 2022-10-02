@@ -296,6 +296,8 @@ func (iterator IBioSequenceBatch) SortBatches(sizes ...int) IBioSequenceBatch {
 	go func() {
 		for iterator.Next() {
 			batch := iterator.Get()
+			// log.Println("Pushd seq #", batch.order, next_to_send)
+
 			if batch.order == next_to_send {
 				newIter.pointer.channel <- batch
 				next_to_send++
@@ -424,6 +426,7 @@ func (iterator IBioSequenceBatch) Rebatch(size int, sizes ...int) IBioSequenceBa
 
 		for iterator.Next() {
 			seqs := iterator.Get()
+			// log.Println("Got seq #", len(seqs.Slice()))
 			for _, s := range seqs.slice {
 				buffer = append(buffer, s)
 				if len(buffer) == size {
@@ -637,9 +640,7 @@ func (iterator IBioSequenceBatch) FilterOn(predicate obiseq.SequencePredicate,
 			}
 
 			seqs.slice = slice[:j]
-			if seqs.Length() > 0 {
-				trueIter.Push(seqs)
-			}
+			trueIter.pointer.channel <- seqs
 		}
 
 		trueIter.Done()
@@ -651,7 +652,7 @@ func (iterator IBioSequenceBatch) FilterOn(predicate obiseq.SequencePredicate,
 
 	go ff(iterator)
 
-	return trueIter.SortBatches().Rebatch(size)
+	return trueIter.Rebatch(size)
 }
 
 // Load every sequences availables from an IBioSequenceBatch iterator into
