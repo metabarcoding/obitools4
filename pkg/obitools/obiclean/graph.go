@@ -266,7 +266,7 @@ func reweightSequences(seqs *[]*seqPCR) {
 	//var rfunc func(*seqPCR)
 
 	rfunc := func(node *seqPCR) {
-		node.AddedSons=0
+		node.AddedSons = 0
 		nedges := len(node.Edges)
 		if nedges > 0 {
 			swf := 0.0
@@ -313,11 +313,13 @@ func buildSamplePairs(seqs *[]*seqPCR, workers int) int {
 
 		for j := i + 1; j < nseq; j++ {
 			father := (*seqs)[j]
-			d, pos, a1, a2 := obialign.D1Or0(son.Sequence, father.Sequence)
-			if d > 0 {
-				son.Edges = append(son.Edges, makeEdge(j, d, pos, a2, a1))
-				father.SonCount++
+			if father.Count > son.Count {
+				d, pos, a1, a2 := obialign.D1Or0(son.Sequence, father.Sequence)
+				if d > 0 {
+					son.Edges = append(son.Edges, makeEdge(j, d, pos, a2, a1))
+					father.SonCount++
 
+				}
 			}
 		}
 
