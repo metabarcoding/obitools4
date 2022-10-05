@@ -196,3 +196,11 @@ func SliceWorkerPipe(worker SeqSliceWorker, sizes ...int) Pipeable {
 
 	return f
 }
+
+func ReverseComplementWorker(inplace bool) SeqWorker {
+	f := func(input *obiseq.BioSequence) *obiseq.BioSequence {
+		return input.ReverseComplement(inplace)
+	}
+
+	return f
+}
