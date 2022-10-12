@@ -3,12 +3,13 @@ package goutils
 import (
 	"bufio"
 	"bytes"
-	"encoding/gob"
 	"encoding/json"
 	"io"
 	"os"
 	"reflect"
 	"sync"
+
+	"github.com/barkimedes/go-deepcopy"
 )
 
 // NotAnInteger defines a new type of Error : "NotAnInteger"
@@ -57,6 +58,44 @@ func InterfaceToInt(i interface{}) (val int, err error) {
 	default:
 		err = &NotABoolean{"value attribute cannot be casted to an integer"}
 	}
+	return
+}
+
+// NotABoolean defines a new type of Error : "NotAMapInt"
+type NotAMapInt struct {
+	message string
+}
+
+// Error() retreives the error message associated to the "NotAnInteger"
+// error. Tha addition of that Error message make the "NotAnInteger"
+// complying with the error interface
+func (m *NotAMapInt) Error() string {
+	return m.message
+}
+
+func InterfaceToIntMap(i interface{}) (val map[string]int, err error) {
+	err = nil
+
+	switch i := i.(type) {
+	case map[string]int:
+		val = i
+	case map[string]interface{}:
+		val = make(map[string]int, len(i))
+		for k, v := range i {
+			val[k], err = InterfaceToInt(v)
+			if err != nil {
+				return
+			}
+		}
+	case map[string]float64:
+		val = make(map[string]int, len(i))
+		for k, v := range i {
+			val[k] = int(v)
+		}
+	default:
+		err = &NotAMapInt{"value attribute cannot be casted to a map[string]int"}
+	}
+
 	return
 }
 
@@ -122,14 +161,14 @@ func CastableToInt(i interface{}) bool {
 	}
 }
 
-// "CopyMap copies the contents of a map[string]interface{} to another map[string]interface{}."
-//
-// The function uses the gob package to encode the source map into a buffer and then decode the buffer
-// into the destination map
-func CopyMap(dest, src map[string]interface{}) {
-	buf := new(bytes.Buffer)
-	gob.NewEncoder(buf).Encode(src)
-	gob.NewDecoder(buf).Decode(&dest)
+func MustFillMap(dest, src map[string]interface{}) {
+
+	for k, v := range src {
+		if IsAMap(v) || IsASlice(v) || IsAnArray(v) {
+			v = deepcopy.MustAnything(v)
+		}
+		dest[k] = v
+	}
 }
 
 // Read a whole file into the memory and store it as array of lines
