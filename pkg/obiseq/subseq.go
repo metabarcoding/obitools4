@@ -43,9 +43,30 @@ func (sequence *BioSequence) Subsequence(from, to int, circular bool) (*BioSeque
 
 	}
 
-	if len(sequence.Annotations()) > 0 {
+	if sequence.HasAnnotation() {
 		newSeq.annotations = GetAnnotation(sequence.Annotations())
 	}
 
-	return newSeq, nil
+	return newSeq._subseqMutation(from), nil
+}
+
+func (sequence *BioSequence) _subseqMutation(shift int) *BioSequence {
+
+	lseq := sequence.Length()
+
+	mut, ok := sequence.GetIntMap("pairing_mismatches")
+	if ok && len(mut) > 0 {
+		cmut := make(map[string]int, len(mut))
+
+		for m, p := range mut {
+			if p < lseq {
+				cmut[m] = p - shift
+			}
+		}
+
+		sequence.SetAttribute("pairing_mismatches", cmut)
+	}
+
+	return sequence
+
 }

@@ -5,7 +5,9 @@
 package obialign
 
 import (
+	"fmt"
 	"math"
+	"strings"
 	"sync"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
@@ -113,7 +115,7 @@ func BuildAlignment(seqA, seqB *obiseq.BioSequence,
 // In that case arenas will be allocated by the function but, they will not
 // be reusable for other alignments and desallocated at the BuildQualityConsensus
 // return.
-func BuildQualityConsensus(seqA, seqB *obiseq.BioSequence, path []int) (*obiseq.BioSequence, int) {
+func BuildQualityConsensus(seqA, seqB *obiseq.BioSequence, path []int, statOnMismatch bool) (*obiseq.BioSequence, int) {
 
 	bufferSA := obiseq.GetSlice(seqA.Length())
 	bufferSB := obiseq.GetSlice(seqB.Length())
@@ -142,12 +144,18 @@ func BuildQualityConsensus(seqA, seqB *obiseq.BioSequence, path []int) (*obiseq.
 	var qM, qm byte
 	var i int
 
+	mismatches := make(map[string]int)
+
 	match := 0
 
 	for i, qA = range bufferQA {
 		nA := bufferSA[i]
 		nB := bufferSB[i]
 		qB = bufferQB[i]
+
+		if statOnMismatch && nA != nB && nA != ' ' && nB != ' ' {
+			mismatches[strings.ToUpper(fmt.Sprintf("(%c:%02d)->(%c:%02d)", nA, qA, nB, qB))] = i + 1
+		}
 
 		if qA > qB {
 			qM = qA
@@ -188,5 +196,39 @@ func BuildQualityConsensus(seqA, seqB *obiseq.BioSequence, path []int) (*obiseq.
 	)
 	consSeq.SetQualities(bufferQA)
 
+	if statOnMismatch && len(mismatches) > 0 {
+		consSeq.SetAttribute("pairing_mismatches", mismatches)
+	}
+
 	return consSeq, match
 }
+
+// func BuildCigar(seqA, seqB *obiseq.BioSequence, path []int) string {
+
+// 	lp := len(path)
+
+// 	posA := 0
+// 	posB := 0
+// 	oldStep := ' '
+// 	kstep := ' '
+// 	for i := 0; i < lp; i++ {
+// 		step := path[i]
+
+// 		if step < 0 {
+// 			kstep='D'
+// 			posA -= step
+// 		}
+// 		if step > 0 {
+// 			kstep='I'
+// 			posB += step
+// 		}
+
+// 		i++
+// 		step = path[i]
+// 		if step > 0 {
+// 			kstep = 'M'
+// 			posA += step
+// 			posB += step
+// 		}
+// 	}
+// }

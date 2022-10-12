@@ -257,6 +257,20 @@ func (s *BioSequence) GetBool(key string) (bool, bool) {
 	return val, ok
 }
 
+func (s *BioSequence) GetIntMap(key string) (map[string]int, bool) {
+	var val map[string]int
+	var err error
+
+	v, ok := s.GetAttribute(key)
+
+	if ok {
+		val, err = goutils.InterfaceToIntMap(v)
+		ok = err == nil
+	}
+
+	return val, ok
+}
+
 // Returning the MD5 hash of the sequence.
 func (s *BioSequence) MD5() [16]byte {
 	return md5.Sum(s.sequence)

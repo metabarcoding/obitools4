@@ -41,7 +41,7 @@ func GetSlice(capacity int) []byte {
 
 func CopySlice(src []byte) []byte {
 	sl := GetSlice(len(src))
-	copy(sl,src)
+	copy(sl, src)
 	return sl
 }
 
@@ -69,7 +69,7 @@ func GetAnnotation(values ...Annotation) Annotation {
 	}
 
 	if len(values) > 0 {
-		goutils.CopyMap(a, values[0])
+		goutils.MustFillMap(a, values[0])
 	}
 
 	return a

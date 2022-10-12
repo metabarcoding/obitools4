@@ -182,5 +182,3 @@ func ExtractBarcodeSliceWorker(ngslibrary NGSLibrary,
 
 	return worker
 }
-
-

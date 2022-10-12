@@ -275,7 +275,7 @@ func _Pcr(seq ApatSequence,
 								(opt.MaxLength() == 0 || length <= opt.MaxLength()) {
 								amplicon, _ := sequence.Subsequence(fm[1], rm[0], opt.pointer.circular)
 								annot := amplicon.Annotations()
-								goutils.CopyMap(annot, sequence.Annotations())
+								goutils.MustFillMap(annot, sequence.Annotations())
 								annot["forward_primer"] = forward.String()
 
 								match, _ := sequence.Subsequence(fm[0], fm[1], opt.pointer.circular)
@@ -350,7 +350,7 @@ func _Pcr(seq ApatSequence,
 								amplicon = amplicon.ReverseComplement(true)
 
 								annot := amplicon.Annotations()
-								goutils.CopyMap(annot, sequence.Annotations())
+								goutils.MustFillMap(annot, sequence.Annotations())
 								annot["forward_primer"] = forward.String()
 
 								match, _ := sequence.Subsequence(rm[0], rm[1], opt.pointer.circular)

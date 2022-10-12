@@ -53,6 +53,7 @@ func (library *NGSLibrary) Match(sequence *obiseq.BioSequence) *DemultiplexMatch
 
 func (library *NGSLibrary) ExtractBarcode(sequence *obiseq.BioSequence, inplace bool) (*obiseq.BioSequence, error) {
 	match := library.Match(sequence)
+
 	return match.ExtractBarcode(sequence, inplace)
 }
 
@@ -244,6 +245,7 @@ func (match *DemultiplexMatch) ExtractBarcode(sequence *obiseq.BioSequence, inpl
 			return sequence, errors.New("read correponding to a primer dimer")
 		}
 	}
+
 
 	if !match.IsDirect {
 		sequence.ReverseComplement(true)

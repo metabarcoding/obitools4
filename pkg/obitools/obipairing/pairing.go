@@ -110,7 +110,7 @@ func AssemblePESequences(seqA, seqB *obiseq.BioSequence,
 	arenaAlign obialign.PEAlignArena) *obiseq.BioSequence {
 
 	score, path := obialign.PEAlign(seqA, seqB, gap, delta, arenaAlign)
-	cons, match := obialign.BuildQualityConsensus(seqA, seqB, path)
+	cons, match := obialign.BuildQualityConsensus(seqA, seqB, path,true)
 
 	left := path[0]
 	right := 0
