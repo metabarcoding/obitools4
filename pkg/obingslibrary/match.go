@@ -246,7 +246,6 @@ func (match *DemultiplexMatch) ExtractBarcode(sequence *obiseq.BioSequence, inpl
 		}
 	}
 
-
 	if !match.IsDirect {
 		sequence.ReverseComplement(true)
 	}
@@ -277,19 +276,19 @@ func (match *DemultiplexMatch) ExtractBarcode(sequence *obiseq.BioSequence, inpl
 		annot["reverse_tag"] = match.ReverseTag
 	}
 
-	if match.Error != nil {
-		annot["demultiplex_error"] = fmt.Sprintf("%v", match.Error)
-	}
-
-	if match.Pcr != nil {
-		annot["sample"] = match.Pcr.Sample
-		annot["experiment"] = match.Pcr.Experiment
-		for k, val := range match.Pcr.Annotations {
-			annot[k] = val
+	if match.Error == nil {
+		if match.Pcr != nil {
+			annot["sample"] = match.Pcr.Sample
+			annot["experiment"] = match.Pcr.Experiment
+			for k, val := range match.Pcr.Annotations {
+				annot[k] = val
+			}
+		} else {
+			annot["demultiplex_error"] = "cannot assign the sequence to a sample"
+			match.Error = errors.New("cannot assign the sequence to a sample")
 		}
 	} else {
-		annot["demultiplex_error"] = "cannot assign the sequence to a sample"
-		match.Error = errors.New("cannot assign the sequence to a sample")
+		annot["demultiplex_error"] = fmt.Sprintf("%v", match.Error)
 	}
 
 	return sequence, match.Error
