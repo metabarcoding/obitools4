@@ -13,6 +13,7 @@ package obiseq
 import (
 	"crypto/md5"
 	"fmt"
+	"strconv"
 	"sync/atomic"
 
 	log "github.com/sirupsen/logrus"
@@ -296,6 +297,49 @@ func (s *BioSequence) Taxid() int {
 	}
 
 	return taxid
+}
+
+func (s *BioSequence) EcotagRefIndex() map[int]string {
+
+	var val map[int]string
+
+	i, ok := s.GetAttribute("ecotag_ref_index")
+
+	if !ok {
+		return nil
+	}
+
+	switch i := i.(type) {
+	case map[int]string:
+		val = i
+	case map[string]interface{}:
+		val = make(map[int]string, len(i))
+		for k, v := range i {
+			score, err := strconv.Atoi(k)
+			if err != nil {
+				log.Panicln(err)
+			}
+
+			val[score], err = goutils.InterfaceToString(v)
+			if err != nil {
+				log.Panicln(err)
+			}
+		}
+	case map[string]string:
+		val = make(map[int]string, len(i))
+		for k, v := range i {
+			score, err := strconv.Atoi(k)
+			if err != nil {
+				log.Panicln(err)
+			}
+			val[score] = v
+
+		}
+	default:
+		log.Panicln("value of attribute ecotag_ref_index cannot be casted to a map[int]string")
+	}
+
+	return val
 }
 
 func (s *BioSequence) SetTaxid(taxid int) {

@@ -21,7 +21,7 @@ var __single_base_code__ = []byte{0,
 }
 
 // Encode4mer transforms an obiseq.BioSequence into a sequence
-// of kmer of length 4. Each letter of the sequence noot belonging
+// of kmer of length 4. Each letter of the sequence not belonging
 // A, C, G, T, U are considered as a A. The kmer is encoded as a byte
 // value ranging from 0 to 255. Each nucleotite is represented by
 // two bits. The values 0, 1, 2, 3 correspond respectively to A, C, G,
@@ -65,15 +65,24 @@ func Encode4mer(seq *obiseq.BioSequence, buffer *[]byte) []byte {
 	return *buffer
 }
 
+// Index4mer returns an index where the occurrence position of every fourmer is
+// stored. The index is returned as an array of slices of integer.  The first
+// dimention corresponds to the code of the 4mer, the second
 func Index4mer(seq *obiseq.BioSequence, index *[][]int, buffer *[]byte) [][]int {
 
 	iternal_buffer := Encode4mer(seq, buffer)
 
 	if index == nil || cap(*index) < 256 {
+		// A new index is created
 		i := make([][]int, 256)
-		index = &i
+		if index == nil {
+			index = &i
+		} else {
+			*index = i
+		}
 	}
 
+	// Every cells of the index is emptied
 	for i := 0; i < 256; i++ {
 		(*index)[i] = (*index)[i][:0]
 	}
@@ -85,6 +94,9 @@ func Index4mer(seq *obiseq.BioSequence, index *[][]int, buffer *[]byte) [][]int 
 	return *index
 }
 
+// FastShiftFourMer runs a Fast algorithm (similar to the one used in FASTA) to compare two sequences.
+// The returned values are two integer values. The shift between both the sequences and the count of
+// matching 4mer when this shift is applied between both the sequences.
 func FastShiftFourMer(index [][]int, seq *obiseq.BioSequence, buffer *[]byte) (int, int) {
 
 	iternal_buffer := Encode4mer(seq, buffer)
@@ -115,3 +127,4 @@ func FastShiftFourMer(index [][]int, seq *obiseq.BioSequence, buffer *[]byte) (i
 
 	return maxshift, maxcount
 }
+

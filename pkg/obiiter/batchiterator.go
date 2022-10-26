@@ -465,6 +465,14 @@ func (iterator IBioSequenceBatch) Recycle() {
 	log.Debugf("End of the recycling of %d Bioseq objects", recycled)
 }
 
+func (iterator IBioSequenceBatch) Consume() {
+	for iterator.Next() {
+		batch := iterator.Get()
+		batch.Recycle()
+	}
+}
+
+
 func (iterator IBioSequenceBatch) Count(recycle bool) (int, int, int) {
 	variants := 0
 	reads := 0

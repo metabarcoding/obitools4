@@ -96,8 +96,18 @@ func (matrix *LCSMatrix) Set(i, j int, score, length int16) {
 	}
 }
 
+// Computes the LCS between two DNA sequences and the length of the
+// corresponding alignment
 func LCSScore(seqA, seqB *obiseq.BioSequence, maxError int,
 	matrix *LCSMatrix) (int, int) {
+	
+	if seqA.Length() == 0 {
+		log.Fatal("Sequence A has a length of 0")
+	}
+
+	if seqB.Length() == 0 {
+		log.Fatal("Sequence B has a length of 0")
+	}
 	// swapped := false
 
 	if seqA.Length() < seqB.Length() {
@@ -105,18 +115,39 @@ func LCSScore(seqA, seqB *obiseq.BioSequence, maxError int,
 		// swapped = true
 	}
 
+
+
 	if (seqA.Length() - seqB.Length()) > maxError {
 		return -1, -1
 	}
 
-	matrix = NewLCSMatrix(matrix, seqA.Length(), seqB.Length(), maxError)
+	la := seqA.Length()
+	lb := seqB.Length()
+	sa := seqA.Sequence()
+	sb := seqB.Sequence()
+
+	matrix = NewLCSMatrix(matrix, la, lb, maxError)
 
 	for i := 1; i <= matrix.l; i++ {
 		ij := max(1, i-matrix.extra)
 		sj := min(i+matrix.delta+matrix.extra, matrix.ll)
 		for j := ij; j <= sj; j++ {
 			sd, ld := matrix.Get(i-1, j-1)
-			if seqB.Sequence()[i-1] == seqA.Sequence()[j-1] {
+			if i > lb {
+				log.Println("Error on seq B ", 1, matrix.l)
+				log.Println(i)
+				log.Println(seqB.Length(), "/", lb)
+				log.Println(string(sa))
+				log.Fatalln(string(sb))
+			}
+			if j > la {
+				log.Println("Error on seq A ", ij, sj)
+				log.Println(j)
+				log.Println(seqA.Length(), "/", la)
+				log.Println(string(sa))
+				log.Fatalln(string(sb))
+			}
+			if sb[i-1] == sa[j-1] {
 				sd++
 			}
 			sup, lup := matrix.Get(i-1, j)
@@ -132,11 +163,13 @@ func LCSScore(seqA, seqB *obiseq.BioSequence, maxError int,
 		}
 	}
 
-	s, l := matrix.Get(seqB.Length(), seqA.Length())
+	s, l := matrix.Get(lb, la)
 
 	if (l - s) > int16(maxError) {
+		// log.Println(l,s,l-s,maxError)
 		return -1, -1
 	}
 
 	return int(s), int(l)
 }
+
