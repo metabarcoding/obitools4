@@ -18,7 +18,6 @@ import (
 
 func IndexSequence(seqidx int,
 	references obiseq.BioSequenceSlice,
-	refcounts []*obikmer.Table4mer,
 	taxo *obitax.Taxonomy) map[int]string {
 
 	sequence := references[seqidx]
@@ -28,23 +27,7 @@ func IndexSequence(seqidx int,
 
 	score := make([]int, len(references))
 	for i, ref := range references {
-		// maxe := goutils.MaxInt(sequence.Length(), ref.Length())
-		// mine := 0
-		// if refcounts != nil {
-		// 	mine, maxe = obikmer.Error4MerBounds(refcounts[seqidx], refcounts[i])
-		// }
-
-		
 		lcs, alilength := obialign.FullLCSScore(sequence, ref, matrix)
-
-		// if lcs < 0 {
-		// 	log.Print("Max error wrongly estimated", mine, maxe)
-		// 	log.Println(string(sequence.Sequence()))
-		// 	log.Fatalln(string(ref.Sequence()))
-
-		// 	maxe := goutils.MaxInt(sequence.Length(), ref.Length())
-		// 	lcs, alilength = obialign.LCSScore(sequence, ref, matrix)
-		// }
 		score[i] = alilength - lcs
 	}
 
@@ -58,7 +41,7 @@ func IndexSequence(seqidx int,
 		log.Panicln(err)
 	}
 
-	ecotag_index := make(map[int]string)
+	obitag_index := make(map[int]string)
 
 	for _, idx := range o {
 		new_taxid, err := taxo.Taxon(references[idx].Taxid())
@@ -76,7 +59,7 @@ func IndexSequence(seqidx int,
 		if current_taxid.Taxid() != new_taxid.Taxid() {
 
 			if new_score > current_score {
-				ecotag_index[score[current_idx]] = fmt.Sprintf(
+				obitag_index[score[current_idx]] = fmt.Sprintf(
 					"%d@%s@%s",
 					current_taxid.Taxid(),
 					current_taxid.ScientificName(),
@@ -89,15 +72,15 @@ func IndexSequence(seqidx int,
 		}
 	}
 
-	ecotag_index[score[current_idx]] = fmt.Sprintf(
+	obitag_index[score[current_idx]] = fmt.Sprintf(
 		"%d@%s@%s",
 		current_taxid.Taxid(),
 		current_taxid.ScientificName(),
 		current_taxid.Rank())
 
-	sequence.SetAttribute("ecotag_ref_index", ecotag_index)
+	sequence.SetAttribute("obitag_ref_index", obitag_index)
 
-	return ecotag_index
+	return obitag_index
 }
 
 func IndexReferenceDB(iterator obiiter.IBioSequenceBatch) obiiter.IBioSequenceBatch {
@@ -142,7 +125,7 @@ func IndexReferenceDB(iterator obiiter.IBioSequenceBatch) obiiter.IBioSequenceBa
 		for l := range limits {
 			sl := obiseq.MakeBioSequenceSlice()
 			for i := l[0]; i < l[1]; i++ {
-				IndexSequence(i, references, refcounts, taxo)
+				IndexSequence(i, references, taxo)
 				sl = append(sl, references[i])
 			}
 			indexed.Push(obiiter.MakeBioSequenceBatch(l[0]/10, sl))

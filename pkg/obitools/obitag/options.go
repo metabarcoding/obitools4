@@ -11,14 +11,18 @@ import (
 )
 
 var _RefDB = ""
+var _RunExact = false
 
 func TagOptionSet(options *getoptions.GetOpt) {
-	options.StringVar(&_RefDB, "reference-db",_RefDB,
+	options.StringVar(&_RefDB, "reference-db", _RefDB,
 		options.Alias("R"),
 		options.Required(),
 		options.ArgName("FILENAME"),
 		options.Description("The name of the file containing the reference DB"))
 
+	options.BoolVar(&_RunExact, "exact", _RunExact,
+		options.Alias("E"),
+		options.Description("Unactivate the heuristic limatitating the sequence comparisons"))
 
 }
 
@@ -26,7 +30,7 @@ func TagOptionSet(options *getoptions.GetOpt) {
 // the obiuniq command
 func OptionSet(options *getoptions.GetOpt) {
 	obiconvert.OptionSet(options)
-	obifind.LoadTaxonomyOptionSet(options,true,false)
+	obifind.LoadTaxonomyOptionSet(options, true, false)
 	TagOptionSet(options)
 }
 
@@ -35,11 +39,15 @@ func CLIRefDBName() string {
 }
 
 func CLIRefDB() obiseq.BioSequenceSlice {
-	refdb,err := obiformats.ReadSequencesBatchFromFile(_RefDB)
+	refdb, err := obiformats.ReadSequencesBatchFromFile(_RefDB)
 
 	if err != nil {
-		log.Panicf("Cannot open the reference library file : %s\n",_RefDB)
+		log.Panicf("Cannot open the reference library file : %s\n", _RefDB)
 	}
 
 	return refdb.Load()
+}
+
+func CLIRunExact() bool {
+	return _RunExact
 }

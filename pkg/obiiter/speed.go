@@ -50,9 +50,9 @@ func (iterator IBioSequenceBatch) Speed(message ...string) IBioSequenceBatch {
 	return newIter
 }
 
-func SpeedPipe() Pipeable {
+func SpeedPipe(message ...string) Pipeable {
 	f := func(iterator IBioSequenceBatch) IBioSequenceBatch {
-		return iterator.Speed()
+		return iterator.Speed(message...)
 	}
 
 	return f

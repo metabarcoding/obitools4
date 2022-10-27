@@ -18,9 +18,10 @@ func IntOrder(data []int) []int {
 		return nil
 	}
 
+	r := make([]int, len(data))
 	rk := intRanker{
 		x: data,
-		r: make([]int, len(data)),
+		r: r,
 	}
 
 	for i := 0; i < len(data); i++ {
@@ -28,6 +29,26 @@ func IntOrder(data []int) []int {
 	}
 
 	sort.Sort(rk)
+	
+	return r
+}
 
-	return rk.r
+func ReverseIntOrder(data []int) []int {
+	if len(data) == 0 {
+		return nil
+	}
+
+	r := make([]int, len(data))
+	rk := intRanker{
+		x: data,
+		r: r,
+	}
+
+	for i := 0; i < len(data); i++ {
+		rk.r[i] = i
+	}
+
+	sort.Sort(sort.Reverse(rk))
+	
+	return r
 }

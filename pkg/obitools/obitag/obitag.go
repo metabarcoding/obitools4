@@ -1,8 +1,8 @@
 package obitag
 
 import (
-	"fmt"
 	"log"
+	"math"
 	"strconv"
 	"strings"
 
@@ -14,118 +14,93 @@ import (
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitax"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obifind"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obirefidx"
 )
 
-func IndexSequence(seqidx int,
+func FindClosests(sequence *obiseq.BioSequence,
 	references obiseq.BioSequenceSlice,
 	refcounts []*obikmer.Table4mer,
-	taxo *obitax.Taxonomy) map[int]string {
+	runExact bool) (obiseq.BioSequenceSlice, int, float64, string, []int) {
 
-	sequence := references[seqidx]
 	matrix := obialign.NewLCSMatrix(nil,
 		sequence.Length(),
 		sequence.Length(),
 		sequence.Length())
 
-	score := make([]int, len(references))
-	for i, ref := range references {
-		maxe := goutils.MaxInt(sequence.Length(), ref.Length())
-		mine := 0
-		if refcounts != nil {
-			mine, maxe = obikmer.Error4MerBounds(refcounts[seqidx], refcounts[i])
-		}
-		lcs, alilength := obialign.LCSScore(sequence, ref, (maxe+1)*2, matrix)
+	seqwords := obikmer.Count4Mer(sequence, nil, nil)
+	cw := make([]int, len(refcounts))
 
-		if lcs < 0 {
-			log.Print("Max error wrongly estimated", mine, maxe)
-			log.Println(string(sequence.Sequence()))
-			log.Fatalln(string(ref.Sequence()))
+	for i, ref := range refcounts {
+		cw[i] = obikmer.Common4Mer(seqwords, ref)
+		// if i < 50 {
+		// 	print(cw[i])
+		// 	print(";")
+		// }
+	}
+	// print("\n")
 
-			maxe := goutils.MaxInt(sequence.Length(), ref.Length())
-			lcs, alilength = obialign.LCSScore(sequence, ref, maxe, matrix)
+	o := goutils.ReverseIntOrder(cw)
+
+	mcw := 100000
+	for _, i := range o {
+		if cw[i] < mcw {
+			mcw = cw[i]
 		}
-		score[i] = alilength - lcs
+		if cw[i] > mcw {
+			log.Panicln("wrong order")
+		}
 	}
 
-	o := goutils.IntOrder(score)
+	bests := obiseq.MakeBioSequenceSlice()
+	bests = append(bests, references[o[0]])
+	bestidxs := make([]int, 0)
+	bestidxs = append(bestidxs, o[0])
+	bestId := 0.0
+	bestmatch := references[o[0]].Id()
 
-	current_taxid, err := taxo.Taxon(references[o[0]].Taxid())
-	current_score := score[o[0]]
-	current_idx := o[0]
+	maxe := 0
+	n := 0
+	nf := 0
 
-	if err != nil {
-		log.Panicln(err)
-	}
+	for i, j := range o {
+		ref := references[j]
 
-	ecotag_index := make(map[int]string)
+		lmin, lmax := goutils.MinMaxInt(sequence.Length(), ref.Length())
+		atMost := lmax - lmin + int(math.Ceil(float64(lmin-3-cw[j])/4.0)) - 2
 
-	for _, idx := range o {
-		new_taxid, err := taxo.Taxon(references[idx].Taxid())
-		if err != nil {
-			log.Panicln(err)
+		if i == 0 {
+			maxe = goutils.MaxInt(sequence.Length(), ref.Length())
 		}
 
-		new_taxid, err = current_taxid.LCA(new_taxid)
-		if err != nil {
-			log.Panicln(err)
-		}
-
-		new_score := score[idx]
-
-		if current_taxid.Taxid() != new_taxid.Taxid() {
-
-			if new_score > current_score {
-				ecotag_index[score[current_idx]] = fmt.Sprintf(
-					"%d@%s@%s",
-					current_taxid.Taxid(),
-					current_taxid.ScientificName(),
-					current_taxid.Rank())
-				current_score = new_score
+		// log.Println(sequence.Id(),cw[j], maxe)
+		if runExact || (atMost <= (maxe + 1)) {
+			lcs, alilength := obialign.LCSScore(sequence, ref, maxe+1, matrix)
+			n++
+			if lcs == -1 {
+				nf++
+				// That aligment is worst than maxe, go to the next sequence
+				continue
 			}
 
-			current_taxid = new_taxid
-			current_idx = idx
-		}
-	}
+			score := alilength - lcs
+			if score < maxe {
+				bests = bests[:0]
+				bestidxs = bestidxs[:0]
+				maxe = score
+				bestId = float64(lcs) / float64(alilength)
+				// log.Println(best.Id(), maxe, bestId)
+			}
 
-	ecotag_index[score[current_idx]] = fmt.Sprintf(
-		"%d@%s@%s",
-		current_taxid.Taxid(),
-		current_taxid.ScientificName(),
-		current_taxid.Rank())
+			if score == maxe {
+				bests = append(bests, ref)
+				bestidxs = append(bestidxs, j)
+				id := float64(lcs) / float64(alilength)
+				if id > bestId {
+					bestId = id
+					bestmatch = ref.Id()
+				}
+			}
 
-	sequence.SetAttribute("ecotag_ref_index", ecotag_index)
-
-	return ecotag_index
-}
-
-func FindClosest(sequence *obiseq.BioSequence,
-	references obiseq.BioSequenceSlice) (*obiseq.BioSequence, int, float64, int) {
-
-	matrix := obialign.NewLCSMatrix(nil,
-		sequence.Length(),
-		sequence.Length(),
-		sequence.Length())
-
-	maxe := goutils.MaxInt(sequence.Length(), references[0].Length())
-	best := references[0]
-	bestidx := 0
-	bestId := 0.0
-
-	for i, ref := range references {
-		lcs, alilength := obialign.LCSScore(sequence, ref, maxe, matrix)
-		if lcs == -1 {
-			// That aligment is worst than maxe, go to the next sequence
-			continue
-		}
-
-		score := alilength - lcs
-		if score < maxe {
-			best = references[i]
-			bestidx = i
-			maxe = score
-			bestId = float64(lcs) / float64(alilength)
-			// log.Println(best.Id(), maxe, bestId)
 		}
 
 		if maxe == 0 {
@@ -133,49 +108,71 @@ func FindClosest(sequence *obiseq.BioSequence,
 			break
 		}
 	}
-	return best, maxe, bestId, bestidx
+	// log.Println("that's all falks", n, nf, maxe, bestId, bestidx)
+	return bests, maxe, bestId, bestmatch, bestidxs
 }
 
 func Identify(sequence *obiseq.BioSequence,
 	references obiseq.BioSequenceSlice,
 	refcounts []*obikmer.Table4mer,
-	taxo *obitax.Taxonomy) *obiseq.BioSequence {
-	best, differences, identity, seqidx := FindClosest(sequence, references)
+	taxo *obitax.Taxonomy,
+	runExact bool) *obiseq.BioSequence {
+	bests, differences, identity, bestmatch, seqidxs := FindClosests(sequence, references, refcounts, runExact)
 
-	idx := best.EcotagRefIndex()
-	if idx == nil {
-		idx = IndexSequence(seqidx, references, refcounts, taxo)
+	taxon := (*obitax.TaxNode)(nil)
+
+	for i, best := range bests {
+		idx := best.OBITagRefIndex()
+		if idx == nil {
+			// log.Fatalln("Need of indexing")
+			idx = obirefidx.IndexSequence(seqidxs[i], references, taxo)
+		}
+
+		d := differences
+		identification, ok := idx[d]
+		for !ok && d >= 0 {
+			identification, ok = idx[d]
+			d--
+		}
+
+		parts := strings.Split(identification, "@")
+		match_taxid, err := strconv.Atoi(parts[0])
+
+		if err != nil {
+			log.Panicln("Cannot extract taxid from :", identification)
+		}
+
+		match_taxon, err := taxo.Taxon(match_taxid)
+
+		if err != nil {
+			log.Panicln("Cannot find taxon corresponding to taxid :", match_taxid)
+		}
+
+		if taxon != nil {
+			taxon, _ = taxon.LCA(match_taxon)
+		} else {
+			taxon = match_taxon
+		}
+
 	}
 
-	d := differences
-	identification, ok := idx[d]
-	for !ok && d >= 0 {
-		identification, ok = idx[d]
-		d--
-	}
-
-	parts := strings.Split(identification, "@")
-	taxid, err := strconv.Atoi(parts[0])
-
-	if err != nil {
-		log.Panicln("Cannot extract taxid from :", identification)
-	}
-
-	sequence.SetTaxid(taxid)
-	sequence.SetAttribute("scientific_name", parts[1])
-	sequence.SetAttribute("ecotag_rank", parts[2])
-	sequence.SetAttribute("ecotag_id", identity)
-	sequence.SetAttribute("ecotag_difference", differences)
-	sequence.SetAttribute("ecotag_match", best.Id())
+	sequence.SetTaxid(taxon.Taxid())
+	sequence.SetAttribute("scientific_name", taxon.ScientificName())
+	sequence.SetAttribute("obitag_rank", taxon.Rank())
+	sequence.SetAttribute("obitag_bestid", identity)
+	sequence.SetAttribute("obitag_difference", differences)
+	sequence.SetAttribute("obitag_bestmatch", bestmatch)
+	sequence.SetAttribute("obitag_match_count", len(bests))
 
 	return sequence
 }
 
 func IdentifySeqWorker(references obiseq.BioSequenceSlice,
 	refcounts []*obikmer.Table4mer,
-	taxo *obitax.Taxonomy) obiiter.SeqWorker {
+	taxo *obitax.Taxonomy,
+	runExact bool) obiiter.SeqWorker {
 	return func(sequence *obiseq.BioSequence) *obiseq.BioSequence {
-		return Identify(sequence, references, refcounts, taxo)
+		return Identify(sequence, references, refcounts, taxo, runExact)
 	}
 }
 
@@ -198,7 +195,7 @@ func AssignTaxonomy(iterator obiiter.IBioSequenceBatch) obiiter.IBioSequenceBatc
 		log.Panicln(error)
 	}
 
-	worker := IdentifySeqWorker(references, refcounts, taxo)
+	worker := IdentifySeqWorker(references, refcounts, taxo, CLIRunExact())
 
-	return iterator.Rebatch(10).MakeIWorker(worker, obioptions.CLIParallelWorkers(), 0).Rebatch(1000)
+	return iterator.Rebatch(17).MakeIWorker(worker, obioptions.CLIParallelWorkers(), 0).Speed("Annotated sequences").Rebatch(1000)
 }

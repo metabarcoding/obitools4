@@ -18,7 +18,7 @@ import (
 // return value and val is set to 0.
 func InterfaceToString(i interface{}) (val string, err error) {
 	err = nil
-	val = fmt.Sprintf("%V", i)
+	val = fmt.Sprintf("%v", i)
 	return
 }
 

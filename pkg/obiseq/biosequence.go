@@ -299,11 +299,11 @@ func (s *BioSequence) Taxid() int {
 	return taxid
 }
 
-func (s *BioSequence) EcotagRefIndex() map[int]string {
+func (s *BioSequence) OBITagRefIndex() map[int]string {
 
 	var val map[int]string
 
-	i, ok := s.GetAttribute("ecotag_ref_index")
+	i, ok := s.GetAttribute("obitag_ref_index")
 
 	if !ok {
 		return nil
@@ -336,7 +336,7 @@ func (s *BioSequence) EcotagRefIndex() map[int]string {
 
 		}
 	default:
-		log.Panicln("value of attribute ecotag_ref_index cannot be casted to a map[int]string")
+		log.Panicln("value of attribute obitag_ref_index cannot be casted to a map[int]string")
 	}
 
 	return val
