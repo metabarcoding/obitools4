@@ -1,3 +1,5 @@
+cloudeng.io/algo v0.0.0-20220721000539-f9fe69fddaf6 h1:9vMtasELP9mg/w0tI4gkfdTkc5hDf8fP1CT9w4L/RN4=
+cloudeng.io/algo v0.0.0-20220721000539-f9fe69fddaf6/go.mod h1:dgJhQ6JXLysnBQG09/5Q56rwJfgyKXlnDbKzko9MhdA=
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
 github.com/DavidGamba/go-getoptions v0.25.3 h1:lSPcMkwWvVZU05C+Uz4DKnKN5wz4bcD1QvJ/QHCRexo=
@@ -12,6 +14,8 @@ github.com/akualab/gjoa v0.0.0-20150423185904-0953495dbcc7 h1:v8r5rCWpphm5f+yaKD
 github.com/akualab/gjoa v0.0.0-20150423185904-0953495dbcc7/go.mod h1:zhxCkmvf40lxgYc6aJuF6AOwfzuvFIANF9OQaMz5xNs=
 github.com/barkimedes/go-deepcopy v0.0.0-20220514131651-17c30cfc62df h1:GSoSVRLoBaFpOOds6QyY1L8AX7uoY+Ln3BHc22W40X0=
 github.com/barkimedes/go-deepcopy v0.0.0-20220514131651-17c30cfc62df/go.mod h1:hiVxq5OP2bUGBRNS3Z/bt/reCLFNbdcST6gISi1fiOM=
+github.com/cloudengio/go.pkgs v0.0.0-20220721000539-f9fe69fddaf6 h1:jvr4JzC9aLREkLwJJKbPSMGm3ls2nA3DaF45ELgQaRI=
+github.com/cloudengio/go.pkgs v0.0.0-20220721000539-f9fe69fddaf6/go.mod h1:F06qYndTL3ObF2Tc5nv+eduTFseb5qgCb/ZpYAlKT+4=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

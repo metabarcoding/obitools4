@@ -12,9 +12,11 @@ require (
 )
 
 require (
+	cloudeng.io/algo v0.0.0-20220721000539-f9fe69fddaf6 // indirect
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/akualab/gjoa v0.0.0-20150423185904-0953495dbcc7 // indirect
 	github.com/barkimedes/go-deepcopy v0.0.0-20220514131651-17c30cfc62df // indirect
+	github.com/cloudengio/go.pkgs v0.0.0-20220721000539-f9fe69fddaf6 // indirect
 	github.com/golang/glog v1.0.0 // indirect
 	github.com/klauspost/compress v1.15.9 // indirect
 	github.com/klauspost/pgzip v1.2.5 // indirect
