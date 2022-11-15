@@ -102,7 +102,6 @@ func OptionSet(options *getoptions.GetOpt) {
 		options.Alias("p"),
 		options.Description("Displays every parental tree's information for the provided taxid."))
 	options.StringVar(&__restrict_rank__, "rank", "",
-		options.Alias("r"),
 		options.Description("Restrict to the given taxonomic rank."))
 }
 
