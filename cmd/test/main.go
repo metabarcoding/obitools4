@@ -1,14 +1,64 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"runtime/trace"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obioptions"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obiclean"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obiconvert"
+	"cloudeng.io/algo/lcs"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obialign"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
+
+func SESStat(script *lcs.EditScript[byte]) (int, int) {
+	llcs := 0
+	gaps := 0
+	extra := 0
+	i := 0
+	ls := len(*script)
+	for i < ls {
+		e := (*script)[i]
+		// log.Println(i,e,e.Op)
+		switch e.Op {
+		case lcs.Identical: // 2
+			if gaps > 0 {
+				extra += gaps
+			}
+			llcs++
+			gaps = 0
+			i++
+		case lcs.Delete: // 1
+			if i+1 < ls {
+				en := (*script)[i+1]
+				if en.Op == lcs.Identical && e.Val == en.Val {
+					log.Println("Swap delete")
+					(*script)[i], (*script)[i+1] = (*script)[i+1], (*script)[i]
+					continue
+				}
+			}
+			gaps--
+			i++
+		case lcs.Insert: // 0
+			if i+1 < ls {
+				en := (*script)[i+1]
+				if en.Op == lcs.Identical && e.Val == en.Val {
+					log.Println("Swap Insert")
+					(*script)[i], (*script)[i+1] = (*script)[i+1], (*script)[i]
+					continue
+				}
+			}
+			gaps++
+			i++
+		}
+	}
+
+	if gaps > 0 {
+		extra += gaps
+	}
+
+	return llcs, extra
+}
 
 func main() {
 
@@ -20,15 +70,46 @@ func main() {
 	trace.Start(ftrace)
 	defer trace.Stop()
 
-	option_parser := obioptions.GenerateOptionParser(
-		obiconvert.InputOptionSet,
-	)
+	// "---CACGATCGTGC-CAGTCAT-GGCTAT"
+	// "CCCCA-GATCGTGCG-AGTCATGGGCTAT"
 
-	_, args, _ := option_parser(os.Args)
+	//  00 0 00000000 1111111 111222
+	//  01 2 34567889 0123456 789012
+	// "CA-C-GATCGTGC-CAGTCAT-GGCTAT"
+	// "CCCCAGATCGTGCG-AGTCATGGGCTAT"
 
-	fs, _ := obiconvert.ReadBioSequencesBatch(args...)
+	//A := "CACGATCGTGCCCCCAGTCATGGCTAT"
+	A := "AAATGCCCCAGATCGTGC"
+	B := "TGCCCCAGAT"
 
-	obiclean.IOBIClean(fs)
+	//A = "aaaggaacttggactgaagatttccacagaggttgcgaatgaaaaacacgtattcgaatgcctcaaatacggaatcgatcttgtctg"
+	A = "aaaggaacttggactgaagatttccacagaggttgcgaatgaaaaacacgtattcgaatgcctcaaatacggaatcgatcttgtctg"
+	B = "atccggttttacgaaaatgcgtgtggtaggggcttatgaaaacgataatcgaataaaaaagggtaggtgcagagactcaacggaagatgttctaacaaatgg"
+	// A = "aataa"
+	// B = "ttttt"
+	sA := obiseq.NewBioSequence("A", []byte(A), "")
+	sB := obiseq.NewBioSequence("A", []byte(B), "")
+	// M := lcs.NewMyers([]byte(A), []byte(B))
+	// fmt.Println(M.LCS())
+	// fmt.Println(M.SES())
+	// fmt.Println(len(M.LCS()))
+	// M.SES().FormatHorizontal(os.Stdout, []byte(B))
+	// llcs, extra := SESStat(M.SES())
+	// nlcs, nali := obialign.LCSScore(sA, sB, sB.Length(), nil)
+	// fmt.Println(llcs, extra, len(A)+extra)
+	// fmt.Println(nlcs, nali)
+	nlcs, nali := obialign.FastLCSScore(sA, sB, sB.Length(), nil)
+	fmt.Println(nlcs, nali)
+
+	// option_parser := obioptions.GenerateOptionParser(
+	// 	obiconvert.InputOptionSet,
+	// )
+
+	// _, args, _ := option_parser(os.Args)
+
+	// fs, _ := obiconvert.ReadBioSequencesBatch(args...)
+
+	// obiclean.IOBIClean(fs)
 
 	// buffer := make([]byte, 0)
 	// fs.Next()

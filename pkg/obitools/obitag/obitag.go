@@ -22,34 +22,26 @@ func FindClosests(sequence *obiseq.BioSequence,
 	refcounts []*obikmer.Table4mer,
 	runExact bool) (obiseq.BioSequenceSlice, int, float64, string, []int) {
 
-	matrix := obialign.NewLCSMatrix(nil,
-		sequence.Length(),
-		sequence.Length(),
-		sequence.Length())
+	var matrix []uint64
 
 	seqwords := obikmer.Count4Mer(sequence, nil, nil)
 	cw := make([]int, len(refcounts))
 
 	for i, ref := range refcounts {
 		cw[i] = obikmer.Common4Mer(seqwords, ref)
-		// if i < 50 {
-		// 	print(cw[i])
-		// 	print(";")
-		// }
 	}
-	// print("\n")
 
 	o := goutils.ReverseIntOrder(cw)
 
-	mcw := 100000
-	for _, i := range o {
-		if cw[i] < mcw {
-			mcw = cw[i]
-		}
-		if cw[i] > mcw {
-			log.Panicln("wrong order")
-		}
-	}
+	// mcw := 100000
+	// for _, i := range o {
+	// 	if cw[i] < mcw {
+	// 		mcw = cw[i]
+	// 	}
+	// 	if cw[i] > mcw {
+	// 		log.Panicln("wrong order")
+	// 	}
+	// }
 
 	bests := obiseq.MakeBioSequenceSlice()
 	bests = append(bests, references[o[0]])
@@ -74,7 +66,8 @@ func FindClosests(sequence *obiseq.BioSequence,
 
 		// log.Println(sequence.Id(),cw[j], maxe)
 		if runExact || (atMost <= (maxe + 1)) {
-			lcs, alilength := obialign.LCSScore(sequence, ref, maxe+1, matrix)
+			lcs, alilength := obialign.FastLCSScore(sequence, ref, maxe+1,&matrix)
+			// lcs, alilength := obialign.LCSScore(sequence, ref, maxe+1, matrix)
 			n++
 			if lcs == -1 {
 				nf++

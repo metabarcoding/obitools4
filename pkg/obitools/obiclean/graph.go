@@ -360,14 +360,14 @@ func extendSimilarityGraph(seqs *[]*seqPCR, step int, workers int) int {
 	nseq := len(*seqs)
 	running := sync.WaitGroup{}
 
-	linePairs := func(matrix *obialign.LCSMatrix, i int) {
+	linePairs := func(matrix *[]uint64, i int) {
 		son := (*seqs)[i]
 		for j := i + 1; j < nseq; j++ {
 			father := (*seqs)[j]
 			d, _, _, _ := obialign.D1Or0(son.Sequence, father.Sequence)
 
 			if d < 0 {
-				lcs, lali := obialign.LCSScore(son.Sequence, father.Sequence,
+				lcs, lali := obialign.FastLCSScore(son.Sequence, father.Sequence,
 					step,
 					matrix)
 				d := (lali - lcs)
@@ -385,9 +385,10 @@ func extendSimilarityGraph(seqs *[]*seqPCR, step int, workers int) int {
 	// idxChan := make(chan [][]Ratio)
 
 	ff := func() {
-		matrix := obialign.NewLCSMatrix(nil, 150, 150, step)
+		var matrix []uint64
+		
 		for i := range lineChan {
-			linePairs(matrix, i)
+			linePairs(&matrix, i)
 		}
 
 		running.Done()
