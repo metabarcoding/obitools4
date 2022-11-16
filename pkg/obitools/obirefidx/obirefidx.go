@@ -28,10 +28,15 @@ func IndexSequence(seqidx int,
 	var matrix []uint64
 
 	score := make([]int, len(references))
+	// t := 0
+	// r := 0
+	// w := 0
 	for i, ref := range references {
-		lcs, alilength := obialign.FastLCSScore(sequence, ref, goutils.MaxInt(sequence.Length(), ref.Length())+5, &matrix)
+		lcs, alilength := obialign.FastLCSScore(sequence, ref, -1 , &matrix)
 		score[i] = alilength - lcs
 	}
+
+	// log.Println("Redone : ",r,"/",t,"(",w,")")
 
 	o := goutils.IntOrder(score)
 

@@ -69,6 +69,10 @@ func FastLCSScore(seqA, seqB *obiseq.BioSequence, maxError int, buffer *[]uint64
 		lA, lB = lB, lA
 	}
 
+	if maxError == -1 {
+		maxError = lA*2
+	}
+
 	delta := lA - lB
 
 	// The difference of length is larger the maximum allowed errors
