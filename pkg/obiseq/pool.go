@@ -40,8 +40,10 @@ func GetSlice(capacity int) []byte {
 }
 
 func CopySlice(src []byte) []byte {
-	sl := GetSlice(len(src))
+	sl := GetSlice(len(src))[0:len(src)]
+
 	copy(sl, src)
+
 	return sl
 }
 
@@ -61,6 +63,7 @@ func RecycleAnnotation(a *Annotation) {
 	}
 }
 
+// It returns a new Annotation object, initialized with the values from the first argument
 func GetAnnotation(values ...Annotation) Annotation {
 	a := Annotation(nil)
 
