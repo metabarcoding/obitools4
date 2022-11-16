@@ -22,12 +22,3 @@ func IParseFastSeqHeaderBatch(iterator obiiter.IBioSequenceBatch,
 		opt.ParallelWorkers(),
 		opt.BufferSize())
 }
-
-func IParseFastSeqHeader(iterator obiiter.IBioSequence,
-	options ...WithOption) obiiter.IBioSequence {
-	opt := MakeOptions(options)
-
-	return IParseFastSeqHeaderBatch(iterator.IBioSequenceBatch(opt.BatchSize(),
-		opt.BufferSize()),
-		options...).SortBatches().IBioSequence()
-}

@@ -132,11 +132,6 @@ func ReadFastSeqBatchFromFile(filename string, options ...WithOption) (obiiter.I
 	return newIter, err
 }
 
-func ReadFastSeqFromFile(filename string, options ...WithOption) (obiiter.IBioSequence, error) {
-	ib, err := ReadFastSeqBatchFromFile(filename, options...)
-	return ib.SortBatches().IBioSequence(), err
-}
-
 func ReadFastSeqBatchFromStdin(options ...WithOption) obiiter.IBioSequenceBatch {
 	opt := MakeOptions(options)
 	newIter := obiiter.MakeIBioSequenceBatch(opt.BufferSize())
@@ -157,9 +152,4 @@ func ReadFastSeqBatchFromStdin(options ...WithOption) obiiter.IBioSequenceBatch 
 	}
 
 	return newIter
-}
-
-func ReadFastSeqFromStdin(options ...WithOption) obiiter.IBioSequence {
-	ib := ReadFastSeqBatchFromStdin(options...)
-	return ib.SortBatches().IBioSequence()
 }

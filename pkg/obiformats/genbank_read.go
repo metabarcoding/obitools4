@@ -130,11 +130,6 @@ func ReadGenbankBatch(reader io.Reader, options ...WithOption) obiiter.IBioSeque
 	return newIter
 }
 
-func ReadGenbank(reader io.Reader, options ...WithOption) obiiter.IBioSequence {
-	ib := ReadGenbankBatch(reader, options...)
-	return ib.SortBatches().IBioSequence()
-}
-
 func ReadGenbankBatchFromFile(filename string, options ...WithOption) (obiiter.IBioSequenceBatch, error) {
 	var reader io.Reader
 	var greader io.Reader
@@ -154,10 +149,4 @@ func ReadGenbankBatchFromFile(filename string, options ...WithOption) (obiiter.I
 	}
 
 	return ReadGenbankBatch(reader, options...), nil
-}
-
-func ReadGenbankFromFile(filename string, options ...WithOption) (obiiter.IBioSequence, error) {
-	ib, err := ReadGenbankBatchFromFile(filename, options...)
-	return ib.SortBatches().IBioSequence(), err
-
 }

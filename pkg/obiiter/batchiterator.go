@@ -244,37 +244,6 @@ func (iterator IBioSequenceBatch) Finished() bool {
 	return iterator.pointer.finished.IsSet()
 }
 
-func (iterator IBioSequenceBatch) IBioSequence(sizes ...int) IBioSequence {
-	buffsize := iterator.BufferSize()
-
-	if len(sizes) > 0 {
-		buffsize = sizes[0]
-	}
-
-	newIter := MakeIBioSequence(buffsize)
-
-	newIter.Add(1)
-
-	go func() {
-		newIter.Wait()
-		close(newIter.Channel())
-	}()
-
-	go func() {
-		for iterator.Next() {
-			batch := iterator.Get()
-
-			for batch.NotEmpty() {
-				newIter.Channel() <- batch.Pop0()
-			}
-			batch.Recycle()
-		}
-		newIter.Done()
-	}()
-
-	return newIter
-}
-
 func (iterator IBioSequenceBatch) SortBatches(sizes ...int) IBioSequenceBatch {
 	buffsize := iterator.BufferSize()
 
@@ -471,7 +440,6 @@ func (iterator IBioSequenceBatch) Consume() {
 		batch.Recycle()
 	}
 }
-
 
 func (iterator IBioSequenceBatch) Count(recycle bool) (int, int, int) {
 	variants := 0

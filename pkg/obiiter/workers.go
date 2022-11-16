@@ -153,34 +153,6 @@ func (iterator IBioSequenceBatch) MakeISliceWorker(worker SeqSliceWorker, sizes 
 	return newIter
 }
 
-func (iterator IBioSequence) MakeIWorker(worker SeqWorker, sizes ...int) IBioSequence {
-	buffsize := iterator.BufferSize()
-
-	if len(sizes) > 0 {
-		buffsize = sizes[0]
-	}
-
-	newIter := MakeIBioSequence(buffsize)
-
-	newIter.Add(1)
-
-	go func() {
-		newIter.Wait()
-		close(newIter.pointer.channel)
-	}()
-
-	go func() {
-		for iterator.Next() {
-			seq := iterator.Get()
-			seq = worker(seq)
-			newIter.pointer.channel <- seq
-		}
-		newIter.Done()
-	}()
-
-	return newIter
-}
-
 func WorkerPipe(worker SeqWorker, sizes ...int) Pipeable {
 	f := func(iterator IBioSequenceBatch) IBioSequenceBatch {
 		return iterator.MakeIWorker(worker, sizes...)

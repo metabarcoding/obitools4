@@ -3,54 +3,12 @@ package obiformats
 import (
 	"fmt"
 	"io"
-	log "github.com/sirupsen/logrus"
 	"os"
+
+	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
 )
-
-func WriteSequences(iterator obiiter.IBioSequence,
-	file io.Writer,
-	options ...WithOption) error {
-
-	opts := MakeOptions(options)
-
-	header_format := opts.FormatFastSeqHeader()
-	quality := opts.QualityShift()
-
-	ok := iterator.Next()
-
-	if ok {
-		seq := iterator.Get()
-		if seq.HasQualities() {
-			fmt.Fprintln(file, FormatFastq(seq, quality, header_format))
-			WriteFastq(iterator, file, options...)
-		} else {
-			fmt.Fprintln(file, FormatFasta(seq, header_format))
-			WriteFasta(iterator, file, options...)
-		}
-	}
-
-	return nil
-}
-
-func WriteSequencesToFile(iterator obiiter.IBioSequence,
-	filename string,
-	options ...WithOption) error {
-
-	file, err := os.Create(filename)
-
-	if err != nil {
-		log.Fatalf("open file error: %v", err)
-		return err
-	}
-
-	return WriteSequences(iterator, file, options...)
-}
-
-func WriteSequencesToStdout(iterator obiiter.IBioSequence, options ...WithOption) error {
-	return WriteSequences(iterator, os.Stdout, options...)
-}
 
 func WriteSequenceBatch(iterator obiiter.IBioSequenceBatch,
 	file io.Writer,

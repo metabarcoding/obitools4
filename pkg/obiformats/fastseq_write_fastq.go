@@ -46,47 +46,6 @@ func FormatFastqBatch(batch obiiter.BioSequenceBatch, quality_shift int,
 	return bs.Bytes()
 }
 
-func WriteFastq(iterator obiiter.IBioSequence, file io.Writer, options ...WithOption) error {
-	opt := MakeOptions(options)
-
-	header_format := opt.FormatFastSeqHeader()
-	quality := opt.QualityShift()
-
-	for iterator.Next() {
-		seq := iterator.Get()
-		fmt.Fprintln(file, FormatFastq(seq, quality, header_format))
-	}
-
-	if opt.CloseFile() {
-		switch file := file.(type) {
-		case *os.File:
-			file.Close()
-		}
-	}
-
-	return nil
-}
-
-func WriteFastqToFile(iterator obiiter.IBioSequence,
-	filename string,
-	options ...WithOption) error {
-
-	file, err := os.Create(filename)
-
-	if err != nil {
-		log.Fatalf("open file error: %v", err)
-		return err
-	}
-
-	options = append(options, OptionCloseFile())
-	return WriteFastq(iterator, file, options...)
-}
-
-func WriteFastqToStdout(iterator obiiter.IBioSequence, options ...WithOption) error {
-	options = append(options, OptionDontCloseFile())
-	return WriteFastq(iterator, os.Stdout, options...)
-}
-
 type FileChunck struct {
 	text  []byte
 	order int

@@ -100,10 +100,3 @@ func ReadSequencesBatchFromFile(filename string,
 
 	return obiiter.NilIBioSequenceBatch, nil
 }
-
-func ReadSequencesFromFile(filename string,
-	options ...WithOption) (obiiter.IBioSequence, error) {
-	ib, err := ReadSequencesBatchFromFile(filename, options...)
-	return ib.SortBatches().IBioSequence(), err
-
-}

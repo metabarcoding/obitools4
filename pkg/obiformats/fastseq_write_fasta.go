@@ -61,47 +61,6 @@ func FormatFastaBatch(batch obiiter.BioSequenceBatch, formater FormatHeader) []b
 	return bs.Bytes()
 }
 
-func WriteFasta(iterator obiiter.IBioSequence, file io.Writer, options ...WithOption) error {
-	opt := MakeOptions(options)
-
-	header_format := opt.FormatFastSeqHeader()
-
-	for iterator.Next() {
-		seq := iterator.Get()
-		fmt.Fprintln(file, FormatFasta(seq, header_format))
-	}
-
-	if opt.CloseFile() {
-		switch file := file.(type) {
-		case *os.File:
-			file.Close()
-		}
-	}
-
-	return nil
-}
-
-func WriteFastaToFile(iterator obiiter.IBioSequence,
-	filename string,
-	options ...WithOption) error {
-
-	file, err := os.Create(filename)
-
-	if err != nil {
-		log.Fatalf("open file error: %v", err)
-		return err
-	}
-
-	options = append(options, OptionCloseFile())
-
-	return WriteFasta(iterator, file, options...)
-}
-
-func WriteFastaToStdout(iterator obiiter.IBioSequence, options ...WithOption) error {
-	options = append(options, OptionDontCloseFile())
-	return WriteFasta(iterator, os.Stdout, options...)
-}
-
 func WriteFastaBatch(iterator obiiter.IBioSequenceBatch,
 	file io.Writer,
 	options ...WithOption) (obiiter.IBioSequenceBatch, error) {

@@ -5,10 +5,11 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
-	log "github.com/sirupsen/logrus"
 	"os"
 	"strconv"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
@@ -206,11 +207,6 @@ func ReadEcoPCRBatch(reader io.Reader, options ...WithOption) obiiter.IBioSequen
 	return newIter
 }
 
-func ReadEcoPCR(reader io.Reader, options ...WithOption) obiiter.IBioSequence {
-	ib := ReadEcoPCRBatch(reader, options...)
-	return ib.SortBatches().IBioSequence()
-}
-
 func ReadEcoPCRBatchFromFile(filename string, options ...WithOption) (obiiter.IBioSequenceBatch, error) {
 	var reader io.Reader
 	var greader io.Reader
@@ -229,10 +225,4 @@ func ReadEcoPCRBatchFromFile(filename string, options ...WithOption) (obiiter.IB
 	}
 
 	return ReadEcoPCRBatch(reader, options...), nil
-}
-
-func ReadEcoPCRFromFile(filename string, options ...WithOption) (obiiter.IBioSequence, error) {
-	ib, err := ReadEcoPCRBatchFromFile(filename, options...)
-	return ib.SortBatches().IBioSequence(), err
-
 }

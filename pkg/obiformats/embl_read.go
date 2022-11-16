@@ -224,11 +224,6 @@ func ReadEMBLBatch(reader io.Reader, options ...WithOption) obiiter.IBioSequence
 	return newIter
 }
 
-func ReadEMBL(reader io.Reader, options ...WithOption) obiiter.IBioSequence {
-	ib := ReadEMBLBatch(reader, options...)
-	return ib.SortBatches().IBioSequence()
-}
-
 func ReadEMBLBatchFromFile(filename string, options ...WithOption) (obiiter.IBioSequenceBatch, error) {
 	var reader io.Reader
 	var greader io.Reader
@@ -248,10 +243,4 @@ func ReadEMBLBatchFromFile(filename string, options ...WithOption) (obiiter.IBio
 	}
 
 	return ReadEMBLBatch(reader, options...), nil
-}
-
-func ReadEMBLFromFile(filename string, options ...WithOption) (obiiter.IBioSequence, error) {
-	ib, err := ReadEMBLBatchFromFile(filename, options...)
-	return ib.SortBatches().IBioSequence(), err
-
 }

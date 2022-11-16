@@ -175,9 +175,3 @@ func ReadBioSequencesBatch(filenames ...string) (obiiter.IBioSequenceBatch, erro
 
 	return iterator, nil
 }
-
-func ReadBioSequences(filenames ...string) (obiiter.IBioSequence, error) {
-	ib, err := ReadBioSequencesBatch(filenames...)
-	return ib.SortBatches().IBioSequence(), err
-
-}
