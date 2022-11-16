@@ -21,13 +21,15 @@ func IndexSequence(seqidx int,
 	taxo *obitax.Taxonomy) map[int]string {
 
 	sequence := references[seqidx]
-	matrix := obialign.NewFullLCSMatrix(nil,
-		sequence.Length(),
-		sequence.Length())
+	// matrix := obialign.NewFullLCSMatrix(nil,
+	// 	sequence.Length(),
+	// 	sequence.Length())
+
+	var matrix []uint64
 
 	score := make([]int, len(references))
 	for i, ref := range references {
-		lcs, alilength := obialign.FullLCSScore(sequence, ref, matrix)
+		lcs, alilength := obialign.FastLCSScore(sequence, ref, goutils.MaxInt(sequence.Length(), ref.Length())+5, &matrix)
 		score[i] = alilength - lcs
 	}
 
@@ -78,8 +80,6 @@ func IndexSequence(seqidx int,
 		current_taxid.ScientificName(),
 		current_taxid.Rank())
 
-	sequence.SetAttribute("obitag_ref_index", obitag_index)
-
 	return obitag_index
 }
 
@@ -125,8 +125,10 @@ func IndexReferenceDB(iterator obiiter.IBioSequenceBatch) obiiter.IBioSequenceBa
 		for l := range limits {
 			sl := obiseq.MakeBioSequenceSlice()
 			for i := l[0]; i < l[1]; i++ {
-				IndexSequence(i, references, taxo)
-				sl = append(sl, references[i])
+				idx := IndexSequence(i, references, taxo)
+				iref := references[i].Copy()
+				iref.SetAttribute("obitag_ref_index", idx)
+				sl = append(sl, iref)
 			}
 			indexed.Push(obiiter.MakeBioSequenceBatch(l[0]/10, sl))
 			bar.Add(len(sl))
