@@ -30,15 +30,21 @@ func FormatFasta(seq *obiseq.BioSequence, formater FormatHeader) string {
 	s := seq.Sequence()
 	l := len(s)
 
-	fragments.Grow(l + int(l/60) + 10)
+	folded := ""
+	if l == 0 {
+		log.Println("Writing a BioSequence of length zero")
+	} else {
+		fragments.Grow(l + int(l/60)*2 + 100)
 
-	for i := 0; i < l; i += 60 {
-		to := min(i+60, l)
-		fmt.Fprintf(&fragments, "%s\n", string(s[i:to]))
+		for i := 0; i < l; i += 60 {
+			to := min(i+60, l)
+			fmt.Fprintf(&fragments, "%s\n", string(s[i:to]))
+		}
+
+		folded = fragments.String()
+		folded = folded[:fragments.Len()-1]
 	}
 
-	folded := fragments.String()
-	folded = folded[:fragments.Len()-1]
 	info := formater(seq)
 	return fmt.Sprintf(">%s %s %s\n%s",
 		seq.Id(), info,
