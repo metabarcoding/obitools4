@@ -171,6 +171,8 @@ func CastableToInt(i interface{}) bool {
 	}
 }
 
+// > It copies the contents of the `src` map into the `dest` map, but if the value is a map, slice, or
+// array, it makes a deep copy of it
 func MustFillMap(dest, src map[string]interface{}) {
 
 	for k, v := range src {
