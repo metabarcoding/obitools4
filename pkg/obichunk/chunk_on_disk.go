@@ -65,7 +65,7 @@ func ISequenceChunkOnDisk(iterator obiiter.IBioSequenceBatch,
 
 	obiformats.WriterDispatcher(dir+"/chunk_%s.fastx",
 		iterator.Distribute(classifier),
-		obiformats.WriteSequencesBatchToFile,
+		obiformats.WriteSequencesToFile,
 	)
 
 	fileNames := find(dir, ".fastx")
@@ -75,7 +75,7 @@ func ISequenceChunkOnDisk(iterator obiiter.IBioSequenceBatch,
 	go func() {
 
 		for order, file := range fileNames {
-			iseq, err := obiformats.ReadSequencesBatchFromFile(file)
+			iseq, err := obiformats.ReadSequencesFromFile(file)
 
 			if err != nil {
 				panic(err)
