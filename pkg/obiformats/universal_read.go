@@ -42,7 +42,7 @@ func GuessSeqFileType(firstline string) string {
 	}
 }
 
-func ReadSequencesBatchFromFile(filename string,
+func ReadSequencesFromFile(filename string,
 	options ...WithOption) (obiiter.IBioSequenceBatch, error) {
 	var file *os.File
 	var reader io.Reader
@@ -85,14 +85,14 @@ func ReadSequencesBatchFromFile(filename string,
 	switch filetype {
 	case "fastq", "fasta":
 		file.Close()
-		is, _ := ReadFastSeqBatchFromFile(filename, options...)
+		is, _ := ReadFastSeqFromFile(filename, options...)
 		return is, nil
 	case "ecopcr":
-		return ReadEcoPCRBatch(reader, options...), nil
+		return ReadEcoPCR(reader, options...), nil
 	case "embl":
-		return ReadEMBLBatch(reader, options...), nil
+		return ReadEMBL(reader, options...), nil
 	case "genbank":
-		return ReadGenbankBatch(reader, options...), nil
+		return ReadGenbank(reader, options...), nil
 	default:
 		log.Fatalf("File %s has guessed format %s which is not yet implemented",
 			filename, filetype)

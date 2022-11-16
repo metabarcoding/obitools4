@@ -33,7 +33,7 @@ func main() {
 
 	_, args, _ := optionParser(os.Args)
 
-	fs, _ := obiconvert.ReadBioSequencesBatch(args...)
+	fs, _ := obiconvert.ReadBioSequences(args...)
 	nvariant, nread, nsymbol := fs.Count(true)
 
 	if obicount.CLIIsPrintingVariantCount() {

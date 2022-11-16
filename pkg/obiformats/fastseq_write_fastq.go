@@ -51,7 +51,7 @@ type FileChunck struct {
 	order int
 }
 
-func WriteFastqBatch(iterator obiiter.IBioSequenceBatch,
+func WriteFastq(iterator obiiter.IBioSequenceBatch,
 	file io.Writer,
 	options ...WithOption) (obiiter.IBioSequenceBatch, error) {
 	opt := MakeOptions(options)
@@ -129,13 +129,13 @@ func WriteFastqBatch(iterator obiiter.IBioSequenceBatch,
 	return newIter, nil
 }
 
-func WriteFastqBatchToStdout(iterator obiiter.IBioSequenceBatch,
+func WriteFastqToStdout(iterator obiiter.IBioSequenceBatch,
 	options ...WithOption) (obiiter.IBioSequenceBatch, error) {
 	options = append(options, OptionDontCloseFile())
-	return WriteFastqBatch(iterator, os.Stdout, options...)
+	return WriteFastq(iterator, os.Stdout, options...)
 }
 
-func WriteFastqBatchToFile(iterator obiiter.IBioSequenceBatch,
+func WriteFastqToFile(iterator obiiter.IBioSequenceBatch,
 	filename string,
 	options ...WithOption) (obiiter.IBioSequenceBatch, error) {
 
@@ -148,5 +148,5 @@ func WriteFastqBatchToFile(iterator obiiter.IBioSequenceBatch,
 
 	options = append(options, OptionCloseFile())
 
-	return WriteFastqBatch(iterator, file, options...)
+	return WriteFastq(iterator, file, options...)
 }

@@ -13,7 +13,7 @@ func ReadSequencesBatchFromFiles(filenames []string,
 	options ...WithOption) obiiter.IBioSequenceBatch {
 
 	if reader == nil {
-		reader = ReadSequencesBatchFromFile
+		reader = ReadSequencesFromFile
 	}
 
 	batchiter := obiiter.MakeIBioSequenceBatch(0)

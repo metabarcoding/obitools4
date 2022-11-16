@@ -61,7 +61,7 @@ func FormatFastaBatch(batch obiiter.BioSequenceBatch, formater FormatHeader) []b
 	return bs.Bytes()
 }
 
-func WriteFastaBatch(iterator obiiter.IBioSequenceBatch,
+func WriteFasta(iterator obiiter.IBioSequenceBatch,
 	file io.Writer,
 	options ...WithOption) (obiiter.IBioSequenceBatch, error) {
 	opt := MakeOptions(options)
@@ -136,13 +136,13 @@ func WriteFastaBatch(iterator obiiter.IBioSequenceBatch,
 	return newIter, nil
 }
 
-func WriteFastaBatchToStdout(iterator obiiter.IBioSequenceBatch,
+func WriteFastaToStdout(iterator obiiter.IBioSequenceBatch,
 	options ...WithOption) (obiiter.IBioSequenceBatch, error) {
 	options = append(options, OptionDontCloseFile())
-	return WriteFastaBatch(iterator, os.Stdout, options...)
+	return WriteFasta(iterator, os.Stdout, options...)
 }
 
-func WriteFastaBatchToFile(iterator obiiter.IBioSequenceBatch,
+func WriteFastaToFile(iterator obiiter.IBioSequenceBatch,
 	filename string,
 	options ...WithOption) (obiiter.IBioSequenceBatch, error) {
 
@@ -155,5 +155,5 @@ func WriteFastaBatchToFile(iterator obiiter.IBioSequenceBatch,
 
 	options = append(options, OptionCloseFile())
 
-	return WriteFastaBatch(iterator, file, options...)
+	return WriteFasta(iterator, file, options...)
 }

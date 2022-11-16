@@ -14,8 +14,8 @@ func main() {
 
 	_, args, _ := optionParser(os.Args)
 
-	fs, _ := obiconvert.ReadBioSequencesBatch(args...)
+	fs, _ := obiconvert.ReadBioSequences(args...)
 
 	comp := fs.MakeIWorker(obiiter.ReverseComplementWorker(true))
-	obiconvert.WriteBioSequencesBatch(comp, true)
+	obiconvert.WriteBioSequences(comp, true)
 }

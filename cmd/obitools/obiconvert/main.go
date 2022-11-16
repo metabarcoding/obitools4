@@ -13,6 +13,6 @@ func main() {
 
 	_, args, _ := optionParser(os.Args)
 
-	fs, _ := obiconvert.ReadBioSequencesBatch(args...)
-	obiconvert.WriteBioSequencesBatch(fs, true)
+	fs, _ := obiconvert.ReadBioSequences(args...)
+	obiconvert.WriteBioSequences(fs, true)
 }

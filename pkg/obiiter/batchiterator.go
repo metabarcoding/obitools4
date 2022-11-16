@@ -631,7 +631,7 @@ func (iterator IBioSequenceBatch) FilterOn(predicate obiseq.SequencePredicate,
 	return trueIter.Rebatch(size)
 }
 
-// Load every sequences availables from an IBioSequenceBatch iterator into
+// Load all sequences availables from an IBioSequenceBatch iterator into
 // a large obiseq.BioSequenceSlice.
 func (iterator IBioSequenceBatch) Load() obiseq.BioSequenceSlice {
 
@@ -656,12 +656,12 @@ func IBatchOver(data obiseq.BioSequenceSlice,
 		buffsize = sizes[1]
 	}
 
-	trueIter := MakeIBioSequenceBatch(buffsize)
+	newIter := MakeIBioSequenceBatch(buffsize)
 
-	trueIter.Add(1)
+	newIter.Add(1)
 
 	go func() {
-		trueIter.WaitAndClose()
+		newIter.WaitAndClose()
 	}()
 
 	go func() {
@@ -673,12 +673,12 @@ func IBatchOver(data obiseq.BioSequenceSlice,
 			if next > ldata {
 				next = ldata
 			}
-			trueIter.Push(MakeBioSequenceBatch(batchid, data[i:next]))
+			newIter.Push(MakeBioSequenceBatch(batchid, data[i:next]))
 			batchid++
 		}
 
-		trueIter.Done()
+		newIter.Done()
 	}()
 
-	return trueIter
+	return newIter
 }

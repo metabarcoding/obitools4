@@ -10,7 +10,7 @@ import (
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obiconvert"
 )
 
-func IExtractBarcodeBatches(iterator obiiter.IBioSequenceBatch) (obiiter.IBioSequenceBatch, error) {
+func IExtractBarcode(iterator obiiter.IBioSequenceBatch) (obiiter.IBioSequenceBatch, error) {
 
 	opts := make([]obingslibrary.WithOption, 0, 10)
 
@@ -44,7 +44,7 @@ func IExtractBarcodeBatches(iterator obiiter.IBioSequenceBatch) (obiiter.IBioSeq
 			obioptions.CLIBatchSize())
 
 		go func() {
-			_, err := obiconvert.WriteBioSequencesBatch(unidentified,
+			_, err := obiconvert.WriteBioSequences(unidentified,
 				true,
 				CLIUnidentifiedFileName())
 

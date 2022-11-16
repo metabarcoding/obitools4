@@ -1,9 +1,10 @@
 package main
 
 import (
-	log "github.com/sirupsen/logrus"
 	"os"
 	"runtime/pprof"
+
+	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obioptions"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obiconvert"
@@ -30,8 +31,8 @@ func main() {
 
 	_, args, _ := optionParser(os.Args)
 
-	sequences, _ := obiconvert.ReadBioSequencesBatch(args...)
-	amplicons, _ := obimultiplex.IExtractBarcodeBatches(sequences)
-	obiconvert.WriteBioSequencesBatch(amplicons, true)
+	sequences, _ := obiconvert.ReadBioSequences(args...)
+	amplicons, _ := obimultiplex.IExtractBarcode(sequences)
+	obiconvert.WriteBioSequences(amplicons, true)
 	amplicons.Wait()
 }

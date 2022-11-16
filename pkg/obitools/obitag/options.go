@@ -39,7 +39,7 @@ func CLIRefDBName() string {
 }
 
 func CLIRefDB() obiseq.BioSequenceSlice {
-	refdb, err := obiformats.ReadSequencesBatchFromFile(_RefDB)
+	refdb, err := obiformats.ReadSequencesFromFile(_RefDB)
 
 	if err != nil {
 		log.Panicf("Cannot open the reference library file : %s\n", _RefDB)

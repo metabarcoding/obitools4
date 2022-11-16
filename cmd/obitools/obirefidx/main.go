@@ -14,9 +14,9 @@ func main() {
 
 	_, args, _ := optionParser(os.Args)
 
-	fs, _ := obiconvert.ReadBioSequencesBatch(args...)
+	fs, _ := obiconvert.ReadBioSequences(args...)
 	indexed := obirefidx.IndexReferenceDB(fs)
 
-	written, _ := obiconvert.WriteBioSequencesBatch(indexed, false)
+	written, _ := obiconvert.WriteBioSequences(indexed, false)
 	written.Consume()
 }

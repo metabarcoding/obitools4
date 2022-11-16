@@ -40,11 +40,11 @@ func DistributeSequence(sequences obiiter.IBioSequenceBatch) {
 
 	switch obiconvert.CLIOutputFormat() {
 	case "fastq":
-		formater = obiformats.WriteFastqBatchToFile
+		formater = obiformats.WriteFastqToFile
 	case "fasta":
-		formater = obiformats.WriteFastaBatchToFile
+		formater = obiformats.WriteFastaToFile
 	default:
-		formater = obiformats.WriteSequencesBatchToFile
+		formater = obiformats.WriteSequencesToFile
 	}
 
 	dispatcher := sequences.Distribute(CLISequenceClassifier(),

@@ -201,7 +201,7 @@ func _ReadFlatFileChunk(reader io.Reader, readers chan _FileChunk) {
 //	6    5  43 2    1
 //
 // <CR>?<LF>//<CR>?<LF>
-func ReadEMBLBatch(reader io.Reader, options ...WithOption) obiiter.IBioSequenceBatch {
+func ReadEMBL(reader io.Reader, options ...WithOption) obiiter.IBioSequenceBatch {
 	opt := MakeOptions(options)
 	entry_channel := make(chan _FileChunk, opt.BufferSize())
 
@@ -224,7 +224,7 @@ func ReadEMBLBatch(reader io.Reader, options ...WithOption) obiiter.IBioSequence
 	return newIter
 }
 
-func ReadEMBLBatchFromFile(filename string, options ...WithOption) (obiiter.IBioSequenceBatch, error) {
+func ReadEMBLFromFile(filename string, options ...WithOption) (obiiter.IBioSequenceBatch, error) {
 	var reader io.Reader
 	var greader io.Reader
 	var err error
@@ -242,5 +242,5 @@ func ReadEMBLBatchFromFile(filename string, options ...WithOption) (obiiter.IBio
 		reader = greader
 	}
 
-	return ReadEMBLBatch(reader, options...), nil
+	return ReadEMBL(reader, options...), nil
 }

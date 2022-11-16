@@ -67,7 +67,7 @@ func _ExpandListOfFiles(check_ext bool, filenames ...string) ([]string, error) {
 	return list_of_files, nil
 }
 
-func ReadBioSequencesBatch(filenames ...string) (obiiter.IBioSequenceBatch, error) {
+func ReadBioSequences(filenames ...string) (obiiter.IBioSequenceBatch, error) {
 	var iterator obiiter.IBioSequenceBatch
 	var reader func(string, ...obiformats.WithOption) (obiiter.IBioSequenceBatch, error)
 
@@ -97,13 +97,13 @@ func ReadBioSequencesBatch(filenames ...string) (obiiter.IBioSequenceBatch, erro
 		log.Printf("Reading sequences from stdin in %s\n", CLIInputFormat())
 		switch CLIInputFormat() {
 		case "ecopcr":
-			iterator = obiformats.ReadEcoPCRBatch(os.Stdin, opts...)
+			iterator = obiformats.ReadEcoPCR(os.Stdin, opts...)
 		case "embl":
-			iterator = obiformats.ReadEMBLBatch(os.Stdin, opts...)
+			iterator = obiformats.ReadEMBL(os.Stdin, opts...)
 		case "genbank":
-			iterator = obiformats.ReadGenbankBatch(os.Stdin, opts...)
+			iterator = obiformats.ReadGenbank(os.Stdin, opts...)
 		default:
-			iterator = obiformats.ReadFastSeqBatchFromStdin(opts...)
+			iterator = obiformats.ReadFastSeqFromStdin(opts...)
 		}
 	} else {
 
@@ -116,11 +116,11 @@ func ReadBioSequencesBatch(filenames ...string) (obiiter.IBioSequenceBatch, erro
 		case "ecopcr":
 			reader = obiformats.ReadEcoPCRBatchFromFile
 		case "embl":
-			reader = obiformats.ReadEMBLBatchFromFile
+			reader = obiformats.ReadEMBLFromFile
 		case "genbank":
-			reader = obiformats.ReadGenbankBatchFromFile
+			reader = obiformats.ReadGenbankFromFile
 		default:
-			reader = obiformats.ReadSequencesBatchFromFile
+			reader = obiformats.ReadSequencesFromFile
 		}
 
 		if len(list_of_files) > 1 {

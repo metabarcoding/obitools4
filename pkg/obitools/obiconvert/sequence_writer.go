@@ -8,7 +8,7 @@ import (
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obioptions"
 )
 
-func WriteBioSequencesBatch(iterator obiiter.IBioSequenceBatch,
+func WriteBioSequences(iterator obiiter.IBioSequenceBatch,
 	terminalAction bool, filenames ...string) (obiiter.IBioSequenceBatch, error) {
 
 	var newIter obiiter.IBioSequenceBatch
@@ -43,20 +43,20 @@ func WriteBioSequencesBatch(iterator obiiter.IBioSequenceBatch,
 	if len(filenames) == 0 {
 		switch CLIOutputFormat() {
 		case "fastq":
-			newIter, err = obiformats.WriteFastqBatchToStdout(iterator, opts...)
+			newIter, err = obiformats.WriteFastqToStdout(iterator, opts...)
 		case "fasta":
-			newIter, err = obiformats.WriteFastaBatchToStdout(iterator, opts...)
+			newIter, err = obiformats.WriteFastaToStdout(iterator, opts...)
 		default:
-			newIter, err = obiformats.WriteSequencesBatchToStdout(iterator, opts...)
+			newIter, err = obiformats.WriteSequencesToStdout(iterator, opts...)
 		}
 	} else {
 		switch CLIOutputFormat() {
 		case "fastq":
-			newIter, err = obiformats.WriteFastqBatchToFile(iterator, filenames[0], opts...)
+			newIter, err = obiformats.WriteFastqToFile(iterator, filenames[0], opts...)
 		case "fasta":
-			newIter, err = obiformats.WriteFastaBatchToFile(iterator, filenames[0], opts...)
+			newIter, err = obiformats.WriteFastaToFile(iterator, filenames[0], opts...)
 		default:
-			newIter, err = obiformats.WriteSequencesBatchToFile(iterator, filenames[0], opts...)
+			newIter, err = obiformats.WriteSequencesToFile(iterator, filenames[0], opts...)
 		}
 	}
 

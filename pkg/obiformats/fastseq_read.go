@@ -87,7 +87,7 @@ func _FastseqReader(seqfile C.fast_kseq_p,
 
 }
 
-func ReadFastSeqBatchFromFile(filename string, options ...WithOption) (obiiter.IBioSequenceBatch, error) {
+func ReadFastSeqFromFile(filename string, options ...WithOption) (obiiter.IBioSequenceBatch, error) {
 	opt := MakeOptions(options)
 
 	name := C.CString(filename)
@@ -132,7 +132,7 @@ func ReadFastSeqBatchFromFile(filename string, options ...WithOption) (obiiter.I
 	return newIter, err
 }
 
-func ReadFastSeqBatchFromStdin(options ...WithOption) obiiter.IBioSequenceBatch {
+func ReadFastSeqFromStdin(options ...WithOption) obiiter.IBioSequenceBatch {
 	opt := MakeOptions(options)
 	newIter := obiiter.MakeIBioSequenceBatch(opt.BufferSize())
 

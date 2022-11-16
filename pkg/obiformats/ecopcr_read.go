@@ -119,7 +119,7 @@ func __read_ecopcr_bioseq__(file *__ecopcr_file__) (*obiseq.BioSequence, error) 
 	return bseq, nil
 }
 
-func ReadEcoPCRBatch(reader io.Reader, options ...WithOption) obiiter.IBioSequenceBatch {
+func ReadEcoPCR(reader io.Reader, options ...WithOption) obiiter.IBioSequenceBatch {
 	tag := make([]byte, 11)
 	n, _ := reader.Read(tag)
 
@@ -224,5 +224,5 @@ func ReadEcoPCRBatchFromFile(filename string, options ...WithOption) (obiiter.IB
 		reader = greader
 	}
 
-	return ReadEcoPCRBatch(reader, options...), nil
+	return ReadEcoPCR(reader, options...), nil
 }

@@ -20,10 +20,10 @@ type gbstate int
 
 const (
 	inHeader     gbstate = 0
-	inEntry              = 1
-	inDefinition         = 2
-	inFeature            = 3
-	inSequence           = 4
+	inEntry      gbstate = 1
+	inDefinition gbstate = 2
+	inFeature    gbstate = 3
+	inSequence   gbstate = 4
 )
 
 func _ParseGenbankFile(input <-chan _FileChunk, out obiiter.IBioSequenceBatch) {
@@ -107,7 +107,7 @@ func _ParseGenbankFile(input <-chan _FileChunk, out obiiter.IBioSequenceBatch) {
 
 }
 
-func ReadGenbankBatch(reader io.Reader, options ...WithOption) obiiter.IBioSequenceBatch {
+func ReadGenbank(reader io.Reader, options ...WithOption) obiiter.IBioSequenceBatch {
 	opt := MakeOptions(options)
 	entry_channel := make(chan _FileChunk, opt.BufferSize())
 
@@ -130,7 +130,7 @@ func ReadGenbankBatch(reader io.Reader, options ...WithOption) obiiter.IBioSeque
 	return newIter
 }
 
-func ReadGenbankBatchFromFile(filename string, options ...WithOption) (obiiter.IBioSequenceBatch, error) {
+func ReadGenbankFromFile(filename string, options ...WithOption) (obiiter.IBioSequenceBatch, error) {
 	var reader io.Reader
 	var greader io.Reader
 	var err error
@@ -148,5 +148,5 @@ func ReadGenbankBatchFromFile(filename string, options ...WithOption) (obiiter.I
 		reader = greader
 	}
 
-	return ReadGenbankBatch(reader, options...), nil
+	return ReadGenbank(reader, options...), nil
 }

@@ -1,9 +1,10 @@
 package main
 
 import (
-	log "github.com/sirupsen/logrus"
 	"os"
 	"runtime/trace"
+
+	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obioptions"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obiconvert"
@@ -40,5 +41,5 @@ func main() {
 		obipairing.WithStats(),
 		obioptions.CLIParallelWorkers(),
 	)
-	obiconvert.WriteBioSequencesBatch(paired, true)
+	obiconvert.WriteBioSequences(paired, true)
 }

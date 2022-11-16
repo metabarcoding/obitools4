@@ -33,7 +33,7 @@ func main() {
 
 	_, args, _ := optionParser(os.Args)
 
-	sequences, _ := obiconvert.ReadBioSequencesBatch(args...)
+	sequences, _ := obiconvert.ReadBioSequences(args...)
 	amplicons, _ := obipcr.PCR(sequences)
-	obiconvert.WriteBioSequencesBatch(amplicons, true)
+	obiconvert.WriteBioSequences(amplicons, true)
 }

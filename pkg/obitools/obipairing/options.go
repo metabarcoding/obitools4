@@ -47,12 +47,12 @@ func OptionSet(options *getoptions.GetOpt) {
 }
 
 func IBatchPairedSequence() (obiiter.IPairedBioSequenceBatch, error) {
-	forward, err := obiconvert.ReadBioSequencesBatch(_ForwardFiles...)
+	forward, err := obiconvert.ReadBioSequences(_ForwardFiles...)
 	if err != nil {
 		return obiiter.NilIPairedBioSequenceBatch, err
 	}
 
-	reverse, err := obiconvert.ReadBioSequencesBatch(_ReverseFiles...)
+	reverse, err := obiconvert.ReadBioSequences(_ReverseFiles...)
 	if err != nil {
 		return obiiter.NilIPairedBioSequenceBatch, err
 	}

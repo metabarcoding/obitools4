@@ -10,7 +10,7 @@ import (
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
 )
 
-func WriteSequenceBatch(iterator obiiter.IBioSequenceBatch,
+func WriteSequence(iterator obiiter.IBioSequenceBatch,
 	file io.Writer,
 	options ...WithOption) (obiiter.IBioSequenceBatch, error) {
 
@@ -27,12 +27,12 @@ func WriteSequenceBatch(iterator obiiter.IBioSequenceBatch,
 
 		if len(batch.Slice()) > 0 {
 			if batch.Slice()[0].HasQualities() {
-				newIter, err = WriteFastqBatch(iterator, file, options...)
+				newIter, err = WriteFastq(iterator, file, options...)
 			} else {
-				newIter, err = WriteFastaBatch(iterator, file, options...)
+				newIter, err = WriteFasta(iterator, file, options...)
 			}
 		} else {
-			newIter, err = WriteFastaBatch(iterator, file, options...)
+			newIter, err = WriteFasta(iterator, file, options...)
 		}
 
 		return newIter, err
@@ -45,13 +45,13 @@ func WriteSequenceBatch(iterator obiiter.IBioSequenceBatch,
 	return obiiter.NilIBioSequenceBatch, fmt.Errorf("input iterator not ready")
 }
 
-func WriteSequencesBatchToStdout(iterator obiiter.IBioSequenceBatch,
+func WriteSequencesToStdout(iterator obiiter.IBioSequenceBatch,
 	options ...WithOption) (obiiter.IBioSequenceBatch, error) {
 	options = append(options, OptionDontCloseFile())
-	return WriteSequenceBatch(iterator, os.Stdout, options...)
+	return WriteSequence(iterator, os.Stdout, options...)
 }
 
-func WriteSequencesBatchToFile(iterator obiiter.IBioSequenceBatch,
+func WriteSequencesToFile(iterator obiiter.IBioSequenceBatch,
 	filename string,
 	options ...WithOption) (obiiter.IBioSequenceBatch, error) {
 
@@ -63,5 +63,5 @@ func WriteSequencesBatchToFile(iterator obiiter.IBioSequenceBatch,
 	}
 
 	options = append(options, OptionCloseFile())
-	return WriteSequenceBatch(iterator, file, options...)
+	return WriteSequence(iterator, file, options...)
 }
