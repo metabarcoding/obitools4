@@ -269,12 +269,18 @@ func IsASlice(value interface{}) bool {
 }
 
 func HasLength(value interface{}) bool {
-	return IsAMap(value) || IsAnArray(value) || IsASlice(value)
+	_, ok := value.(interface{ Len() int })
+	return IsAMap(value) || IsAnArray(value) || IsASlice(value) || ok
 }
-func Length(value interface{}) int {
+func Len(value interface{}) int {
 	l := 1
-	if HasLength(value) {
+
+	if IsAMap(value) || IsAnArray(value) || IsASlice(value) {
 		vc := reflect.ValueOf(value)
+		l = vc.Len()
+	}
+
+	if vc, ok := value.(interface{ Len() int }); ok {
 		l = vc.Len()
 	}
 

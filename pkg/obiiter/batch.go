@@ -31,7 +31,7 @@ func (batch BioSequenceBatch) Slice() obiseq.BioSequenceSlice {
 	return batch.slice
 }
 
-func (batch BioSequenceBatch) Length() int {
+func (batch BioSequenceBatch) Len() int {
 	return len(batch.slice)
 }
 

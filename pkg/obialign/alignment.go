@@ -73,10 +73,10 @@ func _BuildAlignment(seqA, seqB []byte, path []int, gap byte, bufferA, bufferB *
 func BuildAlignment(seqA, seqB *obiseq.BioSequence,
 	path []int, gap byte) (*obiseq.BioSequence, *obiseq.BioSequence) {
 
-	bufferSA := obiseq.GetSlice(seqA.Length())
+	bufferSA := obiseq.GetSlice(seqA.Len())
 	defer obiseq.RecycleSlice(&bufferSA)
 
-	bufferSB := obiseq.GetSlice(seqB.Length())
+	bufferSB := obiseq.GetSlice(seqB.Len())
 	defer obiseq.RecycleSlice(&bufferSB)
 
 	_BuildAlignment(seqA.Sequence(), seqB.Sequence(), path, gap,
@@ -117,12 +117,12 @@ func BuildAlignment(seqA, seqB *obiseq.BioSequence,
 // return.
 func BuildQualityConsensus(seqA, seqB *obiseq.BioSequence, path []int, statOnMismatch bool) (*obiseq.BioSequence, int) {
 
-	bufferSA := obiseq.GetSlice(seqA.Length())
-	bufferSB := obiseq.GetSlice(seqB.Length())
+	bufferSA := obiseq.GetSlice(seqA.Len())
+	bufferSB := obiseq.GetSlice(seqB.Len())
 	defer obiseq.RecycleSlice(&bufferSB)
 
-	bufferQA := obiseq.GetSlice(seqA.Length())
-	bufferQB := obiseq.GetSlice(seqB.Length())
+	bufferQA := obiseq.GetSlice(seqA.Len())
+	bufferQB := obiseq.GetSlice(seqB.Len())
 	defer obiseq.RecycleSlice(&bufferQB)
 
 	_BuildAlignment(seqA.Sequence(), seqB.Sequence(), path, ' ',

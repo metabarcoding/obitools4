@@ -57,16 +57,16 @@ func FindClosests(sequence *obiseq.BioSequence,
 	for i, j := range o {
 		ref := references[j]
 
-		lmin, lmax := goutils.MinMaxInt(sequence.Length(), ref.Length())
+		lmin, lmax := goutils.MinMaxInt(sequence.Len(), ref.Len())
 		atMost := lmax - lmin + int(math.Ceil(float64(lmin-3-cw[j])/4.0)) - 2
 
 		if i == 0 {
-			maxe = goutils.MaxInt(sequence.Length(), ref.Length())
+			maxe = goutils.MaxInt(sequence.Len(), ref.Len())
 		}
 
 		// log.Println(sequence.Id(),cw[j], maxe)
 		if runExact || (atMost <= (maxe + 1)) {
-			lcs, alilength := obialign.FastLCSScore(sequence, ref, maxe+1,&matrix)
+			lcs, alilength := obialign.FastLCSScore(sequence, ref, maxe+1, &matrix)
 			// lcs, alilength := obialign.LCSScore(sequence, ref, maxe+1, matrix)
 			n++
 			if lcs == -1 {

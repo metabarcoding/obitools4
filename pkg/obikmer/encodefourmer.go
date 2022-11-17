@@ -31,7 +31,7 @@ var __single_base_code__ = []byte{0,
 // the slice is used to store the result, overwise a new slice is
 // created.
 func Encode4mer(seq *obiseq.BioSequence, buffer *[]byte) []byte {
-	slength := seq.Length()
+	slength := seq.Len()
 	length := slength - 3
 	rawseq := seq.Sequence()
 
@@ -101,7 +101,7 @@ func FastShiftFourMer(index [][]int, seq *obiseq.BioSequence, buffer *[]byte) (i
 
 	iternal_buffer := Encode4mer(seq, buffer)
 
-	shifts := make(map[int]int, 3*seq.Length())
+	shifts := make(map[int]int, 3*seq.Len())
 
 	for pos, code := range iternal_buffer {
 		for _, refpos := range index[code] {
@@ -127,4 +127,3 @@ func FastShiftFourMer(index [][]int, seq *obiseq.BioSequence, buffer *[]byte) (i
 
 	return maxshift, maxcount
 }
-

@@ -119,8 +119,8 @@ func (pattern ApatPattern) String() string {
 	return C.GoString(pattern.pointer.pointer.cpat)
 }
 
-// Length method returns the length of the matched pattern.
-func (pattern ApatPattern) Length() int {
+// Len method returns the length of the matched pattern.
+func (pattern ApatPattern) Len() int {
 	return int(pattern.pointer.pointer.patlen)
 }
 
@@ -159,7 +159,7 @@ func MakeApatSequence(sequence *obiseq.BioSequence, circular bool, recycle ...Ap
 	var errno C.int32_t
 	var errmsg *C.char
 	var p unsafe.Pointer
-	seqlen := sequence.Length()
+	seqlen := sequence.Len()
 
 	ic := 0
 	if circular {
@@ -195,7 +195,7 @@ func MakeApatSequence(sequence *obiseq.BioSequence, circular bool, recycle ...Ap
 	// copy the data into the buffer, by converting it to a Go array
 	cBuf := (*[1 << 31]byte)(p)
 	copy(cBuf[:], sequence.Sequence())
-	cBuf[sequence.Length()] = 0
+	cBuf[sequence.Len()] = 0
 
 	pseqc := C.new_apatseq((*C.char)(p), C.int32_t(ic), C.int32_t(seqlen),
 		(*C.Seq)(out),
@@ -240,8 +240,8 @@ func MakeApatSequence(sequence *obiseq.BioSequence, circular bool, recycle ...Ap
 	return ApatSequence{recycle[0].pointer}, nil
 }
 
-// Length method returns the length of the ApatSequence.
-func (sequence ApatSequence) Length() int {
+// Len method returns the length of the ApatSequence.
+func (sequence ApatSequence) Len() int {
 	return int(sequence.pointer.pointer.seqlen)
 }
 
@@ -283,7 +283,7 @@ func (sequence ApatSequence) Free() {
 // match. The third value indicates the number of error detected for this occurrence.
 func (pattern ApatPattern) FindAllIndex(sequence ApatSequence, limits ...int) (loc [][3]int) {
 	begin := 0
-	length := sequence.Length()
+	length := sequence.Len()
 
 	if len(limits) > 0 {
 		begin = limits[0]

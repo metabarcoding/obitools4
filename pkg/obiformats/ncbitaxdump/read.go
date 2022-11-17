@@ -5,11 +5,12 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
-	log "github.com/sirupsen/logrus"
 	"os"
 	"path"
 	"strconv"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitax"
 )
@@ -101,7 +102,7 @@ func LoadNCBITaxDump(directory string, onlysn bool) (*obitax.Taxonomy, error) {
 
 	buffered := bufio.NewReader(nodefile)
 	loadNodeTable(buffered, taxonomy)
-	log.Printf("%d Taxonomy nodes read\n", taxonomy.Length())
+	log.Printf("%d Taxonomy nodes read\n", taxonomy.Len())
 
 	//
 	// Load the Taxonomy nodes

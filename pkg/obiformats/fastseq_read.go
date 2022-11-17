@@ -65,19 +65,12 @@ func _FastseqReader(seqfile C.fast_kseq_p,
 		slice = append(slice, rep)
 		ii++
 		if ii >= batch_size {
-			//log.Printf("\n==> Pushing sequence batch\n")
-			// start := time.Now()
-
 			iterator.Push(obiiter.MakeBioSequenceBatch(i, slice))
-			// elapsed := time.Since(start)
-			// log.Printf("\n==>sequences pushed after %s\n", elapsed)
-
 			slice = obiseq.MakeBioSequenceSlice()
 			i++
 			ii = 0
 		}
 
-		// log.Println("longueur : ",l,rep.Length())
 
 	}
 	if len(slice) > 0 {

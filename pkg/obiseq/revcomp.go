@@ -13,7 +13,7 @@ func (sequence *BioSequence) ReverseComplement(inplace bool) *BioSequence {
 
 	s := sequence.sequence
 
-	for i, j := sequence.Length()-1, 0; i >= j; i-- {
+	for i, j := sequence.Len()-1, 0; i >= j; i-- {
 
 		// ASCII code & 31 -> builds an index in witch (a|A) is 1
 		// ASCII code & 0x20 -> Foce lower case
@@ -25,7 +25,7 @@ func (sequence *BioSequence) ReverseComplement(inplace bool) *BioSequence {
 
 	if sequence.HasQualities() {
 		s := sequence.qualities
-		for i, j := sequence.Length()-1, 0; i >= j; i-- {
+		for i, j := sequence.Len()-1, 0; i >= j; i-- {
 			s[j], s[i] = s[i], s[j]
 			j++
 		}
@@ -49,7 +49,7 @@ func (sequence *BioSequence) _revcmpMutation() *BioSequence {
 		return string(b)
 	}
 
-	lseq := sequence.Length()
+	lseq := sequence.Len()
 
 	mut, ok := sequence.GetIntMap("pairing_mismatches")
 	if ok && len(mut) > 0 {

@@ -15,9 +15,9 @@ import (
 
 func FormatFastq(seq *obiseq.BioSequence, quality_shift int, formater FormatHeader) string {
 
-	l := seq.Length()
+	l := seq.Len()
 	q := seq.Qualities()
-	ascii := make([]byte, seq.Length())
+	ascii := make([]byte, seq.Len())
 
 	for j := 0; j < l; j++ {
 		ascii[j] = uint8(q[j]) + uint8(quality_shift)

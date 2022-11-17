@@ -218,7 +218,7 @@ func (iterator IBioSequenceBatch) Push(batch BioSequenceBatch) {
 	if batch.IsNil() {
 		log.Panicln("A Nil batch is pushed on the channel")
 	}
-	if batch.Length() == 0 {
+	if batch.Len() == 0 {
 		log.Panicln("An empty batch is pushed on the channel")
 	}
 
@@ -453,7 +453,7 @@ func (iterator IBioSequenceBatch) Count(recycle bool) (int, int, int) {
 		for _, seq := range batch.Slice() {
 			variants++
 			reads += seq.Count()
-			nucleotides += seq.Length()
+			nucleotides += seq.Len()
 
 			if recycle {
 				seq.Recycle()

@@ -13,11 +13,11 @@ func (sequence *BioSequence) Subsequence(from, to int, circular bool) (*BioSeque
 		return nil, errors.New("from greater than to")
 	}
 
-	if from < 0 || from >= sequence.Length() {
+	if from < 0 || from >= sequence.Len() {
 		return nil, errors.New("from out of bounds")
 	}
 
-	if to <= 0 || to > sequence.Length() {
+	if to <= 0 || to > sequence.Len() {
 		return nil, errors.New("to out of bounds")
 	}
 
@@ -34,7 +34,7 @@ func (sequence *BioSequence) Subsequence(from, to int, circular bool) (*BioSeque
 		newSeq.id = fmt.Sprintf("%s_sub[%d..%d]", sequence.Id(), from+1, to)
 		newSeq.definition = sequence.definition
 	} else {
-		newSeq, _ = sequence.Subsequence(from, sequence.Length(), false)
+		newSeq, _ = sequence.Subsequence(from, sequence.Len(), false)
 		newSeq.Write(sequence.Sequence()[0:to])
 
 		if sequence.HasQualities() {
@@ -52,7 +52,7 @@ func (sequence *BioSequence) Subsequence(from, to int, circular bool) (*BioSeque
 
 func (sequence *BioSequence) _subseqMutation(shift int) *BioSequence {
 
-	lseq := sequence.Length()
+	lseq := sequence.Len()
 
 	mut, ok := sequence.GetIntMap("pairing_mismatches")
 	if ok && len(mut) > 0 {

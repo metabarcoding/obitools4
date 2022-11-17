@@ -234,15 +234,15 @@ func _Pcr(seq ApatSequence,
 	if len(forwardMatches) > 0 {
 
 		begin := forwardMatches[0][0]
-		length := seq.Length() - begin
+		length := seq.Len() - begin
 
 		if opt.pointer.maxLength > 0 {
-			length = forwardMatches[len(forwardMatches)-1][2] - begin + opt.MaxLength() + reverse.Length()
+			length = forwardMatches[len(forwardMatches)-1][2] - begin + opt.MaxLength() + reverse.Len()
 		}
 
 		if opt.Circular() {
 			begin = 0
-			length = seq.Length() + _MaxPatLen
+			length = seq.Len() + _MaxPatLen
 		}
 
 		reverseMatches := crev.FindAllIndex(seq, begin, length)
@@ -252,13 +252,13 @@ func _Pcr(seq ApatSequence,
 
 				posi := fm[0]
 
-				if posi < seq.Length() {
+				if posi < seq.Len() {
 
 					erri := fm[2]
 
 					for _, rm := range reverseMatches {
 						posj := rm[0]
-						if posj < seq.Length() {
+						if posj < seq.Len() {
 							posj := rm[1]
 							errj := rm[2]
 							length = 0
@@ -267,7 +267,7 @@ func _Pcr(seq ApatSequence,
 								length = rm[0] - fm[1]
 							} else {
 								if opt.Circular() {
-									length = rm[0] + seq.Length() - posi - forward.Length()
+									length = rm[0] + seq.Len() - posi - forward.Len()
 								}
 							}
 							if length > 0 && // For when primers touch or overlap
@@ -307,15 +307,15 @@ func _Pcr(seq ApatSequence,
 	if forwardMatches != nil {
 
 		begin := forwardMatches[0][0]
-		length := seq.Length() - begin
+		length := seq.Len() - begin
 
 		if opt.pointer.maxLength > 0 {
-			length = forwardMatches[len(forwardMatches)-1][2] - begin + opt.MaxLength() + reverse.Length()
+			length = forwardMatches[len(forwardMatches)-1][2] - begin + opt.MaxLength() + reverse.Len()
 		}
 
 		if opt.Circular() {
 			begin = 0
-			length = seq.Length() + _MaxPatLen
+			length = seq.Len() + _MaxPatLen
 		}
 
 		reverseMatches := cfwd.FindAllIndex(seq, begin, length)
@@ -325,13 +325,13 @@ func _Pcr(seq ApatSequence,
 
 				posi := fm[0]
 
-				if posi < seq.Length() {
+				if posi < seq.Len() {
 
 					erri := fm[2]
 
 					for _, rm := range reverseMatches {
 						posj := rm[0]
-						if posj < seq.Length() {
+						if posj < seq.Len() {
 							posj := rm[1]
 							errj := rm[2]
 							length = 0
@@ -340,7 +340,7 @@ func _Pcr(seq ApatSequence,
 								length = rm[0] - fm[1]
 							} else {
 								if opt.Circular() {
-									length = rm[0] + seq.Length() - posi - forward.Length()
+									length = rm[0] + seq.Len() - posi - forward.Len()
 								}
 							}
 							if length > 0 && // For when primers touch or overlap

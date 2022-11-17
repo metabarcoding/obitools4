@@ -30,7 +30,7 @@ func (iterator IBioSequenceBatch) IMergeSequenceBatch(na string, statsOn []strin
 				seqs := iterator.Get()
 				batch.slice = append(batch.slice, seqs.slice.Merge(na, statsOn))
 			}
-			if batch.Length() > 0 {
+			if batch.Len() > 0 {
 				newIter.Push(batch)
 			}
 		}
@@ -40,10 +40,9 @@ func (iterator IBioSequenceBatch) IMergeSequenceBatch(na string, statsOn []strin
 	return newIter
 }
 
-
 func MergePipe(na string, statsOn []string, sizes ...int) Pipeable {
 	f := func(iterator IBioSequenceBatch) IBioSequenceBatch {
-		return iterator.IMergeSequenceBatch(na,statsOn,sizes...)
+		return iterator.IMergeSequenceBatch(na, statsOn, sizes...)
 	}
 
 	return f

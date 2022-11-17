@@ -97,14 +97,14 @@ func ISequenceSubChunk(iterator obiiter.IBioSequenceBatch,
 
 			batch := iterator.Get()
 
-			if batch.Length() > 1 {
+			if batch.Len() > 1 {
 				classifier.Reset()
 
-				if cap(ordered) < batch.Length() {
-					log.Debugln("Allocate a new ordered sequences : ", batch.Length())
-					ordered = make([]sSS, batch.Length())
+				if cap(ordered) < batch.Len() {
+					log.Debugln("Allocate a new ordered sequences : ", batch.Len())
+					ordered = make([]sSS, batch.Len())
 				} else {
-					ordered = ordered[:batch.Length()]
+					ordered = ordered[:batch.Len()]
 				}
 
 				for i, s := range batch.Slice() {

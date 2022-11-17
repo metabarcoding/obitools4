@@ -1,10 +1,11 @@
 package obipairing
 
 import (
-	log "github.com/sirupsen/logrus"
 	"math"
 	"os"
 	"runtime"
+
+	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obialign"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
@@ -25,7 +26,7 @@ func _Abs(x int) int {
 // if both sequences have quality scores, a quality of 0 is associated
 // to the added dots.
 //
-// Parameters
+// # Parameters
 //
 // - seqA, seqB: the pair of sequences to align.
 //
@@ -33,7 +34,7 @@ func _Abs(x int) int {
 // destroyed during the assembling process and cannot be reuse later on.
 // the gap and delta parametters.
 //
-// Returns
+// # Returns
 //
 // An obiseq.BioSequence corresponding to the pasting of the both
 // input sequences.
@@ -41,14 +42,15 @@ func _Abs(x int) int {
 // Examples:
 //
 // .
-//  seqA := obiseq.BioSequence("A","cgatgcta","Sequence A")
-//  seqB := obiseq.BioSequence("B","aatcgtacga","Sequence B")
-//  seqC := obipairing.JoinPairedSequence(seqA, seqB, false)
-//  fmt.Println(seqC.String())
+//
+//	seqA := obiseq.BioSequence("A","cgatgcta","Sequence A")
+//	seqB := obiseq.BioSequence("B","aatcgtacga","Sequence B")
+//	seqC := obipairing.JoinPairedSequence(seqA, seqB, false)
+//	fmt.Println(seqC.String())
 //
 // Outputs:
-//  cgatgcta..........aatcgtacga
 //
+//	cgatgcta..........aatcgtacga
 func JoinPairedSequence(seqA, seqB *obiseq.BioSequence, inplace bool) *obiseq.BioSequence {
 
 	if !inplace {
@@ -78,7 +80,7 @@ func JoinPairedSequence(seqA, seqB *obiseq.BioSequence, inplace bool) *obiseq.Bi
 // a given length, it is discarded and booth sequences are only
 // pasted using the obipairing.JoinPairedSequence function.
 //
-// Parameters
+// # Parameters
 //
 // - seqA, seqB: the pair of sequences to align.
 //
@@ -99,25 +101,24 @@ func JoinPairedSequence(seqA, seqB *obiseq.BioSequence, inplace bool) *obiseq.Bi
 // destroyed during the assembling process and cannot be reuse later on.
 // the gap and delta parametters.
 //
-// Returns
+// # Returns
 //
 // An obiseq.BioSequence corresponding to the assembling of the both
 // input sequence.
-//
 func AssemblePESequences(seqA, seqB *obiseq.BioSequence,
 	gap float64, delta, minOverlap int, minIdentity float64, withStats bool,
 	inplace bool,
 	arenaAlign obialign.PEAlignArena) *obiseq.BioSequence {
 
 	score, path := obialign.PEAlign(seqA, seqB, gap, delta, arenaAlign)
-	cons, match := obialign.BuildQualityConsensus(seqA, seqB, path,true)
+	cons, match := obialign.BuildQualityConsensus(seqA, seqB, path, true)
 
 	left := path[0]
 	right := 0
 	if path[len(path)-1] == 0 {
 		right = path[len(path)-2]
 	}
-	lcons := cons.Length()
+	lcons := cons.Len()
 	aliLength := lcons - _Abs(left) - _Abs(right)
 	identity := float64(match) / float64(aliLength)
 
@@ -176,7 +177,7 @@ func AssemblePESequences(seqA, seqB *obiseq.BioSequence,
 // sequences are pasted together and a strech of ten dots is added at the
 // juction of both the sequences.
 //
-// Parameters
+// # Parameters
 //
 // - iterator: is an iterator of paired sequences as produced by the method
 // IBioSequenceBatch.PairWith
@@ -198,11 +199,10 @@ func AssemblePESequences(seqA, seqB *obiseq.BioSequence,
 // The first one indicates how many parallel workers run for aligning the sequences.
 // The second allows too specify the size of the channel buffer.
 //
-// Returns
+// # Returns
 //
 // The function returns an iterator over batches of obiseq.Biosequence object.
 // each pair of processed sequences produces one sequence in the result iterator.
-//
 func IAssemblePESequencesBatch(iterator obiiter.IPairedBioSequenceBatch,
 	gap float64, delta, minOverlap int,
 	minIdentity float64,
@@ -251,7 +251,7 @@ func IAssemblePESequencesBatch(iterator obiiter.IPairedBioSequenceBatch,
 					processed += 59
 				}
 			}
-			bar.Add(batch.Length() - processed)
+			bar.Add(batch.Len() - processed)
 			newIter.Push(obiiter.MakeBioSequenceBatch(
 				batch.Order(),
 				cons,

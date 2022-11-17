@@ -36,7 +36,7 @@ func (taxonomy *Taxonomy) Index() *map[string]*TaxonSet {
 	return &(taxonomy.index)
 }
 
-func (taxonomy *Taxonomy) Length() int {
+func (taxonomy *Taxonomy) Len() int {
 	return len(*taxonomy.nodes)
 }
 

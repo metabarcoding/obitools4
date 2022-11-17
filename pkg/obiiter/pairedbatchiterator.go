@@ -1,8 +1,9 @@
 package obiiter
 
 import (
-	log "github.com/sirupsen/logrus"
 	"sync"
+
+	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
@@ -41,8 +42,7 @@ func (batch PairedBioSequenceBatch) Reorder(newOrder int) PairedBioSequenceBatch
 	return batch
 }
 
-
-func (batch PairedBioSequenceBatch) Length() int {
+func (batch PairedBioSequenceBatch) Len() int {
 	return len(batch.forward)
 }
 

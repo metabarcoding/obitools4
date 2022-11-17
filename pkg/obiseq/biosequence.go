@@ -162,7 +162,7 @@ func (s *BioSequence) String() string {
 }
 
 // Returning the length of the sequence.
-func (s *BioSequence) Length() int {
+func (s *BioSequence) Len() int {
 	return len(s.sequence)
 }
 

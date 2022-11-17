@@ -5,10 +5,8 @@ import (
 	"fmt"
 	"regexp"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/goutils"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obieval"
 	log "github.com/sirupsen/logrus"
-
-	"github.com/PaesslerAG/gval"
 )
 
 type SequencePredicate func(*BioSequence) bool
@@ -130,7 +128,7 @@ func IsLessAbundantOrEqualTo(count int) SequencePredicate {
 
 func IsLongerOrEqualTo(length int) SequencePredicate {
 	f := func(sequence *BioSequence) bool {
-		return sequence.Length() >= length
+		return sequence.Len() >= length
 	}
 
 	return f
@@ -138,7 +136,7 @@ func IsLongerOrEqualTo(length int) SequencePredicate {
 
 func IsShorterOrEqualTo(length int) SequencePredicate {
 	f := func(sequence *BioSequence) bool {
-		return sequence.Length() <= length
+		return sequence.Len() <= length
 	}
 
 	return f
@@ -203,17 +201,7 @@ func IsIdIn(ids ...string) SequencePredicate {
 
 func ExpressionPredicat(expression string) SequencePredicate {
 
-	lang := gval.NewLanguage(
-		gval.Full(),
-		gval.Function("len", func(args ...interface{}) (interface{}, error) {
-			length := goutils.Length(args[0])
-			return (float64)(length), nil
-		}),
-		gval.Function("ismap", func(args ...interface{}) (interface{}, error) {
-			ismap := goutils.IsAMap(args[0])
-			return ismap, nil
-		}))
-	exp, err := lang.NewEvaluable(expression)
+	exp, err := obieval.OBILang.NewEvaluable(expression)
 	if err != nil {
 		log.Fatalf("Error in the expression : %s", expression)
 	}
@@ -223,7 +211,7 @@ func ExpressionPredicat(expression string) SequencePredicate {
 			map[string]interface{}{
 				"annot":     sequence.Annotations(),
 				"count":     sequence.Count(),
-				"seqlength": sequence.Length(),
+				"seqlength": sequence.Len(),
 				"sequence":  sequence,
 			},
 		)

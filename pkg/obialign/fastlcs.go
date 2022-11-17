@@ -60,8 +60,8 @@ var _notavail = encodeValues(0, 30000, false)
 
 func FastLCSScore(seqA, seqB *obiseq.BioSequence, maxError int, buffer *[]uint64) (int, int) {
 
-	lA := seqA.Length()
-	lB := seqB.Length()
+	lA := seqA.Len()
+	lB := seqB.Len()
 
 	// Ensure that A is the longest
 	if lA < lB {
@@ -70,7 +70,7 @@ func FastLCSScore(seqA, seqB *obiseq.BioSequence, maxError int, buffer *[]uint64
 	}
 
 	if maxError == -1 {
-		maxError = lA*2
+		maxError = lA * 2
 	}
 
 	delta := lA - lB

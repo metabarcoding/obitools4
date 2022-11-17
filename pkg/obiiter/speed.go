@@ -39,7 +39,7 @@ func (iterator IBioSequenceBatch) Speed(message ...string) IBioSequenceBatch {
 
 		for iterator.Next() {
 			batch := iterator.Get()
-			l := batch.Length()
+			l := batch.Len()
 			newIter.Push(batch)
 			bar.Add(l)
 		}

@@ -14,8 +14,8 @@ func D1Or0(seq1, seq2 *obiseq.BioSequence) (int, int, byte, byte) {
 
 	pos := -1
 
-	l1 := seq1.Length()
-	l2 := seq2.Length()
+	l1 := seq1.Len()
+	l2 := seq2.Len()
 
 	if abs(l1-l2) > 1 {
 		return -1, pos, 0, 0

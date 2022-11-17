@@ -229,7 +229,7 @@ func PELeftAlign(seqA, seqB *obiseq.BioSequence, gap float64,
 	}
 
 	if arena.pointer == nil {
-		arena = MakePEAlignArena(seqA.Length(), seqB.Length())
+		arena = MakePEAlignArena(seqA.Len(), seqB.Len())
 	}
 
 	score := _FillMatrixPeLeftAlign(seqA.Sequence(), seqA.Qualities(),
@@ -238,7 +238,7 @@ func PELeftAlign(seqA, seqB *obiseq.BioSequence, gap float64,
 		&arena.pointer.pathMatrix)
 
 	arena.pointer.path = _Backtracking(arena.pointer.pathMatrix,
-		seqA.Length(), seqB.Length(),
+		seqA.Len(), seqB.Len(),
 		&arena.pointer.path)
 
 	return score, arena.pointer.path
@@ -253,7 +253,7 @@ func PERightAlign(seqA, seqB *obiseq.BioSequence, gap float64,
 	}
 
 	if arena.pointer == nil {
-		arena = MakePEAlignArena(seqA.Length(), seqB.Length())
+		arena = MakePEAlignArena(seqA.Len(), seqB.Len())
 	}
 
 	score := _FillMatrixPeRightAlign(seqA.Sequence(), seqA.Qualities(),
@@ -262,7 +262,7 @@ func PERightAlign(seqA, seqB *obiseq.BioSequence, gap float64,
 		&arena.pointer.pathMatrix)
 
 	arena.pointer.path = _Backtracking(arena.pointer.pathMatrix,
-		seqA.Length(), seqB.Length(),
+		seqA.Len(), seqB.Len(),
 		&arena.pointer.path)
 
 	return score, arena.pointer.path
@@ -290,15 +290,12 @@ func PEAlign(seqA, seqB *obiseq.BioSequence,
 	shift, fastScore := obikmer.FastShiftFourMer(index, seqB, nil)
 
 	if shift > 0 {
-		over = seqA.Length() - shift
+		over = seqA.Len() - shift
 	} else {
-		over = seqB.Length() + shift
+		over = seqB.Len() + shift
 	}
 
-	// log.Println(seqA.String())
-	// log.Println(seqB.String())
-	// log.Printf("Shift : %d Score : %d Over : %d La : %d:%d Lb: %d:%d\n", shift, fastScore, over, seqA.Length(), len(seqA.Qualities()), seqB.Length(), len(seqB.Qualities()))
-
+	
 	if fastScore+3 < over {
 
 		// At least one mismatch exists in the overlaping region
@@ -315,7 +312,7 @@ func PEAlign(seqA, seqB *obiseq.BioSequence,
 			partLen = len(rawSeqA)
 			rawSeqB = seqB.Sequence()[0:partLen]
 			qualSeqB = seqB.Qualities()[0:partLen]
-			extra3 = seqB.Length() - partLen
+			extra3 = seqB.Len() - partLen
 			score = _FillMatrixPeLeftAlign(
 				rawSeqA, qualSeqA, rawSeqB, qualSeqB, gap,
 				&arena.pointer.scoreMatrix,
@@ -335,7 +332,7 @@ func PEAlign(seqA, seqB *obiseq.BioSequence,
 			partLen = len(rawSeqB)
 			rawSeqA = seqA.Sequence()[:partLen]
 			qualSeqA = seqA.Qualities()[:partLen]
-			extra3 = partLen - seqA.Length()
+			extra3 = partLen - seqA.Len()
 			score = _FillMatrixPeRightAlign(
 				rawSeqA, qualSeqA, rawSeqB, qualSeqB, gap,
 				&arena.pointer.scoreMatrix,
@@ -354,7 +351,7 @@ func PEAlign(seqA, seqB *obiseq.BioSequence,
 			qualSeqA = seqA.Qualities()[startA:]
 			partLen = len(qualSeqA)
 			qualSeqB = seqB.Qualities()[0:partLen]
-			extra3 = seqB.Length() - partLen
+			extra3 = seqB.Len() - partLen
 			score = 0
 		} else {
 			startA = 0
@@ -362,7 +359,7 @@ func PEAlign(seqA, seqB *obiseq.BioSequence,
 			extra5 = startB
 			qualSeqB = seqB.Qualities()[startB:]
 			partLen = len(qualSeqB)
-			extra3 = partLen - seqA.Length()
+			extra3 = partLen - seqA.Len()
 			qualSeqA = seqA.Qualities()[:partLen]
 		}
 		score = 0

@@ -6,7 +6,7 @@ func (set *TaxonSet) Get(i int) *TaxNode {
 	return (*set)[i]
 }
 
-func (set *TaxonSet) Length() int {
+func (set *TaxonSet) Len() int {
 	return len(*set)
 }
 

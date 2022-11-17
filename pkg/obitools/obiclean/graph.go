@@ -386,7 +386,7 @@ func extendSimilarityGraph(seqs *[]*seqPCR, step int, workers int) int {
 
 	ff := func() {
 		var matrix []uint64
-		
+
 		for i := range lineChan {
 			linePairs(&matrix, i)
 		}
@@ -463,7 +463,7 @@ func EstimateRatio(samples map[string]*[]*seqPCR, minStatRatio int) [][]Ratio {
 			for _, edge := range seq.Edges {
 				father := (*seqs)[edge.Father]
 				if father.Weight >= minStatRatio && edge.Dist == 1 {
-					ratio[edge.NucPair] = append(ratio[edge.NucPair], Ratio{name, father.Weight, seq.Weight, father.Count, seq.Count, edge.Pos, father.Sequence.Length()})
+					ratio[edge.NucPair] = append(ratio[edge.NucPair], Ratio{name, father.Weight, seq.Weight, father.Count, seq.Count, edge.Pos, father.Sequence.Len()})
 				}
 			}
 

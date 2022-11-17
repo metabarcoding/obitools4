@@ -63,9 +63,9 @@ func TaxonAsString(taxon *obitax.TaxNode, pattern string) string {
 			fmt.Printf("%+v", err)
 		}
 
-		bf.WriteString(path.Get(path.Length() - 1).ScientificName())
+		bf.WriteString(path.Get(path.Len() - 1).ScientificName())
 
-		for i := path.Length() - 2; i >= 0; i-- {
+		for i := path.Len() - 2; i >= 0; i-- {
 			fmt.Fprintf(&bf, ":%s", path.Get(i).ScientificName())
 		}
 

@@ -58,7 +58,7 @@ var _FourBitsBaseDecode = []byte{
 // A byte slice can be provided (buffer) to preveent allocation of a new
 // memory chunk by th function.
 func Encode4bits(seq *obiseq.BioSequence, buffer []byte) []byte {
-	length := seq.Length()
+	length := seq.Len()
 	rawseq := seq.Sequence()
 
 	if buffer == nil {
