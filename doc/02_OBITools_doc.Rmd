@@ -1,0 +1,95 @@
+# The *OBITools* commands
+
+## Specifying the input files to *OBITools* commands
+
+## Options common to most of the *OBITools* commands
+
+### Specifying input format
+
+Five sequence formats are accepted for input files. [Fasta](#fasta-classical "Fasta format description") and [Fastq](#fastq-classical "Fastq format description") are the main ones, EMBL and Genbank allow the use of flat files produced by these two international databases. The last one, ecoPCR, is maintained for compatibility with previous *OBITools* and allows to read *ecoPCR* outputs as sequence files.
+
+-   `--ecopcr` : Read data following the *ecoPCR* output format.
+-   `--embl` Read data following the *EMBL* flatfile format.
+-   `--genbank` Read data following the *Genbank* flatfile format.
+
+Several encoding schemes have been proposed for quality scores in [Fastq](#fastq-classical "Fastq format description") format. Currently, *OBITools* considers Sanger encoding as the standard. For reasons of compatibility with older datasets produced with *Solexa* sequencers, it is possible, by using the following option, to force the use of the corresponding quality encoding scheme when reading these older files.
+
+-   `--solexa` Decodes quality string according to the Solexa specification. (default: false)
+
+### Specifying output format
+
+Only two output sequence formats are supported by OBITools, Fasta and Fastq. Fastq is used when output sequences are associated with quality information. Otherwise, Fasta is the default format. However, it is possible to force the output format by using one of the following two options. Forcing the use of Fasta results in the loss of quality information. Conversely, when the Fastq format is forced with sequences that have no quality data, dummy qualities set to 40 for each nucleotide are added.
+
+-   `--fasta-output` Read data following the ecoPCR output format.
+-   `--fastq-output` Read data following the EMBL flatfile format.
+
+OBITools allows multiple input files to be specified for a single command.
+
+-   `--no-order` When several input files are provided, indicates that there is no order among them. (default: false)
+
+### Format of the annotations in Fasta and Fastq files
+
+OBITools extend the [Fasta](#fasta-classical "Fasta format description") and [Fastq](#fastq-classical "Fastq format description") formats by introducing a format for the title lines of these formats allowing to annotate every sequence. While the previous version of OBITools used an *ad-hoc* format for these annotation, this new version introduce the usage of the standard JSON format to store them.
+
+On input, OBITools automatically recognize the format of the annotations, but two options allows to force the parsing following one of them. You should normally not need to use these options.
+
+-   `--input-OBI-header` FASTA/FASTQ title line annotations follow OBI format. (default: false)
+
+-   `--input-json-header` FASTA/FASTQ title line annotations follow json format. (default: false)
+
+On output, by default annotation are formatted using the new JSON format. For compatibility with previous version of OBITools and with external scripts and software, it is possible to force the usage of the previous OBITools format.
+
+-   `--output-OBI-header|-O` output FASTA/FASTQ title line annotations follow OBI format. (default: false)
+
+-   `--output-json-header` output FASTA/FASTQ title line annotations follow json format. (default: false)
+
+#### System related options
+
+-   `--debug` (default: false)
+-   `--help\|-h\|-?` (default: false)
+-   `--max-cpu <int>` Number of parallele threads computing the result (default: 10)
+-   `--workers\|-w <int>` Number of parallele threads computing the result (default: 9)
+
+## Metabarcode design and quality assessment
+
+#### `obipcr`
+
+> Replace the `ecoPCR` original *OBITools*
+
+## File format conversions
+
+#### `obiconvert`
+
+## Sequence annotations
+
+#### `obitag`
+
+## Computations on sequences
+
+### `obipairing`
+
+> Replace the `illuminapairedends` original *OBITools*
+
+#### `obimultiplex`
+
+> Replace the `ngsfilter` original *OBITools*
+
+#### `obicomplement`
+
+#### `obiclean`
+
+#### `obiuniq`
+
+## Sequence sampling and filtering
+
+#### `obigrep`
+
+### Utilities
+
+#### `obicount`
+
+#### `obidistribute`
+
+#### `obifind`
+
+> Replace the `ecofind` original *OBITools.*

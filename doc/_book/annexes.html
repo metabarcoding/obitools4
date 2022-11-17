@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+<head>
+
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>4 Annexes | The GO OBITools</title>
+  <meta name="description" content="Description of the principles used into the GO implementation of OBITools." />
+  <meta name="generator" content="bookdown 0.29 and GitBook 2.6.7" />
+
+  <meta property="og:title" content="4 Annexes | The GO OBITools" />
+  <meta property="og:type" content="book" />
+  
+  <meta property="og:description" content="Description of the principles used into the GO implementation of OBITools." />
+  <meta name="github-repo" content="seankross/bookdown-start" />
+
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="4 Annexes | The GO OBITools" />
+  
+  <meta name="twitter:description" content="Description of the principles used into the GO implementation of OBITools." />
+  
+
+<meta name="author" content="SEric Coissac" />
+
+
+<meta name="date" content="2022-08-25" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  
+  
+<link rel="prev" href="reference-documentation-for-the-go-obitools-library.html"/>
+
+<script src="book_assets/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fuse.js@6.4.6/dist/fuse.min.js"></script>
+<link href="book_assets/gitbook-2.6.7/css/style.css" rel="stylesheet" />
+<link href="book_assets/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
+<link href="book_assets/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
+<link href="book_assets/gitbook-2.6.7/css/plugin-highlight.css" rel="stylesheet" />
+<link href="book_assets/gitbook-2.6.7/css/plugin-search.css" rel="stylesheet" />
+<link href="book_assets/gitbook-2.6.7/css/plugin-fontsettings.css" rel="stylesheet" />
+<link href="book_assets/gitbook-2.6.7/css/plugin-clipboard.css" rel="stylesheet" />
+
+
+
+
+
+
+
+
+<link href="book_assets/anchor-sections-1.1.0/anchor-sections.css" rel="stylesheet" />
+<link href="book_assets/anchor-sections-1.1.0/anchor-sections-hash.css" rel="stylesheet" />
+<script src="book_assets/anchor-sections-1.1.0/anchor-sections.js"></script>
+
+
+<style type="text/css">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+
+</head>
+
+<body>
+
+
+
+  <div class="book without-animation with-summary font-size-2 font-family-1" data-basepath=".">
+
+    <div class="book-summary">
+      <nav role="navigation">
+
+<ul class="summary">
+<li class="chapter" data-level="1" data-path="the-obitools.html"><a href="the-obitools.html"><i class="fa fa-check"></i><b>1</b> The OBITools</a>
+<ul>
+<li class="chapter" data-level="1.1" data-path="the-obitools.html"><a href="the-obitools.html#aims-of-obitools"><i class="fa fa-check"></i><b>1.1</b> Aims of <em>OBITools</em></a></li>
+<li class="chapter" data-level="1.2" data-path="the-obitools.html"><a href="the-obitools.html#file-formats-usable-with-obitools"><i class="fa fa-check"></i><b>1.2</b> File formats usable with <em>OBITools</em></a>
+<ul>
+<li class="chapter" data-level="1.2.1" data-path="the-obitools.html"><a href="the-obitools.html#the-sequence-files"><i class="fa fa-check"></i><b>1.2.1</b> The sequence files</a></li>
+<li class="chapter" data-level="1.2.2" data-path="the-obitools.html"><a href="the-obitools.html#the-iupac-code"><i class="fa fa-check"></i><b>1.2.2</b> The IUPAC Code</a></li>
+<li class="chapter" data-level="1.2.3" data-path="the-obitools.html"><a href="the-obitools.html#classical-fasta"><i class="fa fa-check"></i><b>1.2.3</b> The <em>fasta</em> format</a></li>
+<li class="chapter" data-level="1.2.4" data-path="the-obitools.html"><a href="the-obitools.html#classical-fastq"><i class="fa fa-check"></i><b>1.2.4</b> The <em>fastq</em> sequence format</a></li>
+</ul></li>
+<li class="chapter" data-level="1.3" data-path="the-obitools.html"><a href="the-obitools.html#file-extension"><i class="fa fa-check"></i><b>1.3</b> File extension</a></li>
+<li class="chapter" data-level="1.4" data-path="the-obitools.html"><a href="the-obitools.html#see-also"><i class="fa fa-check"></i><b>1.4</b> See also</a></li>
+<li class="chapter" data-level="1.5" data-path="the-obitools.html"><a href="the-obitools.html#references"><i class="fa fa-check"></i><b>1.5</b> References</a></li>
+</ul></li>
+<li class="chapter" data-level="2" data-path="the-obitools-commands.html"><a href="the-obitools-commands.html"><i class="fa fa-check"></i><b>2</b> The <em>OBITools</em> commands</a>
+<ul>
+<li class="chapter" data-level="2.1" data-path="the-obitools-commands.html"><a href="the-obitools-commands.html#specifying-the-input-files-to-obitools-commands"><i class="fa fa-check"></i><b>2.1</b> Specifying the input files to <em>OBITools</em> commands</a></li>
+<li class="chapter" data-level="2.2" data-path="the-obitools-commands.html"><a href="the-obitools-commands.html#options-common-to-most-of-the-obitools-commands"><i class="fa fa-check"></i><b>2.2</b> Options common to most of the <em>OBITools</em> commands</a>
+<ul>
+<li class="chapter" data-level="2.2.1" data-path="the-obitools-commands.html"><a href="the-obitools-commands.html#specifying-input-format"><i class="fa fa-check"></i><b>2.2.1</b> Specifying input format</a></li>
+<li class="chapter" data-level="2.2.2" data-path="the-obitools-commands.html"><a href="the-obitools-commands.html#specifying-output-format"><i class="fa fa-check"></i><b>2.2.2</b> Specifying output format</a></li>
+<li class="chapter" data-level="2.2.3" data-path="the-obitools-commands.html"><a href="the-obitools-commands.html#format-of-the-annotations-in-fasta-and-fastq-files"><i class="fa fa-check"></i><b>2.2.3</b> Format of the annotations in Fasta and Fastq files</a></li>
+</ul></li>
+<li class="chapter" data-level="2.3" data-path="the-obitools-commands.html"><a href="the-obitools-commands.html#metabarcode-design-and-quality-assessment"><i class="fa fa-check"></i><b>2.3</b> Metabarcode design and quality assessment</a></li>
+<li class="chapter" data-level="2.4" data-path="the-obitools-commands.html"><a href="the-obitools-commands.html#file-format-conversions"><i class="fa fa-check"></i><b>2.4</b> File format conversions</a></li>
+<li class="chapter" data-level="2.5" data-path="the-obitools-commands.html"><a href="the-obitools-commands.html#sequence-annotations"><i class="fa fa-check"></i><b>2.5</b> Sequence annotations</a></li>
+<li class="chapter" data-level="2.6" data-path="the-obitools-commands.html"><a href="the-obitools-commands.html#computations-on-sequences"><i class="fa fa-check"></i><b>2.6</b> Computations on sequences</a>
+<ul>
+<li class="chapter" data-level="2.6.1" data-path="the-obitools-commands.html"><a href="the-obitools-commands.html#obipairing"><i class="fa fa-check"></i><b>2.6.1</b> <code>obipairing</code></a></li>
+</ul></li>
+<li class="chapter" data-level="2.7" data-path="the-obitools-commands.html"><a href="the-obitools-commands.html#sequence-sampling-and-filtering"><i class="fa fa-check"></i><b>2.7</b> Sequence sampling and filtering</a>
+<ul>
+<li class="chapter" data-level="2.7.1" data-path="the-obitools-commands.html"><a href="the-obitools-commands.html#utilities"><i class="fa fa-check"></i><b>2.7.1</b> Utilities</a></li>
+</ul></li>
+</ul></li>
+<li class="chapter" data-level="3" data-path="reference-documentation-for-the-go-obitools-library.html"><a href="reference-documentation-for-the-go-obitools-library.html"><i class="fa fa-check"></i><b>3</b> Reference documentation for the GO <em>OBITools</em> library</a>
+<ul>
+<li class="chapter" data-level="3.1" data-path="reference-documentation-for-the-go-obitools-library.html"><a href="reference-documentation-for-the-go-obitools-library.html#biosequence"><i class="fa fa-check"></i><b>3.1</b> BioSequence</a>
+<ul>
+<li class="chapter" data-level="3.1.1" data-path="reference-documentation-for-the-go-obitools-library.html"><a href="reference-documentation-for-the-go-obitools-library.html#creating-new-instances"><i class="fa fa-check"></i><b>3.1.1</b> Creating new instances</a></li>
+<li class="chapter" data-level="3.1.2" data-path="reference-documentation-for-the-go-obitools-library.html"><a href="reference-documentation-for-the-go-obitools-library.html#end-of-life-of-a-biosequence-instance"><i class="fa fa-check"></i><b>3.1.2</b> End of life of a <code>BioSequence</code> instance</a></li>
+<li class="chapter" data-level="3.1.3" data-path="reference-documentation-for-the-go-obitools-library.html"><a href="reference-documentation-for-the-go-obitools-library.html#accessing-to-the-elements-of-a-sequence"><i class="fa fa-check"></i><b>3.1.3</b> Accessing to the elements of a sequence</a></li>
+</ul></li>
+</ul></li>
+<li class="chapter" data-level="4" data-path="annexes.html"><a href="annexes.html"><i class="fa fa-check"></i><b>4</b> Annexes</a>
+<ul>
+<li class="chapter" data-level="4.0.1" data-path="annexes.html"><a href="annexes.html#sequence-attributes"><i class="fa fa-check"></i><b>4.0.1</b> Sequence attributes</a></li>
+</ul></li>
+</ul>
+
+      </nav>
+    </div>
+
+    <div class="book-body">
+      <div class="body-inner">
+        <div class="book-header" role="navigation">
+          <h1>
+            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">The GO <em>OBITools</em></a>
+          </h1>
+        </div>
+
+        <div class="page-wrapper" tabindex="-1" role="main">
+          <div class="page-inner">
+
+            <section class="normal" id="section-">
+<div id="annexes" class="section level1 hasAnchor" number="4">
+<h1><span class="header-section-number">4</span> Annexes<a href="annexes.html#annexes" class="anchor-section" aria-label="Anchor link to header"></a></h1>
+<div id="sequence-attributes" class="section level3 hasAnchor" number="4.0.1">
+<h3><span class="header-section-number">4.0.1</span> Sequence attributes<a href="annexes.html#sequence-attributes" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<div id="reserved-sequence-attributes" class="section level4 hasAnchor" number="4.0.1.1">
+<h4><span class="header-section-number">4.0.1.1</span> Reserved sequence attributes<a href="annexes.html#reserved-sequence-attributes" class="anchor-section" aria-label="Anchor link to header"></a></h4>
+<div id="ali_dir" class="section level5 hasAnchor" number="4.0.1.1.1">
+<h5><span class="header-section-number">4.0.1.1.1</span> <code>ali_dir</code><a href="annexes.html#ali_dir" class="anchor-section" aria-label="Anchor link to header"></a></h5>
+<div id="type-string" class="section level6 hasAnchor" number="4.0.1.1.1.1">
+<h6><span class="header-section-number">4.0.1.1.1.1</span> Type : <code>string</code><a href="annexes.html#type-string" class="anchor-section" aria-label="Anchor link to header"></a></h6>
+<p>The attribute can contain 2 string values <code>"left"</code> or <code>"right".</code></p>
+</div>
+<div id="set-by-the-obipairing-tool" class="section level6 hasAnchor" number="4.0.1.1.1.2">
+<h6><span class="header-section-number">4.0.1.1.1.2</span> Set by the <em>obipairing</em> tool<a href="annexes.html#set-by-the-obipairing-tool" class="anchor-section" aria-label="Anchor link to header"></a></h6>
+<p>The alignment generated by <em>obipairing</em> is a 3’-end gap free algorithm.
+Two cases can occur when aligning the forward and reverse reads. If the
+barcode is long enough, both the reads overlap only on their 3’ ends. In
+such case, the alignment direction <code>ali_dir</code> is set to <em>left</em>. If the
+barcode is shorter than the read length, the paired reads overlap by
+their 5’ ends, and the complete barcode is sequenced by both the reads.
+In that later case, <code>ali_dir</code> is set to <em>right</em>.</p>
+</div>
+</div>
+<div id="ali_length" class="section level5 hasAnchor" number="4.0.1.1.2">
+<h5><span class="header-section-number">4.0.1.1.2</span> <code>ali_length</code><a href="annexes.html#ali_length" class="anchor-section" aria-label="Anchor link to header"></a></h5>
+<div id="set-by-the-obipairing-tool-1" class="section level6 hasAnchor" number="4.0.1.1.2.1">
+<h6><span class="header-section-number">4.0.1.1.2.1</span> Set by the <em>obipairing</em> tool<a href="annexes.html#set-by-the-obipairing-tool-1" class="anchor-section" aria-label="Anchor link to header"></a></h6>
+<p>Length of the aligned parts when merging forward and reverse reads</p>
+</div>
+</div>
+<div id="count-the-number-of-sequence-occurrences" class="section level5 hasAnchor" number="4.0.1.1.3">
+<h5><span class="header-section-number">4.0.1.1.3</span> <code>count</code> : the number of sequence occurrences<a href="annexes.html#count-the-number-of-sequence-occurrences" class="anchor-section" aria-label="Anchor link to header"></a></h5>
+<div id="set-by-the-obiuniq-tool" class="section level6 hasAnchor" number="4.0.1.1.3.1">
+<h6><span class="header-section-number">4.0.1.1.3.1</span> Set by the <em>obiuniq</em> tool<a href="annexes.html#set-by-the-obiuniq-tool" class="anchor-section" aria-label="Anchor link to header"></a></h6>
+<p>The <code>count</code> attribute indicates how-many strictly identical sequences
+have been merged in a single record. It contains an integer value. If it
+is absent this means that the sequence record represents a single
+occurrence of the sequence.</p>
+</div>
+<div id="getter-method-count" class="section level6 hasAnchor" number="4.0.1.1.3.2">
+<h6><span class="header-section-number">4.0.1.1.3.2</span> Getter : method <code>Count()</code><a href="annexes.html#getter-method-count" class="anchor-section" aria-label="Anchor link to header"></a></h6>
+<p>The <code>Count()</code> method allows to access to the count attribute as an
+integer value. If the <code>count</code> attribute is not defined for the given
+sequence, the value <em>1</em> is returned</p>
+</div>
+</div>
+<div id="merged_" class="section level5 hasAnchor" number="4.0.1.1.4">
+<h5><span class="header-section-number">4.0.1.1.4</span> <code>merged_*</code><a href="annexes.html#merged_" class="anchor-section" aria-label="Anchor link to header"></a></h5>
+<div id="type-mapstringint" class="section level6 hasAnchor" number="4.0.1.1.4.1">
+<h6><span class="header-section-number">4.0.1.1.4.1</span> Type : <code>map[string]int</code><a href="annexes.html#type-mapstringint" class="anchor-section" aria-label="Anchor link to header"></a></h6>
+</div>
+<div id="set-by-the-obiuniq-tool-1" class="section level6 hasAnchor" number="4.0.1.1.4.2">
+<h6><span class="header-section-number">4.0.1.1.4.2</span> Set by the <em>obiuniq</em> tool<a href="annexes.html#set-by-the-obiuniq-tool-1" class="anchor-section" aria-label="Anchor link to header"></a></h6>
+<p>The <code>-m</code> option of the <em>obiuniq</em> tools allows for keeping track of the
+distribution of the values stored in given attribute of interest. Often
+this option is used to summarise distribution of a sequence variant
+accross samples when <em>obiuniq</em> is run after running <em>obimultiplex</em>. The
+actual name of the attribute depends on the name of the monitored
+attribute. If <code>-m</code> option is used with the attribute <em>sample</em>, then this
+attribute names <em>merged_sample</em>.</p>
+</div>
+</div>
+<div id="mode" class="section level5 hasAnchor" number="4.0.1.1.5">
+<h5><span class="header-section-number">4.0.1.1.5</span> <code>mode</code><a href="annexes.html#mode" class="anchor-section" aria-label="Anchor link to header"></a></h5>
+<div id="set-by-the-obipairing-tool-2" class="section level6 hasAnchor" number="4.0.1.1.5.1">
+<h6><span class="header-section-number">4.0.1.1.5.1</span> Set by the <em>obipairing</em> tool<a href="annexes.html#set-by-the-obipairing-tool-2" class="anchor-section" aria-label="Anchor link to header"></a></h6>
+<p><strong><code>obitag_ref_index</code></strong></p>
+</div>
+<div id="set-by-the-obirefidx-tool." class="section level6 hasAnchor" number="4.0.1.1.5.2">
+<h6><span class="header-section-number">4.0.1.1.5.2</span> Set by the <em>obirefidx</em> tool.<a href="annexes.html#set-by-the-obirefidx-tool." class="anchor-section" aria-label="Anchor link to header"></a></h6>
+<p>It resumes to which taxonomic annotation a match to that sequence must
+lead according to the number of differences existing between the query
+sequence and the reference sequence having that tag.</p>
+</div>
+<div id="getter-method-count-1" class="section level6 hasAnchor" number="4.0.1.1.5.3">
+<h6><span class="header-section-number">4.0.1.1.5.3</span> Getter : method <code>Count()</code><a href="annexes.html#getter-method-count-1" class="anchor-section" aria-label="Anchor link to header"></a></h6>
+</div>
+</div>
+<div id="pairing_mismatches" class="section level5 hasAnchor" number="4.0.1.1.6">
+<h5><span class="header-section-number">4.0.1.1.6</span> <code>pairing_mismatches</code><a href="annexes.html#pairing_mismatches" class="anchor-section" aria-label="Anchor link to header"></a></h5>
+<div id="set-by-the-obipairing-tool-3" class="section level6 hasAnchor" number="4.0.1.1.6.1">
+<h6><span class="header-section-number">4.0.1.1.6.1</span> Set by the <em>obipairing</em> tool<a href="annexes.html#set-by-the-obipairing-tool-3" class="anchor-section" aria-label="Anchor link to header"></a></h6>
+</div>
+</div>
+<div id="score" class="section level5 hasAnchor" number="4.0.1.1.7">
+<h5><span class="header-section-number">4.0.1.1.7</span> <code>score</code><a href="annexes.html#score" class="anchor-section" aria-label="Anchor link to header"></a></h5>
+<div id="set-by-the-obipairing-tool-4" class="section level6 hasAnchor" number="4.0.1.1.7.1">
+<h6><span class="header-section-number">4.0.1.1.7.1</span> Set by the <em>obipairing</em> tool<a href="annexes.html#set-by-the-obipairing-tool-4" class="anchor-section" aria-label="Anchor link to header"></a></h6>
+</div>
+</div>
+<div id="score_norm" class="section level5 hasAnchor" number="4.0.1.1.8">
+<h5><span class="header-section-number">4.0.1.1.8</span> <code>score_norm</code><a href="annexes.html#score_norm" class="anchor-section" aria-label="Anchor link to header"></a></h5>
+<div id="set-by-the-obipairing-tool-5" class="section level6 hasAnchor" number="4.0.1.1.8.1">
+<h6><span class="header-section-number">4.0.1.1.8.1</span> Set by the <em>obipairing</em> tool<a href="annexes.html#set-by-the-obipairing-tool-5" class="anchor-section" aria-label="Anchor link to header"></a></h6>
+
+</div>
+</div>
+</div>
+</div>
+</div>
+            </section>
+
+          </div>
+        </div>
+      </div>
+<a href="reference-documentation-for-the-go-obitools-library.html" class="navigation navigation-prev navigation-unique" aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+
+    </div>
+  </div>
+<script src="book_assets/gitbook-2.6.7/js/app.min.js"></script>
+<script src="book_assets/gitbook-2.6.7/js/clipboard.min.js"></script>
+<script src="book_assets/gitbook-2.6.7/js/plugin-search.js"></script>
+<script src="book_assets/gitbook-2.6.7/js/plugin-sharing.js"></script>
+<script src="book_assets/gitbook-2.6.7/js/plugin-fontsettings.js"></script>
+<script src="book_assets/gitbook-2.6.7/js/plugin-bookdown.js"></script>
+<script src="book_assets/gitbook-2.6.7/js/jquery.highlight.js"></script>
+<script src="book_assets/gitbook-2.6.7/js/plugin-clipboard.js"></script>
+<script>
+gitbook.require(["gitbook"], function(gitbook) {
+gitbook.start({
+"sharing": {
+"github": false,
+"facebook": true,
+"twitter": true,
+"linkedin": false,
+"weibo": false,
+"instapaper": false,
+"vk": false,
+"whatsapp": false,
+"all": ["facebook", "twitter", "linkedin", "weibo", "instapaper"]
+},
+"fontsettings": {
+"theme": "white",
+"family": "sans",
+"size": 2
+},
+"edit": {
+"link": null,
+"text": null
+},
+"history": {
+"link": null,
+"text": null
+},
+"view": {
+"link": null,
+"text": null
+},
+"download": ["_main.pdf"],
+"search": {
+"engine": "fuse",
+"options": null
+},
+"toc": {
+"collapse": "subsection"
+}
+});
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    var src = "true";
+    if (src === "" || src === "true") src = "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/latest.js?config=TeX-MML-AM_CHTML";
+    if (location.protocol !== "file:")
+      if (/^https?:/.test(src))
+        src = src.replace(/^https?:/, '');
+    script.src = src;
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+</body>
+
+</html>
