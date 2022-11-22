@@ -199,7 +199,6 @@ func FastLCSScore(seqA, seqB *obiseq.BioSequence, maxError int, buffer *[]uint64
 				Sleft = _notavail
 			default:
 				Sdiag = previous[x]
-
 				if bA[j-1] == bB[i-1] {
 					Sdiag = _incscore(Sdiag)
 				}

@@ -56,5 +56,5 @@ func IExtractBarcode(iterator obiiter.IBioSequenceBatch) (obiiter.IBioSequenceBa
 	}
 	log.Printf("Sequence demultiplexing using %d workers\n", obioptions.CLIParallelWorkers())
 
-	return newIter, nil
+	return newIter.Speed("Demultiplexing"), nil
 }

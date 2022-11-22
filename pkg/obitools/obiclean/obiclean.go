@@ -19,6 +19,7 @@ type seqPCR struct {
 	SonCount  int
 	AddedSons int
 	Edges     []Edge
+	Cluster   map[int]bool        // used as the set of head sequences associated to that sequence 
 }
 
 // buildSamples sorts the sequences by samples
@@ -183,13 +184,53 @@ func GetMutation(sequence *obiseq.BioSequence) map[string]string {
 	return mutation
 }
 
+func GetCluster(sequence *obiseq.BioSequence) map[string]string {
+	annotation := sequence.Annotations()
+	icluster, ok := annotation["obiclean_cluster"]
+	var cluster map[string]string
+
+	if ok {
+		switch icluster := icluster.(type) {
+		case map[string]string:
+			cluster = icluster
+		case map[string]interface{}:
+			cluster = make(map[string]string)
+			for k, v := range icluster {
+				cluster[k] = fmt.Sprint(v)
+			}
+		}
+	} else {
+		cluster = make(map[string]string)
+		annotation["obiclean_cluster"] = cluster
+	}
+
+	return cluster
+}
+
+
+// func Cluster(sample map[string]*([]*seqPCR)) {
+// 	for _, graph := range sample {
+// 		for _, s := range *graph {
+// 			cluster := GetCluster(s.Sequence)
+// 			if len(s.Edges) > 0 {
+// 				for _, f := range s.Edges {
+
+// 				}	
+// 			} else {
+// 				cluster
+// 			}
+
+// 		}
+// 	}
+// }
+
 func Mutation(sample map[string]*([]*seqPCR)) {
 	for _, graph := range sample {
 		for _, s := range *graph {
 			for _, f := range s.Edges {
 				id := (*graph)[f.Father].Sequence.Id()
 				GetMutation(s.Sequence)[id] = fmt.Sprintf("(%c)->(%c)@%d",
-					f.From, f.To, f.Pos + 1)
+					f.From, f.To, f.Pos+1)
 			}
 		}
 	}
@@ -277,14 +318,6 @@ func IOBIClean(itertator obiiter.IBioSequenceBatch) obiiter.IBioSequenceBatch {
 		}
 	}
 
-	if IsSaveRatioTable() {
-		all_ratio := EstimateRatio(samples, MinCountToEvalMutationRate())
-		EmpiricalDistCsv(RatioTableFilename(), all_ratio)
-	}
-
-	if SaveGraphToFiles() {
-		SaveGMLGraphs(GraphFilesDirectory(), samples, MinCountToEvalMutationRate())
-	}
 
 	Mutation(samples)
 
@@ -309,6 +342,16 @@ func IOBIClean(itertator obiiter.IBioSequenceBatch) obiiter.IBioSequenceBatch {
 		}
 		bar.Add(1)
 	}
+
+	if SaveGraphToFiles() {
+		SaveGMLGraphs(GraphFilesDirectory(), samples, MinCountToEvalMutationRate())
+	}
+
+	if IsSaveRatioTable() {
+		all_ratio := EstimateRatio(samples, MinCountToEvalMutationRate())
+		EmpiricalDistCsv(RatioTableFilename(), all_ratio)
+	}
+
 
 	iter := annotateOBIClean(db, samples, SampleAttribute(), "NA")
 

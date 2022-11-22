@@ -11,6 +11,7 @@
 package obiseq
 
 import (
+	"bytes"
 	"crypto/md5"
 	"fmt"
 	"strconv"
@@ -370,7 +371,7 @@ func (s *BioSequence) SetSequence(sequence []byte) {
 	if s.sequence != nil {
 		RecycleSlice(&s.sequence)
 	}
-	s.sequence = sequence
+	s.sequence = bytes.ToLower(sequence)
 }
 
 // Setting the qualities of the BioSequence.

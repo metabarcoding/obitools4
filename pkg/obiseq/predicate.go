@@ -209,9 +209,7 @@ func ExpressionPredicat(expression string) SequencePredicate {
 	f := func(sequence *BioSequence) bool {
 		value, err := exp.EvalBool(context.Background(),
 			map[string]interface{}{
-				"annot":     sequence.Annotations(),
-				"count":     sequence.Count(),
-				"seqlength": sequence.Len(),
+				"annotations":     sequence.Annotations(),
 				"sequence":  sequence,
 			},
 		)

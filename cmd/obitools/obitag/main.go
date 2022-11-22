@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"runtime/pprof"
@@ -37,4 +38,6 @@ func main() {
 	identified := obitag.AssignTaxonomy(fs)
 
 	obiconvert.WriteBioSequences(identified, true)
+
+	fmt.Println("")
 }

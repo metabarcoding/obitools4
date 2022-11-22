@@ -7,6 +7,7 @@ package obiformats
 import "C"
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"unsafe"
@@ -38,7 +39,7 @@ func _FastseqReader(seqfile C.fast_kseq_p,
 			comment = ""
 		}
 
-		rep := obiseq.NewBioSequence(name, sequence, comment)
+		rep := obiseq.NewBioSequence(name, bytes.ToLower(sequence), comment)
 
 		if s.qual.l > C.ulong(0) {
 			cquality := unsafe.Slice(s.qual.s, C.int(s.qual.l))

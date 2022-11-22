@@ -18,6 +18,8 @@ import (
 
 type Ratio struct {
 	Sample string
+	SeqID  string
+	status string
 	From   int
 	To     int
 	CFrom  int
@@ -97,12 +99,14 @@ func EmpiricalDistCsv(filename string, data [][]Ratio) {
 
 	bar := progressbar.NewOptions(len(data), pbopt...)
 
-	fmt.Fprintln(file, "Sample,From,To,Weight_from,Weight_to,Count_from,Count_to,Position,length")
+	fmt.Fprintln(file, "Sample,Father_id,Father_status,From,To,Weight_from,Weight_to,Count_from,Count_to,Position,length")
 	for code, dist := range data {
 		a1, a2 := intToNucPair(code)
 		for _, ratio := range dist {
-			fmt.Fprintf(file, "%s,%c,%c,%d,%d,%d,%d,%d,%d\n",
+			fmt.Fprintf(file, "%s,%s,%s,%c,%c,%d,%d,%d,%d,%d,%d\n",
 				ratio.Sample,
+				ratio.SeqID,
+				ratio.status,
 				a1, a2,
 				ratio.From,
 				ratio.To,
@@ -463,7 +467,13 @@ func EstimateRatio(samples map[string]*[]*seqPCR, minStatRatio int) [][]Ratio {
 			for _, edge := range seq.Edges {
 				father := (*seqs)[edge.Father]
 				if father.Weight >= minStatRatio && edge.Dist == 1 {
-					ratio[edge.NucPair] = append(ratio[edge.NucPair], Ratio{name, father.Weight, seq.Weight, father.Count, seq.Count, edge.Pos, father.Sequence.Len()})
+					ratio[edge.NucPair] = append(ratio[edge.NucPair],
+						Ratio{name,
+							father.Sequence.Id(), Status(father.Sequence)[name],
+							father.Weight, seq.Weight,
+							father.Count, seq.Count,
+							edge.Pos,
+							father.Sequence.Len()})
 				}
 			}
 

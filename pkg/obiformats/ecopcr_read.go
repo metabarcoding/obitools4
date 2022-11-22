@@ -1,6 +1,7 @@
 package obiformats
 
 import (
+	"bytes"
 	"compress/gzip"
 	"encoding/csv"
 	"fmt"
@@ -67,7 +68,7 @@ func __read_ecopcr_bioseq__(file *__ecopcr_file__) (*obiseq.BioSequence, error) 
 		comment = strings.TrimSpace(record[19])
 	}
 
-	bseq := obiseq.NewBioSequence(name, sequence, comment)
+	bseq := obiseq.NewBioSequence(name, bytes.ToLower(sequence), comment)
 	annotation := bseq.Annotations()
 
 	annotation["ac"] = name

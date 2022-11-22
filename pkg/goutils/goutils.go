@@ -66,7 +66,56 @@ func InterfaceToInt(i interface{}) (val int, err error) {
 	case uint64:
 		val = int(t) // standardizes across systems
 	default:
-		err = &NotABoolean{"value attribute cannot be casted to an integer"}
+		err = &NotAnInteger{"value attribute cannot be casted to an integer"}
+	}
+	return
+}
+
+// NotAnInteger defines a new type of Error : "NotAnInteger"
+type NotAnFloat64 struct {
+	message string
+}
+
+// Error() retreives the error message associated to the "NotAnInteger"
+// error. Tha addition of that Error message make the "NotAnInteger"
+// complying with the error interface
+func (m *NotAnFloat64) Error() string {
+	return m.message
+}
+
+// InterfaceToInt converts a interface{} to an integer value if possible.
+// If not a "NotAnInteger" error is returned via the err
+// return value and val is set to 0.
+func InterfaceToFloat64(i interface{}) (val float64, err error) {
+
+	err = nil
+	val = 0
+
+	switch t := i.(type) {
+	case int:
+		val = float64(t)
+	case int8:
+		val = float64(t) // standardizes across systems
+	case int16:
+		val = float64(t) // standardizes across systems
+	case int32:
+		val = float64(t) // standardizes across systems
+	case int64:
+		val = float64(t) // standardizes across systems
+	case float32:
+		val = float64(t) // standardizes across systems
+	case float64:
+		val = t // standardizes across systems
+	case uint8:
+		val = float64(t) // standardizes across systems
+	case uint16:
+		val = float64(t) // standardizes across systems
+	case uint32:
+		val = float64(t) // standardizes across systems
+	case uint64:
+		val = float64(t) // standardizes across systems
+	default:
+		err = &NotAnFloat64{"value attribute cannot be casted to a float value"}
 	}
 	return
 }
@@ -108,6 +157,45 @@ func InterfaceToIntMap(i interface{}) (val map[string]int, err error) {
 
 	return
 }
+
+// NotABoolean defines a new type of Error : "NotAMapInt"
+type NotAMapFloat64 struct {
+	message string
+}
+
+// Error() retreives the error message associated to the "NotAnInteger"
+// error. Tha addition of that Error message make the "NotAnInteger"
+// complying with the error interface
+func (m *NotAMapFloat64) Error() string {
+	return m.message
+}
+
+func InterfaceToFloat64Map(i interface{}) (val map[string]float64, err error) {
+	err = nil
+
+	switch i := i.(type) {
+	case map[string]float64:
+		val = i
+	case map[string]interface{}:
+		val = make(map[string]float64, len(i))
+		for k, v := range i {
+			val[k], err = InterfaceToFloat64(v)
+			if err != nil {
+				return
+			}
+		}
+	case map[string]int:
+		val = make(map[string]float64, len(i))
+		for k, v := range i {
+			val[k] = float64(v)
+		}
+	default:
+		err = &NotAMapFloat64{"value attribute cannot be casted to a map[string]float64"}
+	}
+
+	return
+}
+
 
 // NotABoolean defines a new type of Error : "NotABoolean"
 type NotABoolean struct {

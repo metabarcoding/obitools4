@@ -66,7 +66,9 @@ func FindClosests(sequence *obiseq.BioSequence,
 
 		// log.Println(sequence.Id(),cw[j], maxe)
 		if runExact || (atMost <= (maxe + 1)) {
+			// if true {
 			lcs, alilength := obialign.FastLCSScore(sequence, ref, maxe+1, &matrix)
+			// fmt.Println(j, cw[j], lcs, alilength, alilength-lcs)
 			// lcs, alilength := obialign.LCSScore(sequence, ref, maxe+1, matrix)
 			n++
 			if lcs == -1 {
