@@ -1,0 +1,157 @@
+# The GO *OBITools* library
+
+## BioSequence
+
+The `BioSequence` class is used to represent biological sequences. It
+allows for storing : - the sequence itself as a `[]byte` - the
+sequencing quality score as a `[]byte` if needed - an identifier as a
+`string` - a definition as a `string` - a set of *(key, value)* pairs in
+a `map[sting]interface{}`
+
+BioSequence is defined in the obiseq module and is included using the
+code
+
+``` go
+import (
+    "git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
+)
+```
+
+### Creating new instances
+
+To create new instance, use
+
+-   `MakeBioSequence(id string, sequence []byte, definition string) obiseq.BioSequence`
+-   `NewBioSequence(id string, sequence []byte, definition string) *obiseq.BioSequence`
+
+Both create a `BioSequence` instance, but when the first one returns the
+instance, the second returns a pointer on the new instance. Two other
+functions `MakeEmptyBioSequence`, and `NewEmptyBioSequence` do the same
+job but provide an uninitialized objects.
+
+-   `id` parameters corresponds to the unique identifier of the
+    sequence. It mist be a string constituted of a single word (not
+    containing any space).
+-   `sequence` is the DNA sequence itself, provided as a `byte` array
+    (`[]byte`).
+-   `definition` is a `string`, potentially empty, but usualy containing
+    a sentence explaining what is that sequence.
+
+``` go
+import (
+    "git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
+)
+
+func main() {
+    myseq := obiseq.NewBiosequence(
+        "seq_GH0001",
+        bytes.FromString("ACGTGTCAGTCG"),
+        "A short test sequence",
+        )
+}
+```
+
+When formated as fasta the parameters correspond to the following schema
+
+    >id definition containing potentially several words
+    sequence
+
+### End of life of a `BioSequence` instance
+
+When a `BioSequence` instance is no more used, it is normally taken in
+charge by the GO garbage collector. You can if you want call the
+`Recycle` method on the instance to store the allocated memory element
+in a `pool` to limit allocation effort when many sequences are
+manipulated.
+
+### Accessing to the elements of a sequence
+
+The different elements of an `obiseq.BioSequence` must be accessed using
+a set of methods. For the three main elements provided during the
+creation of a new instance methodes are :
+
+-   `Id() string`
+-   `Sequence() []byte`
+-   `Definition() string`
+
+It exists pending method to change the value of these elements
+
+-   `SetId(id string)`
+-   `SetSequence(sequence []byte)`
+-   `SetDefinition(definition string)`
+
+``` go
+import (
+    "fmt"
+    "git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
+)
+
+func main() {
+    myseq := obiseq.NewBiosequence(
+        "seq_GH0001",
+        bytes.FromString("ACGTGTCAGTCG"),
+        "A short test sequence",
+        )
+
+    fmt.Println(myseq.Id())
+    myseq.SetId("SPE01_0001")
+    fmt.Println(myseq.Id())
+}
+```
+
+#### Different ways for accessing an editing the sequence
+
+If `Sequence()`and `SetSequence(sequence []byte)` methods are the basic
+ones, several other methods exist.
+
+-   `String() string` return the sequence directly converted to a
+    `string` instance.
+-   The `Write` method family allows for extending an existing sequence
+    following the buffer protocol.
+    -   `Write(data []byte) (int, error)` allows for appending a byte
+        array on 3' end of the sequence.
+    -   `WriteString(data string) (int, error)` allows for appending a
+        `string`.
+    -   `WriteByte(data byte) error` allows for appending a single
+        `byte`.
+
+The `Clear` method empties the sequence buffer.
+
+``` go
+import (
+    "fmt"
+    "git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
+)
+
+func main() {
+    myseq := obiseq.NewEmptyBiosequence()
+
+    myseq.WriteString("accc")
+    myseq.WriteByte(byte('c'))
+    fmt.Println(myseq.String())
+}
+```
+
+#### Sequence quality scores
+
+Sequence quality scores cannot be initialized at the time of instance
+creation. You must use dedicated methods to add quality scores to a
+sequence.
+
+To be coherent the length of both the DNA sequence and que quality score
+sequence must be equal. But assessment of this constraint is realized.
+It is of the programmer responsability to check that invariant.
+
+While accessing to the quality scores relies on the method
+`Quality() []byte`, setting the quality need to call one of the
+following method. They run similarly to their sequence dedicated
+conterpart.
+
+-   `SetQualities(qualities Quality)`
+-   `WriteQualities(data []byte) (int, error)`
+-   `WriteByteQualities(data byte) error`
+
+In a way analogous to the `Clear` method, `ClearQualities()` empties the
+sequence of quality scores.
+
+

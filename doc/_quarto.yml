@@ -1,0 +1,25 @@
+project:
+  type: book
+
+book:
+  title: "OBITools V4"
+  author: "Eric Coissac"
+  date: "1/17/2023"
+  chapters:
+    - index.qmd
+    - intro.qmd
+    - commands.qmd
+    - library.qmd
+    - annexes.qmd
+    - references.qmd
+
+bibliography: book.bib
+
+format:
+  html:
+    theme: cosmo
+  pdf:
+    documentclass: scrreprt
+
+
+
