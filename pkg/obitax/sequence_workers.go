@@ -2,12 +2,11 @@ package obitax
 
 import (
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/goutils"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 	log "github.com/sirupsen/logrus"
 )
 
-func (taxonomy *Taxonomy) MakeSetTaxonAtRankWorker(rank string) obiiter.SeqWorker {
+func (taxonomy *Taxonomy) MakeSetTaxonAtRankWorker(rank string) obiseq.SeqWorker {
 
 	if !goutils.Contains(taxonomy.RankList(), rank) {
 		log.Fatalf("%s is not a valid rank (allowed ranks are %v)",
@@ -23,7 +22,7 @@ func (taxonomy *Taxonomy) MakeSetTaxonAtRankWorker(rank string) obiiter.SeqWorke
 	return w
 }
 
-func (taxonomy *Taxonomy) MakeSetSpeciesWorker() obiiter.SeqWorker {
+func (taxonomy *Taxonomy) MakeSetSpeciesWorker() obiseq.SeqWorker {
 
 	w := func(sequence *obiseq.BioSequence) *obiseq.BioSequence {
 		taxonomy.SetSpecies(sequence)
@@ -33,7 +32,7 @@ func (taxonomy *Taxonomy) MakeSetSpeciesWorker() obiiter.SeqWorker {
 	return w
 }
 
-func (taxonomy *Taxonomy) MakeSetGenusWorker() obiiter.SeqWorker {
+func (taxonomy *Taxonomy) MakeSetGenusWorker() obiseq.SeqWorker {
 
 	w := func(sequence *obiseq.BioSequence) *obiseq.BioSequence {
 		taxonomy.SetGenus(sequence)
@@ -43,7 +42,7 @@ func (taxonomy *Taxonomy) MakeSetGenusWorker() obiiter.SeqWorker {
 	return w
 }
 
-func (taxonomy *Taxonomy) MakeSetFamilyWorker() obiiter.SeqWorker {
+func (taxonomy *Taxonomy) MakeSetFamilyWorker() obiseq.SeqWorker {
 
 	w := func(sequence *obiseq.BioSequence) *obiseq.BioSequence {
 		taxonomy.SetFamily(sequence)
@@ -52,5 +51,3 @@ func (taxonomy *Taxonomy) MakeSetFamilyWorker() obiiter.SeqWorker {
 
 	return w
 }
-
-

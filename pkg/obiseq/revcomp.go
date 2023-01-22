@@ -64,3 +64,12 @@ func (sequence *BioSequence) _revcmpMutation() *BioSequence {
 
 	return sequence
 }
+
+
+func ReverseComplementWorker(inplace bool) SeqWorker {
+	f := func(input *BioSequence) *BioSequence {
+		return input.ReverseComplement(inplace)
+	}
+
+	return f
+}

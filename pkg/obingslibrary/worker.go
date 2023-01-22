@@ -1,7 +1,6 @@
 package obingslibrary
 
 import (
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
 
@@ -170,7 +169,7 @@ func ExtractBarcodeSlice(ngslibrary NGSLibrary,
 }
 
 func ExtractBarcodeSliceWorker(ngslibrary NGSLibrary,
-	options ...WithOption) obiiter.SeqSliceWorker {
+	options ...WithOption) obiseq.SeqSliceWorker {
 
 	opt := MakeOptions(options)
 

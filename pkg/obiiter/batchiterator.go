@@ -1,3 +1,5 @@
+// It takes a slice of BioSequence objects, and returns an iterator that will return batches of
+// BioSequence objects
 package obiiter
 
 import (

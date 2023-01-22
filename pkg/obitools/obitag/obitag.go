@@ -165,7 +165,7 @@ func Identify(sequence *obiseq.BioSequence,
 func IdentifySeqWorker(references obiseq.BioSequenceSlice,
 	refcounts []*obikmer.Table4mer,
 	taxo *obitax.Taxonomy,
-	runExact bool) obiiter.SeqWorker {
+	runExact bool) obiseq.SeqWorker {
 	return func(sequence *obiseq.BioSequence) *obiseq.BioSequence {
 		return Identify(sequence, references, refcounts, taxo, runExact)
 	}

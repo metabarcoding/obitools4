@@ -6,18 +6,6 @@ import (
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
 
-type SeqAnnotator func(*obiseq.BioSequence)
-
-type SeqWorker func(*obiseq.BioSequence) *obiseq.BioSequence
-type SeqSliceWorker func(obiseq.BioSequenceSlice) obiseq.BioSequenceSlice
-
-func AnnotatorToSeqWorker(function SeqAnnotator) SeqWorker {
-	f := func(seq *obiseq.BioSequence) *obiseq.BioSequence {
-		function(seq)
-		return seq
-	}
-	return f
-}
 
 // That method allows for applying a SeqWorker function on every sequences.
 //
@@ -27,7 +15,7 @@ func AnnotatorToSeqWorker(function SeqAnnotator) SeqWorker {
 // Moreover the SeqWorker function, the method accepted two optional integer parameters.
 //   - First is allowing to indicates the number of workers running in parallele (default 4)
 //   - The second the size of the chanel buffer. By default set to the same value than the input buffer.
-func (iterator IBioSequence) MakeIWorker(worker SeqWorker, sizes ...int) IBioSequence {
+func (iterator IBioSequence) MakeIWorker(worker obiseq.SeqWorker, sizes ...int) IBioSequence {
 	nworkers := 4
 	buffsize := iterator.BufferSize()
 
@@ -70,7 +58,7 @@ func (iterator IBioSequence) MakeIWorker(worker SeqWorker, sizes ...int) IBioSeq
 }
 
 func (iterator IBioSequence) MakeIConditionalWorker(predicate obiseq.SequencePredicate,
-	worker SeqWorker, sizes ...int) IBioSequence {
+	worker obiseq.SeqWorker, sizes ...int) IBioSequence {
 	nworkers := 4
 	buffsize := iterator.BufferSize()
 
@@ -114,7 +102,7 @@ func (iterator IBioSequence) MakeIConditionalWorker(predicate obiseq.SequencePre
 	return newIter
 }
 
-func (iterator IBioSequence) MakeISliceWorker(worker SeqSliceWorker, sizes ...int) IBioSequence {
+func (iterator IBioSequence) MakeISliceWorker(worker obiseq.SeqSliceWorker, sizes ...int) IBioSequence {
 	nworkers := 4
 	buffsize := iterator.BufferSize()
 
@@ -153,7 +141,7 @@ func (iterator IBioSequence) MakeISliceWorker(worker SeqSliceWorker, sizes ...in
 	return newIter
 }
 
-func WorkerPipe(worker SeqWorker, sizes ...int) Pipeable {
+func WorkerPipe(worker obiseq.SeqWorker, sizes ...int) Pipeable {
 	f := func(iterator IBioSequence) IBioSequence {
 		return iterator.MakeIWorker(worker, sizes...)
 	}
@@ -161,7 +149,7 @@ func WorkerPipe(worker SeqWorker, sizes ...int) Pipeable {
 	return f
 }
 
-func SliceWorkerPipe(worker SeqSliceWorker, sizes ...int) Pipeable {
+func SliceWorkerPipe(worker obiseq.SeqSliceWorker, sizes ...int) Pipeable {
 	f := func(iterator IBioSequence) IBioSequence {
 		return iterator.MakeISliceWorker(worker, sizes...)
 	}
@@ -169,10 +157,3 @@ func SliceWorkerPipe(worker SeqSliceWorker, sizes ...int) Pipeable {
 	return f
 }
 
-func ReverseComplementWorker(inplace bool) SeqWorker {
-	f := func(input *obiseq.BioSequence) *obiseq.BioSequence {
-		return input.ReverseComplement(inplace)
-	}
-
-	return f
-}
