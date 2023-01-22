@@ -10,13 +10,13 @@ import (
 func ReadSequencesBatchFromFiles(filenames []string,
 	reader IBatchReader,
 	concurrent_readers int,
-	options ...WithOption) obiiter.IBioSequenceBatch {
+	options ...WithOption) obiiter.IBioSequence {
 
 	if reader == nil {
 		reader = ReadSequencesFromFile
 	}
 
-	batchiter := obiiter.MakeIBioSequenceBatch(0)
+	batchiter := obiiter.MakeIBioSequence(0)
 	nextCounter := goutils.AtomicCounter()
 
 	batchiter.Add(concurrent_readers)

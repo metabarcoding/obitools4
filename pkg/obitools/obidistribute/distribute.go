@@ -9,7 +9,7 @@ import (
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obiconvert"
 )
 
-func DistributeSequence(sequences obiiter.IBioSequenceBatch) {
+func DistributeSequence(sequences obiiter.IBioSequence) {
 
 	opts := make([]obiformats.WithOption, 0, 10)
 

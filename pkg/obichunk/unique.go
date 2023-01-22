@@ -12,14 +12,14 @@ import (
 // Runs dereplication algorithm on a  obiiter.IBioSequenceBatch
 // iterator.
 
-func IUniqueSequence(iterator obiiter.IBioSequenceBatch,
-	options ...WithOption) (obiiter.IBioSequenceBatch, error) {
+func IUniqueSequence(iterator obiiter.IBioSequence,
+	options ...WithOption) (obiiter.IBioSequence, error) {
 
 	var err error
 	opts := MakeOptions(options)
 	nworkers := opts.ParallelWorkers()
 
-	iUnique := obiiter.MakeIBioSequenceBatch(opts.BufferSize())
+	iUnique := obiiter.MakeIBioSequence(opts.BufferSize())
 
 	iterator = iterator.Speed("Splitting data set")
 
@@ -32,7 +32,7 @@ func IUniqueSequence(iterator obiiter.IBioSequenceBatch,
 			0)
 
 		if err != nil {
-			return obiiter.NilIBioSequenceBatch, err
+			return obiiter.NilIBioSequence, err
 		}
 
 	} else {
@@ -41,7 +41,7 @@ func IUniqueSequence(iterator obiiter.IBioSequenceBatch,
 			opts.BufferSize())
 
 		if err != nil {
-			return obiiter.NilIBioSequenceBatch, err
+			return obiiter.NilIBioSequence, err
 		}
 	}
 
@@ -65,14 +65,14 @@ func IUniqueSequence(iterator obiiter.IBioSequenceBatch,
 		return neworder
 	}
 
-	var ff func(obiiter.IBioSequenceBatch,
+	var ff func(obiiter.IBioSequence,
 		*obiseq.BioSequenceClassifier,
 		int)
 
 	cat := opts.Categories()
 	na := opts.NAValue()
 
-	ff = func(input obiiter.IBioSequenceBatch,
+	ff = func(input obiiter.IBioSequence,
 		classifier *obiseq.BioSequenceClassifier,
 		icat int) {
 		icat--
@@ -81,9 +81,9 @@ func IUniqueSequence(iterator obiiter.IBioSequenceBatch,
 			1,
 			opts.BufferSize())
 
-		var next obiiter.IBioSequenceBatch
+		var next obiiter.IBioSequence
 		if icat >= 0 {
-			next = obiiter.MakeIBioSequenceBatch(opts.BufferSize())
+			next = obiiter.MakeIBioSequence(opts.BufferSize())
 
 			iUnique.Add(1)
 

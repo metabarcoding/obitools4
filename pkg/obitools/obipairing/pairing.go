@@ -206,7 +206,7 @@ func AssemblePESequences(seqA, seqB *obiseq.BioSequence,
 func IAssemblePESequencesBatch(iterator obiiter.IPairedBioSequenceBatch,
 	gap float64, delta, minOverlap int,
 	minIdentity float64,
-	withStats bool, sizes ...int) obiiter.IBioSequenceBatch {
+	withStats bool, sizes ...int) obiiter.IBioSequence {
 
 	nworkers := runtime.NumCPU() * 3 / 2
 	buffsize := iterator.BufferSize()
@@ -219,7 +219,7 @@ func IAssemblePESequencesBatch(iterator obiiter.IPairedBioSequenceBatch,
 		buffsize = sizes[1]
 	}
 
-	newIter := obiiter.MakeIBioSequenceBatch(buffsize)
+	newIter := obiiter.MakeIBioSequence(buffsize)
 
 	newIter.Add(nworkers)
 

@@ -1,16 +1,17 @@
 package obichunk
 
 import (
-	log "github.com/sirupsen/logrus"
 	"sync"
+
+	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
 
-func ISequenceChunk(iterator obiiter.IBioSequenceBatch,
+func ISequenceChunk(iterator obiiter.IBioSequence,
 	classifier *obiseq.BioSequenceClassifier,
-	sizes ...int) (obiiter.IBioSequenceBatch, error) {
+	sizes ...int) (obiiter.IBioSequence, error) {
 
 	bufferSize := iterator.BufferSize()
 
@@ -18,7 +19,7 @@ func ISequenceChunk(iterator obiiter.IBioSequenceBatch,
 		bufferSize = sizes[0]
 	}
 
-	newIter := obiiter.MakeIBioSequenceBatch(bufferSize)
+	newIter := obiiter.MakeIBioSequence(bufferSize)
 
 	newIter.Add(1)
 

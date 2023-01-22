@@ -15,7 +15,7 @@ import (
 
 // Structure implementing an iterator over bioseq.BioSequenceBatch
 // based on a channel.
-type _IBioSequenceBatch struct {
+type _IBioSequence struct {
 	channel         chan BioSequenceBatch
 	current         BioSequenceBatch
 	pushBack        *abool.AtomicBool
@@ -27,24 +27,24 @@ type _IBioSequenceBatch struct {
 	finished        *abool.AtomicBool
 }
 
-type IBioSequenceBatch struct {
-	pointer *_IBioSequenceBatch
+type IBioSequence struct {
+	pointer *_IBioSequence
 }
 
-// NilIBioSequenceBatch nil instance for IBioSequenceBatch
+// NilIBioSequence nil instance for IBioSequenceBatch
 //
-// NilIBioSequenceBatch is the nil instance for the
+// NilIBioSequence is the nil instance for the
 // IBioSequenceBatch type.
-var NilIBioSequenceBatch = IBioSequenceBatch{pointer: nil}
+var NilIBioSequence = IBioSequence{pointer: nil}
 
-func MakeIBioSequenceBatch(sizes ...int) IBioSequenceBatch {
+func MakeIBioSequence(sizes ...int) IBioSequence {
 	buffsize := int32(0)
 
 	if len(sizes) > 0 {
 		buffsize = int32(sizes[0])
 	}
 
-	i := _IBioSequenceBatch{
+	i := _IBioSequence{
 		channel:         make(chan BioSequenceBatch, buffsize),
 		current:         NilBioSequenceBatch,
 		pushBack:        abool.New(),
@@ -58,11 +58,11 @@ func MakeIBioSequenceBatch(sizes ...int) IBioSequenceBatch {
 	i.all_done = &waiting
 	lock := sync.RWMutex{}
 	i.lock = &lock
-	ii := IBioSequenceBatch{&i}
+	ii := IBioSequence{&i}
 	return ii
 }
 
-func (iterator IBioSequenceBatch) Add(n int) {
+func (iterator IBioSequence) Add(n int) {
 	if iterator.pointer == nil {
 		log.Panic("call of IBioSequenceBatch.Add method on NilIBioSequenceBatch")
 	}
@@ -70,7 +70,7 @@ func (iterator IBioSequenceBatch) Add(n int) {
 	iterator.pointer.all_done.Add(n)
 }
 
-func (iterator IBioSequenceBatch) Done() {
+func (iterator IBioSequence) Done() {
 	if iterator.pointer == nil {
 		log.Panic("call of IBioSequenceBatch.Done method on NilIBioSequenceBatch")
 	}
@@ -78,7 +78,7 @@ func (iterator IBioSequenceBatch) Done() {
 	iterator.pointer.all_done.Done()
 }
 
-func (iterator IBioSequenceBatch) Unlock() {
+func (iterator IBioSequence) Unlock() {
 	if iterator.pointer == nil {
 		log.Panic("call of IBioSequenceBatch.Unlock method on NilIBioSequenceBatch")
 	}
@@ -86,7 +86,7 @@ func (iterator IBioSequenceBatch) Unlock() {
 	iterator.pointer.lock.Unlock()
 }
 
-func (iterator IBioSequenceBatch) Lock() {
+func (iterator IBioSequence) Lock() {
 	if iterator.pointer == nil {
 		log.Panic("call of IBioSequenceBatch.Lock method on NilIBioSequenceBatch")
 	}
@@ -94,7 +94,7 @@ func (iterator IBioSequenceBatch) Lock() {
 	iterator.pointer.lock.Lock()
 }
 
-func (iterator IBioSequenceBatch) RLock() {
+func (iterator IBioSequence) RLock() {
 	if iterator.pointer == nil {
 		log.Panic("call of IBioSequenceBatch.RLock method on NilIBioSequenceBatch")
 	}
@@ -102,7 +102,7 @@ func (iterator IBioSequenceBatch) RLock() {
 	iterator.pointer.lock.RLock()
 }
 
-func (iterator IBioSequenceBatch) RUnlock() {
+func (iterator IBioSequence) RUnlock() {
 	if iterator.pointer == nil {
 		log.Panic("call of IBioSequenceBatch.RUnlock method on NilIBioSequenceBatch")
 	}
@@ -110,7 +110,7 @@ func (iterator IBioSequenceBatch) RUnlock() {
 	iterator.pointer.lock.RUnlock()
 }
 
-func (iterator IBioSequenceBatch) Wait() {
+func (iterator IBioSequence) Wait() {
 	if iterator.pointer == nil {
 		log.Panic("call of IBioSequenceBatch.Wait method on NilIBioSequenceBatch")
 	}
@@ -118,7 +118,7 @@ func (iterator IBioSequenceBatch) Wait() {
 	iterator.pointer.all_done.Wait()
 }
 
-func (iterator IBioSequenceBatch) Channel() chan BioSequenceBatch {
+func (iterator IBioSequence) Channel() chan BioSequenceBatch {
 	if iterator.pointer == nil {
 		log.Panic("call of IBioSequenceBatch.Channel method on NilIBioSequenceBatch")
 	}
@@ -126,7 +126,7 @@ func (iterator IBioSequenceBatch) Channel() chan BioSequenceBatch {
 	return iterator.pointer.channel
 }
 
-func (iterator IBioSequenceBatch) IsNil() bool {
+func (iterator IBioSequence) IsNil() bool {
 	if iterator.pointer == nil {
 		log.Panic("call of IBioSequenceBatch.IsNil method on NilIBioSequenceBatch")
 	}
@@ -134,7 +134,7 @@ func (iterator IBioSequenceBatch) IsNil() bool {
 	return iterator.pointer == nil
 }
 
-func (iterator IBioSequenceBatch) BufferSize() int {
+func (iterator IBioSequence) BufferSize() int {
 	if iterator.pointer == nil {
 		log.Panic("call of IBioSequenceBatch.BufferSize method on NilIBioSequenceBatch")
 	}
@@ -142,7 +142,7 @@ func (iterator IBioSequenceBatch) BufferSize() int {
 	return int(atomic.LoadInt32(&iterator.pointer.buffer_size))
 }
 
-func (iterator IBioSequenceBatch) BatchSize() int {
+func (iterator IBioSequence) BatchSize() int {
 	if iterator.pointer == nil {
 		log.Panic("call of IBioSequenceBatch.BatchSize method on NilIBioSequenceBatch")
 	}
@@ -150,7 +150,7 @@ func (iterator IBioSequenceBatch) BatchSize() int {
 	return int(atomic.LoadInt32(&iterator.pointer.batch_size))
 }
 
-func (iterator IBioSequenceBatch) SetBatchSize(size int) error {
+func (iterator IBioSequence) SetBatchSize(size int) error {
 	if size >= 0 {
 		atomic.StoreInt32(&iterator.pointer.batch_size, int32(size))
 		return nil
@@ -159,10 +159,10 @@ func (iterator IBioSequenceBatch) SetBatchSize(size int) error {
 	return fmt.Errorf("size (%d) cannot be negative", size)
 }
 
-func (iterator IBioSequenceBatch) Split() IBioSequenceBatch {
+func (iterator IBioSequence) Split() IBioSequence {
 	iterator.pointer.lock.RLock()
 	defer iterator.pointer.lock.RUnlock()
-	i := _IBioSequenceBatch{
+	i := _IBioSequence{
 		channel:         iterator.pointer.channel,
 		current:         NilBioSequenceBatch,
 		pushBack:        abool.New(),
@@ -174,11 +174,11 @@ func (iterator IBioSequenceBatch) Split() IBioSequenceBatch {
 	lock := sync.RWMutex{}
 	i.lock = &lock
 
-	newIter := IBioSequenceBatch{&i}
+	newIter := IBioSequence{&i}
 	return newIter
 }
 
-func (iterator IBioSequenceBatch) Next() bool {
+func (iterator IBioSequence) Next() bool {
 	if iterator.pointer.pushBack.IsSet() {
 		iterator.pointer.pushBack.UnSet()
 		return true
@@ -200,7 +200,7 @@ func (iterator IBioSequenceBatch) Next() bool {
 	return false
 }
 
-func (iterator IBioSequenceBatch) PushBack() {
+func (iterator IBioSequence) PushBack() {
 	if !iterator.pointer.current.IsNil() {
 		iterator.pointer.pushBack.Set()
 	}
@@ -210,11 +210,11 @@ func (iterator IBioSequenceBatch) PushBack() {
 // currently pointed by the iterator. You have to use the
 // 'Next' method to move to the next entry before calling
 // 'Get' to retreive the following instance.
-func (iterator IBioSequenceBatch) Get() BioSequenceBatch {
+func (iterator IBioSequence) Get() BioSequenceBatch {
 	return iterator.pointer.current
 }
 
-func (iterator IBioSequenceBatch) Push(batch BioSequenceBatch) {
+func (iterator IBioSequence) Push(batch BioSequenceBatch) {
 	if batch.IsNil() {
 		log.Panicln("A Nil batch is pushed on the channel")
 	}
@@ -225,11 +225,11 @@ func (iterator IBioSequenceBatch) Push(batch BioSequenceBatch) {
 	iterator.pointer.channel <- batch
 }
 
-func (iterator IBioSequenceBatch) Close() {
+func (iterator IBioSequence) Close() {
 	close(iterator.pointer.channel)
 }
 
-func (iterator IBioSequenceBatch) WaitAndClose() {
+func (iterator IBioSequence) WaitAndClose() {
 	iterator.Wait()
 
 	for len(iterator.Channel()) > 0 {
@@ -240,18 +240,18 @@ func (iterator IBioSequenceBatch) WaitAndClose() {
 
 // Finished returns 'true' value if no more data is available
 // from the iterator.
-func (iterator IBioSequenceBatch) Finished() bool {
+func (iterator IBioSequence) Finished() bool {
 	return iterator.pointer.finished.IsSet()
 }
 
-func (iterator IBioSequenceBatch) SortBatches(sizes ...int) IBioSequenceBatch {
+func (iterator IBioSequence) SortBatches(sizes ...int) IBioSequence {
 	buffsize := iterator.BufferSize()
 
 	if len(sizes) > 0 {
 		buffsize = sizes[0]
 	}
 
-	newIter := MakeIBioSequenceBatch(buffsize)
+	newIter := MakeIBioSequence(buffsize)
 
 	newIter.Add(1)
 
@@ -288,14 +288,14 @@ func (iterator IBioSequenceBatch) SortBatches(sizes ...int) IBioSequenceBatch {
 
 }
 
-func (iterator IBioSequenceBatch) Concat(iterators ...IBioSequenceBatch) IBioSequenceBatch {
+func (iterator IBioSequence) Concat(iterators ...IBioSequence) IBioSequence {
 
 	if len(iterators) == 0 {
 		return iterator
 	}
 
 	buffsize := iterator.BufferSize()
-	newIter := MakeIBioSequenceBatch(buffsize)
+	newIter := MakeIBioSequence(buffsize)
 
 	newIter.Add(1)
 
@@ -333,7 +333,7 @@ func (iterator IBioSequenceBatch) Concat(iterators ...IBioSequenceBatch) IBioSeq
 	return newIter
 }
 
-func (iterator IBioSequenceBatch) Pool(iterators ...IBioSequenceBatch) IBioSequenceBatch {
+func (iterator IBioSequence) Pool(iterators ...IBioSequence) IBioSequence {
 
 	niterator := len(iterators) + 1
 
@@ -343,7 +343,7 @@ func (iterator IBioSequenceBatch) Pool(iterators ...IBioSequenceBatch) IBioSeque
 
 	nextCounter := goutils.AtomicCounter()
 	buffsize := iterator.BufferSize()
-	newIter := MakeIBioSequenceBatch(buffsize)
+	newIter := MakeIBioSequence(buffsize)
 
 	newIter.Add(niterator)
 
@@ -351,7 +351,7 @@ func (iterator IBioSequenceBatch) Pool(iterators ...IBioSequenceBatch) IBioSeque
 		newIter.WaitAndClose()
 	}()
 
-	ff := func(iterator IBioSequenceBatch) {
+	ff := func(iterator IBioSequence) {
 
 		for iterator.Next() {
 			s := iterator.Get()
@@ -372,14 +372,14 @@ func (iterator IBioSequenceBatch) Pool(iterators ...IBioSequenceBatch) IBioSeque
 // IBioSequenceBatch with every batches having the same size
 // indicated in parameter. Rebatching implies to sort the
 // source IBioSequenceBatch.
-func (iterator IBioSequenceBatch) Rebatch(size int, sizes ...int) IBioSequenceBatch {
+func (iterator IBioSequence) Rebatch(size int, sizes ...int) IBioSequence {
 	buffsize := iterator.BufferSize()
 
 	if len(sizes) > 0 {
 		buffsize = sizes[0]
 	}
 
-	newIter := MakeIBioSequenceBatch(buffsize)
+	newIter := MakeIBioSequence(buffsize)
 
 	newIter.Add(1)
 
@@ -418,7 +418,7 @@ func (iterator IBioSequenceBatch) Rebatch(size int, sizes ...int) IBioSequenceBa
 	return newIter
 }
 
-func (iterator IBioSequenceBatch) Recycle() {
+func (iterator IBioSequence) Recycle() {
 
 	log.Debugln("Start recycling of Bioseq objects")
 	recycled := 0
@@ -434,14 +434,14 @@ func (iterator IBioSequenceBatch) Recycle() {
 	log.Debugf("End of the recycling of %d Bioseq objects", recycled)
 }
 
-func (iterator IBioSequenceBatch) Consume() {
+func (iterator IBioSequence) Consume() {
 	for iterator.Next() {
 		batch := iterator.Get()
 		batch.Recycle()
 	}
 }
 
-func (iterator IBioSequenceBatch) Count(recycle bool) (int, int, int) {
+func (iterator IBioSequence) Count(recycle bool) (int, int, int) {
 	variants := 0
 	reads := 0
 	nucleotides := 0
@@ -465,7 +465,7 @@ func (iterator IBioSequenceBatch) Count(recycle bool) (int, int, int) {
 	return variants, reads, nucleotides
 }
 
-func (iterator IBioSequenceBatch) PairWith(reverse IBioSequenceBatch,
+func (iterator IBioSequence) PairWith(reverse IBioSequence,
 	sizes ...int) IPairedBioSequenceBatch {
 	buffsize := iterator.BufferSize()
 	batchsize := 5000
@@ -510,16 +510,16 @@ func (iterator IBioSequenceBatch) PairWith(reverse IBioSequenceBatch,
 // A function that takes a predicate and returns two IBioSequenceBatch iterators.
 // Sequences extracted from the input iterator are distributed among both the
 // iterator following the predicate value.
-func (iterator IBioSequenceBatch) DivideOn(predicate obiseq.SequencePredicate,
-	size int, sizes ...int) (IBioSequenceBatch, IBioSequenceBatch) {
+func (iterator IBioSequence) DivideOn(predicate obiseq.SequencePredicate,
+	size int, sizes ...int) (IBioSequence, IBioSequence) {
 	buffsize := iterator.BufferSize()
 
 	if len(sizes) > 0 {
 		buffsize = sizes[0]
 	}
 
-	trueIter := MakeIBioSequenceBatch(buffsize)
-	falseIter := MakeIBioSequenceBatch(buffsize)
+	trueIter := MakeIBioSequence(buffsize)
+	falseIter := MakeIBioSequence(buffsize)
 
 	trueIter.Add(1)
 	falseIter.Add(1)
@@ -578,8 +578,8 @@ func (iterator IBioSequenceBatch) DivideOn(predicate obiseq.SequencePredicate,
 
 // Filtering a batch of sequences.
 // A function that takes a predicate and a batch of sequences and returns a filtered batch of sequences.
-func (iterator IBioSequenceBatch) FilterOn(predicate obiseq.SequencePredicate,
-	size int, sizes ...int) IBioSequenceBatch {
+func (iterator IBioSequence) FilterOn(predicate obiseq.SequencePredicate,
+	size int, sizes ...int) IBioSequence {
 	buffsize := iterator.BufferSize()
 	nworkers := 4
 
@@ -591,7 +591,7 @@ func (iterator IBioSequenceBatch) FilterOn(predicate obiseq.SequencePredicate,
 		buffsize = sizes[1]
 	}
 
-	trueIter := MakeIBioSequenceBatch(buffsize)
+	trueIter := MakeIBioSequence(buffsize)
 
 	trueIter.Add(nworkers)
 
@@ -599,7 +599,7 @@ func (iterator IBioSequenceBatch) FilterOn(predicate obiseq.SequencePredicate,
 		trueIter.WaitAndClose()
 	}()
 
-	ff := func(iterator IBioSequenceBatch) {
+	ff := func(iterator IBioSequence) {
 		// iterator = iterator.SortBatches()
 
 		for iterator.Next() {
@@ -633,7 +633,7 @@ func (iterator IBioSequenceBatch) FilterOn(predicate obiseq.SequencePredicate,
 
 // Load all sequences availables from an IBioSequenceBatch iterator into
 // a large obiseq.BioSequenceSlice.
-func (iterator IBioSequenceBatch) Load() obiseq.BioSequenceSlice {
+func (iterator IBioSequence) Load() obiseq.BioSequenceSlice {
 
 	chunck := obiseq.MakeBioSequenceSlice()
 	for iterator.Next() {
@@ -648,7 +648,7 @@ func (iterator IBioSequenceBatch) Load() obiseq.BioSequenceSlice {
 // It takes a slice of BioSequence objects, and returns an iterator that will return batches of
 // BioSequence objects
 func IBatchOver(data obiseq.BioSequenceSlice,
-	size int, sizes ...int) IBioSequenceBatch {
+	size int, sizes ...int) IBioSequence {
 
 	buffsize := 0
 
@@ -656,7 +656,7 @@ func IBatchOver(data obiseq.BioSequenceSlice,
 		buffsize = sizes[1]
 	}
 
-	newIter := MakeIBioSequenceBatch(buffsize)
+	newIter := MakeIBioSequence(buffsize)
 
 	newIter.Add(1)
 

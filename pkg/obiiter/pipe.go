@@ -1,12 +1,11 @@
 package obiiter
 
+type Pipeable func(input IBioSequence) IBioSequence
 
-type Pipeable func(input IBioSequenceBatch) IBioSequenceBatch
-
-func Pipeline(start Pipeable,parts ...Pipeable) Pipeable {
-	p := func (input IBioSequenceBatch) IBioSequenceBatch {
+func Pipeline(start Pipeable, parts ...Pipeable) Pipeable {
+	p := func(input IBioSequence) IBioSequence {
 		data := start(input)
-		for _,part := range parts {
+		for _, part := range parts {
 			data = part(data)
 		}
 		return data
@@ -15,17 +14,16 @@ func Pipeline(start Pipeable,parts ...Pipeable) Pipeable {
 	return p
 }
 
-func (input IBioSequenceBatch) Pipe(start Pipeable, parts ...Pipeable) IBioSequenceBatch {
-	p := Pipeline(start,parts...)
+func (input IBioSequence) Pipe(start Pipeable, parts ...Pipeable) IBioSequence {
+	p := Pipeline(start, parts...)
 	return p(input)
 }
 
+type Teeable func(input IBioSequence) (IBioSequence, IBioSequence)
 
-type Teeable func(input IBioSequenceBatch) (IBioSequenceBatch,IBioSequenceBatch) 
-
-func (input IBioSequenceBatch) CopyTee() (IBioSequenceBatch,IBioSequenceBatch) {
-	first := MakeIBioSequenceBatch()
-	second:= MakeIBioSequenceBatch()
+func (input IBioSequence) CopyTee() (IBioSequence, IBioSequence) {
+	first := MakeIBioSequence()
+	second := MakeIBioSequence()
 
 	first.Add(1)
 
@@ -36,11 +34,11 @@ func (input IBioSequenceBatch) CopyTee() (IBioSequenceBatch,IBioSequenceBatch) {
 
 	go func() {
 		for input.Next() {
-			b:=input.Get()
+			b := input.Get()
 			first.Push(b)
 			second.Push(b)
 		}
 	}()
 
-	return first,second 
+	return first, second
 }

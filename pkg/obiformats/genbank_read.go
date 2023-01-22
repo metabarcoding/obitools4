@@ -26,7 +26,7 @@ const (
 	inSequence   gbstate = 4
 )
 
-func _ParseGenbankFile(input <-chan _FileChunk, out obiiter.IBioSequenceBatch) {
+func _ParseGenbankFile(input <-chan _FileChunk, out obiiter.IBioSequence) {
 
 	state := inHeader
 
@@ -107,11 +107,11 @@ func _ParseGenbankFile(input <-chan _FileChunk, out obiiter.IBioSequenceBatch) {
 
 }
 
-func ReadGenbank(reader io.Reader, options ...WithOption) obiiter.IBioSequenceBatch {
+func ReadGenbank(reader io.Reader, options ...WithOption) obiiter.IBioSequence {
 	opt := MakeOptions(options)
 	entry_channel := make(chan _FileChunk, opt.BufferSize())
 
-	newIter := obiiter.MakeIBioSequenceBatch(opt.BufferSize())
+	newIter := obiiter.MakeIBioSequence(opt.BufferSize())
 
 	nworkers := opt.ParallelWorkers()
 	newIter.Add(nworkers)
@@ -130,7 +130,7 @@ func ReadGenbank(reader io.Reader, options ...WithOption) obiiter.IBioSequenceBa
 	return newIter
 }
 
-func ReadGenbankFromFile(filename string, options ...WithOption) (obiiter.IBioSequenceBatch, error) {
+func ReadGenbankFromFile(filename string, options ...WithOption) (obiiter.IBioSequence, error) {
 	var reader io.Reader
 	var greader io.Reader
 	var err error
@@ -138,7 +138,7 @@ func ReadGenbankFromFile(filename string, options ...WithOption) (obiiter.IBioSe
 	reader, err = os.Open(filename)
 	if err != nil {
 		log.Printf("open file error: %+v", err)
-		return obiiter.NilIBioSequenceBatch, err
+		return obiiter.NilIBioSequence, err
 	}
 
 	// Test if the flux is compressed by gzip

@@ -51,13 +51,13 @@ type FileChunck struct {
 	order int
 }
 
-func WriteFastq(iterator obiiter.IBioSequenceBatch,
+func WriteFastq(iterator obiiter.IBioSequence,
 	file io.Writer,
-	options ...WithOption) (obiiter.IBioSequenceBatch, error) {
+	options ...WithOption) (obiiter.IBioSequence, error) {
 	opt := MakeOptions(options)
 
 	buffsize := iterator.BufferSize()
-	newIter := obiiter.MakeIBioSequenceBatch(buffsize)
+	newIter := obiiter.MakeIBioSequence(buffsize)
 
 	nwriters := opt.ParallelWorkers()
 
@@ -77,7 +77,7 @@ func WriteFastq(iterator obiiter.IBioSequenceBatch,
 		log.Debugln("End of the fastq file writing")
 	}()
 
-	ff := func(iterator obiiter.IBioSequenceBatch) {
+	ff := func(iterator obiiter.IBioSequence) {
 		for iterator.Next() {
 			batch := iterator.Get()
 			chunk := FileChunck{
@@ -129,21 +129,21 @@ func WriteFastq(iterator obiiter.IBioSequenceBatch,
 	return newIter, nil
 }
 
-func WriteFastqToStdout(iterator obiiter.IBioSequenceBatch,
-	options ...WithOption) (obiiter.IBioSequenceBatch, error) {
+func WriteFastqToStdout(iterator obiiter.IBioSequence,
+	options ...WithOption) (obiiter.IBioSequence, error) {
 	options = append(options, OptionDontCloseFile())
 	return WriteFastq(iterator, os.Stdout, options...)
 }
 
-func WriteFastqToFile(iterator obiiter.IBioSequenceBatch,
+func WriteFastqToFile(iterator obiiter.IBioSequence,
 	filename string,
-	options ...WithOption) (obiiter.IBioSequenceBatch, error) {
+	options ...WithOption) (obiiter.IBioSequence, error) {
 
 	file, err := os.Create(filename)
 
 	if err != nil {
 		log.Fatalf("open file error: %v", err)
-		return obiiter.NilIBioSequenceBatch, err
+		return obiiter.NilIBioSequence, err
 	}
 
 	options = append(options, OptionCloseFile())

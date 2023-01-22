@@ -19,7 +19,7 @@ import (
 )
 
 func _FastseqReader(seqfile C.fast_kseq_p,
-	iterator obiiter.IBioSequenceBatch,
+	iterator obiiter.IBioSequence,
 	batch_size int) {
 	var comment string
 	i := 0
@@ -72,7 +72,6 @@ func _FastseqReader(seqfile C.fast_kseq_p,
 			ii = 0
 		}
 
-
 	}
 	if len(slice) > 0 {
 		iterator.Push(obiiter.MakeBioSequenceBatch(i, slice))
@@ -81,7 +80,7 @@ func _FastseqReader(seqfile C.fast_kseq_p,
 
 }
 
-func ReadFastSeqFromFile(filename string, options ...WithOption) (obiiter.IBioSequenceBatch, error) {
+func ReadFastSeqFromFile(filename string, options ...WithOption) (obiiter.IBioSequence, error) {
 	opt := MakeOptions(options)
 
 	name := C.CString(filename)
@@ -94,7 +93,7 @@ func ReadFastSeqFromFile(filename string, options ...WithOption) (obiiter.IBioSe
 
 	if pointer == nil {
 		err = fmt.Errorf("cannot open file %s", filename)
-		return obiiter.NilIBioSequenceBatch, err
+		return obiiter.NilIBioSequence, err
 	}
 
 	size := int64(-1)
@@ -106,7 +105,7 @@ func ReadFastSeqFromFile(filename string, options ...WithOption) (obiiter.IBioSe
 		size = -1
 	}
 
-	newIter := obiiter.MakeIBioSequenceBatch(opt.BufferSize())
+	newIter := obiiter.MakeIBioSequence(opt.BufferSize())
 	newIter.Add(1)
 
 	go func() {
@@ -126,9 +125,9 @@ func ReadFastSeqFromFile(filename string, options ...WithOption) (obiiter.IBioSe
 	return newIter, err
 }
 
-func ReadFastSeqFromStdin(options ...WithOption) obiiter.IBioSequenceBatch {
+func ReadFastSeqFromStdin(options ...WithOption) obiiter.IBioSequence {
 	opt := MakeOptions(options)
-	newIter := obiiter.MakeIBioSequenceBatch(opt.BufferSize())
+	newIter := obiiter.MakeIBioSequence(opt.BufferSize())
 
 	newIter.Add(1)
 

@@ -84,7 +84,7 @@ func _EndOfLastEntry(buff []byte) int {
 	return -1
 }
 
-func _ParseEmblFile(input <-chan _FileChunk, out obiiter.IBioSequenceBatch) {
+func _ParseEmblFile(input <-chan _FileChunk, out obiiter.IBioSequence) {
 
 	for chunks := range input {
 		scanner := bufio.NewScanner(chunks.raw)
@@ -201,11 +201,11 @@ func _ReadFlatFileChunk(reader io.Reader, readers chan _FileChunk) {
 //	6    5  43 2    1
 //
 // <CR>?<LF>//<CR>?<LF>
-func ReadEMBL(reader io.Reader, options ...WithOption) obiiter.IBioSequenceBatch {
+func ReadEMBL(reader io.Reader, options ...WithOption) obiiter.IBioSequence {
 	opt := MakeOptions(options)
 	entry_channel := make(chan _FileChunk, opt.BufferSize())
 
-	newIter := obiiter.MakeIBioSequenceBatch(opt.BufferSize())
+	newIter := obiiter.MakeIBioSequence(opt.BufferSize())
 
 	nworkers := opt.ParallelWorkers()
 	newIter.Add(nworkers)
@@ -224,7 +224,7 @@ func ReadEMBL(reader io.Reader, options ...WithOption) obiiter.IBioSequenceBatch
 	return newIter
 }
 
-func ReadEMBLFromFile(filename string, options ...WithOption) (obiiter.IBioSequenceBatch, error) {
+func ReadEMBLFromFile(filename string, options ...WithOption) (obiiter.IBioSequence, error) {
 	var reader io.Reader
 	var greader io.Reader
 	var err error
@@ -232,7 +232,7 @@ func ReadEMBLFromFile(filename string, options ...WithOption) (obiiter.IBioSeque
 	reader, err = os.Open(filename)
 	if err != nil {
 		log.Printf("open file error: %+v", err)
-		return obiiter.NilIBioSequenceBatch, err
+		return obiiter.NilIBioSequence, err
 	}
 
 	// Test if the flux is compressed by gzip

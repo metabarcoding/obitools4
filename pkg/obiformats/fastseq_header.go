@@ -15,8 +15,8 @@ func ParseGuessedFastSeqHeader(sequence *obiseq.BioSequence) {
 	}
 }
 
-func IParseFastSeqHeaderBatch(iterator obiiter.IBioSequenceBatch,
-	options ...WithOption) obiiter.IBioSequenceBatch {
+func IParseFastSeqHeaderBatch(iterator obiiter.IBioSequence,
+	options ...WithOption) obiiter.IBioSequence {
 	opt := MakeOptions(options)
 	return iterator.MakeIWorker(obiiter.AnnotatorToSeqWorker(opt.ParseFastSeqHeader()),
 		opt.ParallelWorkers(),

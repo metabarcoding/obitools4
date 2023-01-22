@@ -9,7 +9,7 @@ import (
 // PCR iterates over sequences provided by a obiseq.IBioSequenceBatch
 // and returns an other obiseq.IBioSequenceBatch distributing
 // obiseq.BioSequenceBatch containing the selected amplicon sequences.
-func PCR(iterator obiiter.IBioSequenceBatch) (obiiter.IBioSequenceBatch, error) {
+func PCR(iterator obiiter.IBioSequence) (obiiter.IBioSequence, error) {
 
 	opts := make([]obiapat.WithOption, 0, 10)
 

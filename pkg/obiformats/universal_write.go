@@ -10,9 +10,9 @@ import (
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
 )
 
-func WriteSequence(iterator obiiter.IBioSequenceBatch,
+func WriteSequence(iterator obiiter.IBioSequence,
 	file io.Writer,
-	options ...WithOption) (obiiter.IBioSequenceBatch, error) {
+	options ...WithOption) (obiiter.IBioSequence, error) {
 
 	iterator = iterator.Rebatch(1000)
 
@@ -22,7 +22,7 @@ func WriteSequence(iterator obiiter.IBioSequenceBatch,
 		batch := iterator.Get()
 		iterator.PushBack()
 
-		var newIter obiiter.IBioSequenceBatch
+		var newIter obiiter.IBioSequence
 		var err error
 
 		if len(batch.Slice()) > 0 {
@@ -42,24 +42,24 @@ func WriteSequence(iterator obiiter.IBioSequenceBatch,
 		return iterator, nil
 	}
 
-	return obiiter.NilIBioSequenceBatch, fmt.Errorf("input iterator not ready")
+	return obiiter.NilIBioSequence, fmt.Errorf("input iterator not ready")
 }
 
-func WriteSequencesToStdout(iterator obiiter.IBioSequenceBatch,
-	options ...WithOption) (obiiter.IBioSequenceBatch, error) {
+func WriteSequencesToStdout(iterator obiiter.IBioSequence,
+	options ...WithOption) (obiiter.IBioSequence, error) {
 	options = append(options, OptionDontCloseFile())
 	return WriteSequence(iterator, os.Stdout, options...)
 }
 
-func WriteSequencesToFile(iterator obiiter.IBioSequenceBatch,
+func WriteSequencesToFile(iterator obiiter.IBioSequence,
 	filename string,
-	options ...WithOption) (obiiter.IBioSequenceBatch, error) {
+	options ...WithOption) (obiiter.IBioSequence, error) {
 
 	file, err := os.Create(filename)
 
 	if err != nil {
 		log.Fatalf("open file error: %v", err)
-		return obiiter.NilIBioSequenceBatch, err
+		return obiiter.NilIBioSequence, err
 	}
 
 	options = append(options, OptionCloseFile())

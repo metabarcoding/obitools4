@@ -8,10 +8,10 @@ import (
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obioptions"
 )
 
-func WriteBioSequences(iterator obiiter.IBioSequenceBatch,
-	terminalAction bool, filenames ...string) (obiiter.IBioSequenceBatch, error) {
+func WriteBioSequences(iterator obiiter.IBioSequence,
+	terminalAction bool, filenames ...string) (obiiter.IBioSequence, error) {
 
-	var newIter obiiter.IBioSequenceBatch
+	var newIter obiiter.IBioSequence
 
 	opts := make([]obiformats.WithOption, 0, 10)
 
@@ -62,12 +62,12 @@ func WriteBioSequences(iterator obiiter.IBioSequenceBatch,
 
 	if err != nil {
 		log.Fatalf("Write file error: %v", err)
-		return obiiter.NilIBioSequenceBatch, err
+		return obiiter.NilIBioSequence, err
 	}
 
 	if terminalAction {
 		newIter.Recycle()
-		return obiiter.NilIBioSequenceBatch, nil
+		return obiiter.NilIBioSequence, nil
 	}
 
 	return newIter, nil

@@ -35,12 +35,12 @@ func find(root, ext string) []string {
 	return a
 }
 
-func ISequenceChunkOnDisk(iterator obiiter.IBioSequenceBatch,
+func ISequenceChunkOnDisk(iterator obiiter.IBioSequence,
 	classifier *obiseq.BioSequenceClassifier,
-	sizes ...int) (obiiter.IBioSequenceBatch, error) {
+	sizes ...int) (obiiter.IBioSequence, error) {
 	dir, err := tempDir()
 	if err != nil {
-		return obiiter.NilIBioSequenceBatch, err
+		return obiiter.NilIBioSequence, err
 	}
 
 	bufferSize := iterator.BufferSize()
@@ -49,7 +49,7 @@ func ISequenceChunkOnDisk(iterator obiiter.IBioSequenceBatch,
 		bufferSize = sizes[0]
 	}
 
-	newIter := obiiter.MakeIBioSequenceBatch(bufferSize)
+	newIter := obiiter.MakeIBioSequence(bufferSize)
 
 	newIter.Add(1)
 

@@ -6,8 +6,8 @@ import (
 	"github.com/schollz/progressbar/v3"
 )
 
-func (iterator IBioSequenceBatch) Speed(message ...string) IBioSequenceBatch {
-	newIter := MakeIBioSequenceBatch()
+func (iterator IBioSequence) Speed(message ...string) IBioSequence {
+	newIter := MakeIBioSequence()
 
 	newIter.Add(1)
 
@@ -51,7 +51,7 @@ func (iterator IBioSequenceBatch) Speed(message ...string) IBioSequenceBatch {
 }
 
 func SpeedPipe(message ...string) Pipeable {
-	f := func(iterator IBioSequenceBatch) IBioSequenceBatch {
+	f := func(iterator IBioSequence) IBioSequence {
 		return iterator.Speed(message...)
 	}
 

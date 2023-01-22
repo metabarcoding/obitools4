@@ -19,7 +19,7 @@ type seqPCR struct {
 	SonCount  int
 	AddedSons int
 	Edges     []Edge
-	Cluster   map[int]bool        // used as the set of head sequences associated to that sequence 
+	Cluster   map[int]bool // used as the set of head sequences associated to that sequence
 }
 
 // buildSamples sorts the sequences by samples
@@ -58,7 +58,7 @@ func buildSamples(dataset obiseq.BioSequenceSlice,
 
 func annotateOBIClean(dataset obiseq.BioSequenceSlice,
 	sample map[string]*([]*seqPCR),
-	tag, NAValue string) obiiter.IBioSequenceBatch {
+	tag, NAValue string) obiiter.IBioSequence {
 	batchsize := 1000
 	var annot = func(data obiseq.BioSequenceSlice) obiseq.BioSequenceSlice {
 
@@ -207,7 +207,6 @@ func GetCluster(sequence *obiseq.BioSequence) map[string]string {
 	return cluster
 }
 
-
 // func Cluster(sample map[string]*([]*seqPCR)) {
 // 	for _, graph := range sample {
 // 		for _, s := range *graph {
@@ -215,7 +214,7 @@ func GetCluster(sequence *obiseq.BioSequence) map[string]string {
 // 			if len(s.Edges) > 0 {
 // 				for _, f := range s.Edges {
 
-// 				}	
+// 				}
 // 			} else {
 // 				cluster
 // 			}
@@ -286,7 +285,7 @@ func Weight(sequence *obiseq.BioSequence) map[string]int {
 	return weight
 }
 
-func IOBIClean(itertator obiiter.IBioSequenceBatch) obiiter.IBioSequenceBatch {
+func IOBIClean(itertator obiiter.IBioSequence) obiiter.IBioSequence {
 
 	db := itertator.Load()
 
@@ -317,7 +316,6 @@ func IOBIClean(itertator obiiter.IBioSequenceBatch) obiiter.IBioSequenceBatch {
 			bar.Add(1)
 		}
 	}
-
 
 	Mutation(samples)
 
@@ -351,7 +349,6 @@ func IOBIClean(itertator obiiter.IBioSequenceBatch) obiiter.IBioSequenceBatch {
 		all_ratio := EstimateRatio(samples, MinCountToEvalMutationRate())
 		EmpiricalDistCsv(RatioTableFilename(), all_ratio)
 	}
-
 
 	iter := annotateOBIClean(db, samples, SampleAttribute(), "NA")
 

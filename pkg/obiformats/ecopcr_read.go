@@ -120,7 +120,7 @@ func __read_ecopcr_bioseq__(file *__ecopcr_file__) (*obiseq.BioSequence, error) 
 	return bseq, nil
 }
 
-func ReadEcoPCR(reader io.Reader, options ...WithOption) obiiter.IBioSequenceBatch {
+func ReadEcoPCR(reader io.Reader, options ...WithOption) obiiter.IBioSequence {
 	tag := make([]byte, 11)
 	n, _ := reader.Read(tag)
 
@@ -166,7 +166,7 @@ func ReadEcoPCR(reader io.Reader, options ...WithOption) obiiter.IBioSequenceBat
 
 	opt := MakeOptions(options)
 
-	newIter := obiiter.MakeIBioSequenceBatch(opt.BufferSize())
+	newIter := obiiter.MakeIBioSequence(opt.BufferSize())
 	newIter.Add(1)
 
 	go func() {
@@ -208,7 +208,7 @@ func ReadEcoPCR(reader io.Reader, options ...WithOption) obiiter.IBioSequenceBat
 	return newIter
 }
 
-func ReadEcoPCRBatchFromFile(filename string, options ...WithOption) (obiiter.IBioSequenceBatch, error) {
+func ReadEcoPCRBatchFromFile(filename string, options ...WithOption) (obiiter.IBioSequence, error) {
 	var reader io.Reader
 	var greader io.Reader
 	var err error
@@ -216,7 +216,7 @@ func ReadEcoPCRBatchFromFile(filename string, options ...WithOption) (obiiter.IB
 	reader, err = os.Open(filename)
 	if err != nil {
 		log.Printf("open file error: %+v", err)
-		return obiiter.NilIBioSequenceBatch, err
+		return obiiter.NilIBioSequence, err
 	}
 
 	// Test if the flux is compressed by gzip

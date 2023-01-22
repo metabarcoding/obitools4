@@ -8,14 +8,14 @@ import (
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obiconvert"
 )
 
-func IFilterSequence(iterator obiiter.IBioSequenceBatch) obiiter.IBioSequenceBatch {
-	var newIter obiiter.IBioSequenceBatch
+func IFilterSequence(iterator obiiter.IBioSequence) obiiter.IBioSequence {
+	var newIter obiiter.IBioSequence
 
 	predicate := CLISequenceSelectionPredicate()
 
 	if predicate != nil {
 		if CLISaveDiscardedSequences() {
-			var discarded obiiter.IBioSequenceBatch
+			var discarded obiiter.IBioSequence
 
 			log.Printf("Discarded sequences saved in file: %s\n", CLIDiscardedFileName())
 			newIter, discarded = iterator.DivideOn(predicate,

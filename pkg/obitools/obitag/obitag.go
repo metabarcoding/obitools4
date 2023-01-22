@@ -171,7 +171,7 @@ func IdentifySeqWorker(references obiseq.BioSequenceSlice,
 	}
 }
 
-func AssignTaxonomy(iterator obiiter.IBioSequenceBatch) obiiter.IBioSequenceBatch {
+func AssignTaxonomy(iterator obiiter.IBioSequence) obiiter.IBioSequence {
 
 	references := CLIRefDB()
 	refcounts := make(

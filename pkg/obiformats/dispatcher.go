@@ -2,15 +2,16 @@ package obiformats
 
 import (
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"sync"
+
+	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
 )
 
-type SequenceBatchWriterToFile func(iterator obiiter.IBioSequenceBatch,
+type SequenceBatchWriterToFile func(iterator obiiter.IBioSequence,
 	filename string,
-	options ...WithOption) (obiiter.IBioSequenceBatch, error)
+	options ...WithOption) (obiiter.IBioSequence, error)
 
 func WriterDispatcher(prototypename string,
 	dispatcher obiiter.IDistribute,

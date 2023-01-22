@@ -8,19 +8,19 @@ import (
 )
 
 type IDistribute struct {
-	outputs    map[int]IBioSequenceBatch
+	outputs    map[int]IBioSequence
 	news       chan int
 	classifier *obiseq.BioSequenceClassifier
 	lock       *sync.Mutex
 }
 
-func (dist *IDistribute) Outputs(key int) (IBioSequenceBatch, error) {
+func (dist *IDistribute) Outputs(key int) (IBioSequence, error) {
 	dist.lock.Lock()
 	iter, ok := dist.outputs[key]
 	dist.lock.Unlock()
 
 	if !ok {
-		return NilIBioSequenceBatch, fmt.Errorf("code %d unknown", key)
+		return NilIBioSequence, fmt.Errorf("code %d unknown", key)
 	}
 
 	return iter, nil
@@ -34,11 +34,11 @@ func (dist *IDistribute) Classifier() *obiseq.BioSequenceClassifier {
 	return dist.classifier
 }
 
-func (iterator IBioSequenceBatch) Distribute(class *obiseq.BioSequenceClassifier, sizes ...int) IDistribute {
+func (iterator IBioSequence) Distribute(class *obiseq.BioSequenceClassifier, sizes ...int) IDistribute {
 	batchsize := 5000
 	buffsize := 2
 
-	outputs := make(map[int]IBioSequenceBatch, 100)
+	outputs := make(map[int]IBioSequence, 100)
 	slices := make(map[int]*obiseq.BioSequenceSlice, 100)
 	orders := make(map[int]int, 100)
 	news := make(chan int)
@@ -80,7 +80,7 @@ func (iterator IBioSequenceBatch) Distribute(class *obiseq.BioSequenceClassifier
 					orders[key] = 0
 
 					lock.Lock()
-					outputs[key] = MakeIBioSequenceBatch(buffsize)
+					outputs[key] = MakeIBioSequence(buffsize)
 					lock.Unlock()
 
 					news <- key

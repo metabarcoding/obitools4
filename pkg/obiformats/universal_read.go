@@ -43,7 +43,7 @@ func GuessSeqFileType(firstline string) string {
 }
 
 func ReadSequencesFromFile(filename string,
-	options ...WithOption) (obiiter.IBioSequenceBatch, error) {
+	options ...WithOption) (obiiter.IBioSequence, error) {
 	var file *os.File
 	var reader io.Reader
 	var greader io.Reader
@@ -53,7 +53,7 @@ func ReadSequencesFromFile(filename string,
 
 	if err != nil {
 		log.Fatalf("open file error: %v", err)
-		return obiiter.NilIBioSequenceBatch, err
+		return obiiter.NilIBioSequence, err
 	}
 
 	reader = file
@@ -72,7 +72,7 @@ func ReadSequencesFromFile(filename string,
 	tag, _ := breader.Peek(30)
 
 	if len(tag) < 30 {
-		newIter := obiiter.MakeIBioSequenceBatch()
+		newIter := obiiter.MakeIBioSequence()
 		newIter.Close()
 		return newIter, nil
 	}
@@ -98,5 +98,5 @@ func ReadSequencesFromFile(filename string,
 			filename, filetype)
 	}
 
-	return obiiter.NilIBioSequenceBatch, nil
+	return obiiter.NilIBioSequence, nil
 }

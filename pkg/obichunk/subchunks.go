@@ -56,9 +56,9 @@ func (by _By) Sort(seqs []sSS) {
 // End of the sort interface
 //
 
-func ISequenceSubChunk(iterator obiiter.IBioSequenceBatch,
+func ISequenceSubChunk(iterator obiiter.IBioSequence,
 	classifier *obiseq.BioSequenceClassifier,
-	sizes ...int) (obiiter.IBioSequenceBatch, error) {
+	sizes ...int) (obiiter.IBioSequence, error) {
 
 	bufferSize := iterator.BufferSize()
 	nworkers := 4
@@ -71,7 +71,7 @@ func ISequenceSubChunk(iterator obiiter.IBioSequenceBatch,
 		bufferSize = sizes[1]
 	}
 
-	newIter := obiiter.MakeIBioSequenceBatch(bufferSize)
+	newIter := obiiter.MakeIBioSequence(bufferSize)
 
 	newIter.Add(nworkers)
 
@@ -88,7 +88,7 @@ func ISequenceSubChunk(iterator obiiter.IBioSequenceBatch,
 		return neworder
 	}
 
-	ff := func(iterator obiiter.IBioSequenceBatch,
+	ff := func(iterator obiiter.IBioSequence,
 		classifier *obiseq.BioSequenceClassifier) {
 
 		ordered := make([]sSS, 100)

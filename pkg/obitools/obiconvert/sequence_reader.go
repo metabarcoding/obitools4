@@ -67,9 +67,9 @@ func _ExpandListOfFiles(check_ext bool, filenames ...string) ([]string, error) {
 	return list_of_files, nil
 }
 
-func ReadBioSequences(filenames ...string) (obiiter.IBioSequenceBatch, error) {
-	var iterator obiiter.IBioSequenceBatch
-	var reader func(string, ...obiformats.WithOption) (obiiter.IBioSequenceBatch, error)
+func ReadBioSequences(filenames ...string) (obiiter.IBioSequence, error) {
+	var iterator obiiter.IBioSequence
+	var reader func(string, ...obiformats.WithOption) (obiiter.IBioSequence, error)
 
 	opts := make([]obiformats.WithOption, 0, 10)
 
@@ -109,7 +109,7 @@ func ReadBioSequences(filenames ...string) (obiiter.IBioSequenceBatch, error) {
 
 		list_of_files, err := _ExpandListOfFiles(false, filenames...)
 		if err != nil {
-			return obiiter.NilIBioSequenceBatch, err
+			return obiiter.NilIBioSequence, err
 		}
 
 		switch CLIInputFormat() {
@@ -140,7 +140,7 @@ func ReadBioSequences(filenames ...string) (obiiter.IBioSequenceBatch, error) {
 			iterator, err = reader(list_of_files[0], opts...)
 
 			if err != nil {
-				return obiiter.NilIBioSequenceBatch, err
+				return obiiter.NilIBioSequence, err
 			}
 		}
 

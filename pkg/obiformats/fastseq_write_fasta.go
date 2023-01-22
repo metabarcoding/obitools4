@@ -61,13 +61,13 @@ func FormatFastaBatch(batch obiiter.BioSequenceBatch, formater FormatHeader) []b
 	return bs.Bytes()
 }
 
-func WriteFasta(iterator obiiter.IBioSequenceBatch,
+func WriteFasta(iterator obiiter.IBioSequence,
 	file io.Writer,
-	options ...WithOption) (obiiter.IBioSequenceBatch, error) {
+	options ...WithOption) (obiiter.IBioSequence, error) {
 	opt := MakeOptions(options)
 
 	buffsize := iterator.BufferSize()
-	newIter := obiiter.MakeIBioSequenceBatch(buffsize)
+	newIter := obiiter.MakeIBioSequence(buffsize)
 
 	nwriters := opt.ParallelWorkers()
 
@@ -83,7 +83,7 @@ func WriteFasta(iterator obiiter.IBioSequenceBatch,
 		log.Debugln("End of the fasta file writing")
 	}()
 
-	ff := func(iterator obiiter.IBioSequenceBatch) {
+	ff := func(iterator obiiter.IBioSequence) {
 		for iterator.Next() {
 
 			batch := iterator.Get()
@@ -136,21 +136,21 @@ func WriteFasta(iterator obiiter.IBioSequenceBatch,
 	return newIter, nil
 }
 
-func WriteFastaToStdout(iterator obiiter.IBioSequenceBatch,
-	options ...WithOption) (obiiter.IBioSequenceBatch, error) {
+func WriteFastaToStdout(iterator obiiter.IBioSequence,
+	options ...WithOption) (obiiter.IBioSequence, error) {
 	options = append(options, OptionDontCloseFile())
 	return WriteFasta(iterator, os.Stdout, options...)
 }
 
-func WriteFastaToFile(iterator obiiter.IBioSequenceBatch,
+func WriteFastaToFile(iterator obiiter.IBioSequence,
 	filename string,
-	options ...WithOption) (obiiter.IBioSequenceBatch, error) {
+	options ...WithOption) (obiiter.IBioSequence, error) {
 
 	file, err := os.Create(filename)
 
 	if err != nil {
 		log.Fatalf("open file error: %v", err)
-		return obiiter.NilIBioSequenceBatch, err
+		return obiiter.NilIBioSequence, err
 	}
 
 	options = append(options, OptionCloseFile())

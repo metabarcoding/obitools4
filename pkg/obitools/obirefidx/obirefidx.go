@@ -32,7 +32,7 @@ func IndexSequence(seqidx int,
 	// r := 0
 	// w := 0
 	for i, ref := range references {
-		lcs, alilength := obialign.FastLCSScore(sequence, ref, -1 , &matrix)
+		lcs, alilength := obialign.FastLCSScore(sequence, ref, -1, &matrix)
 		score[i] = alilength - lcs
 	}
 
@@ -88,7 +88,7 @@ func IndexSequence(seqidx int,
 	return obitag_index
 }
 
-func IndexReferenceDB(iterator obiiter.IBioSequenceBatch) obiiter.IBioSequenceBatch {
+func IndexReferenceDB(iterator obiiter.IBioSequence) obiiter.IBioSequence {
 
 	references := iterator.Load()
 	refcounts := make(
@@ -118,7 +118,7 @@ func IndexReferenceDB(iterator obiiter.IBioSequenceBatch) obiiter.IBioSequenceBa
 	bar := progressbar.NewOptions(len(references), pbopt...)
 
 	limits := make(chan [2]int)
-	indexed := obiiter.MakeIBioSequenceBatch()
+	indexed := obiiter.MakeIBioSequence()
 	go func() {
 		for i := 0; i < len(references); i += 10 {
 			limits <- [2]int{i, goutils.MinInt(i+10, len(references))}

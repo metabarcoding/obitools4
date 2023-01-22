@@ -2,7 +2,7 @@ package obiiter
 
 import "git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 
-func (iterator IBioSequenceBatch) IMergeSequenceBatch(na string, statsOn []string, sizes ...int) IBioSequenceBatch {
+func (iterator IBioSequence) IMergeSequenceBatch(na string, statsOn []string, sizes ...int) IBioSequence {
 	batchsize := 100
 	buffsize := iterator.BufferSize()
 
@@ -13,7 +13,7 @@ func (iterator IBioSequenceBatch) IMergeSequenceBatch(na string, statsOn []strin
 		buffsize = sizes[1]
 	}
 
-	newIter := MakeIBioSequenceBatch(buffsize)
+	newIter := MakeIBioSequence(buffsize)
 
 	newIter.Add(1)
 
@@ -41,7 +41,7 @@ func (iterator IBioSequenceBatch) IMergeSequenceBatch(na string, statsOn []strin
 }
 
 func MergePipe(na string, statsOn []string, sizes ...int) Pipeable {
-	f := func(iterator IBioSequenceBatch) IBioSequenceBatch {
+	f := func(iterator IBioSequence) IBioSequence {
 		return iterator.IMergeSequenceBatch(na, statsOn, sizes...)
 	}
 

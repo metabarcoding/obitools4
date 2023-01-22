@@ -27,7 +27,7 @@ func AnnotatorToSeqWorker(function SeqAnnotator) SeqWorker {
 // Moreover the SeqWorker function, the method accepted two optional integer parameters.
 //   - First is allowing to indicates the number of workers running in parallele (default 4)
 //   - The second the size of the chanel buffer. By default set to the same value than the input buffer.
-func (iterator IBioSequenceBatch) MakeIWorker(worker SeqWorker, sizes ...int) IBioSequenceBatch {
+func (iterator IBioSequence) MakeIWorker(worker SeqWorker, sizes ...int) IBioSequence {
 	nworkers := 4
 	buffsize := iterator.BufferSize()
 
@@ -39,7 +39,7 @@ func (iterator IBioSequenceBatch) MakeIWorker(worker SeqWorker, sizes ...int) IB
 		buffsize = sizes[1]
 	}
 
-	newIter := MakeIBioSequenceBatch(buffsize)
+	newIter := MakeIBioSequence(buffsize)
 
 	newIter.Add(nworkers)
 
@@ -49,7 +49,7 @@ func (iterator IBioSequenceBatch) MakeIWorker(worker SeqWorker, sizes ...int) IB
 
 	}()
 
-	f := func(iterator IBioSequenceBatch) {
+	f := func(iterator IBioSequence) {
 		for iterator.Next() {
 			batch := iterator.Get()
 			for i, seq := range batch.slice {
@@ -69,8 +69,8 @@ func (iterator IBioSequenceBatch) MakeIWorker(worker SeqWorker, sizes ...int) IB
 	return newIter
 }
 
-func (iterator IBioSequenceBatch) MakeIConditionalWorker(predicate obiseq.SequencePredicate,
-	worker SeqWorker, sizes ...int) IBioSequenceBatch {
+func (iterator IBioSequence) MakeIConditionalWorker(predicate obiseq.SequencePredicate,
+	worker SeqWorker, sizes ...int) IBioSequence {
 	nworkers := 4
 	buffsize := iterator.BufferSize()
 
@@ -82,7 +82,7 @@ func (iterator IBioSequenceBatch) MakeIConditionalWorker(predicate obiseq.Sequen
 		buffsize = sizes[1]
 	}
 
-	newIter := MakeIBioSequenceBatch(buffsize)
+	newIter := MakeIBioSequence(buffsize)
 
 	newIter.Add(nworkers)
 
@@ -92,7 +92,7 @@ func (iterator IBioSequenceBatch) MakeIConditionalWorker(predicate obiseq.Sequen
 
 	}()
 
-	f := func(iterator IBioSequenceBatch) {
+	f := func(iterator IBioSequence) {
 		for iterator.Next() {
 			batch := iterator.Get()
 			for i, seq := range batch.slice {
@@ -114,7 +114,7 @@ func (iterator IBioSequenceBatch) MakeIConditionalWorker(predicate obiseq.Sequen
 	return newIter
 }
 
-func (iterator IBioSequenceBatch) MakeISliceWorker(worker SeqSliceWorker, sizes ...int) IBioSequenceBatch {
+func (iterator IBioSequence) MakeISliceWorker(worker SeqSliceWorker, sizes ...int) IBioSequence {
 	nworkers := 4
 	buffsize := iterator.BufferSize()
 
@@ -126,7 +126,7 @@ func (iterator IBioSequenceBatch) MakeISliceWorker(worker SeqSliceWorker, sizes 
 		buffsize = sizes[1]
 	}
 
-	newIter := MakeIBioSequenceBatch(buffsize)
+	newIter := MakeIBioSequence(buffsize)
 
 	newIter.Add(nworkers)
 
@@ -135,7 +135,7 @@ func (iterator IBioSequenceBatch) MakeISliceWorker(worker SeqSliceWorker, sizes 
 		log.Println("End of the batch slice workers")
 	}()
 
-	f := func(iterator IBioSequenceBatch) {
+	f := func(iterator IBioSequence) {
 		for iterator.Next() {
 			batch := iterator.Get()
 			batch.slice = worker(batch.slice)
@@ -154,7 +154,7 @@ func (iterator IBioSequenceBatch) MakeISliceWorker(worker SeqSliceWorker, sizes 
 }
 
 func WorkerPipe(worker SeqWorker, sizes ...int) Pipeable {
-	f := func(iterator IBioSequenceBatch) IBioSequenceBatch {
+	f := func(iterator IBioSequence) IBioSequence {
 		return iterator.MakeIWorker(worker, sizes...)
 	}
 
@@ -162,7 +162,7 @@ func WorkerPipe(worker SeqWorker, sizes ...int) Pipeable {
 }
 
 func SliceWorkerPipe(worker SeqSliceWorker, sizes ...int) Pipeable {
-	f := func(iterator IBioSequenceBatch) IBioSequenceBatch {
+	f := func(iterator IBioSequence) IBioSequence {
 		return iterator.MakeISliceWorker(worker, sizes...)
 	}
 
