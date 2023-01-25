@@ -55,21 +55,21 @@ func _MatchScoreRatio(a, b byte) (float64, float64) {
 
 	l2 := math.Log(2)
 	l3 := math.Log(3)
-	l4 := math.Log(4)
 	l10 := math.Log(10)
-	lE1 := -float64(a)/10*l10 - l4
-	lE2 := -float64(b)/10*l10 - l4
-	lO1 := math.Log1p(-math.Exp(lE1 + l3))
-	lO2 := math.Log1p(-math.Exp(lE2 + l3))
+	lalea := math.Log(30)                  // 1 /(change of the random model)
+	lE1 := -float64(a)/10*l10 - l3         // log proba of sequencing error on A/3
+	lE2 := -float64(b)/10*l10 - l3         // log proba of sequencing error on B/3
+	lO1 := math.Log1p(-math.Exp(lE1 + l3)) // log proba no being an error on A
+	lO2 := math.Log1p(-math.Exp(lE2 + l3)) // log proba no being an error on B
 	lO1O2 := lO1 + lO2
 	lE1E2 := lE1 + lE2
 	lO1E2 := lO1 + lE2
 	lO2E1 := lO2 + lE1
 
-	MM := _Logaddexp(lO1O2, lE1E2+l3) + l4
-	Mm := _Logaddexp(_Logaddexp(lO1E2, lO2E1), lE1E2+l2) + l4
+	MM := _Logaddexp(lO1O2, lE1E2+l3)                    // Proba match when match observed
+	Mm := _Logaddexp(_Logaddexp(lO1E2, lO2E1), lE1E2+l2) // Proba match when mismatch observed
 
-	return MM, Mm
+	return MM + lalea, Mm + lalea
 }
 
 func _InitNucPartMatch() {

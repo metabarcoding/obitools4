@@ -52,6 +52,7 @@ func _GetMatrix(matrix *[]int, lenA, a, b int) int {
 }
 
 func _GetMatrixFrom(matrix *[]int, lenA, a, b int) (int, int, int) {
+	// Formula rechecked on 01/25/2023
 	i := (b+1)*(lenA+1) + a
 	j := i - lenA
 	m := *matrix
@@ -68,10 +69,15 @@ func _PairingScorePeAlign(baseA, qualA, baseB, qualB byte) int {
 		return _NucScorePartMatchMismatch[qualA][qualB]
 	default:
 		return int(partMatch*float64(_NucScorePartMatchMatch[qualA][qualB]) +
-			(1-partMatch)*float64(_NucScorePartMatchMismatch[qualA][qualB]) + 0.5)
+			(1-partMatch)*float64(_NucScorePartMatchMismatch[qualA][qualB]) +
+			0.5)
 	}
 }
 
+// Gaps at the beginning of B and at the end of A are free
+// With A spanning over lines and B over columns
+//   - First column gap = 0
+//   - Last line gaps = 0
 func _FillMatrixPeLeftAlign(seqA, qualA, seqB, qualB []byte, gap float64,
 	scoreMatrix, pathMatrix *[]int) int {
 
@@ -95,6 +101,7 @@ func _FillMatrixPeLeftAlign(seqA, qualA, seqB, qualB []byte, gap float64,
 	*scoreMatrix = (*scoreMatrix)[:needed]
 	*pathMatrix = (*pathMatrix)[:needed]
 
+	// Sets the first position of the matrix with 0 score
 	_SetMatrices(scoreMatrix, pathMatrix, la, -1, -1, 0, 0)
 
 	// Fills the first column with score 0
@@ -102,17 +109,20 @@ func _FillMatrixPeLeftAlign(seqA, qualA, seqB, qualB []byte, gap float64,
 		_SetMatrices(scoreMatrix, pathMatrix, la, i, -1, 0, -1)
 	}
 
-	la1 := la - 1
+	la1 := la - 1 // Except the last line (gaps are free on it)
 
 	for j := 0; j < lb; j++ {
 
+		// Fill the first line with scores corresponding to a set of gaps
 		_SetMatrices(scoreMatrix, pathMatrix, la, -1, j, (j+1)*gapPenalty, 1)
 
 		for i := 0; i < la1; i++ {
 			left, diag, top := _GetMatrixFrom(scoreMatrix, la, i, j)
+
 			diag += _PairingScorePeAlign(seqA[i], qualA[i], seqB[j], qualB[j])
 			left += gapPenalty
 			top += gapPenalty
+
 			switch {
 			case diag > left && diag > top:
 				_SetMatrices(scoreMatrix, pathMatrix, la, i, j, diag, 0)
@@ -143,6 +153,10 @@ func _FillMatrixPeLeftAlign(seqA, qualA, seqB, qualB []byte, gap float64,
 	return _GetMatrix(scoreMatrix, la, la1, lb-1)
 }
 
+// Gaps at the beginning of A and at the end of B are free
+// With A spanning over lines and B over columns
+//   - First line gap = 0
+//   - Last column gaps = 0
 func _FillMatrixPeRightAlign(seqA, qualA, seqB, qualB []byte, gap float64,
 	scoreMatrix, pathMatrix *[]int) int {
 
@@ -166,17 +180,19 @@ func _FillMatrixPeRightAlign(seqA, qualA, seqB, qualB []byte, gap float64,
 	*scoreMatrix = (*scoreMatrix)[:needed]
 	*pathMatrix = (*pathMatrix)[:needed]
 
+	// Sets the first position of the matrix with 0 score
 	_SetMatrices(scoreMatrix, pathMatrix, la, -1, -1, 0, 0)
 
-	// Fills the first column with score 0
+	// Fills the first column with scores corresponding to a set of gaps
 	for i := 0; i < la; i++ {
 		_SetMatrices(scoreMatrix, pathMatrix, la, i, -1, (i+1)*gapPenalty, -1)
 	}
 
-	lb1 := lb - 1
+	lb1 := lb - 1 // Except the last column (gaps are free on it)
 
 	for j := 0; j < lb1; j++ {
 
+		// Fill the first line with zero score
 		_SetMatrices(scoreMatrix, pathMatrix, la, -1, j, 0, 1)
 
 		for i := 0; i < la; i++ {
@@ -187,7 +203,7 @@ func _FillMatrixPeRightAlign(seqA, qualA, seqB, qualB []byte, gap float64,
 			top += gapPenalty
 
 			switch {
-			case diag > left && left > top:
+			case diag > left && diag > top:
 				_SetMatrices(scoreMatrix, pathMatrix, la, i, j, diag, 0)
 			case left > diag && left > top:
 				_SetMatrices(scoreMatrix, pathMatrix, la, i, j, left, +1)
@@ -218,6 +234,7 @@ func _FillMatrixPeRightAlign(seqA, qualA, seqB, qualB []byte, gap float64,
 	}
 
 	return _GetMatrix(scoreMatrix, la, la-1, lb1)
+
 }
 
 func PELeftAlign(seqA, seqB *obiseq.BioSequence, gap float64,
@@ -295,10 +312,8 @@ func PEAlign(seqA, seqB *obiseq.BioSequence,
 		over = seqB.Len() + shift
 	}
 
-	
+	// At least one mismatch exists in the overlaping region
 	if fastScore+3 < over {
-
-		// At least one mismatch exists in the overlaping region
 
 		if shift > 0 {
 			startA = shift - delta
@@ -319,8 +334,6 @@ func PEAlign(seqA, seqB *obiseq.BioSequence,
 				&arena.pointer.pathMatrix)
 		} else {
 
-			// Both overlaping regions are identicals
-
 			startA = 0
 			startB = -shift - delta
 			if startB < 0 {
@@ -333,6 +346,7 @@ func PEAlign(seqA, seqB *obiseq.BioSequence,
 			rawSeqA = seqA.Sequence()[:partLen]
 			qualSeqA = seqA.Qualities()[:partLen]
 			extra3 = partLen - seqA.Len()
+
 			score = _FillMatrixPeRightAlign(
 				rawSeqA, qualSeqA, rawSeqB, qualSeqB, gap,
 				&arena.pointer.scoreMatrix,
@@ -344,6 +358,9 @@ func PEAlign(seqA, seqB *obiseq.BioSequence,
 			&arena.pointer.path)
 
 	} else {
+
+		// Both overlaping regions are identicals
+
 		if shift > 0 {
 			startA = shift
 			startB = 0

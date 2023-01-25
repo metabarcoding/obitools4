@@ -19,13 +19,19 @@ var _BioSequenceSlicePool = sync.Pool{
 }
 
 // > This function returns a pointer to a new `BioSequenceSlice` object
-func NewBioSequenceSlice() *BioSequenceSlice {
-	return _BioSequenceSlicePool.Get().(*BioSequenceSlice)
+func NewBioSequenceSlice(size ...int) *BioSequenceSlice {
+	slice := _BioSequenceSlicePool.Get().(*BioSequenceSlice)
+	if len(size) > 0 {
+		s := size[0]
+		slice.InsureCapacity(s)
+		(*slice)=(*slice)[0:s]
+	}
+	return slice
 }
 
 // `MakeBioSequenceSlice()` returns a pointer to a new `BioSequenceSlice` struct
-func MakeBioSequenceSlice() BioSequenceSlice {
-	return *NewBioSequenceSlice()
+func MakeBioSequenceSlice(size ...int) BioSequenceSlice {
+	return *NewBioSequenceSlice(size...)
 }
 
 func (s *BioSequenceSlice) Recycle() {
