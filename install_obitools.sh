@@ -2,6 +2,7 @@
 
 URL="https://go.dev/dl/"
 OBIURL4="https://git.metabarcoding.org/lecasofts/go/obitools/-/archive/master/obitools-master.tar.gz"
+PREFIX="/usr/local"
 
 # the directory of the script
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -39,7 +40,7 @@ GOURL=$(curl "${URL}${GOFILE}" \
 curl "$GOURL" \
     | tar zxf -
 
-export PATH="$WORK_DIR/go/bin:$PATH"
+export PATH="$(pwd)/go/bin:$PATH"
 
 curl "$OBIURL4" \
     | tar zxf - 
@@ -47,4 +48,17 @@ curl "$OBIURL4" \
 cd obitools-master
 make
 
+echo "Please enter your password for installing obitools"
+
+sudo mkdir -p "${PREFIX}/bin"
+if [[ ! "${PREFIX}/bin" || ! -d "${PREFIX}/bin" ]]; then
+  echo "Could not create ${PREFIX}/bin directory for installing obitools"
+  exit 1
+fi
+
+sudo cp build/* "${PREFIX}/bin"
+
 popd
+
+rm -rf "$WORK_DIR"
+
