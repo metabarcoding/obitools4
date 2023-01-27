@@ -1,4 +1,4 @@
-# The *OBITools* commands
+# The *OBITools V4* commands
 
 ## Specifying the input files to *OBITools* commands
 
@@ -96,6 +96,131 @@ sequence is the sequence object on which the expression is evaluated
 
 > Replace the `illuminapairedends` original *OBITools*
 
+#### Alignment procedure
+
+`obipairing` is introducing a new alignment algorithm compared to the `illuminapairedend` command of the `OBITools V2`.
+Nethertheless this new algorithm has been design to produce the same results than the previous, except in very few cases.
+
+The new algorithm is a two-step procedure. First, a FASTN-type algorithm [@Lipman1985-hw] identifies the best offset between the two matched readings. This identifies the region of overlap. 
+
+In the second step, the matching regions of the two reads are extracted along with a flanking sequence of $\Delta$ base pairs. The two subsequences are then aligned using a "one side free end-gap" dynamic programming algorithm. This latter step is only called if at least one mismatch is detected by the FASTP step. 
+
+Unless the similarity between the two reads at their overlap region is very low, the addition of the flanking regions in the second step of the alignment ensures the same alignment as if the dynamic programming alignment was performed on the full reads. 
+
+#### The scoring system
+
+In the dynamic programming step, the match and mismatch scores take into account the quality scores of the two aligned nucleotides. By taking these into account, the probability of a true match can be calculated for each aligned base pair. 
+
+If we consider a nucleotide read with a quality score $Q$, the probability of misreading this base ($P_E$) is :
+$$
+P_E = 10^{-\frac{Q}{10}}
+$$
+
+Thus, when a given nucleotide $X$ is observed with the quality score $Q$. The probability that $X$ is really an $X$ is :
+
+$$
+P(X=X) = 1 - P_E
+$$
+
+Otherwise, $X$ is actually one of the three other possible nucleotides ($X_{E1}$, $X_{E2}$ or $X_{E3}$). If we suppose that the three reading error have the same probability :
+
+$$
+P(X=X_{E1}) = P(X=X_{E3}) = P(X=X_{E3}) = \frac{P_E}{3}
+$$
+
+At each position in an alignment where the two nucleotides $X_1$ and $X_2$ face each other (not a gapped position), the probability of a true match varies depending on whether $X_1=X_2$, an observed match, or $X_1 \neq X_2$, an observed mismatch. 
+
+**Probability of a true match when  $X_1=X_2$**
+
+That probability can be divided in two parts. First $X_1$ and $X_2$ have been correctly read. The corresponding probability is :
+
+$$
+\begin{aligned}
+P_{TM} &= (1- PE_1)(1-PE_2)\\ 
+       &=(1 - 10^{-\frac{Q_1}{10} } )(1 - 10^{-\frac{Q_2}{10}} )
+\end{aligned}
+$$
+
+Secondly, a match can occure if the true nucleotides read as $X_1$ and $X_2$ are not $X_1$ and $X_2$ but identical.
+
+$$
+\begin{aligned}
+P(X_1==X_{E1}) \cap P(X_2==X_{E1}) &= \frac{P_{E1} P_{E2}}{9} \\
+P(X_1==X_{Ex}) \cap P(X_2==X_{Ex}) & = \frac{P_{E1} P_{E2}}{3}
+\end{aligned}
+$$
+
+The probability of a true match between $X_1$ and $X_2$ when $X_1 = X_2$ an observed match :
+
+$$
+\begin{aligned}
+P(MATCH | X_1 = X_2) = (1- PE_1)(1-PE_2) + \frac{P_{E1} P_{E2}}{3}
+\end{aligned}
+$$
+
+**Probability of a true match when  $X_1 \neq X_2$**
+
+That probability can be divided in three parts. 
+
+a. $X_1$ has been correctly read and $X_2$ is a sequencing error and is actually equal to $X_1$. 
+$$
+P_a =  (1-P_{E1})\frac{P_{E2}}{3}
+$$
+a. $X_2$ has been correctly read and $X_1$ is a sequencing error and is actually equal to $X_2$. 
+$$
+P_b =  (1-P_{E2})\frac{P_{E1}}{3}
+$$
+a. $X_1$ and $X_2$ corresponds to sequencing error but are actually the same base $X_{Ex}$
+$$
+P_c = 2\frac{P_{E1} P_{E2}}{9}
+$$
+
+Consequently : 
+$$
+\begin{aligned}
+P(MATCH | X_1 \neq X_2) =  (1-P_{E1})\frac{P_{E2}}{3} +  (1-P_{E2})\frac{P_{E1}}{3} + 2\frac{P_{E1} P_{E2}}{9}
+\end{aligned}
+$$
+
+**Probability of a match under the random model**
+
+
+```{r}
+#| echo: false
+#| warning: false
+#| fig-cap: "Evolution of the match and mismatch scores when the quality of base is 20 while the second range from 10 to 40."
+require(ggplot2)
+require(tidyverse)
+
+Smatch <- function(Q1,Q2) {
+  PE1 <- 10^(-Q1/10)
+  PE2 <- 10^(-Q2/10)
+  PT1 <- 1 - PE1
+  PT2 <- 1 - PE2
+  
+  PM <- PT1*PT2 +  PE1 * PE2 / 3
+  round((log(PM)+log(4))*10) 
+}
+
+Smismatch <- function(Q1,Q2) {
+  
+  PE1 <- 10^(-Q1/10)
+  PE2 <- 10^(-Q2/10)
+  PT1 <- 1 - PE1
+  PT2 <- 1 - PE2
+  
+  PM <- PE1*PT2/3 +  PT1 * PE2 / 3 + 2/3 * PE1 * PE2
+  round((log(PM)+log(4))*10) 
+}
+
+tibble(Q = 10:40) %>%
+  mutate(Match = mapply(Smatch,Q,20),
+         Mismatch = mapply(Smismatch,Q,20),
+  ) %>% pivot_longer(cols = -Q, names_to = "Class", values_to = "Score") %>%
+  ggplot(aes(x=Q,y=Score,col=Class)) +
+  geom_line() +
+  xlab("Q1 (Q2=20)") 
+```
 #### `obimultiplex`
 
 > Replace the `ngsfilter` original *OBITools*

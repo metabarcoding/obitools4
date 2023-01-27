@@ -22,6 +22,25 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1.6em;
   vertical-align: middle;
 }
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}
 </style>
 
 
@@ -106,7 +125,7 @@ ul.task-list li input[type="checkbox"] {
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./commands.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">The <em>OBITools</em> commands</span></a>
+  <a href="./commands.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">The <em>OBITools V4</em> commands</span></a>
   </div>
 </li>
         <li class="sidebar-item">
@@ -172,8 +191,16 @@ ul.task-list li input[type="checkbox"] {
 <section id="preface" class="level1 unnumbered">
 <h1 class="unnumbered">Preface</h1>
 <p>The first version of <em>OBITools</em> started to be developed in 2005. This was at the beginning of the DNA metabarcoding story at the Laboratoire d’Ecologie Alpine (LECA) in Grenoble. At that time, with Pierre Taberlet and François Pompanon, we were thinking about the potential of this new methodology under development. PIerre and François developed more the laboratory methods, while I was thinking more about the tools for analysing the sequences produced. Two ideas were behind this development. I wanted something modular, and something easy to extend. To achieve the first goal, I decided to implement obitools as a suite of unix commands mimicking the classic unix commands but dedicated to sequence files. The basic unix commands are very useful for automatically manipulating, parsing and editing text files. They work in flow, line by line on the input text. The result is a new text file that can be used as input for the next command. Such a design makes it possible to quickly develop a text processing pipeline by chaining simple elementary operations. The <em>OBITools</em> are the exact counterpart of these basic Unix commands, but the basic information they process is a sequence (potentially spanning several lines of text), not a single line of text. Most <em>OBITools</em> consume sequence files and produce sequence files. Thus, the principles of chaining and modularity are respected. In order to be able to easily extend the <em>OBITools</em> to keep up with our evolving ideas about processing DNA metabarcoding data, it was decided to develop them using an interpreted language: Python. Python 2, the version available at the time, allowed us to develop the <em>OBITools</em> efficiently. When parts of the algorithms were computationally demanding, they were implemented in C and linked to the Python code. Even though Python is not the most efficient language available, even though computers were not as powerful as they are today, the size of the data we could produce using 454 sequencers or early solexa machines was small enough to be processed in a reasonable time.</p>
+<p>The first public version of obitools was <a href="https://metabarcoding.org/obitools"><em>OBITools2</em></a> <span class="citation" data-cites="Boyer2016-gq">(<a href="references.html#ref-Boyer2016-gq" role="doc-biblioref">Boyer et al. 2016</a>)</span>, this was actually a cleaned up and documented version of <em>OBITools</em> that had been running at LECA for years and was not really distributed except to a few collaborators. This is where <em>OBITools</em> started its public life from then on. The DNA metabarcoding spring schools provided and still provide user training every year. But <em>OBITools2</em> soon suffered from two limitations: it was developed in Python2, which was increasingly abandoned in favour of Python3, and the data size kept increasing with the new illumina machines. Python’s intrinsic slowness coupled with the increasing size of the datasets made OBITools computation times increasingly long. The abandonment of all maintenance of Python2 by its developers also imposed the need for a new version of OBITools.</p>
+<p><a href="https://metabarcoding.org/obitools3"><em>OBITools3</em></a> was the first response to this crisis. Developed and maintained by <a href="https://www.celine-mercier.info">Céline Mercier</a>, <em>OBITools3</em> attempted to address several limitations of <em>OBITools2</em>. It is a complete new code, mainly developed in Python3, with most of the lower layer code written in C for efficiency. OBITools3 has also abandoned text files for binary files for the same reason of efficiency. They have been replaced by a database structure that keeps track of every operation performed on the data.</p>
+<p>Here we present <em>OBITools4</em> which can be seen as a return to the origins of OBITools. While <em>OBITools3</em> offered traceability of analyses, which is in line with the concept of open science, and faster execution, <em>OBITools2</em> was more versatile and not only usable for the analysis of DNA metabarcoding data. <em>OBITools4</em> is the third full implementation of <em>OBITools</em>. The idea behind this new version is to go back to the original design of <em>OBITools</em> which ran on text files containing sequences, like the classic Unix commands, but running at least as fast as <em>OBITools3</em> and taking advantage of the multicore architecture of all modern laptops. For this, the idea of relying on an interpreted language was abandoned. The <em>OBITools4</em> are now fully implemented in the <a href="https://go.dev">GO</a> language with the exception of a few small pieces of specific code already implemented very efficiently in C. <em>OBITools4</em> also implement a new format for the annotations inserted in the header of every sequences. Rather tha relying on a format specific to <em>OBITools</em>, by default <em>OBITools4</em> use the <a href="https://www.json.org">JSON</a> format. This simplifies the writing of parsers in any languages, and thus allows obitools to easiestly interact with other software.</p>
 
 
+<div id="refs" class="references csl-bib-body hanging-indent" role="doc-bibliography" style="display: none">
+<div id="ref-Boyer2016-gq" class="csl-entry" role="doc-biblioentry">
+Boyer, Frédéric, Céline Mercier, Aurélie Bonin, Yvan Le Bras, Pierre Taberlet, and Eric Coissac. 2016. <span>“<span class="nocase">obitools: a unix-inspired software package for DNA metabarcoding</span>.”</span> <em>Molecular Ecology Resources</em> 16 (1): 176–82. <a href="https://doi.org/10.1111/1755-0998.12428">https://doi.org/10.1111/1755-0998.12428</a>.
+</div>
+</div>
 </section>
 
 </main> <!-- /main -->

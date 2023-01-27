@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>OBITools V4 - 2&nbsp; The OBITools commands</title>
+<title>OBITools V4 - 2&nbsp; The OBITools V4 commands</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -19,6 +19,25 @@ ul.task-list li input[type="checkbox"] {
   width: 0.8em;
   margin: 0 0.8em 0.2em -1.6em;
   vertical-align: middle;
+}
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
 }
 </style>
 
@@ -61,6 +80,7 @@ ul.task-list li input[type="checkbox"] {
   }
 }</script>
 
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
 
 </head>
 
@@ -70,7 +90,7 @@ ul.task-list li input[type="checkbox"] {
   <header id="quarto-header" class="headroom fixed-top">
   <nav class="quarto-secondary-nav" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
     <div class="container-fluid d-flex justify-content-between">
-      <h1 class="quarto-secondary-nav-title"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">The <em>OBITools</em> commands</span></h1>
+      <h1 class="quarto-secondary-nav-title"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">The <em>OBITools V4</em> commands</span></h1>
       <button type="button" class="quarto-btn-toggle btn" aria-label="Show secondary navigation">
         <i class="bi bi-chevron-right"></i>
       </button>
@@ -105,7 +125,7 @@ ul.task-list li input[type="checkbox"] {
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./commands.html" class="sidebar-item-text sidebar-link active"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">The <em>OBITools</em> commands</span></a>
+  <a href="./commands.html" class="sidebar-item-text sidebar-link active"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">The <em>OBITools V4</em> commands</span></a>
   </div>
 </li>
         <li class="sidebar-item">
@@ -164,7 +184,7 @@ ul.task-list li input[type="checkbox"] {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title d-none d-lg-block"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">The <em>OBITools</em> commands</span></h1>
+<h1 class="title d-none d-lg-block"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">The <em>OBITools V4</em> commands</span></h1>
 </div>
 
 
@@ -296,20 +316,93 @@ ul.task-list li input[type="checkbox"] {
 <blockquote class="blockquote">
 <p>Replace the <code>illuminapairedends</code> original <em>OBITools</em></p>
 </blockquote>
-<section id="obimultiplex" class="level4" data-number="2.7.1.1">
-<h4 data-number="2.7.1.1" class="anchored" data-anchor-id="obimultiplex"><span class="header-section-number">2.7.1.1</span> <code>obimultiplex</code></h4>
+<section id="alignment-procedure" class="level4" data-number="2.7.1.1">
+<h4 data-number="2.7.1.1" class="anchored" data-anchor-id="alignment-procedure"><span class="header-section-number">2.7.1.1</span> Alignment procedure</h4>
+<p><code>obipairing</code> is introducing a new alignment algorithm compared to the <code>illuminapairedend</code> command of the <code>OBITools V2</code>. Nethertheless this new algorithm has been design to produce the same results than the previous, except in very few cases.</p>
+<p>The new algorithm is a two-step procedure. First, a FASTN-type algorithm <span class="citation" data-cites="Lipman1985-hw">(<a href="references.html#ref-Lipman1985-hw" role="doc-biblioref">Lipman and Pearson 1985</a>)</span> identifies the best offset between the two matched readings. This identifies the region of overlap.</p>
+<p>In the second step, the matching regions of the two reads are extracted along with a flanking sequence of <span class="math inline">\(\Delta\)</span> base pairs. The two subsequences are then aligned using a “one side free end-gap” dynamic programming algorithm. This latter step is only called if at least one mismatch is detected by the FASTP step.</p>
+<p>Unless the similarity between the two reads at their overlap region is very low, the addition of the flanking regions in the second step of the alignment ensures the same alignment as if the dynamic programming alignment was performed on the full reads.</p>
+</section>
+<section id="the-scoring-system" class="level4" data-number="2.7.1.2">
+<h4 data-number="2.7.1.2" class="anchored" data-anchor-id="the-scoring-system"><span class="header-section-number">2.7.1.2</span> The scoring system</h4>
+<p>In the dynamic programming step, the match and mismatch scores take into account the quality scores of the two aligned nucleotides. By taking these into account, the probability of a true match can be calculated for each aligned base pair.</p>
+<p>If we consider a nucleotide read with a quality score <span class="math inline">\(Q\)</span>, the probability of misreading this base (<span class="math inline">\(P_E\)</span>) is : <span class="math display">\[
+P_E = 10^{-\frac{Q}{10}}
+\]</span></p>
+<p>Thus, when a given nucleotide <span class="math inline">\(X\)</span> is observed with the quality score <span class="math inline">\(Q\)</span>. The probability that <span class="math inline">\(X\)</span> is really an <span class="math inline">\(X\)</span> is :</p>
+<p><span class="math display">\[
+P(X=X) = 1 - P_E
+\]</span></p>
+<p>Otherwise, <span class="math inline">\(X\)</span> is actually one of the three other possible nucleotides (<span class="math inline">\(X_{E1}\)</span>, <span class="math inline">\(X_{E2}\)</span> or <span class="math inline">\(X_{E3}\)</span>). If we suppose that the three reading error have the same probability :</p>
+<p><span class="math display">\[
+P(X=X_{E1}) = P(X=X_{E3}) = P(X=X_{E3}) = \frac{P_E}{3}
+\]</span></p>
+<p>At each position in an alignment where the two nucleotides <span class="math inline">\(X_1\)</span> and <span class="math inline">\(X_2\)</span> face each other (not a gapped position), the probability of a true match varies depending on whether <span class="math inline">\(X_1=X_2\)</span>, an observed match, or <span class="math inline">\(X_1 \neq X_2\)</span>, an observed mismatch.</p>
+<p><strong>Probability of a true match when <span class="math inline">\(X_1=X_2\)</span></strong></p>
+<p>That probability can be divided in two parts. First <span class="math inline">\(X_1\)</span> and <span class="math inline">\(X_2\)</span> have been correctly read. The corresponding probability is :</p>
+<p><span class="math display">\[
+\begin{aligned}
+P_{TM} &amp;= (1- PE_1)(1-PE_2)\\
+       &amp;=(1 - 10^{-\frac{Q_1}{10} } )(1 - 10^{-\frac{Q_2}{10}} )
+\end{aligned}
+\]</span></p>
+<p>Secondly, a match can occure if the true nucleotides read as <span class="math inline">\(X_1\)</span> and <span class="math inline">\(X_2\)</span> are not <span class="math inline">\(X_1\)</span> and <span class="math inline">\(X_2\)</span> but identical.</p>
+<p><span class="math display">\[
+\begin{aligned}
+P(X_1==X_{E1}) \cap P(X_2==X_{E1}) &amp;= \frac{P_{E1} P_{E2}}{9} \\
+P(X_1==X_{Ex}) \cap P(X_2==X_{Ex}) &amp; = \frac{P_{E1} P_{E2}}{3}
+\end{aligned}
+\]</span></p>
+<p>The probability of a true match between <span class="math inline">\(X_1\)</span> and <span class="math inline">\(X_2\)</span> when <span class="math inline">\(X_1 = X_2\)</span> an observed match :</p>
+<p><span class="math display">\[
+\begin{aligned}
+P(MATCH | X_1 = X_2) = (1- PE_1)(1-PE_2) + \frac{P_{E1} P_{E2}}{3}
+\end{aligned}
+\]</span></p>
+<p><strong>Probability of a true match when <span class="math inline">\(X_1 \neq X_2\)</span></strong></p>
+<p>That probability can be divided in three parts.</p>
+<ol type="a">
+<li><span class="math inline">\(X_1\)</span> has been correctly read and <span class="math inline">\(X_2\)</span> is a sequencing error and is actually equal to <span class="math inline">\(X_1\)</span>. <span class="math display">\[
+P_a =  (1-P_{E1})\frac{P_{E2}}{3}
+\]</span></li>
+<li><span class="math inline">\(X_2\)</span> has been correctly read and <span class="math inline">\(X_1\)</span> is a sequencing error and is actually equal to <span class="math inline">\(X_2\)</span>. <span class="math display">\[
+P_b =  (1-P_{E2})\frac{P_{E1}}{3}
+\]</span></li>
+<li><span class="math inline">\(X_1\)</span> and <span class="math inline">\(X_2\)</span> corresponds to sequencing error but are actually the same base <span class="math inline">\(X_{Ex}\)</span> <span class="math display">\[
+P_c = 2\frac{P_{E1} P_{E2}}{9}
+\]</span></li>
+</ol>
+<p>Consequently : <span class="math display">\[
+\begin{aligned}
+P(MATCH | X_1 \neq X_2) =  (1-P_{E1})\frac{P_{E2}}{3} +  (1-P_{E2})\frac{P_{E1}}{3} + 2\frac{P_{E1} P_{E2}}{9}
+\end{aligned}
+\]</span></p>
+<p><strong>Probability of a match under the random model</strong></p>
+<div class="cell">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="commands_files/figure-html/unnamed-chunk-1-1.png" class="img-fluid figure-img" width="672"></p>
+<p></p><figcaption class="figure-caption">Evolution of the match and mismatch scores when the quality of base is 20 while the second range from 10 to 40.</figcaption><p></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="obimultiplex" class="level4" data-number="2.7.1.3">
+<h4 data-number="2.7.1.3" class="anchored" data-anchor-id="obimultiplex"><span class="header-section-number">2.7.1.3</span> <code>obimultiplex</code></h4>
 <blockquote class="blockquote">
 <p>Replace the <code>ngsfilter</code> original <em>OBITools</em></p>
 </blockquote>
 </section>
-<section id="obicomplement" class="level4" data-number="2.7.1.2">
-<h4 data-number="2.7.1.2" class="anchored" data-anchor-id="obicomplement"><span class="header-section-number">2.7.1.2</span> <code>obicomplement</code></h4>
+<section id="obicomplement" class="level4" data-number="2.7.1.4">
+<h4 data-number="2.7.1.4" class="anchored" data-anchor-id="obicomplement"><span class="header-section-number">2.7.1.4</span> <code>obicomplement</code></h4>
 </section>
-<section id="obiclean" class="level4" data-number="2.7.1.3">
-<h4 data-number="2.7.1.3" class="anchored" data-anchor-id="obiclean"><span class="header-section-number">2.7.1.3</span> <code>obiclean</code></h4>
+<section id="obiclean" class="level4" data-number="2.7.1.5">
+<h4 data-number="2.7.1.5" class="anchored" data-anchor-id="obiclean"><span class="header-section-number">2.7.1.5</span> <code>obiclean</code></h4>
 </section>
-<section id="obiuniq" class="level4" data-number="2.7.1.4">
-<h4 data-number="2.7.1.4" class="anchored" data-anchor-id="obiuniq"><span class="header-section-number">2.7.1.4</span> <code>obiuniq</code></h4>
+<section id="obiuniq" class="level4" data-number="2.7.1.6">
+<h4 data-number="2.7.1.6" class="anchored" data-anchor-id="obiuniq"><span class="header-section-number">2.7.1.6</span> <code>obiuniq</code></h4>
 </section>
 </section>
 </section>
@@ -333,6 +426,11 @@ ul.task-list li input[type="checkbox"] {
 </blockquote>
 
 
+<div id="refs" class="references csl-bib-body hanging-indent" role="doc-bibliography" style="display: none">
+<div id="ref-Lipman1985-hw" class="csl-entry" role="doc-biblioentry">
+Lipman, D J, and W R Pearson. 1985. <span>“<span class="nocase">Rapid and sensitive protein similarity searches</span>.”</span> <em>Science</em> 227 (4693): 1435–41. <a href="http://www.ncbi.nlm.nih.gov/pubmed/2983426">http://www.ncbi.nlm.nih.gov/pubmed/2983426</a>.
+</div>
+</div>
 </section>
 </section>
 </section>

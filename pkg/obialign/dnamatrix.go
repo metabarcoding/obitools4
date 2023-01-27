@@ -56,7 +56,7 @@ func _MatchScoreRatio(a, b byte) (float64, float64) {
 	l2 := math.Log(2)
 	l3 := math.Log(3)
 	l10 := math.Log(10)
-	lalea := math.Log(30)                  // 1 /(change of the random model)
+	lalea := math.Log(4)                   // 1 /(change of the random model)
 	lE1 := -float64(a)/10*l10 - l3         // log proba of sequencing error on A/3
 	lE2 := -float64(b)/10*l10 - l3         // log proba of sequencing error on B/3
 	lO1 := math.Log1p(-math.Exp(lE1 + l3)) // log proba no being an error on A

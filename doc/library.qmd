@@ -58,11 +58,8 @@ When formated as fasta the parameters correspond to the following schema
 
 ### End of life of a `BioSequence` instance
 
-When a `BioSequence` instance is no more used, it is normally taken in
-charge by the GO garbage collector. You can if you want call the
-`Recycle` method on the instance to store the allocated memory element
-in a `pool` to limit allocation effort when many sequences are
-manipulated.
+When an instance of `BioSequence` is no longer in use, it is normally taken over by the GO garbage collector. If you know that an instance will never be used again, you can, if you wish, call the `Recycle` method on it to store the allocated memory elements in a `pool` to limit the allocation effort when many sequences are being handled. Once the recycle method has been called on an instance, you must ensure that no other method is called on it.
+
 
 ### Accessing to the elements of a sequence
 
@@ -154,4 +151,62 @@ conterpart.
 In a way analogous to the `Clear` method, `ClearQualities()` empties the
 sequence of quality scores.
 
+### The annotations of a sequence
 
+A sequence can be annotated with attributes. Each attribute is associated with a value. An attribute is identified by its name.
+The name of an attribute consists of a character string containing no spaces or blank characters. Values can be of several types.
+
+- Scalar types:
+    - integer
+    - numeric
+    - character
+    - boolean
+- Container types:
+    - vector
+    - map
+
+Vectors can contain any type of scalar. Maps are compulsorily indexed by strings and can contain any scalar type. It is not possible to have nested container type.
+
+Annotations are stored in an object of type `bioseq.Annotation` which is an alias of `map[string]interface{}`. This map can be retrieved using the `Annotations() Annotation` method. If no annotation has been defined for this sequence, the method returns an empty map. It is possible to test an instance of `BioSequence` using its `HasAnnotation() bool` method to see if it has any annotations associated with it.
+
+- GetAttribute(key string) (interface{}, bool)
+
+## The sequence iterator
+
+The pakage *obiter* provides an iterator mecanism for manipulating sequences. The main class provided by this package is `obiiter.IBioSequence`. An `IBioSequence` iterator provides batch of sequences.
+
+### Basic usage of a sequence iterator
+
+Many functions, among them functions reading sequences from a text file, return a `IBioSequence` iterator. The iterator  class provides two main methods:
+
+- `Next() bool`
+- `Get() obiiter.BioSequenceBatch`
+
+The `Next` method moves the iterator to the next value, while the `Get` method returns the currently pointed value. Using them, it is possible to loop over the data as in the following code chunk.
+
+``` go
+import (
+    "git.metabarcoding.org/lecasofts/go/obitools/pkg/obiformats"
+)
+
+func main() {
+    mydata := obiformats.ReadFastSeqFromFile("myfile.fasta")
+       
+    for mydata.Next() {
+        data := mydata.Get()
+        //
+        // Whatever you want to do with the data chunk
+        //
+    }
+}
+```
+
+An `obiseq.BioSequenceBatch` instance is a set of sequences stored in an `obiseq.BioSequenceSlice` and a sequence number. The number of sequences in a batch is not defined. A batch can even contain zero sequences, if for example all sequences initially included in the batch have been filtered out at some stage of their processing.
+
+### The `Pipable` functions
+
+A function consuming a  `obiiter.IBioSequence` and returning a  `obiiter.IBioSequence` is of class `obiiter.Pipable`.
+
+### The `Teeable` functions
+
+A function consuming a  `obiiter.IBioSequence` and returning two  `obiiter.IBioSequence` instance is of class `obiiter.Teeable`.
