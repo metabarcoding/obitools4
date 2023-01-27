@@ -16,13 +16,12 @@ var _clearAll = false
 var _setSeqLength = false
 var _uniqueID = false
 
-func SequenceSelectionOptionSet(options *getoptions.GetOpt) {
+func SequenceAnnotationOptionSet(options *getoptions.GetOpt) {
 	options.BoolVar(&_addRank, "seq-rank", _addRank,
 		options.Description("Adds a new attribute named seq_rank to the sequence record indicating its entry number in the sequence file."),
 	)
 
 	options.BoolVar(&_clearAll, "clear", _clearAll,
-		options.Alias("C"),
 		options.Description("Clears all attributes associated to the sequence records."),
 	)
 
@@ -65,7 +64,7 @@ func SequenceSelectionOptionSet(options *getoptions.GetOpt) {
 func OptionSet(options *getoptions.GetOpt) {
 	obiconvert.OptionSet(options)
 	obigrep.SequenceSelectionOptionSet(options)
-	SequenceSelectionOptionSet(options)
+	SequenceAnnotationOptionSet(options)
 }
 
 // -S <KEY>:<PYTHON_EXPRESSION>, --set-tag=<KEY>:<PYTHON_EXPRESSION>
@@ -91,3 +90,34 @@ func OptionSet(options *getoptions.GetOpt) {
 
 // --uniq-id
 // Forces sequence record ids to be unique.
+
+func CLIHasAttributeToBeRenamed() bool {
+	return len(_toBeRenamed) > 0
+}
+
+func CLIAttributeToBeRenamed() map[string]string {
+	return _toBeRenamed
+}
+
+func CLIHasAttibuteToDelete() bool {
+	return len(_toBeDeleted) > 0
+}
+
+func CLIAttibuteToDelete() []string {
+	return _toBeDeleted
+}
+
+func CLIHasToBeKeptAttributes() bool {
+	return len(_keepOnly) > 0
+}
+
+func CLIToBeKeptAttributes() map[string]bool {
+	d := make(map[string]bool,len(_keepOnly))
+
+	for _,v := range _keepOnly {
+		d[v]=true
+	}
+
+	return d
+}
+
