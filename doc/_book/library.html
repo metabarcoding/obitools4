@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>OBITools V4 - 3&nbsp; The GO OBITools library</title>
+<title>OBITools V4 - 4&nbsp; The GO OBITools library</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -133,7 +133,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   <header id="quarto-header" class="headroom fixed-top">
   <nav class="quarto-secondary-nav" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
     <div class="container-fluid d-flex justify-content-between">
-      <h1 class="quarto-secondary-nav-title"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">The GO <em>OBITools</em> library</span></h1>
+      <h1 class="quarto-secondary-nav-title"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">The GO <em>OBITools</em> library</span></h1>
       <button type="button" class="quarto-btn-toggle btn" aria-label="Show secondary navigation">
         <i class="bi bi-chevron-right"></i>
       </button>
@@ -168,17 +168,22 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./commands.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">The <em>OBITools V4</em> commands</span></a>
+  <a href="./tutorial.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">OBITools V4 Tutorial</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./library.html" class="sidebar-item-text sidebar-link active"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">The GO <em>OBITools</em> library</span></a>
+  <a href="./commands.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">The <em>OBITools V4</em> commands</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./annexes.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Annexes</span></a>
+  <a href="./library.html" class="sidebar-item-text sidebar-link active"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">The GO <em>OBITools</em> library</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./annexes.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Annexes</span></a>
   </div>
 </li>
         <li class="sidebar-item">
@@ -195,18 +200,18 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
     <h2 id="toc-title">Table of contents</h2>
    
   <ul>
-  <li><a href="#biosequence" id="toc-biosequence" class="nav-link active" data-scroll-target="#biosequence"><span class="toc-section-number">3.1</span>  BioSequence</a>
+  <li><a href="#biosequence" id="toc-biosequence" class="nav-link active" data-scroll-target="#biosequence"><span class="toc-section-number">4.1</span>  BioSequence</a>
   <ul class="collapse">
-  <li><a href="#creating-new-instances" id="toc-creating-new-instances" class="nav-link" data-scroll-target="#creating-new-instances"><span class="toc-section-number">3.1.1</span>  Creating new instances</a></li>
-  <li><a href="#end-of-life-of-a-biosequence-instance" id="toc-end-of-life-of-a-biosequence-instance" class="nav-link" data-scroll-target="#end-of-life-of-a-biosequence-instance"><span class="toc-section-number">3.1.2</span>  End of life of a <code>BioSequence</code> instance</a></li>
-  <li><a href="#accessing-to-the-elements-of-a-sequence" id="toc-accessing-to-the-elements-of-a-sequence" class="nav-link" data-scroll-target="#accessing-to-the-elements-of-a-sequence"><span class="toc-section-number">3.1.3</span>  Accessing to the elements of a sequence</a></li>
-  <li><a href="#the-annotations-of-a-sequence" id="toc-the-annotations-of-a-sequence" class="nav-link" data-scroll-target="#the-annotations-of-a-sequence"><span class="toc-section-number">3.1.4</span>  The annotations of a sequence</a></li>
+  <li><a href="#creating-new-instances" id="toc-creating-new-instances" class="nav-link" data-scroll-target="#creating-new-instances"><span class="toc-section-number">4.1.1</span>  Creating new instances</a></li>
+  <li><a href="#end-of-life-of-a-biosequence-instance" id="toc-end-of-life-of-a-biosequence-instance" class="nav-link" data-scroll-target="#end-of-life-of-a-biosequence-instance"><span class="toc-section-number">4.1.2</span>  End of life of a <code>BioSequence</code> instance</a></li>
+  <li><a href="#accessing-to-the-elements-of-a-sequence" id="toc-accessing-to-the-elements-of-a-sequence" class="nav-link" data-scroll-target="#accessing-to-the-elements-of-a-sequence"><span class="toc-section-number">4.1.3</span>  Accessing to the elements of a sequence</a></li>
+  <li><a href="#the-annotations-of-a-sequence" id="toc-the-annotations-of-a-sequence" class="nav-link" data-scroll-target="#the-annotations-of-a-sequence"><span class="toc-section-number">4.1.4</span>  The annotations of a sequence</a></li>
   </ul></li>
-  <li><a href="#the-sequence-iterator" id="toc-the-sequence-iterator" class="nav-link" data-scroll-target="#the-sequence-iterator"><span class="toc-section-number">3.2</span>  The sequence iterator</a>
+  <li><a href="#the-sequence-iterator" id="toc-the-sequence-iterator" class="nav-link" data-scroll-target="#the-sequence-iterator"><span class="toc-section-number">4.2</span>  The sequence iterator</a>
   <ul class="collapse">
-  <li><a href="#basic-usage-of-a-sequence-iterator" id="toc-basic-usage-of-a-sequence-iterator" class="nav-link" data-scroll-target="#basic-usage-of-a-sequence-iterator"><span class="toc-section-number">3.2.1</span>  Basic usage of a sequence iterator</a></li>
-  <li><a href="#the-pipable-functions" id="toc-the-pipable-functions" class="nav-link" data-scroll-target="#the-pipable-functions"><span class="toc-section-number">3.2.2</span>  The <code>Pipable</code> functions</a></li>
-  <li><a href="#the-teeable-functions" id="toc-the-teeable-functions" class="nav-link" data-scroll-target="#the-teeable-functions"><span class="toc-section-number">3.2.3</span>  The <code>Teeable</code> functions</a></li>
+  <li><a href="#basic-usage-of-a-sequence-iterator" id="toc-basic-usage-of-a-sequence-iterator" class="nav-link" data-scroll-target="#basic-usage-of-a-sequence-iterator"><span class="toc-section-number">4.2.1</span>  Basic usage of a sequence iterator</a></li>
+  <li><a href="#the-pipable-functions" id="toc-the-pipable-functions" class="nav-link" data-scroll-target="#the-pipable-functions"><span class="toc-section-number">4.2.2</span>  The <code>Pipable</code> functions</a></li>
+  <li><a href="#the-teeable-functions" id="toc-the-teeable-functions" class="nav-link" data-scroll-target="#the-teeable-functions"><span class="toc-section-number">4.2.3</span>  The <code>Teeable</code> functions</a></li>
   </ul></li>
   </ul>
 </nav>
@@ -216,7 +221,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title d-none d-lg-block"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">The GO <em>OBITools</em> library</span></h1>
+<h1 class="title d-none d-lg-block"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">The GO <em>OBITools</em> library</span></h1>
 </div>
 
 
@@ -231,15 +236,15 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 
 </header>
 
-<section id="biosequence" class="level2" data-number="3.1">
-<h2 data-number="3.1" class="anchored" data-anchor-id="biosequence"><span class="header-section-number">3.1</span> BioSequence</h2>
+<section id="biosequence" class="level2" data-number="4.1">
+<h2 data-number="4.1" class="anchored" data-anchor-id="biosequence"><span class="header-section-number">4.1</span> BioSequence</h2>
 <p>The <code>BioSequence</code> class is used to represent biological sequences. It allows for storing : - the sequence itself as a <code>[]byte</code> - the sequencing quality score as a <code>[]byte</code> if needed - an identifier as a <code>string</code> - a definition as a <code>string</code> - a set of <em>(key, value)</em> pairs in a <code>map[sting]interface{}</code></p>
 <p>BioSequence is defined in the obiseq module and is included using the code</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode go code-with-copy"><code class="sourceCode go"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> <span class="op">(</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"</span></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="op">)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<section id="creating-new-instances" class="level3" data-number="3.1.1">
-<h3 data-number="3.1.1" class="anchored" data-anchor-id="creating-new-instances"><span class="header-section-number">3.1.1</span> Creating new instances</h3>
+<section id="creating-new-instances" class="level3" data-number="4.1.1">
+<h3 data-number="4.1.1" class="anchored" data-anchor-id="creating-new-instances"><span class="header-section-number">4.1.1</span> Creating new instances</h3>
 <p>To create new instance, use</p>
 <ul>
 <li><code>MakeBioSequence(id string, sequence []byte, definition string) obiseq.BioSequence</code></li>
@@ -266,12 +271,12 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <pre><code>&gt;id definition containing potentially several words
 sequence</code></pre>
 </section>
-<section id="end-of-life-of-a-biosequence-instance" class="level3" data-number="3.1.2">
-<h3 data-number="3.1.2" class="anchored" data-anchor-id="end-of-life-of-a-biosequence-instance"><span class="header-section-number">3.1.2</span> End of life of a <code>BioSequence</code> instance</h3>
+<section id="end-of-life-of-a-biosequence-instance" class="level3" data-number="4.1.2">
+<h3 data-number="4.1.2" class="anchored" data-anchor-id="end-of-life-of-a-biosequence-instance"><span class="header-section-number">4.1.2</span> End of life of a <code>BioSequence</code> instance</h3>
 <p>When an instance of <code>BioSequence</code> is no longer in use, it is normally taken over by the GO garbage collector. If you know that an instance will never be used again, you can, if you wish, call the <code>Recycle</code> method on it to store the allocated memory elements in a <code>pool</code> to limit the allocation effort when many sequences are being handled. Once the recycle method has been called on an instance, you must ensure that no other method is called on it.</p>
 </section>
-<section id="accessing-to-the-elements-of-a-sequence" class="level3" data-number="3.1.3">
-<h3 data-number="3.1.3" class="anchored" data-anchor-id="accessing-to-the-elements-of-a-sequence"><span class="header-section-number">3.1.3</span> Accessing to the elements of a sequence</h3>
+<section id="accessing-to-the-elements-of-a-sequence" class="level3" data-number="4.1.3">
+<h3 data-number="4.1.3" class="anchored" data-anchor-id="accessing-to-the-elements-of-a-sequence"><span class="header-section-number">4.1.3</span> Accessing to the elements of a sequence</h3>
 <p>The different elements of an <code>obiseq.BioSequence</code> must be accessed using a set of methods. For the three main elements provided during the creation of a new instance methodes are :</p>
 <ul>
 <li><code>Id() string</code></li>
@@ -300,8 +305,8 @@ sequence</code></pre>
 <span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>    myseq<span class="op">.</span>SetId<span class="op">(</span><span class="st">"SPE01_0001"</span><span class="op">)</span></span>
 <span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>    fmt<span class="op">.</span>Println<span class="op">(</span>myseq<span class="op">.</span>Id<span class="op">())</span></span>
 <span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<section id="different-ways-for-accessing-an-editing-the-sequence" class="level4" data-number="3.1.3.1">
-<h4 data-number="3.1.3.1" class="anchored" data-anchor-id="different-ways-for-accessing-an-editing-the-sequence"><span class="header-section-number">3.1.3.1</span> Different ways for accessing an editing the sequence</h4>
+<section id="different-ways-for-accessing-an-editing-the-sequence" class="level4" data-number="4.1.3.1">
+<h4 data-number="4.1.3.1" class="anchored" data-anchor-id="different-ways-for-accessing-an-editing-the-sequence"><span class="header-section-number">4.1.3.1</span> Different ways for accessing an editing the sequence</h4>
 <p>If <code>Sequence()</code>and <code>SetSequence(sequence []byte)</code> methods are the basic ones, several other methods exist.</p>
 <ul>
 <li><code>String() string</code> return the sequence directly converted to a <code>string</code> instance.</li>
@@ -326,8 +331,8 @@ sequence</code></pre>
 <span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>    fmt<span class="op">.</span>Println<span class="op">(</span>myseq<span class="op">.</span>String<span class="op">())</span></span>
 <span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
-<section id="sequence-quality-scores" class="level4" data-number="3.1.3.2">
-<h4 data-number="3.1.3.2" class="anchored" data-anchor-id="sequence-quality-scores"><span class="header-section-number">3.1.3.2</span> Sequence quality scores</h4>
+<section id="sequence-quality-scores" class="level4" data-number="4.1.3.2">
+<h4 data-number="4.1.3.2" class="anchored" data-anchor-id="sequence-quality-scores"><span class="header-section-number">4.1.3.2</span> Sequence quality scores</h4>
 <p>Sequence quality scores cannot be initialized at the time of instance creation. You must use dedicated methods to add quality scores to a sequence.</p>
 <p>To be coherent the length of both the DNA sequence and que quality score sequence must be equal. But assessment of this constraint is realized. It is of the programmer responsability to check that invariant.</p>
 <p>While accessing to the quality scores relies on the method <code>Quality() []byte</code>, setting the quality need to call one of the following method. They run similarly to their sequence dedicated conterpart.</p>
@@ -339,8 +344,8 @@ sequence</code></pre>
 <p>In a way analogous to the <code>Clear</code> method, <code>ClearQualities()</code> empties the sequence of quality scores.</p>
 </section>
 </section>
-<section id="the-annotations-of-a-sequence" class="level3" data-number="3.1.4">
-<h3 data-number="3.1.4" class="anchored" data-anchor-id="the-annotations-of-a-sequence"><span class="header-section-number">3.1.4</span> The annotations of a sequence</h3>
+<section id="the-annotations-of-a-sequence" class="level3" data-number="4.1.4">
+<h3 data-number="4.1.4" class="anchored" data-anchor-id="the-annotations-of-a-sequence"><span class="header-section-number">4.1.4</span> The annotations of a sequence</h3>
 <p>A sequence can be annotated with attributes. Each attribute is associated with a value. An attribute is identified by its name. The name of an attribute consists of a character string containing no spaces or blank characters. Values can be of several types.</p>
 <ul>
 <li>Scalar types:
@@ -363,11 +368,11 @@ sequence</code></pre>
 </ul>
 </section>
 </section>
-<section id="the-sequence-iterator" class="level2" data-number="3.2">
-<h2 data-number="3.2" class="anchored" data-anchor-id="the-sequence-iterator"><span class="header-section-number">3.2</span> The sequence iterator</h2>
+<section id="the-sequence-iterator" class="level2" data-number="4.2">
+<h2 data-number="4.2" class="anchored" data-anchor-id="the-sequence-iterator"><span class="header-section-number">4.2</span> The sequence iterator</h2>
 <p>The pakage <em>obiter</em> provides an iterator mecanism for manipulating sequences. The main class provided by this package is <code>obiiter.IBioSequence</code>. An <code>IBioSequence</code> iterator provides batch of sequences.</p>
-<section id="basic-usage-of-a-sequence-iterator" class="level3" data-number="3.2.1">
-<h3 data-number="3.2.1" class="anchored" data-anchor-id="basic-usage-of-a-sequence-iterator"><span class="header-section-number">3.2.1</span> Basic usage of a sequence iterator</h3>
+<section id="basic-usage-of-a-sequence-iterator" class="level3" data-number="4.2.1">
+<h3 data-number="4.2.1" class="anchored" data-anchor-id="basic-usage-of-a-sequence-iterator"><span class="header-section-number">4.2.1</span> Basic usage of a sequence iterator</h3>
 <p>Many functions, among them functions reading sequences from a text file, return a <code>IBioSequence</code> iterator. The iterator class provides two main methods:</p>
 <ul>
 <li><code>Next() bool</code></li>
@@ -390,12 +395,12 @@ sequence</code></pre>
 <span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>An <code>obiseq.BioSequenceBatch</code> instance is a set of sequences stored in an <code>obiseq.BioSequenceSlice</code> and a sequence number. The number of sequences in a batch is not defined. A batch can even contain zero sequences, if for example all sequences initially included in the batch have been filtered out at some stage of their processing.</p>
 </section>
-<section id="the-pipable-functions" class="level3" data-number="3.2.2">
-<h3 data-number="3.2.2" class="anchored" data-anchor-id="the-pipable-functions"><span class="header-section-number">3.2.2</span> The <code>Pipable</code> functions</h3>
+<section id="the-pipable-functions" class="level3" data-number="4.2.2">
+<h3 data-number="4.2.2" class="anchored" data-anchor-id="the-pipable-functions"><span class="header-section-number">4.2.2</span> The <code>Pipable</code> functions</h3>
 <p>A function consuming a <code>obiiter.IBioSequence</code> and returning a <code>obiiter.IBioSequence</code> is of class <code>obiiter.Pipable</code>.</p>
 </section>
-<section id="the-teeable-functions" class="level3" data-number="3.2.3">
-<h3 data-number="3.2.3" class="anchored" data-anchor-id="the-teeable-functions"><span class="header-section-number">3.2.3</span> The <code>Teeable</code> functions</h3>
+<section id="the-teeable-functions" class="level3" data-number="4.2.3">
+<h3 data-number="4.2.3" class="anchored" data-anchor-id="the-teeable-functions"><span class="header-section-number">4.2.3</span> The <code>Teeable</code> functions</h3>
 <p>A function consuming a <code>obiiter.IBioSequence</code> and returning two <code>obiiter.IBioSequence</code> instance is of class <code>obiiter.Teeable</code>.</p>
 
 
@@ -539,12 +544,12 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
       <a href="./commands.html" class="pagination-link">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">The <em>OBITools V4</em> commands</span></span>
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">The <em>OBITools V4</em> commands</span></span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">
       <a href="./annexes.html" class="pagination-link">
-        <span class="nav-page-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Annexes</span></span> <i class="bi bi-arrow-right-short"></i>
+        <span class="nav-page-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Annexes</span></span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>

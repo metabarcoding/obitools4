@@ -1,6 +1,8 @@
 project:
   type: book
 
+engine: jupyter
+
 book:
   title: "OBITools V4"
   author: "Eric Coissac"
@@ -8,6 +10,7 @@ book:
   chapters:
     - index.qmd
     - intro.qmd
+    - tutorial.qmd
     - commands.qmd
     - library.qmd
     - annexes.qmd
@@ -15,11 +18,15 @@ book:
 
 bibliography: book.bib
 
+execute: 
+  freeze: auto
+
 format:
   html:
-    theme: cosmo
+    theme: zephyr
   pdf:
     documentclass: scrreprt
+
 
 
 
