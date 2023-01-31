@@ -48,13 +48,13 @@ func _parse_json_header_(header string, annotations obiseq.Annotation) string {
 
 	for k, v := range annotations {
 		switch vt := v.(type) {
-		case float64 :
+		case float64:
 			if vt == math.Floor(vt) {
 				annotations[k] = int(vt)
 			}
 		}
 	}
-	
+
 	if err != nil {
 		log.Fatalf("annotation parsing error on %s : %v\n", header, err)
 	}
@@ -70,7 +70,7 @@ func ParseFastSeqJsonHeader(sequence *obiseq.BioSequence) {
 func FormatFastSeqJsonHeader(sequence *obiseq.BioSequence) string {
 	annotations := sequence.Annotations()
 
-	if annotations != nil  && len(annotations) > 0 {
+	if len(annotations) > 0 {
 		text, err := goutils.JsonMarshal(sequence.Annotations())
 
 		if err != nil {
