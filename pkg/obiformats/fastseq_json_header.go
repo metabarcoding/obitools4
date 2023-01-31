@@ -70,7 +70,7 @@ func ParseFastSeqJsonHeader(sequence *obiseq.BioSequence) {
 func FormatFastSeqJsonHeader(sequence *obiseq.BioSequence) string {
 	annotations := sequence.Annotations()
 
-	if annotations != nil {
+	if annotations != nil  && len(annotations) > 0 {
 		text, err := goutils.JsonMarshal(sequence.Annotations())
 
 		if err != nil {
