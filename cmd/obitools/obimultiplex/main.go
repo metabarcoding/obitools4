@@ -2,9 +2,6 @@ package main
 
 import (
 	"os"
-	"runtime/pprof"
-
-	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obioptions"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obiconvert"
@@ -13,12 +10,12 @@ import (
 
 func main() {
 
-	f, err := os.Create("cpu.pprof")
-	if err != nil {
-		log.Fatal(err)
-	}
-	pprof.StartCPUProfile(f)
-	defer pprof.StopCPUProfile()
+	// f, err := os.Create("cpu.pprof")
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// pprof.StartCPUProfile(f)
+	// defer pprof.StopCPUProfile()
 
 	// ftrace, err := os.Create("cpu.trace")
 	// if err != nil {

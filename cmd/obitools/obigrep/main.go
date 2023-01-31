@@ -2,9 +2,6 @@ package main
 
 import (
 	"os"
-	"runtime/pprof"
-
-	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obioptions"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
@@ -17,12 +14,12 @@ func main() {
 	defer obiseq.LogBioSeqStatus()
 
 	// go tool pprof -http=":8000" ./obipairing ./cpu.pprof
-	f, err := os.Create("cpu.pprof")
-	if err != nil {
-		log.Fatal(err)
-	}
-	pprof.StartCPUProfile(f)
-	defer pprof.StopCPUProfile()
+	// f, err := os.Create("cpu.pprof")
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// pprof.StartCPUProfile(f)
+	// defer pprof.StopCPUProfile()
 
 	// go tool trace cpu.trace
 	// ftrace, err := os.Create("cpu.trace")

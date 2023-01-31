@@ -2,9 +2,6 @@ package main
 
 import (
 	"os"
-	"runtime/trace"
-
-	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obioptions"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obiconvert"
@@ -22,12 +19,12 @@ func main() {
 	// defer pprof.StopCPUProfile()
 
 	// go tool trace cpu.trace
-	ftrace, err := os.Create("cpu.trace")
-	if err != nil {
-		log.Fatal(err)
-	}
-	trace.Start(ftrace)
-	defer trace.Stop()
+	// ftrace, err := os.Create("cpu.trace")
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// trace.Start(ftrace)
+	// defer trace.Stop()
 
 	optionParser := obioptions.GenerateOptionParser(obipairing.OptionSet)
 
