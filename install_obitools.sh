@@ -1,7 +1,7 @@
 #!/bin/bash
 
 URL="https://go.dev/dl/"
-OBIURL4="https://git.metabarcoding.org/lecasofts/go/obitools/-/archive/master/obitools-master.tar.gz"
+OBIURL4="https://git.metabarcoding.org/obitools/obitools4/obitools4/-/archive/master/obitools4-master.tar.gz"
 PREFIX="/usr/local"
 
 # the directory of the script
