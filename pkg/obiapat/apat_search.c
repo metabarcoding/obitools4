@@ -124,8 +124,8 @@ int32_t ManberSub(Seq *pseq, Pattern *ppat, int patnum,int begin,int length)
 {
         int         e, emax, found;
         uint32_t    pos;
-        uint32_t    smask, cmask, sindx;
-        uint32_t    *pr, r[2 * MAX_PAT_ERR + 2];
+        patword_t    smask, cmask, sindx;
+        patword_t    *pr, r[2 * MAX_PAT_ERR + 2];
         uint8_t     *data;
         StackiPtr   *stkpos, *stkerr;
         uint32_t    end;
