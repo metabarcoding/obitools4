@@ -7,6 +7,7 @@ import (
 	"runtime/trace"
 
 	"cloudeng.io/algo/lcs"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/goutils"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obialign"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
@@ -89,6 +90,21 @@ func main() {
 	// B = "ttttt"
 	sA := obiseq.NewBioSequence("A", []byte(A), "")
 	sB := obiseq.NewBioSequence("A", []byte(B), "")
+
+	var x interface{}
+
+	x = sA
+
+	if _, ok := x.(*obiseq.BioSequence); ok {
+		fmt.Println("Purée")
+
+	}
+
+	if _, ok := x.(interface{ Length() int }); ok {
+		fmt.Println("Victoire")
+	}
+
+	fmt.Println(goutils.Len(x),goutils.Len([]int{1,2,3}))
 	// M := lcs.NewMyers([]byte(A), []byte(B))
 	// fmt.Println(M.LCS())
 	// fmt.Println(M.SES())
@@ -98,7 +114,7 @@ func main() {
 	// nlcs, nali := obialign.LCSScore(sA, sB, sB.Length(), nil)
 	// fmt.Println(llcs, extra, len(A)+extra)
 	// fmt.Println(nlcs, nali)
-	nlcs, nali := obialign.FastLCSScore(sA, sB, sB.Length(), nil)
+	nlcs, nali := obialign.FastLCSScore(sA, sB, sB.Len(), nil)
 	fmt.Println(nlcs, nali)
 
 	// option_parser := obioptions.GenerateOptionParser(
