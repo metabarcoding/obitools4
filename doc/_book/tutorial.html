@@ -231,6 +231,7 @@ div.csl-indent {
   <li><a href="#taxonomic-assignment-of-sequences" id="toc-taxonomic-assignment-of-sequences" class="nav-link" data-scroll-target="#taxonomic-assignment-of-sequences"><span class="toc-section-number">2.2.6</span>  Taxonomic assignment of sequences</a></li>
   <li><a href="#assign-each-sequence-to-a-taxon" id="toc-assign-each-sequence-to-a-taxon" class="nav-link" data-scroll-target="#assign-each-sequence-to-a-taxon"><span class="toc-section-number">2.2.7</span>  Assign each sequence to a taxon</a></li>
   <li><a href="#generate-the-final-result-table" id="toc-generate-the-final-result-table" class="nav-link" data-scroll-target="#generate-the-final-result-table"><span class="toc-section-number">2.2.8</span>  Generate the final result table</a></li>
+  <li><a href="#looking-at-the-data-in-r" id="toc-looking-at-the-data-in-r" class="nav-link" data-scroll-target="#looking-at-the-data-in-r"><span class="toc-section-number">2.2.9</span>  Looking at the data in R</a></li>
   </ul></li>
   </ul>
 </nav>
@@ -430,7 +431,7 @@ agcccaaaactcaaaggacttggcggtgcttcacaccctt</code></pre>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb15"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="ex">obicount</span> results/wolf.ali.assigned.simple.clean.fasta</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>time="2023-01-31T22:44:30+01:00" level=info msg="Appending results/wolf.ali.assigned.simple.clean.fasta file\n"
+<pre><code>time="2023-02-02T23:07:30+01:00" level=info msg="Appending results/wolf.ali.assigned.simple.clean.fasta file\n"
  2749 36409 273387</code></pre>
 </div>
 </div>
@@ -439,10 +440,10 @@ agcccaaaactcaaaggacttggcggtgcttcacaccctt</code></pre>
 <div class="sourceCode cell-code" id="cb17"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="ex">obigrep</span> <span class="at">-p</span> <span class="st">'sequence.Count() == 1'</span> results/wolf.ali.assigned.simple.clean.fasta <span class="dt">\</span></span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">|</span> <span class="ex">obicount</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>time="2023-01-31T22:44:30+01:00" level=info msg="Appending results/wolf.ali.assigned.simple.clean.fasta file\n"
-time="2023-01-31T22:44:30+01:00" level=info msg="Reading sequences from stdin in guessed\n"
-time="2023-01-31T22:44:30+01:00" level=info msg="On output use JSON headers"
- 2309 2309 229920</code></pre>
+<pre><code>time="2023-02-02T23:07:30+01:00" level=info msg="Reading sequences from stdin in guessed\n"
+time="2023-02-02T23:07:30+01:00" level=info msg="Appending results/wolf.ali.assigned.simple.clean.fasta file\n"
+time="2023-02-02T23:07:30+01:00" level=info msg="On output use JSON headers"
+ 2309 2309 229912</code></pre>
 </div>
 </div>
 <p>In that dataset sigletons corresponds to <span class="math inline">\(3511\)</span> variants.</p>
@@ -490,7 +491,7 @@ agcttaaaactcaaaggacttggcggtgctttataccctt</code></pre>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb23"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="ex">obicount</span> results/wolf.ali.assigned.simple.clean.c10.l80.fasta</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>time="2023-01-31T22:44:32+01:00" level=info msg="Appending results/wolf.ali.assigned.simple.clean.c10.l80.fasta file\n"
+<pre><code>time="2023-02-02T23:07:31+01:00" level=info msg="Appending results/wolf.ali.assigned.simple.clean.c10.l80.fasta file\n"
  26 31337 2585</code></pre>
 </div>
 </div>
@@ -502,6 +503,7 @@ agcttaaaactcaaaggacttggcggtgctttataccctt</code></pre>
 <p>Taxonomic assignment of sequences requires a reference database compiling all possible species to be identified in the sample. Assignment is then done based on sequence comparison between sample sequences and reference sequences.</p>
 <section id="download-the-taxonomy" class="level4 unnumbered">
 <h4 class="unnumbered anchored" data-anchor-id="download-the-taxonomy">Download the taxonomy</h4>
+<p>It is always possible to download the complete taxonomy from NCBI using the following commands.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb25"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> TAXO</span>
 <span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> TAXO</span>
@@ -509,39 +511,45 @@ agcttaaaactcaaaggacttggcggtgctttataccctt</code></pre>
 <span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>   <span class="kw">|</span> <span class="fu">tar</span> <span class="at">-zxvf</span> <span class="at">-</span></span>
 <span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> ..</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
+<p>For people have a low speed internet connection, a copy of the <code>taxdump.tar.gz</code> file is provided in the wolf_data directory. The NCBI taxonomy is dayly updated, but the one provided here is ok for running this tutorial.</p>
+<p>To build the TAXO directory from the provided <code>taxdump.tar.gz</code>, you need to execute the following commands</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> TAXO</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> TAXO</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a><span class="fu">tar</span> zxvf wolf_data/taxdump.tar.gz </span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> ..</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
 </section>
 <section id="build-a-reference-database" class="level4 unnumbered">
 <h4 class="unnumbered anchored" data-anchor-id="build-a-reference-database">Build a reference database</h4>
-<p>One way to build the reference database is to use the <code class="interpreted-text" role="doc">ecoPCR &lt;scripts/ecoPCR&gt;</code> program to simulate a PCR and to extract all sequences from the EMBL that may be amplified <span class="title-ref">in silico</span> by the two primers (<span class="title-ref">TTAGATACCCCACTATGC</span> and <span class="title-ref">TAGAACAGGCTCCTCTAG</span>) used for PCR amplification.</p>
-<p>The full list of steps for building this reference database would then be:</p>
+<p>One way to build the reference database is to use the <code>obipcr</code> program to simulate a PCR and extract all sequences from a general purpose DNA database such as genbank or EMBL that can be amplified <em>in silico</em> by the two primers (here <strong>TTAGATACCCCACTATGC</strong> and <strong>TAGAACAGGCTCCTCTAG</strong>) used for PCR amplification.</p>
+<p>The two steps to build this reference database would then be</p>
 <ol type="1">
-<li>Download the whole set of EMBL sequences (available from: <a href="ftp://ftp.ebi.ac.uk/pub/databases/embl/release/" class="uri">ftp://ftp.ebi.ac.uk/pub/databases/embl/release/</a>)</li>
-<li>Download the NCBI taxonomy (available from: <a href="ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz" class="uri">ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz</a>)</li>
-<li>Format them into the ecoPCR format (see <code class="interpreted-text" role="doc">obiconvert &lt;scripts/obiconvert&gt;</code> for how you can produce ecoPCR compatible files)</li>
-<li>Use ecoPCR to simulate amplification and build a reference database based on putatively amplified barcodes together with their recorded taxonomic information</li>
+<li><p>Today, the easiest database to download is <em>Genbank</em>. But this will take you more than a day and occupy more than half a terabyte on your hard drive. In the <code>wolf_data</code> directory, a shell script called <code>download_gb.sh</code> is provided to perform this task. It requires that the programs <code>wget2</code> and <code>curl</code> are available on your computer.</p></li>
+<li><p>Use <code>obipcr</code> to simulate amplification and build a reference database based on the putatively amplified barcodes and their recorded taxonomic information.</p></li>
 </ol>
-<p>As step 1 and step 3 can be really time-consuming (about one day), we alredy provide the reference database produced by the following commands so that you can skip its construction. Note that as the EMBL database and taxonomic data can evolve daily, if you run the following commands you may end up with quite different results.</p>
-<p>Any utility allowing file downloading from a ftp site can be used. In the following commands, we use the commonly used <code>wget</code> <em>Unix</em> command.</p>
+<p>As these steps can take a long time (about a day for the download and an hour for the PCR), we already provide the reference database produced by the following commands so you can skip its construction. Note that as the Genbank and taxonomic database evolve frequently, if you run the following commands you may get different results.</p>
 <section id="download-the-sequences" class="level5 unnumbered">
 <h5 class="unnumbered anchored" data-anchor-id="download-the-sequences">Download the sequences</h5>
-<div class="sourceCode" id="cb26"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;</span> mkdir <span class="ex">EMBL</span></span>
-<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;</span> cd <span class="ex">EMBL</span></span>
-<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;</span> wget <span class="ex">-nH</span> <span class="at">--cut-dirs</span><span class="op">=</span>4 <span class="at">-Arel_std_\*.dat.gz</span> <span class="at">-m</span> ftp://ftp.ebi.ac.uk/pub/databases/embl/release/</span>
-<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;</span> cd <span class="ex">..</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</section>
-<section id="download-the-taxonomy-1" class="level5 unnumbered">
-<h5 class="unnumbered anchored" data-anchor-id="download-the-taxonomy-1">Download the taxonomy</h5>
-<div class="sourceCode" id="cb27"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;</span> mkdir <span class="ex">TAXO</span></span>
-<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;</span> cd <span class="ex">TAXO</span></span>
-<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;</span> wget <span class="ex">ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz</span></span>
-<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;</span> tar <span class="ex">-zxvf</span> taxdump.tar.gz</span>
-<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;</span> cd <span class="ex">..</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> genbank</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> genbank</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a><span class="ex">../wolf_data/install_gb.sh</span></span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> ..</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>DO NOT RUN THIS COMMAND EXCEPT IF YOU ARE REALLY CONSIENT OF THE TIME AND DISK SPACE REQUIRED.</p>
 </section>
 <section id="use-obipcr-to-simulate-an-in-silico-pcr" class="level5 unnumbered">
 <h5 class="unnumbered anchored" data-anchor-id="use-obipcr-to-simulate-an-in-silico-pcr">Use obipcr to simulate an in silico` PCR</h5>
-<div class="sourceCode" id="cb28"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;</span> obipcr <span class="ex">-d</span> ./ECODB/embl_last <span class="at">-e</span> 3 <span class="at">-l</span> 50 <span class="at">-L</span> 150 <span class="dt">\ </span></span>
-<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>  <span class="ex">TTAGATACCCCACTATGC</span> TAGAACAGGCTCCTCTAG <span class="op">&gt;</span> v05.ecopcr</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p>Note that the primers must be in the same order both in <code>wolf_diet_ngsfilter.txt</code> and in the <code>obipcr</code> command.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="ex">obipcr</span> <span class="at">-t</span> TAXO <span class="at">-e</span> 3 <span class="at">-l</span> 50 <span class="at">-L</span> 150 <span class="dt">\ </span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>       <span class="ex">--forward</span> TTAGATACCCCACTATGC <span class="dt">\</span></span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>       <span class="at">--reverse</span> TAGAACAGGCTCCTCTAG <span class="dt">\</span></span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>       <span class="at">--no-order</span> <span class="dt">\</span></span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>       genbank/Release-251/gb<span class="pp">*</span>.seq.gz</span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>       <span class="op">&gt;</span> results/v05.pcr.fasta</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Note that the primers must be in the same order both in <code>wolf_diet_ngsfilter.txt</code> and in the <code>obipcr</code> command. The part of the path indicating the <em>Genbank</em> release can change. Please check in your genbank directory the exact name of your release.</p>
 </section>
 <section id="clean-the-database" class="level5 unnumbered">
 <h5 class="unnumbered anchored" data-anchor-id="clean-the-database">Clean the database</h5>
@@ -551,22 +559,25 @@ agcttaaaactcaaaggacttggcggtgctttataccctt</code></pre>
 <li>ensure that the dereplicated sequences have a taxid at the family level (<code>obigrep</code> command below).</li>
 <li>ensure that sequences each have a unique identification (<code>obiannotate</code> command below)</li>
 </ol>
-<div class="sourceCode" id="cb29"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;</span> obigrep <span class="ex">-d</span> embl_last <span class="at">--require-rank</span><span class="op">=</span>species <span class="dt">\</span></span>
-<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--require-rank</span><span class="op">=</span>genus <span class="at">--require-rank</span><span class="op">=</span>family v05.ecopcr <span class="op">&gt;</span> v05_clean.fasta</span>
-<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;</span> obiuniq <span class="ex">-d</span> embl_last <span class="dt">\ </span></span>
-<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>  <span class="ex">v05_clean.fasta</span> <span class="op">&gt;</span> v05_clean_uniq.fasta</span>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="ex">obigrep</span> <span class="at">-t</span> TAXO <span class="dt">\</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>          <span class="at">--require-rank</span> species <span class="dt">\</span></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>          <span class="at">--require-rank</span> genus <span class="dt">\</span></span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>          <span class="at">--require-rank</span> family <span class="dt">\</span></span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>          results/v05.ecopcr <span class="op">&gt;</span> results/v05_clean.fasta</span>
 <span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;</span> obigrep <span class="ex">-d</span> embl_last <span class="at">--require-rank</span><span class="op">=</span>family <span class="dt">\ </span></span>
-<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>  <span class="ex">v05_clean_uniq.fasta</span> <span class="op">&gt;</span> v05_clean_uniq_clean.fasta</span>
-<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;</span> obiannotate <span class="ex">--uniq-id</span> v05_clean_uniq_clean.fasta <span class="op">&gt;</span> db_v05.fasta</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p>obirefidx -t TAXO wolf_data/db_v05_r117.fasta &gt; results/db_v05_r117.indexed.fasta</p>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a><span class="ex">obiuniq</span> <span class="at">-c</span> taxid <span class="dt">\</span></span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>        results/v05_clean.fasta <span class="dt">\</span></span>
+<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a>        <span class="op">&gt;</span> results/v05_clean_uniq.fasta</span>
+<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-11"><a href="#cb29-11" aria-hidden="true" tabindex="-1"></a><span class="ex">obirefidx</span> <span class="at">-t</span> TAXO results/v05_clean_uniq.fasta <span class="dt">\</span></span>
+<span id="cb29-12"><a href="#cb29-12" aria-hidden="true" tabindex="-1"></a>        <span class="op">&gt;</span> results/v05_clean_uniq.indexed.fasta</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
 <div class="warning">
 <div class="title">
 <p>Warning</p>
 </div>
-<p>From now on, for the sake of clarity, the following commands will use the filenames of the files provided with the tutorial. If you decided to run the last steps and use the files you have produced, you'll have to use <code>db_v05.fasta</code> instead of <code>db_v05_r117.fasta</code> and <code>embl_last</code> instead of <code>embl_r117</code></p>
+<p>From now on, for the sake of clarity, the following commands will use the filenames of the files provided with the tutorial. If you decided to run the last steps and use the files you have produced, you'll have to use <code>results/v05_clean_uniq.indexed.fasta</code> instead of <code>wolf_data/db_v05_r117.indexed.fasta</code>.</p>
 </div>
 </section>
 </section>
@@ -614,6 +625,48 @@ agcttaaaactcaaaggacttggcggtgctttataccctt</code></pre>
 <pre><code>&gt;HELIUM_000100422_612GNAAXX:7:84:16335:5083#0/1_sub[28..126] {"count":96,"merged_sample":{"26a_F040644":11,"29a_F260619":85},"obiclean_status":{"26a_F040644":"s","29a_F260619":"h"},"obiclean_weight":{"26a_F040644":14,"29a_F260619":110},"obitag_bestid":0.9595959595959596,"obitag_bestmatch":"AC187326","obitag_difference":4,"obitag_match_count":1,"obitag_rank":"subspecies","scientific_name":"Canis lupus familiaris","taxid":9615}
 ttagccctaaacataagctattccataacaaaataattcgccagagaactactagcaaca
 gattaaacctcaaaggacttggcagtgctttatacccct</code></pre>
+</section>
+<section id="looking-at-the-data-in-r" class="level3" data-number="2.2.9">
+<h3 data-number="2.2.9" class="anchored" data-anchor-id="looking-at-the-data-in-r"><span class="header-section-number">2.2.9</span> Looking at the data in R</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ROBIFastread)</span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(vegan)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Le chargement a nécessité le package : permute</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Le chargement a nécessité le package : lattice</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>This is vegan 2.6-4</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(magrittr)</span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a> </span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>diet_data <span class="ot">&lt;-</span> <span class="fu">read_obifasta</span>(<span class="st">"results/wolf.ali.assigned.simple.clean.c10.l80.taxo.fasta"</span>) </span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a>diet_data <span class="sc">%&lt;&gt;%</span> <span class="fu">extract_features</span>(<span class="st">"obitag_bestmatch"</span>,<span class="st">"obitag_rank"</span>,<span class="st">"scientific_name"</span>,<span class="st">'taxid'</span>)</span>
+<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a>diet_tab <span class="ot">&lt;-</span> <span class="fu">extract_readcount</span>(diet_data,<span class="at">key=</span><span class="st">"obiclean_weight"</span>)</span>
+<span id="cb38-8"><a href="#cb38-8" aria-hidden="true" tabindex="-1"></a>diet_tab</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>4 x 26 sparse Matrix of class "dgCMatrix"</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>  [[ suppressing 26 column names 'HELIUM_000100422_612GNAAXX:7:30:17945:19531#0/1_sub[28..126]', 'HELIUM_000100422_612GNAAXX:7:94:16908:11285#0/1_sub[28..127]', 'HELIUM_000100422_612GNAAXX:7:100:4828:3492#0/1_sub[28..127]' ... ]]</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                                                                            
+26a_F040644 43    .  .  .   . 88   . 52 208 15 31  .    . 14 481 72 17  .  .
+13a_F730603  . 8409 22  1   .  .   .  .   .  .  . 20    .  .  19  .  . 15  .
+29a_F260619  .    .  . 13 353  . 391  .   .  .  .  . 6275  .   1  .  .  . 44
+15a_F730814  .    .  .  .   .  .   .  .   .  .  .  . 9165  .   5  .  .  .  .
+                                   
+26a_F040644 12830  14  . . 18  .  .
+13a_F730603     .   .  . 9  .  . 25
+29a_F260619     . 110 16 .  . 25  .
+15a_F730814     .   .  . 4  .  .  .</code></pre>
+</div>
+</div>
 <dl>
 <dt>This file contains 26 sequences. You can deduce the diet of each sample:</dt>
 <dd>

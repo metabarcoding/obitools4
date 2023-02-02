@@ -379,6 +379,8 @@ sequences and reference sequences.
 
 #### Download the taxonomy  {.unnumbered}
 
+It is always possible to download the complete taxonomy from NCBI using the following commands.
+
 ```{bash}
 #| output: false
 mkdir TAXO
@@ -387,68 +389,63 @@ curl http://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz \
    | tar -zxvf -
 cd ..
 ```
- 
+
+For people have a low speed internet connection, a copy of the `taxdump.tar.gz` file is provided in the wolf_data directory.
+The NCBI taxonomy is dayly updated, but the one provided here is ok for running this tutorial.
+
+To build the TAXO directory from the provided `taxdump.tar.gz`, you need to execute the following commands
+
+```{bash}
+#| output: false
+mkdir TAXO
+cd TAXO
+tar zxvf wolf_data/taxdump.tar.gz 
+cd ..
+```
+
 #### Build a reference database  {.unnumbered}
 
-One way to build the reference database is to use the
-`ecoPCR <scripts/ecoPCR>`{.interpreted-text role="doc"} program to
-simulate a PCR and to extract all sequences from the EMBL that may be
-amplified [in silico]{.title-ref} by the two primers
-([TTAGATACCCCACTATGC]{.title-ref} and [TAGAACAGGCTCCTCTAG]{.title-ref})
+One way to build the reference database is to use the `obipcr` program to simulate a PCR and extract all sequences from a general purpose DNA database such as genbank or EMBL that can be
+amplified *in silico* by the two primers (here **TTAGATACCCCACTATGC** and **TAGAACAGGCTCCTCTAG**)
 used for PCR amplification.
 
-The full list of steps for building this reference database would then
-be:
+The two steps to build this reference database would then be
 
-1.  Download the whole set of EMBL sequences (available from:
-    <ftp://ftp.ebi.ac.uk/pub/databases/embl/release/>)
-2.  Download the NCBI taxonomy (available from:
-    <ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz>)
-3.  Format them into the ecoPCR format (see
-    `obiconvert <scripts/obiconvert>`{.interpreted-text role="doc"} for
-    how you can produce ecoPCR compatible files)
-4.  Use ecoPCR to simulate amplification and build a reference database
-    based on putatively amplified barcodes together with their recorded
-    taxonomic information
+1.  Today, the easiest database to download is *Genbank*. But this will take you more than a day and occupy more than half a terabyte on your hard drive. In the `wolf_data` directory, a shell script called `download_gb.sh` is provided to perform this task. It requires that the programs `wget2` and `curl` are available   on your computer.
 
-As step 1 and step 3 can be really time-consuming (about one day), we
-alredy provide the reference database produced by the following commands
-so that you can skip its construction. Note that as the EMBL database
-and taxonomic data can evolve daily, if you run the following commands
-you may end up with quite different results.
+1.  Use `obipcr` to simulate amplification and build a reference database based on the putatively amplified barcodes and their recorded taxonomic information.
 
-Any utility allowing file downloading from a ftp site can be used. In
-the following commands, we use the commonly used `wget` *Unix* command.
+As these steps can take a long time (about a day for the download and an hour for the PCR), we already provide the reference database produced by the following commands so you can skip its construction. Note that as the Genbank and taxonomic database evolve frequently, if you run the following commands you may get different results.
 
 ##### Download the sequences  {.unnumbered}
 
-``` bash
-> mkdir EMBL
-> cd EMBL
-> wget -nH --cut-dirs=4 -Arel_std_\*.dat.gz -m ftp://ftp.ebi.ac.uk/pub/databases/embl/release/
-> cd ..
-```
+```{bash}
+#| eval: false
+mkdir genbank
+cd genbank
+../wolf_data/install_gb.sh
+cd ..
+``` 
 
-##### Download the taxonomy  {.unnumbered}
-
-``` bash
-> mkdir TAXO
-> cd TAXO
-> wget ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz
-> tar -zxvf taxdump.tar.gz
-> cd ..
-```
+DO NOT RUN THIS COMMAND EXCEPT IF YOU ARE REALLY CONSIENT OF THE TIME AND DISK SPACE REQUIRED.
 
 
 ##### Use obipcr to simulate an in silico\` PCR  {.unnumbered}
 
-``` bash
-> obipcr -d ./ECODB/embl_last -e 3 -l 50 -L 150 \ 
-  TTAGATACCCCACTATGC TAGAACAGGCTCCTCTAG > v05.ecopcr
+```{bash}
+#| eval: false
+obipcr -t TAXO -e 3 -l 50 -L 150 \ 
+       --forward TTAGATACCCCACTATGC \
+       --reverse TAGAACAGGCTCCTCTAG \
+       --no-order \
+       genbank/Release-251/gb*.seq.gz
+       > results/v05.pcr.fasta
 ```
 
 Note that the primers must be in the same order both in
 `wolf_diet_ngsfilter.txt` and in the `obipcr` command.
+The part of the path indicating the *Genbank* release can change.
+Please check in your genbank directory the exact name of your release.
 
 ##### Clean the database  {.unnumbered}
 
@@ -461,20 +458,23 @@ Note that the primers must be in the same order both in
 4.  ensure that sequences each have a unique identification
     (`obiannotate` command below)
 
-``` bash
-> obigrep -d embl_last --require-rank=species \
-  --require-rank=genus --require-rank=family v05.ecopcr > v05_clean.fasta
+```{bash}
+#| eval: false
 
-> obiuniq -d embl_last \ 
-  v05_clean.fasta > v05_clean_uniq.fasta
+obigrep -t TAXO \
+          --require-rank species \
+          --require-rank genus \
+          --require-rank family \
+          results/v05.ecopcr > results/v05_clean.fasta
 
-> obigrep -d embl_last --require-rank=family \ 
-  v05_clean_uniq.fasta > v05_clean_uniq_clean.fasta
+obiuniq -c taxid \
+        results/v05_clean.fasta \
+        > results/v05_clean_uniq.fasta
 
-> obiannotate --uniq-id v05_clean_uniq_clean.fasta > db_v05.fasta
+obirefidx -t TAXO results/v05_clean_uniq.fasta \
+        > results/v05_clean_uniq.indexed.fasta
 ```
 
-obirefidx -t TAXO wolf_data/db_v05_r117.fasta > results/db_v05_r117.indexed.fasta
 
 
 ::: warning
@@ -485,8 +485,7 @@ Warning
 From now on, for the sake of clarity, the following commands will use
 the filenames of the files provided with the tutorial. If you decided to
 run the last steps and use the files you have produced, you\'ll have to
-use `db_v05.fasta` instead of `db_v05_r117.fasta` and `embl_last`
-instead of `embl_r117`
+use `results/v05_clean_uniq.indexed.fasta` instead of `wolf_data/db_v05_r117.indexed.fasta`.
 :::
 
 ### Assign each sequence to a taxon
@@ -551,7 +550,23 @@ ttagccctaaacataagctattccataacaaaataattcgccagagaactactagcaaca
 gattaaacctcaaaggacttggcagtgctttatacccct
 ```
 
-This file contains 26 sequences. You can deduce the diet of each sample:
+### Looking at the data in R
+
+
+```{r}
+library(ROBIFastread)
+library(vegan)
+library(magrittr)
+ 
+
+diet_data <- read_obifasta("results/wolf.ali.assigned.simple.clean.c10.l80.taxo.fasta") 
+diet_data %<>% extract_features("obitag_bestmatch","obitag_rank","scientific_name",'taxid')
+
+diet_tab <- extract_readcount(diet_data,key="obiclean_weight")
+diet_tab
+```
+
+This file contains 26 sequences. You can deduce the diet of each sample: 
 
 :   -   13a_F730603: Cervus elaphus
     -   15a_F730814: Capreolus capreolus

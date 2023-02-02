@@ -17,9 +17,9 @@ var _setSeqLength = false
 var _uniqueID = false
 
 func SequenceAnnotationOptionSet(options *getoptions.GetOpt) {
-	options.BoolVar(&_addRank, "seq-rank", _addRank,
-		options.Description("Adds a new attribute named seq_rank to the sequence record indicating its entry number in the sequence file."),
-	)
+	// options.BoolVar(&_addRank, "seq-rank", _addRank,
+	// 	options.Description("Adds a new attribute named seq_rank to the sequence record indicating its entry number in the sequence file."),
+	// )
 
 	options.BoolVar(&_clearAll, "clear", _clearAll,
 		options.Description("Clears all attributes associated to the sequence records."),
@@ -29,9 +29,10 @@ func SequenceAnnotationOptionSet(options *getoptions.GetOpt) {
 		options.Description("Adds attribute with seq_length as a key and sequence length as a value."),
 	)
 
-	options.BoolVar(&_uniqueID, "uniq-id", _uniqueID,
-		options.Description("Forces sequence record ids to be unique."),
-	)
+	// options.BoolVar(&_uniqueID, "uniq-id", _uniqueID,
+	// 	options.Description("Forces sequence record ids to be unique."),
+	// )
+
 	options.StringMapVar(&_toBeRenamed, "rename-tag", 1, 1,
 		options.Alias("R"),
 		options.ArgName("NEW_NAME=OLD_NAME"),
@@ -47,10 +48,10 @@ func SequenceAnnotationOptionSet(options *getoptions.GetOpt) {
 		options.ArgName("RANK_NAME"),
 		options.Description("Adds taxonomic annotation at taxonomic rank <RANK_NAME>."))
 
-	options.StringVar(&_tagList, "tag-list", _tagList,
-		options.ArgName("FILENAME"),
-		options.Description("<FILENAME> points to a file containing attribute names"+
-			" and values to modify for specified sequence records."))
+	// options.StringVar(&_tagList, "tag-list", _tagList,
+	// 	options.ArgName("FILENAME"),
+	// 	options.Description("<FILENAME> points to a file containing attribute names"+
+	// 		" and values to modify for specified sequence records."))
 
 	options.StringSliceVar(&_keepOnly, "keep", 1, 1,
 		options.Alias("k"),
@@ -111,14 +112,8 @@ func CLIHasToBeKeptAttributes() bool {
 	return len(_keepOnly) > 0
 }
 
-func CLIToBeKeptAttributes() map[string]bool {
-	d := make(map[string]bool, len(_keepOnly))
-
-	for _, v := range _keepOnly {
-		d[v] = true
-	}
-
-	return d
+func CLIToBeKeptAttributes() []string {
+	return _keepOnly
 }
 
 func CLIHasTaxonAtRank() bool {
@@ -131,4 +126,8 @@ func CLITaxonAtRank() []string {
 
 func CLIHasSetLengthFlag() bool {
 	return _setSeqLength
+}
+
+func CLIHasClearAllFlag() bool {
+	return _clearAll
 }
