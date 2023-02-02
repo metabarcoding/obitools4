@@ -110,7 +110,7 @@ else
   make OBITOOLS_PREFIX="${OBITOOLS_PREFIX}"
 fi
 
-cp build/* "${INSTALL_DIR}/bin" 2> /dev/null \
+(cp build/* "${INSTALL_DIR}/bin" 2> /dev/null) \
    || sudo cp build/* "${INSTALL_DIR}/bin"
 
 popd
