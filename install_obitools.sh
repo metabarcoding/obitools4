@@ -111,8 +111,8 @@ else
 fi
 
 (cp build/* "${INSTALL_DIR}/bin" 2> /dev/null) \
-   || (echo "Please enter your password for installing obitools in ${INSTALL_DIR}"
-        sudo cp build/* "${INSTALL_DIR}/bin")
+   || (echo "Please enter your password for installing obitools in ${INSTALL_DIR}" 
+       sudo cp build/* "${INSTALL_DIR}/bin")
 
 popd
 
