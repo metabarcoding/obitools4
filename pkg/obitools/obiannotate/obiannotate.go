@@ -18,14 +18,32 @@ func DeleteAttributesWorker(toBeDeleted []string) obiseq.SeqWorker {
 	return f
 }
 
-func ToBeKeptAttributesWorker(toBeKept map[string]bool) obiseq.SeqWorker {
+func ToBeKeptAttributesWorker(toBeKept []string) obiseq.SeqWorker {
+
+	d := make(map[string]bool, len(_keepOnly))
+
+	for _, v := range _keepOnly {
+		d[v] = true
+	}
 
 	f := func(s *obiseq.BioSequence) *obiseq.BioSequence {
 		annot := s.Annotations()
 		for key := range annot {
-			if _, ok := toBeKept[key]; !ok {
+			if _, ok := d[key]; !ok {
 				s.DeleteAttribute(key)
 			}
+		}
+		return s
+	}
+
+	return f
+}
+
+func ClearAllAttributesWorker() obiseq.SeqWorker {
+	f := func(s *obiseq.BioSequence) *obiseq.BioSequence {
+		annot := s.Annotations()
+		for key := range annot {
+			s.DeleteAttribute(key)
 		}
 		return s
 	}
@@ -69,8 +87,8 @@ func CLIAnnotationWorker() obiseq.SeqWorker {
 	var annotator obiseq.SeqWorker
 	annotator = nil
 
-	if CLIHasAttributeToBeRenamed() {
-		w := RenameAttributeWorker(CLIAttributeToBeRenamed())
+	if CLIHasClearAllFlag() {
+		w := ClearAllAttributesWorker()
 		annotator = annotator.ChainWorkers(w)
 	}
 
@@ -81,6 +99,11 @@ func CLIAnnotationWorker() obiseq.SeqWorker {
 
 	if CLIHasToBeKeptAttributes() {
 		w := ToBeKeptAttributesWorker(CLIToBeKeptAttributes())
+		annotator = annotator.ChainWorkers(w)
+	}
+
+	if CLIHasAttributeToBeRenamed() {
+		w := RenameAttributeWorker(CLIAttributeToBeRenamed())
 		annotator = annotator.ChainWorkers(w)
 	}
 
