@@ -1,11 +1,11 @@
 GOCMD=go
-GOBUILD=$(GOCMD) build
+GOBUILD=$(GOCMD) build # -compiler gccgo -gccgoflags -O3
 GOCLEAN=$(GOCMD) clean
 GOTEST=$(GOCMD) test
 GOGET=$(GOCMD) get
 
 BUILD_DIR=build
-OBITOOLS_PREFIX:=g
+OBITOOLS_PREFIX:=
 
 PACKAGES_SRC:= $(wildcard pkg/*/*.go pkg/*/*/*.go)
 PACKAGE_DIRS:=$(sort $(patsubst %/,%,$(dir $(PACKAGES_SRC))))
