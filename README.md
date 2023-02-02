@@ -22,7 +22,6 @@ Therefore, installing the new *OBITools* may hide or delete the old ones. If you
 available on your system, the installation script offers two options:
 
 
-Translated with www.DeepL.com/Translator (free version)
 >  -i, --install-dir       Directory where obitools are installed 
 >                          (as example use `/usr/local` not `/usr/local/bin`).
 > 
