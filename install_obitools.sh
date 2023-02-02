@@ -59,7 +59,7 @@ if [[ ! "$WORK_DIR" || ! -d "$WORK_DIR" ]]; then
   exit 1
 fi
 
-mkdir -p "${INSTALL_DIR}/bin" \
+mkdir -p "${INSTALL_DIR}/bin" 2> /dev/null \
   || (echo "Please enter your password for installing obitools in ${INSTALL_DIR}"
       sudo mkdir -p "${INSTALL_DIR}/bin")
 
@@ -110,7 +110,7 @@ else
   make OBITOOLS_PREFIX="${OBITOOLS_PREFIX}"
 fi
 
-cp build/* "${INSTALL_DIR}/bin" \
+cp build/* "${INSTALL_DIR}/bin" 2> /dev/null \
    || sudo cp build/* "${INSTALL_DIR}/bin"
 
 popd
