@@ -67,8 +67,6 @@ echo WORK_DIR=$WORK_DIR
 echo INSTALL_DIR=$INSTALL_DIR
 echo OBITOOLS_PREFIX=$OBITOOLS_PREFIX
 
-exit 0
-
 pushd $WORK_DIR
 
 OS=$(uname -a | awk '{print $1}')
