@@ -33,7 +33,7 @@ func (taxon *TaxNode) TaxonAtRank(rank string) *TaxNode {
 		}
 	}
 
-	if taxon == taxon.pparent {
+	if taxon == taxon.pparent  && taxon.rank != rank {
 		taxon = nil
 	}
 

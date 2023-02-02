@@ -112,12 +112,19 @@ func CLIHasToBeKeptAttributes() bool {
 }
 
 func CLIToBeKeptAttributes() map[string]bool {
-	d := make(map[string]bool,len(_keepOnly))
+	d := make(map[string]bool, len(_keepOnly))
 
-	for _,v := range _keepOnly {
-		d[v]=true
+	for _, v := range _keepOnly {
+		d[v] = true
 	}
 
 	return d
 }
 
+func CLIHasTaxonAtRank() bool {
+	return len(_taxonAtRank) > 0
+}
+
+func CLITaxonAtRank() []string {
+	return _taxonAtRank
+}
