@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.2.256">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>OBITools V4 - 1&nbsp; The OBITools</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1.6em;
+  vertical-align: middle;
+}
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="./tutorial.html" rel="next">
+<link href="./index.html" rel="prev">
+<script src="site_libs/quarto-html/quarto.js"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 20,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit"
+  }
+}</script>
+
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+</head>
+
+<body class="nav-sidebar floating">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+    <div class="container-fluid d-flex justify-content-between">
+      <h1 class="quarto-secondary-nav-title"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">The OBITools</span></h1>
+      <button type="button" class="quarto-btn-toggle btn" aria-label="Show secondary navigation">
+        <i class="bi bi-chevron-right"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="./">OBITools V4</a> 
+    </div>
+      </div>
+      <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+      </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">Preface</a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./intro.html" class="sidebar-item-text sidebar-link active"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">The OBITools</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorial.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">OBITools V4 Tutorial</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./commands.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">The <em>OBITools V4</em> commands</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./library.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">The GO <em>OBITools</em> library</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./annexes.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Annexes</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./references.html" class="sidebar-item-text sidebar-link">References</a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#aims-of-obitools" id="toc-aims-of-obitools" class="nav-link active" data-scroll-target="#aims-of-obitools"><span class="toc-section-number">1.1</span>  Aims of <em>OBITools</em></a></li>
+  <li><a href="#file-formats-usable-with-obitools" id="toc-file-formats-usable-with-obitools" class="nav-link" data-scroll-target="#file-formats-usable-with-obitools"><span class="toc-section-number">1.2</span>  File formats usable with <em>OBITools</em></a>
+  <ul class="collapse">
+  <li><a href="#the-sequence-files" id="toc-the-sequence-files" class="nav-link" data-scroll-target="#the-sequence-files"><span class="toc-section-number">1.2.1</span>  The sequence files</a></li>
+  <li><a href="#the-iupac-code" id="toc-the-iupac-code" class="nav-link" data-scroll-target="#the-iupac-code"><span class="toc-section-number">1.2.2</span>  The IUPAC Code</a></li>
+  <li><a href="#classical-fasta" id="toc-classical-fasta" class="nav-link" data-scroll-target="#classical-fasta"><span class="toc-section-number">1.2.3</span>  The <em>fasta</em> format</a></li>
+  <li><a href="#classical-fastq" id="toc-classical-fastq" class="nav-link" data-scroll-target="#classical-fastq"><span class="toc-section-number">1.2.4</span>  The <em>fastq</em> sequence format</a></li>
+  </ul></li>
+  <li><a href="#file-extension" id="toc-file-extension" class="nav-link" data-scroll-target="#file-extension"><span class="toc-section-number">1.3</span>  File extension</a></li>
+  <li><a href="#see-also" id="toc-see-also" class="nav-link" data-scroll-target="#see-also"><span class="toc-section-number">1.4</span>  See also</a></li>
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references"><span class="toc-section-number">1.5</span>  References</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title d-none d-lg-block"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">The OBITools</span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+</header>
+
+<section id="aims-of-obitools" class="level2" data-number="1.1">
+<h2 data-number="1.1" class="anchored" data-anchor-id="aims-of-obitools"><span class="header-section-number">1.1</span> Aims of <em>OBITools</em></h2>
+</section>
+<section id="file-formats-usable-with-obitools" class="level2" data-number="1.2">
+<h2 data-number="1.2" class="anchored" data-anchor-id="file-formats-usable-with-obitools"><span class="header-section-number">1.2</span> File formats usable with <em>OBITools</em></h2>
+<section id="the-sequence-files" class="level3" data-number="1.2.1">
+<h3 data-number="1.2.1" class="anchored" data-anchor-id="the-sequence-files"><span class="header-section-number">1.2.1</span> The sequence files</h3>
+<p>Sequences can be stored following various format. OBITools knows some of them. The central formats for sequence files manipulated by OBITools scripts are the <code>fasta</code> and fastq format. OBITools extends the both these formats by specifying a syntax to include in the definition line data qualifying the sequence. All file formats use the <code>IUPAC</code> code for encoding nucleotides.</p>
+</section>
+<section id="the-iupac-code" class="level3" data-number="1.2.2">
+<h3 data-number="1.2.2" class="anchored" data-anchor-id="the-iupac-code"><span class="header-section-number">1.2.2</span> The IUPAC Code</h3>
+<p>The International Union of Pure and Applied Chemistry (IUPAC_) defined the standard code for representing protein or DNA sequences.</p>
+<section id="DNA-IUPAC" class="level4" data-number="1.2.2.1">
+<h4 data-number="1.2.2.1" class="anchored" data-anchor-id="DNA-IUPAC"><span class="header-section-number">1.2.2.1</span> Nucleic IUPAC Code</h4>
+<table class="table">
+<thead>
+<tr class="header">
+<th><strong>Code</strong></th>
+<th><strong>Nucleotide</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>A</td>
+<td>Adenine</td>
+</tr>
+<tr class="even">
+<td>C</td>
+<td>Cytosine</td>
+</tr>
+<tr class="odd">
+<td>G</td>
+<td>Guanine</td>
+</tr>
+<tr class="even">
+<td>T</td>
+<td>Thymine</td>
+</tr>
+<tr class="odd">
+<td>U</td>
+<td>Uracil</td>
+</tr>
+<tr class="even">
+<td>R</td>
+<td>Purine (A or G)</td>
+</tr>
+<tr class="odd">
+<td>Y</td>
+<td>Pyrimidine (C, T, or U)</td>
+</tr>
+<tr class="even">
+<td>M</td>
+<td>C or A</td>
+</tr>
+<tr class="odd">
+<td>K</td>
+<td>T, U, or G</td>
+</tr>
+<tr class="even">
+<td>W</td>
+<td>T, U, or A</td>
+</tr>
+<tr class="odd">
+<td>S</td>
+<td>C or G</td>
+</tr>
+<tr class="even">
+<td>B</td>
+<td>C, T, U, or G (not A)</td>
+</tr>
+<tr class="odd">
+<td>D</td>
+<td>A, T, U, or G (not C)</td>
+</tr>
+<tr class="even">
+<td>H</td>
+<td>A, T, U, or C (not G)</td>
+</tr>
+<tr class="odd">
+<td>V</td>
+<td>A, C, or G (not T, not U)</td>
+</tr>
+<tr class="even">
+<td>N</td>
+<td>Any base (A, C, G, T, or U)</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="classical-fasta" class="level3" data-number="1.2.3">
+<h3 data-number="1.2.3" class="anchored" data-anchor-id="classical-fasta"><span class="header-section-number">1.2.3</span> The <em>fasta</em> format</h3>
+<p>The <strong>fasta format</strong> is certainly the most widely used sequence file format. This is certainly due to its great simplicity. It was originally created for the Lipman and Pearson <a href="http://www.ncbi.nlm.nih.gov/pubmed/3162770?dopt=Citation">FASTA program</a>. OBITools use in more of the classical :ref:<code>fasta</code> format an :ref:<code>extended version</code> of this format where structured data are included in the title line.</p>
+<p>In <em>fasta</em> format a sequence is represented by a title line beginning with a <strong><code>&gt;</code></strong> character and the sequences by itself following the :doc:<code>iupac</code> code. The sequence is usually split other severals lines of the same length (expect for the last one)</p>
+<pre><code>&gt;my_sequence this is my pretty sequence
+ACGTTGCAGTACGTTGCAGTACGTTGCAGTACGTTGCAGTACGTTGCAGTACGTTGCAGT
+GTGCTGACGTTGCAGTACGTTGCAGTACGTTGCAGTACGTTGCAGTACGTTGCAGTGTTT
+AACGACGTTGCAGTACGTTGCAGT</code></pre>
+<p>This is no special format for the title line excepting that this line should be unique. Usually the first word following the <strong>&gt;</strong> character is considered as the sequence identifier. The end of the title line corresponding to a description of the sequence. Several sequences can be concatenated in a same file. The description of the next sequence is just pasted at the end of the record of the previous one</p>
+<pre><code>&gt;sequence_A this is my first pretty sequence
+ACGTTGCAGTACGTTGCAGTACGTTGCAGTACGTTGCAGTACGTTGCAGTACGTTGCAGT
+GTGCTGACGTTGCAGTACGTTGCAGTACGTTGCAGTACGTTGCAGTACGTTGCAGTGTTT
+AACGACGTTGCAGTACGTTGCAGT
+&gt;sequence_B this is my second pretty sequence
+ACGTTGCAGTACGTTGCAGTACGTTGCAGTACGTTGCAGTACGTTGCAGTACGTTGCAGT
+GTGCTGACGTTGCAGTACGTTGCAGTACGTTGCAGTACGTTGCAGTACGTTGCAGTGTTT
+AACGACGTTGCAGTACGTTGCAGT
+&gt;sequence_C this is my third pretty sequence
+ACGTTGCAGTACGTTGCAGTACGTTGCAGTACGTTGCAGTACGTTGCAGTACGTTGCAGT
+GTGCTGACGTTGCAGTACGTTGCAGTACGTTGCAGTACGTTGCAGTACGTTGCAGTGTTT
+AACGACGTTGCAGTACGTTGCAGT</code></pre>
+</section>
+<section id="classical-fastq" class="level3" data-number="1.2.4">
+<h3 data-number="1.2.4" class="anchored" data-anchor-id="classical-fastq"><span class="header-section-number">1.2.4</span> The <em>fastq</em> sequence format<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a></h3>
+<p><strong>fastq format</strong> is a text-based format for storing both a biological sequence (usually nucleotide sequence) and its corresponding quality scores. Both the sequence letter and quality score are encoded with a single ASCII character for brevity. It was originally developed at the <code>Wellcome Trust Sanger Institute</code> to bundle a <a href="#classical-fasta">fasta</a> sequence and its quality data, but has recently become the <em>de facto</em> standard for storing the output of high throughput sequencing instruments such as the Illumina Genome Analyzer Illumina <span class="citation" data-cites="cock2010sanger">(<a href="references.html#ref-cock2010sanger" role="doc-biblioref">Cock et al. 2010</a>)</span> .</p>
+<p>A fastq file normally uses four lines per sequence.</p>
+<ul>
+<li>Line 1 begins with a ‘@’ character and is followed by a sequence identifier and an <em>optional</em> description (like a :ref:<code>fasta</code> title line).</li>
+<li>Line 2 is the raw sequence letters.</li>
+<li>Line 3 begins with a ‘+’ character and is <em>optionally</em> followed by the same sequence identifier (and any description) again.</li>
+<li>Line 4 encodes the quality values for the sequence in Line 2, and must contain the same number of symbols as letters in the sequence.</li>
+</ul>
+<p>A fastq file containing a single sequence might look like this:</p>
+<pre><code>@SEQ_ID
+GATTTGGGGTTCAAAGCAGTATCGATCAAATAGTAAATCCATTTGTTCAACTCACAGTTT
++
+!''*((((***+))%%%++)(%%%%).1***-+*''))**55CCF&gt;&gt;&gt;&gt;&gt;&gt;CCCCCCC65</code></pre>
+<p>The character ‘!’ represents the lowest quality while ‘~’ is the highest. Here are the quality value characters in left-to-right increasing order of quality (<code>ASCII</code>):</p>
+<pre><code>!"#$%&amp;'()*+,-./0123456789:;&lt;=&gt;?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~</code></pre>
+<p>The original Sanger FASTQ files also allowed the sequence and quality strings to be wrapped (split over multiple lines), but this is generally discouraged as it can make parsing complicated due to the unfortunate choice of “@” and “+” as markers (these characters can also occur in the quality string).</p>
+<section id="variations" class="level4" data-number="1.2.4.1">
+<h4 data-number="1.2.4.1" class="anchored" data-anchor-id="variations"><span class="header-section-number">1.2.4.1</span> Variations</h4>
+<section id="quality" class="level5" data-number="1.2.4.1.1">
+<h5 data-number="1.2.4.1.1" class="anchored" data-anchor-id="quality"><span class="header-section-number">1.2.4.1.1</span> Quality</h5>
+<p>A quality value <em>Q</em> is an integer mapping of <em>p</em> (i.e., the probability that the corresponding base call is incorrect). Two different equations have been in use. The first is the standard Sanger variant to assess reliability of a base call, otherwise known as Phred quality score:</p>
+<p><span class="math display">\[
+Q_\text{sanger} = -10 \, \log_{10} p
+\]</span></p>
+<p>The Solexa pipeline (i.e., the software delivered with the Illumina Genome Analyzer) earlier used a different mapping, encoding the odds <span class="math inline">\(\mathbf{p}/(1-\mathbf{p})\)</span> instead of the probability <span class="math inline">\(\mathbf{p}\)</span>:</p>
+<p><span class="math display">\[
+Q_\text{solexa-prior to v.1.3} = -10 \, \log_{10} \frac{p}{1-p}
+\]</span></p>
+<p>Although both mappings are asymptotically identical at higher quality values, they differ at lower quality levels (i.e., approximately <span class="math inline">\(\mathbf{p} &gt; 0.05\)</span>, or equivalently, <span class="math inline">\(\mathbf{Q} &lt; 13\)</span>).</p>
+<p>|Relationship between <em>Q</em> and <em>p</em> using the Sanger (red) and Solexa (black) equations (described above). The vertical dotted line indicates <span class="math inline">\(\mathbf{p}= 0.05\)</span>, or equivalently, <span class="math inline">\(Q = 13\)</span>.|</p>
+</section>
+</section>
+<section id="encoding" class="level4" data-number="1.2.4.2">
+<h4 data-number="1.2.4.2" class="anchored" data-anchor-id="encoding"><span class="header-section-number">1.2.4.2</span> Encoding</h4>
+<ul>
+<li>Sanger format can encode a Phred quality score from 0 to 93 using ASCII 33 to 126 (although in raw read data the Phred quality score rarely exceeds 60, higher scores are possible in assemblies or read maps).</li>
+<li>Solexa/Illumina 1.0 format can encode a Solexa/Illumina quality score from -5 to 62 using ASCII 59 to 126 (although in raw read data Solexa scores from -5 to 40 only are expected)</li>
+<li>Starting with Illumina 1.3 and before Illumina 1.8, the format encoded a Phred quality score from 0 to 62 using ASCII 64 to 126 (although in raw read data Phred scores from 0 to 40 only are expected).</li>
+<li>Starting in Illumina 1.5 and before Illumina 1.8, the Phred scores 0 to 2 have a slightly different meaning. The values 0 and 1 are no longer used and the value 2, encoded by ASCII 66 “B”.</li>
+</ul>
+<p>Sequencing Control Software, Version 2.6, Catalog # SY-960-2601, Part # 15009921 Rev.&nbsp;A, November 2009]&nbsp;<a href="[http://watson.nci.nih.gov/solexa/Using_SCSv2.6_15009921_A.pdf](http://watson.nci.nih.gov/solexa/Using_SCSv2.6_15009921_A.pdf){.uri}" class="uri">[http://watson.nci.nih.gov/solexa/Using_SCSv2.6_15009921_A.pdf\\](http://watson.nci.nih.gov/solexa/Using_SCSv2.6_15009921_A.pdf){.uri}</a> (page 30) states the following: <em>If a read ends with a segment of mostly low quality (Q15 or below), then all of the quality values in the segment are replaced with a value of 2 (encoded as the letter B in Illumina’s text-based encoding of quality scores)… This Q2 indicator does not predict a specific error rate, but rather indicates that a specific final portion of the read should not be used in further analyses.</em> Also, the quality score encoded as “B” letter may occur internally within reads at least as late as pipeline version 1.6, as shown in the following example:</p>
+<pre><code>@HWI-EAS209_0006_FC706VJ:5:58:5894:21141#ATCACG/1
+TTAATTGGTAAATAAATCTCCTAATAGCTTAGATNTTACCTTNNNNNNNNNNTAGTTTCTTGAGATTTGTTGGGGGAGACATTTTTGTGATTGCCTTGAT
++HWI-EAS209_0006_FC706VJ:5:58:5894:21141#ATCACG/1
+efcfffffcfeefffcffffffddf`feed]`]_Ba_^__[YBBBBBBBBBBRTT\]][]dddd`ddd^dddadd^BBBBBBBBBBBBBBBBBBBBBBBB</code></pre>
+<p>An alternative interpretation of this ASCII encoding has been proposed. Also, in Illumina runs using PhiX controls, the character ‘B’ was observed to represent an “unknown quality score”. The error rate of ‘B’ reads was roughly 3 phred scores lower the mean observed score of a given run.</p>
+<ul>
+<li>Starting in Illumina 1.8, the quality scores have basically returned to the use of the Sanger format (Phred+33).</li>
+</ul>
+</section>
+</section>
+</section>
+<section id="file-extension" class="level2" data-number="1.3">
+<h2 data-number="1.3" class="anchored" data-anchor-id="file-extension"><span class="header-section-number">1.3</span> File extension</h2>
+<p>There is no standard file extension for a FASTQ file, but .fq and .fastq, are commonly used.</p>
+</section>
+<section id="see-also" class="level2" data-number="1.4">
+<h2 data-number="1.4" class="anchored" data-anchor-id="see-also"><span class="header-section-number">1.4</span> See also</h2>
+<ul>
+<li>:ref:<code>fasta</code></li>
+</ul>
+</section>
+<section id="references" class="level2" data-number="1.5">
+<h2 data-number="1.5" class="anchored" data-anchor-id="references"><span class="header-section-number">1.5</span> References</h2>
+<p>.. [1] Cock et al (2009) The Sanger FASTQ file format for sequences with quality scores, and the Solexa/Illumina FASTQ variants. Nucleic Acids Research,</p>
+<p>.. [2] Illumina Quality Scores, Tobias Mann, Bioinformatics, San Diego, Illumina <code>1</code>__</p>
+<p>.. |Relationship between <em>Q</em> and <em>p</em> using the Sanger (red) and Solexa (black) equations (described above). The vertical dotted line indicates <em>p</em> = 0.05, or equivalently, <em>Q</em> Å 13.| image:: Probability metrics.png</p>
+<p>See <a href="http://en.wikipedia.org/wiki/FASTQ_format" class="uri">http://en.wikipedia.org/wiki/FASTQ_format</a></p>
+
+
+<div id="refs" class="references csl-bib-body hanging-indent" role="doc-bibliography" style="display: none">
+<div id="ref-cock2010sanger" class="csl-entry" role="doc-biblioentry">
+Cock, Peter JA, Christopher J Fields, Naohisa Goto, Michael L Heuer, and Peter M Rice. 2010. <span>“The Sanger FASTQ File Format for Sequences with Quality Scores, and the Solexa/Illumina FASTQ Variants.”</span> <em>Nucleic Acids Research</em> 38 (6): 1767–71.
+</div>
+</div>
+</section>
+<section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes">
+<hr>
+<ol>
+<li id="fn1"><p>This article uses material from the Wikipedia article <a href="http://en.wikipedia.org/wiki/FASTQ_format"><code>FASTQ format</code></a> which is released under the <code>Creative Commons Attribution-Share-Alike License 3.0</code><a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    target: function(trigger) {
+      return trigger.previousElementSibling;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="./index.html" class="pagination-link">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Preface</span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="./tutorial.html" class="pagination-link">
+        <span class="nav-page-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">OBITools V4 Tutorial</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+</body></html>
