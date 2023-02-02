@@ -60,7 +60,14 @@ if [[ ! "$WORK_DIR" || ! -d "$WORK_DIR" ]]; then
 fi
 
 mkdir -p "${INSTALL_DIR}/bin" \
-  || sudo mkdir -p "${INSTALL_DIR}/bin"
+  || (echo "Please enter your password for installing obitools in ${INSTALL_DIR}"
+      sudo mkdir -p "${INSTALL_DIR}/bin")
+
+if [[ ! "${INSTALL_DIR}/bin" || ! -d "${INSTALL_DIR}/bin" ]]; then
+  echo "Could not create ${INSTALL_DIR}/bin directory for installing obitools"
+  exit 1
+fi
+
 INSTALL_DIR="$(cd $INSTALL_DIR && pwd)"
 
 echo WORK_DIR=$WORK_DIR
@@ -101,14 +108,6 @@ if [[ -z "$OBITOOLS_PREFIX" ]] ; then
   make
 else
   make OBITOOLS_PREFIX="${OBITOOLS_PREFIX}"
-fi
-
-echo "Please enter your password for installing obitools"
-
-sudo mkdir -p "${INSTALL_DIR}/bin"
-if [[ ! "${INSTALL_DIR}/bin" || ! -d "${INSTALL_DIR}/bin" ]]; then
-  echo "Could not create ${INSTALL_DIR}/bin directory for installing obitools"
-  exit 1
 fi
 
 cp build/* "${INSTALL_DIR}/bin" \
