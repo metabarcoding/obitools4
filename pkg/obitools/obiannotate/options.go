@@ -128,3 +128,7 @@ func CLIHasTaxonAtRank() bool {
 func CLITaxonAtRank() []string {
 	return _taxonAtRank
 }
+
+func CLIHasSetLengthFlag() bool {
+	return _setSeqLength
+}

@@ -47,12 +47,22 @@ func RenameAttributeWorker(toBeRenamed map[string]string) obiseq.SeqWorker {
 func AddTaxonAtRankWorker(taxonomy *obitax.Taxonomy, ranks ...string) obiseq.SeqWorker {
 	f := func(s *obiseq.BioSequence) *obiseq.BioSequence {
 		for _, r := range ranks {
-			taxonomy.SetTaxonAtRank(s,r)
+			taxonomy.SetTaxonAtRank(s, r)
 		}
 		return s
 	}
 
 	return f
+}
+
+func AddSeqLengthWorker() obiseq.SeqWorker {
+	f := func(s *obiseq.BioSequence) *obiseq.BioSequence {
+		s.SetAttribute("seq_length", s.Len())
+		return s
+	}
+
+	return f
+
 }
 
 func CLIAnnotationWorker() obiseq.SeqWorker {
@@ -76,7 +86,12 @@ func CLIAnnotationWorker() obiseq.SeqWorker {
 
 	if CLIHasTaxonAtRank() {
 		taxo := obigrep.CLILoadSelectedTaxonomy()
-		w := AddTaxonAtRankWorker(taxo,CLITaxonAtRank()...)
+		w := AddTaxonAtRankWorker(taxo, CLITaxonAtRank()...)
+		annotator = annotator.ChainWorkers(w)
+	}
+
+	if CLIHasSetLengthFlag() {
+		w := AddSeqLengthWorker()
 		annotator = annotator.ChainWorkers(w)
 	}
 
