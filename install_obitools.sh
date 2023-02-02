@@ -1,21 +1,73 @@
 #!/bin/bash
 
+INSTALL_DIR="/usr/local"
+OBITOOLS_PREFIX=""
+# default values
 URL="https://go.dev/dl/"
 OBIURL4="https://git.metabarcoding.org/obitools/obitools4/obitools4/-/archive/master/obitools4-master.tar.gz"
-PREFIX="/usr/local"
+INSTALL_DIR="/usr/local"
+OBITOOLS_PREFIX=""
 
-# the directory of the script
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+# help message
+function display_help {
+  echo "Usage: $0 [OPTIONS]"
+  echo ""
+  echo "Options:"
+  echo "  -i, --install-dir       Directory where obitools are installed "
+  echo "                          (as example use /usr/local not /usr/local/bin)."
+  echo "  -p, --obitools-prefix   Prefix added to the obitools command names if you"
+  echo "                          want to have several versions of obitools at the"
+  echo "                          same time on your system (as example -p g will produce "
+  echo "                          gobigrep command instead of obigrep)."
+  echo "  -h, --help              Display this help message."
+}
+
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    -i|--install-dir)
+      INSTALL_DIR="$2"
+      shift 2
+      ;;
+    -p|--obitools-prefix)
+      OBITOOLS_PREFIX="$2"
+      shift 2
+      ;;
+    -h|--help)
+      display_help
+      exit 0
+      ;;
+    *)
+      echo "Error: Unsupported option $1"
+      exit 1
+      ;;
+  esac
+done
+
+# the directory from where the script is run
+DIR="$(pwd)"
 
 # the temp directory used, within $DIR
 # omit the -p parameter to create a temporal directory in the default location
-WORK_DIR=$(mktemp -d -t "$DIR" "obitools4.XXXXXX")
+# WORK_DIR=$(mktemp -d -p "$DIR"  "obitools4.XXXXXX" 2> /dev/null || \
+#            mktemp -d -t "$DIR"  "obitools4.XXXXXX")
+
+WORK_DIR=$(mktemp -d "obitools4.XXXXXX")
 
 # check if tmp dir was created
 if [[ ! "$WORK_DIR" || ! -d "$WORK_DIR" ]]; then
   echo "Could not create temp dir"
   exit 1
 fi
+
+mkdir -p "${INSTALL_DIR}/bin" \
+  || sudo mkdir -p "${INSTALL_DIR}/bin"
+INSTALL_DIR="$(cd $INSTALL_DIR && pwd)"
+
+echo WORK_DIR=$WORK_DIR
+echo INSTALL_DIR=$INSTALL_DIR
+echo OBITOOLS_PREFIX=$OBITOOLS_PREFIX
+
+exit 0
 
 pushd $WORK_DIR
 
@@ -45,18 +97,24 @@ export PATH="$(pwd)/go/bin:$PATH"
 curl "$OBIURL4" \
     | tar zxf - 
 
-cd obitools-master
-make
+cd obitools4-master
+
+if [[ -z "$OBITOOLS_PREFIX" ]] ; then
+  make
+else
+  make OBITOOLS_PREFIX="${OBITOOLS_PREFIX}"
+fi
 
 echo "Please enter your password for installing obitools"
 
-sudo mkdir -p "${PREFIX}/bin"
-if [[ ! "${PREFIX}/bin" || ! -d "${PREFIX}/bin" ]]; then
-  echo "Could not create ${PREFIX}/bin directory for installing obitools"
+sudo mkdir -p "${INSTALL_DIR}/bin"
+if [[ ! "${INSTALL_DIR}/bin" || ! -d "${INSTALL_DIR}/bin" ]]; then
+  echo "Could not create ${INSTALL_DIR}/bin directory for installing obitools"
   exit 1
 fi
 
-sudo cp build/* "${PREFIX}/bin"
+cp build/* "${INSTALL_DIR}/bin" \
+   || sudo cp build/* "${INSTALL_DIR}/bin"
 
 popd
 
