@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>OBITools V4 - 2&nbsp; OBITools V4 Tutorial</title>
+<title>OBITools V4 - 3&nbsp; OBITools V4 Tutorial</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -113,7 +113,7 @@ div.csl-indent {
 <script src="site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="./">
 <link href="./commands.html" rel="next">
-<link href="./intro.html" rel="prev">
+<link href="./formats.html" rel="prev">
 <script src="site_libs/quarto-html/quarto.js"></script>
 <script src="site_libs/quarto-html/popper.min.js"></script>
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
@@ -153,7 +153,7 @@ div.csl-indent {
   <header id="quarto-header" class="headroom fixed-top">
   <nav class="quarto-secondary-nav" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
     <div class="container-fluid d-flex justify-content-between">
-      <h1 class="quarto-secondary-nav-title"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">OBITools V4 Tutorial</span></h1>
+      <h1 class="quarto-secondary-nav-title"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">OBITools V4 Tutorial</span></h1>
       <button type="button" class="quarto-btn-toggle btn" aria-label="Show secondary navigation">
         <i class="bi bi-chevron-right"></i>
       </button>
@@ -188,22 +188,27 @@ div.csl-indent {
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./tutorial.html" class="sidebar-item-text sidebar-link active"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">OBITools V4 Tutorial</span></a>
+  <a href="./formats.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">File formats usable with <em>OBITools</em></span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./commands.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">The <em>OBITools V4</em> commands</span></a>
+  <a href="./tutorial.html" class="sidebar-item-text sidebar-link active"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">OBITools V4 Tutorial</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./library.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">The GO <em>OBITools</em> library</span></a>
+  <a href="./commands.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">The <em>OBITools V4</em> commands</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./annexes.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Annexes</span></a>
+  <a href="./library.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">The GO <em>OBITools</em> library</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./annexes.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Annexes</span></a>
   </div>
 </li>
         <li class="sidebar-item">
@@ -220,18 +225,18 @@ div.csl-indent {
     <h2 id="toc-title">Table of contents</h2>
    
   <ul>
-  <li><a href="#wolves-diet-based-on-dna-metabarcoding" id="toc-wolves-diet-based-on-dna-metabarcoding" class="nav-link active" data-scroll-target="#wolves-diet-based-on-dna-metabarcoding"><span class="toc-section-number">2.1</span>  Wolves’ diet based on DNA metabarcoding</a></li>
-  <li><a href="#step-by-step-analysis" id="toc-step-by-step-analysis" class="nav-link" data-scroll-target="#step-by-step-analysis"><span class="toc-section-number">2.2</span>  Step by step analysis</a>
+  <li><a href="#wolves-diet-based-on-dna-metabarcoding" id="toc-wolves-diet-based-on-dna-metabarcoding" class="nav-link active" data-scroll-target="#wolves-diet-based-on-dna-metabarcoding"><span class="toc-section-number">3.1</span>  Wolves’ diet based on DNA metabarcoding</a></li>
+  <li><a href="#step-by-step-analysis" id="toc-step-by-step-analysis" class="nav-link" data-scroll-target="#step-by-step-analysis"><span class="toc-section-number">3.2</span>  Step by step analysis</a>
   <ul class="collapse">
-  <li><a href="#recover-full-sequence-reads-from-forward-and-reverse-partial-reads" id="toc-recover-full-sequence-reads-from-forward-and-reverse-partial-reads" class="nav-link" data-scroll-target="#recover-full-sequence-reads-from-forward-and-reverse-partial-reads"><span class="toc-section-number">2.2.1</span>  Recover full sequence reads from forward and reverse partial reads</a></li>
-  <li><a href="#remove-unaligned-sequence-records" id="toc-remove-unaligned-sequence-records" class="nav-link" data-scroll-target="#remove-unaligned-sequence-records"><span class="toc-section-number">2.2.2</span>  Remove unaligned sequence records</a></li>
-  <li><a href="#assign-each-sequence-record-to-the-corresponding-samplemarker-combination" id="toc-assign-each-sequence-record-to-the-corresponding-samplemarker-combination" class="nav-link" data-scroll-target="#assign-each-sequence-record-to-the-corresponding-samplemarker-combination"><span class="toc-section-number">2.2.3</span>  Assign each sequence record to the corresponding sample/marker combination</a></li>
-  <li><a href="#dereplicate-reads-into-uniq-sequences" id="toc-dereplicate-reads-into-uniq-sequences" class="nav-link" data-scroll-target="#dereplicate-reads-into-uniq-sequences"><span class="toc-section-number">2.2.4</span>  Dereplicate reads into uniq sequences</a></li>
-  <li><a href="#denoise-the-sequence-dataset" id="toc-denoise-the-sequence-dataset" class="nav-link" data-scroll-target="#denoise-the-sequence-dataset"><span class="toc-section-number">2.2.5</span>  Denoise the sequence dataset</a></li>
-  <li><a href="#taxonomic-assignment-of-sequences" id="toc-taxonomic-assignment-of-sequences" class="nav-link" data-scroll-target="#taxonomic-assignment-of-sequences"><span class="toc-section-number">2.2.6</span>  Taxonomic assignment of sequences</a></li>
-  <li><a href="#assign-each-sequence-to-a-taxon" id="toc-assign-each-sequence-to-a-taxon" class="nav-link" data-scroll-target="#assign-each-sequence-to-a-taxon"><span class="toc-section-number">2.2.7</span>  Assign each sequence to a taxon</a></li>
-  <li><a href="#generate-the-final-result-table" id="toc-generate-the-final-result-table" class="nav-link" data-scroll-target="#generate-the-final-result-table"><span class="toc-section-number">2.2.8</span>  Generate the final result table</a></li>
-  <li><a href="#looking-at-the-data-in-r" id="toc-looking-at-the-data-in-r" class="nav-link" data-scroll-target="#looking-at-the-data-in-r"><span class="toc-section-number">2.2.9</span>  Looking at the data in R</a></li>
+  <li><a href="#recover-full-sequence-reads-from-forward-and-reverse-partial-reads" id="toc-recover-full-sequence-reads-from-forward-and-reverse-partial-reads" class="nav-link" data-scroll-target="#recover-full-sequence-reads-from-forward-and-reverse-partial-reads"><span class="toc-section-number">3.2.1</span>  Recover full sequence reads from forward and reverse partial reads</a></li>
+  <li><a href="#remove-unaligned-sequence-records" id="toc-remove-unaligned-sequence-records" class="nav-link" data-scroll-target="#remove-unaligned-sequence-records"><span class="toc-section-number">3.2.2</span>  Remove unaligned sequence records</a></li>
+  <li><a href="#assign-each-sequence-record-to-the-corresponding-samplemarker-combination" id="toc-assign-each-sequence-record-to-the-corresponding-samplemarker-combination" class="nav-link" data-scroll-target="#assign-each-sequence-record-to-the-corresponding-samplemarker-combination"><span class="toc-section-number">3.2.3</span>  Assign each sequence record to the corresponding sample/marker combination</a></li>
+  <li><a href="#dereplicate-reads-into-uniq-sequences" id="toc-dereplicate-reads-into-uniq-sequences" class="nav-link" data-scroll-target="#dereplicate-reads-into-uniq-sequences"><span class="toc-section-number">3.2.4</span>  Dereplicate reads into uniq sequences</a></li>
+  <li><a href="#denoise-the-sequence-dataset" id="toc-denoise-the-sequence-dataset" class="nav-link" data-scroll-target="#denoise-the-sequence-dataset"><span class="toc-section-number">3.2.5</span>  Denoise the sequence dataset</a></li>
+  <li><a href="#taxonomic-assignment-of-sequences" id="toc-taxonomic-assignment-of-sequences" class="nav-link" data-scroll-target="#taxonomic-assignment-of-sequences"><span class="toc-section-number">3.2.6</span>  Taxonomic assignment of sequences</a></li>
+  <li><a href="#assign-each-sequence-to-a-taxon" id="toc-assign-each-sequence-to-a-taxon" class="nav-link" data-scroll-target="#assign-each-sequence-to-a-taxon"><span class="toc-section-number">3.2.7</span>  Assign each sequence to a taxon</a></li>
+  <li><a href="#generate-the-final-result-table" id="toc-generate-the-final-result-table" class="nav-link" data-scroll-target="#generate-the-final-result-table"><span class="toc-section-number">3.2.8</span>  Generate the final result table</a></li>
+  <li><a href="#looking-at-the-data-in-r" id="toc-looking-at-the-data-in-r" class="nav-link" data-scroll-target="#looking-at-the-data-in-r"><span class="toc-section-number">3.2.9</span>  Looking at the data in R</a></li>
   </ul></li>
   </ul>
 </nav>
@@ -241,7 +246,7 @@ div.csl-indent {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title d-none d-lg-block"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">OBITools V4 Tutorial</span></h1>
+<h1 class="title d-none d-lg-block"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">OBITools V4 Tutorial</span></h1>
 </div>
 
 
@@ -261,8 +266,8 @@ div.csl-indent {
 <li>the OBITools</li>
 <li>some basic Unix commands</li>
 </ul>
-<section id="wolves-diet-based-on-dna-metabarcoding" class="level2" data-number="2.1">
-<h2 data-number="2.1" class="anchored" data-anchor-id="wolves-diet-based-on-dna-metabarcoding"><span class="header-section-number">2.1</span> Wolves’ diet based on DNA metabarcoding</h2>
+<section id="wolves-diet-based-on-dna-metabarcoding" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="wolves-diet-based-on-dna-metabarcoding"><span class="header-section-number">3.1</span> Wolves’ diet based on DNA metabarcoding</h2>
 <p>The data used in this tutorial correspond to the analysis of four wolf scats, using the protocol published in <span class="citation" data-cites="Shehzad2012-pn">Shehzad et al. (<a href="references.html#ref-Shehzad2012-pn" role="doc-biblioref">2012</a>)</span> for assessing carnivore diet. After extracting DNA from the faeces, the DNA amplifications were carried out using the primers <code>TTAGATACCCCACTATGC</code> and <code>TAGAACAGGCTCCTCTAG</code> amplifiying the <em>12S-V5</em> region <span class="citation" data-cites="Riaz2011-gn">(<a href="references.html#ref-Riaz2011-gn" role="doc-biblioref">Riaz et al. 2011</a>)</span>, together with a wolf blocking oligonucleotide.</p>
 <p>The complete data set can be downloaded here: <a href="wolf_diet.tgz">the tutorial dataset</a></p>
 <p>Once the data file is downloaded, using a UNIX terminal unarchive the data from the <code>tgz</code> file.</p>
@@ -293,10 +298,10 @@ div.csl-indent {
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> results</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
-<section id="step-by-step-analysis" class="level2" data-number="2.2">
-<h2 data-number="2.2" class="anchored" data-anchor-id="step-by-step-analysis"><span class="header-section-number">2.2</span> Step by step analysis</h2>
-<section id="recover-full-sequence-reads-from-forward-and-reverse-partial-reads" class="level3" data-number="2.2.1">
-<h3 data-number="2.2.1" class="anchored" data-anchor-id="recover-full-sequence-reads-from-forward-and-reverse-partial-reads"><span class="header-section-number">2.2.1</span> Recover full sequence reads from forward and reverse partial reads</h3>
+<section id="step-by-step-analysis" class="level2" data-number="3.2">
+<h2 data-number="3.2" class="anchored" data-anchor-id="step-by-step-analysis"><span class="header-section-number">3.2</span> Step by step analysis</h2>
+<section id="recover-full-sequence-reads-from-forward-and-reverse-partial-reads" class="level3" data-number="3.2.1">
+<h3 data-number="3.2.1" class="anchored" data-anchor-id="recover-full-sequence-reads-from-forward-and-reverse-partial-reads"><span class="header-section-number">3.2.1</span> Recover full sequence reads from forward and reverse partial reads</h3>
 <p>When using the result of a paired-end sequencing assay with supposedly overlapping forward and reverse reads, the first step is to recover the assembled sequence.</p>
 <p>The forward and reverse reads of the same fragment are <em>at the same line position</em> in the two fastq files obtained after sequencing. Based on these two files, the assembly of the forward and reverse reads is done with the <code>obipairing</code> utility that aligns the two reads and returns the reconstructed sequence.</p>
 <p>In our case, the command is:</p>
@@ -309,8 +314,8 @@ div.csl-indent {
 </div>
 <p>The <code>--min-identity</code> and <code>--min-overlap</code> options allow discarding sequences with low alignment quality. If after the aligment, the overlaping parts of the reads is shorter than 10 base pairs or the similarity over this aligned region is below 80% of identity, in the output file, the forward and reverse reads are not aligned but concatenated, and the value of the <code>mode</code> attribute in the sequence header is set to <code>joined</code> instead of <code>alignment</code>.</p>
 </section>
-<section id="remove-unaligned-sequence-records" class="level3" data-number="2.2.2">
-<h3 data-number="2.2.2" class="anchored" data-anchor-id="remove-unaligned-sequence-records"><span class="header-section-number">2.2.2</span> Remove unaligned sequence records</h3>
+<section id="remove-unaligned-sequence-records" class="level3" data-number="3.2.2">
+<h3 data-number="3.2.2" class="anchored" data-anchor-id="remove-unaligned-sequence-records"><span class="header-section-number">3.2.2</span> Remove unaligned sequence records</h3>
 <p>Unaligned sequences (:py<code class="interpreted-text" role="mod">mode=joined</code>) cannot be used. The following command allows removing them from the dataset:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">obigrep</span> <span class="at">-p</span> <span class="st">'annotations.mode != "join"'</span> <span class="dt">\</span></span>
@@ -327,8 +332,8 @@ ccgcctcctttagataccccactatgcttagccctaaacacaagtaattaatataacaaaattgttcgccagagtactac
 +
 CCCCCCCBCCCCCCCCCCCCCCCCCCCCCCBCCCCCBCCCCCCC&lt;CcCccbe[`F`accXV&lt;TA\RYU\\ee_e[XZ[XEEEEEEEEEE?EEEEEEEEEEDEEEEEEECCCCCCCCCCCCCCCCCCCCCCCACCCCCACCCCCCCCCCCCCCCC</code></pre>
 </section>
-<section id="assign-each-sequence-record-to-the-corresponding-samplemarker-combination" class="level3" data-number="2.2.3">
-<h3 data-number="2.2.3" class="anchored" data-anchor-id="assign-each-sequence-record-to-the-corresponding-samplemarker-combination"><span class="header-section-number">2.2.3</span> Assign each sequence record to the corresponding sample/marker combination</h3>
+<section id="assign-each-sequence-record-to-the-corresponding-samplemarker-combination" class="level3" data-number="3.2.3">
+<h3 data-number="3.2.3" class="anchored" data-anchor-id="assign-each-sequence-record-to-the-corresponding-samplemarker-combination"><span class="header-section-number">3.2.3</span> Assign each sequence record to the corresponding sample/marker combination</h3>
 <p>Each sequence record is assigned to its corresponding sample and marker using the data provided in a text file (here <code>wolf_diet_ngsfilter.txt</code>). This text file contains one line per sample, with the name of the experiment (several experiments can be included in the same file), the name of the tags (for example: <code>aattaac</code> if the same tag has been used on each extremity of the PCR products, or <code>aattaac:gaagtag</code> if the tags were different), the sequence of the forward primer, the sequence of the reverse primer, the letter <code>T</code> or <code>F</code> for sample identification using the forward primer and tag only or using both primers and both tags, respectively (see <code>obimultiplex</code> for details).</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="ex">obimultiplex</span> <span class="at">-t</span> wolf_data/wolf_diet_ngsfilter.txt <span class="dt">\</span></span>
@@ -348,8 +353,8 @@ ttagccctaaacacaagtaattaatataacaaaattgttcgccagagtactaccggcaatagcttaaaactcaaaggact
 +
 CCCBCCCCCBCCCCCCC&lt;CcCccbe[`F`accXV&lt;TA\RYU\\ee_e[XZ[XEEEEEEEEEE?EEEEEEEEEEDEEEEEEECCCCCCCCCCCCCCCCCCC</code></pre>
 </section>
-<section id="dereplicate-reads-into-uniq-sequences" class="level3" data-number="2.2.4">
-<h3 data-number="2.2.4" class="anchored" data-anchor-id="dereplicate-reads-into-uniq-sequences"><span class="header-section-number">2.2.4</span> Dereplicate reads into uniq sequences</h3>
+<section id="dereplicate-reads-into-uniq-sequences" class="level3" data-number="3.2.4">
+<h3 data-number="3.2.4" class="anchored" data-anchor-id="dereplicate-reads-into-uniq-sequences"><span class="header-section-number">3.2.4</span> Dereplicate reads into uniq sequences</h3>
 <p>The same DNA molecule can be sequenced several times. In order to reduce both file size and computations time, and to get easier interpretable results, it is convenient to work with unique <em>sequences</em> instead of <em>reads</em>. To <em>dereplicate</em> such <em>reads</em> into unique <em>sequences</em>, we use the <code>obiuniq</code> command.</p>
 <table class="table">
 <colgroup>
@@ -408,8 +413,8 @@ gcctgaaactcaaaggacttggcggtgctttacatccct
 ttagccctaaacacaagtaattaatataacaaaattattcgccagagtactaccggcaat
 agcttaaaactcaaaggactcggcggtgctttataccctt</code></pre>
 </section>
-<section id="denoise-the-sequence-dataset" class="level3" data-number="2.2.5">
-<h3 data-number="2.2.5" class="anchored" data-anchor-id="denoise-the-sequence-dataset"><span class="header-section-number">2.2.5</span> Denoise the sequence dataset</h3>
+<section id="denoise-the-sequence-dataset" class="level3" data-number="3.2.5">
+<h3 data-number="3.2.5" class="anchored" data-anchor-id="denoise-the-sequence-dataset"><span class="header-section-number">3.2.5</span> Denoise the sequence dataset</h3>
 <p>To have a set of sequences assigned to their corresponding samples does not mean that all sequences are <em>biologically</em> meaningful i.e.&nbsp;some of these sequences can contains PCR and/or sequencing errors, or chimeras.</p>
 <section id="tag-the-sequences-for-pcr-errors-sequence-variants" class="level4 unnumbered">
 <h4 class="unnumbered anchored" data-anchor-id="tag-the-sequences-for-pcr-errors-sequence-variants">Tag the sequences for PCR errors (sequence variants)</h4>
@@ -431,7 +436,7 @@ agcccaaaactcaaaggacttggcggtgcttcacaccctt</code></pre>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb15"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="ex">obicount</span> results/wolf.ali.assigned.simple.clean.fasta</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>time="2023-02-02T23:07:30+01:00" level=info msg="Appending results/wolf.ali.assigned.simple.clean.fasta file\n"
+<pre><code>time="2023-02-03T11:50:36+01:00" level=info msg="Appending results/wolf.ali.assigned.simple.clean.fasta file\n"
  2749 36409 273387</code></pre>
 </div>
 </div>
@@ -440,10 +445,10 @@ agcccaaaactcaaaggacttggcggtgcttcacaccctt</code></pre>
 <div class="sourceCode cell-code" id="cb17"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="ex">obigrep</span> <span class="at">-p</span> <span class="st">'sequence.Count() == 1'</span> results/wolf.ali.assigned.simple.clean.fasta <span class="dt">\</span></span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">|</span> <span class="ex">obicount</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>time="2023-02-02T23:07:30+01:00" level=info msg="Reading sequences from stdin in guessed\n"
-time="2023-02-02T23:07:30+01:00" level=info msg="Appending results/wolf.ali.assigned.simple.clean.fasta file\n"
-time="2023-02-02T23:07:30+01:00" level=info msg="On output use JSON headers"
- 2309 2309 229912</code></pre>
+<pre><code>time="2023-02-03T11:50:36+01:00" level=info msg="Reading sequences from stdin in guessed\n"
+time="2023-02-03T11:50:36+01:00" level=info msg="Appending results/wolf.ali.assigned.simple.clean.fasta file\n"
+time="2023-02-03T11:50:36+01:00" level=info msg="On output use JSON headers"
+ 2229 2229 221982</code></pre>
 </div>
 </div>
 <p>In that dataset sigletons corresponds to <span class="math inline">\(3511\)</span> variants.</p>
@@ -491,14 +496,14 @@ agcttaaaactcaaaggacttggcggtgctttataccctt</code></pre>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb23"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="ex">obicount</span> results/wolf.ali.assigned.simple.clean.c10.l80.fasta</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>time="2023-02-02T23:07:31+01:00" level=info msg="Appending results/wolf.ali.assigned.simple.clean.c10.l80.fasta file\n"
+<pre><code>time="2023-02-03T11:50:38+01:00" level=info msg="Appending results/wolf.ali.assigned.simple.clean.c10.l80.fasta file\n"
  26 31337 2585</code></pre>
 </div>
 </div>
 </section>
 </section>
-<section id="taxonomic-assignment-of-sequences" class="level3" data-number="2.2.6">
-<h3 data-number="2.2.6" class="anchored" data-anchor-id="taxonomic-assignment-of-sequences"><span class="header-section-number">2.2.6</span> Taxonomic assignment of sequences</h3>
+<section id="taxonomic-assignment-of-sequences" class="level3" data-number="3.2.6">
+<h3 data-number="3.2.6" class="anchored" data-anchor-id="taxonomic-assignment-of-sequences"><span class="header-section-number">3.2.6</span> Taxonomic assignment of sequences</h3>
 <p>Once denoising has been done, the next step in diet analysis is to assign the barcodes to the corresponding species in order to get the complete list of species associated to each sample.</p>
 <p>Taxonomic assignment of sequences requires a reference database compiling all possible species to be identified in the sample. Assignment is then done based on sequence comparison between sample sequences and reference sequences.</p>
 <section id="download-the-taxonomy" class="level4 unnumbered">
@@ -582,8 +587,8 @@ agcttaaaactcaaaggacttggcggtgctttataccctt</code></pre>
 </section>
 </section>
 </section>
-<section id="assign-each-sequence-to-a-taxon" class="level3" data-number="2.2.7">
-<h3 data-number="2.2.7" class="anchored" data-anchor-id="assign-each-sequence-to-a-taxon"><span class="header-section-number">2.2.7</span> Assign each sequence to a taxon</h3>
+<section id="assign-each-sequence-to-a-taxon" class="level3" data-number="3.2.7">
+<h3 data-number="3.2.7" class="anchored" data-anchor-id="assign-each-sequence-to-a-taxon"><span class="header-section-number">3.2.7</span> Assign each sequence to a taxon</h3>
 <p>Once the reference database is built, taxonomic assignment can be carried out using the <code>obitag</code> command.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb30"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="ex">obitag</span> <span class="at">-t</span> TAXO <span class="at">-R</span> wolf_data/db_v05_r117.indexed.fasta <span class="dt">\</span></span>
@@ -602,8 +607,8 @@ agcttaaaactcaaaggacttggcggtgctttataccctt</code></pre>
 <span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a><span class="ex">ttagccctaaacataaacattcaataaacaagaatgttcgccagaggactactagcaata</span></span>
 <span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a><span class="ex">gcttaaaactcaaaggacttggcggtgctttatatccct</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
-<section id="generate-the-final-result-table" class="level3" data-number="2.2.8">
-<h3 data-number="2.2.8" class="anchored" data-anchor-id="generate-the-final-result-table"><span class="header-section-number">2.2.8</span> Generate the final result table</h3>
+<section id="generate-the-final-result-table" class="level3" data-number="3.2.8">
+<h3 data-number="3.2.8" class="anchored" data-anchor-id="generate-the-final-result-table"><span class="header-section-number">3.2.8</span> Generate the final result table</h3>
 <p>Some unuseful attributes can be removed at this stage.</p>
 <ul>
 <li>obiclean_head</li>
@@ -626,8 +631,8 @@ agcttaaaactcaaaggacttggcggtgctttataccctt</code></pre>
 ttagccctaaacataagctattccataacaaaataattcgccagagaactactagcaaca
 gattaaacctcaaaggacttggcagtgctttatacccct</code></pre>
 </section>
-<section id="looking-at-the-data-in-r" class="level3" data-number="2.2.9">
-<h3 data-number="2.2.9" class="anchored" data-anchor-id="looking-at-the-data-in-r"><span class="header-section-number">2.2.9</span> Looking at the data in R</h3>
+<section id="looking-at-the-data-in-r" class="level3" data-number="3.2.9">
+<h3 data-number="3.2.9" class="anchored" data-anchor-id="looking-at-the-data-in-r"><span class="header-section-number">3.2.9</span> Looking at the data in R</h3>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ROBIFastread)</span>
 <span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(vegan)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -652,19 +657,19 @@ gattaaacctcaaaggacttggcagtgctttatacccct</code></pre>
 <pre><code>4 x 26 sparse Matrix of class "dgCMatrix"</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>  [[ suppressing 26 column names 'HELIUM_000100422_612GNAAXX:7:30:17945:19531#0/1_sub[28..126]', 'HELIUM_000100422_612GNAAXX:7:94:16908:11285#0/1_sub[28..127]', 'HELIUM_000100422_612GNAAXX:7:100:4828:3492#0/1_sub[28..127]' ... ]]</code></pre>
+<pre><code>  [[ suppressing 26 column names 'HELIUM_000100422_612GNAAXX:7:5:15939:5437#0/1_sub[28..126]', 'HELIUM_000100422_612GNAAXX:7:100:4828:3492#0/1_sub[28..127]', 'HELIUM_000100422_612GNAAXX:7:113:17236:15166#0/1_sub[28..126]' ... ]]</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>                                                                            
-26a_F040644 43    .  .  .   . 88   . 52 208 15 31  .    . 14 481 72 17  .  .
-13a_F730603  . 8409 22  1   .  .   .  .   .  .  . 20    .  .  19  .  . 15  .
-29a_F260619  .    .  . 13 353  . 391  .   .  .  .  . 6275  .   1  .  .  . 44
-15a_F730814  .    .  .  .   .  .   .  .   .  .  .  . 9165  .   5  .  .  .  .
-                                   
-26a_F040644 12830  14  . . 18  .  .
-13a_F730603     .   .  . 9  .  . 25
-29a_F260619     . 110 16 .  . 25  .
-15a_F730814     .   .  . 4  .  .  .</code></pre>
+<pre><code>                                                                             
+26a_F040644 12787  . 72   .  .  . 31 . 208 18 14 88 15  14   . 52 481    .  .
+13a_F730603     . 22  .   .  .  .  . 9   .  .  .  .  .   .   .  .  19    .  .
+29a_F260619     .  .  . 353 25 16  . .   .  .  .  .  . 110 391  .   1 6246 44
+15a_F730814     .  .  .   .  .  .  . 4   .  .  .  .  .   .   .  .   5 9165  .
+                                  
+26a_F040644  .  . 17  .  .    . 43
+13a_F730603  1 25  . 15 20 8409  .
+29a_F260619 13  .  .  .  .    .  .
+15a_F730814  .  .  .  .  .    .  .</code></pre>
 </div>
 </div>
 <dl>
@@ -831,13 +836,13 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 </script>
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
-      <a href="./intro.html" class="pagination-link">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">The OBITools</span></span>
+      <a href="./formats.html" class="pagination-link">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">File formats usable with <em>OBITools</em></span></span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">
       <a href="./commands.html" class="pagination-link">
-        <span class="nav-page-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">The <em>OBITools V4</em> commands</span></span> <i class="bi bi-arrow-right-short"></i>
+        <span class="nav-page-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">The <em>OBITools V4</em> commands</span></span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>

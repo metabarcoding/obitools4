@@ -49,7 +49,7 @@ div.csl-indent {
 <script src="site_libs/quarto-search/fuse.min.js"></script>
 <script src="site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="./">
-<link href="./tutorial.html" rel="next">
+<link href="./formats.html" rel="next">
 <link href="./index.html" rel="prev">
 <script src="site_libs/quarto-html/quarto.js"></script>
 <script src="site_libs/quarto-html/popper.min.js"></script>
@@ -125,22 +125,27 @@ div.csl-indent {
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./tutorial.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">OBITools V4 Tutorial</span></a>
+  <a href="./formats.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">File formats usable with <em>OBITools</em></span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./commands.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">The <em>OBITools V4</em> commands</span></a>
+  <a href="./tutorial.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">OBITools V4 Tutorial</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./library.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">The GO <em>OBITools</em> library</span></a>
+  <a href="./commands.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">The <em>OBITools V4</em> commands</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./annexes.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Annexes</span></a>
+  <a href="./library.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">The GO <em>OBITools</em> library</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./annexes.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Annexes</span></a>
   </div>
 </li>
         <li class="sidebar-item">
@@ -158,16 +163,11 @@ div.csl-indent {
    
   <ul>
   <li><a href="#aims-of-obitools" id="toc-aims-of-obitools" class="nav-link active" data-scroll-target="#aims-of-obitools"><span class="toc-section-number">1.1</span>  Aims of <em>OBITools</em></a></li>
-  <li><a href="#file-formats-usable-with-obitools" id="toc-file-formats-usable-with-obitools" class="nav-link" data-scroll-target="#file-formats-usable-with-obitools"><span class="toc-section-number">1.2</span>  File formats usable with <em>OBITools</em></a>
+  <li><a href="#installation-of-the-obitools" id="toc-installation-of-the-obitools" class="nav-link" data-scroll-target="#installation-of-the-obitools"><span class="toc-section-number">1.2</span>  Installation of the obitools</a>
   <ul class="collapse">
-  <li><a href="#the-sequence-files" id="toc-the-sequence-files" class="nav-link" data-scroll-target="#the-sequence-files"><span class="toc-section-number">1.2.1</span>  The sequence files</a></li>
-  <li><a href="#the-iupac-code" id="toc-the-iupac-code" class="nav-link" data-scroll-target="#the-iupac-code"><span class="toc-section-number">1.2.2</span>  The IUPAC Code</a></li>
-  <li><a href="#classical-fasta" id="toc-classical-fasta" class="nav-link" data-scroll-target="#classical-fasta"><span class="toc-section-number">1.2.3</span>  The <em>fasta</em> format</a></li>
-  <li><a href="#classical-fastq" id="toc-classical-fastq" class="nav-link" data-scroll-target="#classical-fastq"><span class="toc-section-number">1.2.4</span>  The <em>fastq</em> sequence format</a></li>
+  <li><a href="#availability-of-the-obitools" id="toc-availability-of-the-obitools" class="nav-link" data-scroll-target="#availability-of-the-obitools"><span class="toc-section-number">1.2.1</span>  Availability of the OBITools</a></li>
+  <li><a href="#prerequisites" id="toc-prerequisites" class="nav-link" data-scroll-target="#prerequisites"><span class="toc-section-number">1.2.2</span>  Prerequisites</a></li>
   </ul></li>
-  <li><a href="#file-extension" id="toc-file-extension" class="nav-link" data-scroll-target="#file-extension"><span class="toc-section-number">1.3</span>  File extension</a></li>
-  <li><a href="#see-also" id="toc-see-also" class="nav-link" data-scroll-target="#see-also"><span class="toc-section-number">1.4</span>  See also</a></li>
-  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references"><span class="toc-section-number">1.5</span>  References</a></li>
   </ul>
 </nav>
     </div>
@@ -191,201 +191,73 @@ div.csl-indent {
 
 </header>
 
+<p>The <em>OBITools4</em> are programs specifically designed for analyzing NGS data in a DNA metabarcoding context, taking into account taxonomic information. It is distributed as an open source software available on the following website: http://metabarcoding.org/obitools4.</p>
 <section id="aims-of-obitools" class="level2" data-number="1.1">
 <h2 data-number="1.1" class="anchored" data-anchor-id="aims-of-obitools"><span class="header-section-number">1.1</span> Aims of <em>OBITools</em></h2>
+<p>DNA metabarcoding is an efficient approach for biodiversity studies <span class="citation" data-cites="Taberlet2012-pf">(<a href="references.html#ref-Taberlet2012-pf" role="doc-biblioref">Taberlet et al. 2012</a>)</span>. Originally mainly developed by microbiologists <span class="citation" data-cites="Sogin2006-ab">(<em>e.g.</em> <a href="references.html#ref-Sogin2006-ab" role="doc-biblioref">Sogin et al. 2006</a>)</span>, it is now widely used for plants <span class="citation" data-cites="Sonstebo2010-vv Yoccoz2012-ix Parducci2012-rn">(<em>e.g.</em> <a href="references.html#ref-Sonstebo2010-vv" role="doc-biblioref">Sønstebø et al. 2010</a>; <a href="references.html#ref-Yoccoz2012-ix" role="doc-biblioref">Yoccoz et al. 2012</a>; <a href="references.html#ref-Parducci2012-rn" role="doc-biblioref">Parducci et al. 2012</a>)</span> and animals from meiofauna <span class="citation" data-cites="Chariton2010-cz Baldwin2013-yc">(<em>e.g.</em> <a href="references.html#ref-Chariton2010-cz" role="doc-biblioref">Chariton et al. 2010</a>; <a href="references.html#ref-Baldwin2013-yc" role="doc-biblioref">Baldwin et al. 2013</a>)</span> to larger organisms <span class="citation" data-cites="Andersen2012-gj Thomsen2012-au">(<em>e.g.</em> <a href="references.html#ref-Andersen2012-gj" role="doc-biblioref">Andersen et al. 2012</a>; <a href="references.html#ref-Thomsen2012-au" role="doc-biblioref">Thomsen et al. 2012</a>)</span>. Interestingly, this method is not limited to <em>sensu stricto</em> biodiversity surveys, but it can also be implemented in other ecological contexts such as for herbivore <span class="citation" data-cites="Valentini2009-ay Kowalczyk2011-kg">(e.g. <a href="references.html#ref-Valentini2009-ay" role="doc-biblioref">Valentini et al. 2009</a>; <a href="references.html#ref-Kowalczyk2011-kg" role="doc-biblioref">Kowalczyk et al. 2011</a>)</span> or carnivore <span class="citation" data-cites="Deagle2009-yh Shehzad2012-pn">(e.g. <a href="references.html#ref-Deagle2009-yh" role="doc-biblioref">Deagle, Kirkwood, and Jarman 2009</a>; <a href="references.html#ref-Shehzad2012-pn" role="doc-biblioref">Shehzad et al. 2012</a>)</span> diet analyses.</p>
+<p>Whatever the biological question under consideration, the DNA metabarcoding methodology relies heavily on next-generation sequencing (NGS), and generates considerable numbers of DNA sequence reads (typically million of reads). Manipulation of such large datasets requires dedicated programs usually running on a Unix system. Unix is an operating system, whose first version was created during the sixties. Since its early stages, it is dedicated to scientific computing and includes a large set of simple tools to efficiently process text files. Most of those programs can be viewed as filters extracting information from a text file to create a new text file. These programs process text files as streams, line per line, therefore allowing computation on a huge dataset without requiring a large memory. Unix programs usually print their results to their standard output (<em>stdout</em>), which by default is the terminal, so the results can be examined on screen. The main philosophy of the Unix environment is to allow easy redirection of the <em>stdout</em> either to a file, for saving the results, or to the standard input (<em>stdin</em>) of a second program thus allowing to easily create complex processing from simple base commands. Access to Unix computers is increasingly easier for scientists nowadays. Indeed, the Linux operating system, an open source version of Unix, can be freely installed on every PC machine and the MacOS operating system, running on Apple computers, is also a Unix system. The <em>OBITools</em> programs imitate Unix standard programs because they usually act as filters, reading their data from text files or the <em>stdin</em> and writing their results to the <em>stdout</em>. The main difference with classical Unix programs is that text files are not analyzed line per line but sequence record per sequence record (see below for a detailed description of a sequence record). Compared to packages for similar purposes like mothur <span class="citation" data-cites="Schloss2009-qy">(<a href="references.html#ref-Schloss2009-qy" role="doc-biblioref">Schloss et al. 2009</a>)</span> or QIIME <span class="citation" data-cites="Caporaso2010-ii">(<a href="references.html#ref-Caporaso2010-ii" role="doc-biblioref">Caporaso et al. 2010</a>)</span>, the <em>OBITools</em> mainly rely on filtering and sorting algorithms. This allows users to set up versatile data analysis pipelines (Figure 1), adjustable to the broad range of DNA metabarcoding applications. The innovation of the <em>OBITools</em> is their ability to take into account the taxonomic annotations, ultimately allowing sorting and filtering of sequence records based on the taxonomy.</p>
 </section>
-<section id="file-formats-usable-with-obitools" class="level2" data-number="1.2">
-<h2 data-number="1.2" class="anchored" data-anchor-id="file-formats-usable-with-obitools"><span class="header-section-number">1.2</span> File formats usable with <em>OBITools</em></h2>
-<section id="the-sequence-files" class="level3" data-number="1.2.1">
-<h3 data-number="1.2.1" class="anchored" data-anchor-id="the-sequence-files"><span class="header-section-number">1.2.1</span> The sequence files</h3>
-<p>Sequences can be stored following various format. OBITools knows some of them. The central formats for sequence files manipulated by OBITools scripts are the <code>fasta</code> and fastq format. OBITools extends the both these formats by specifying a syntax to include in the definition line data qualifying the sequence. All file formats use the <code>IUPAC</code> code for encoding nucleotides.</p>
+<section id="installation-of-the-obitools" class="level2" data-number="1.2">
+<h2 data-number="1.2" class="anchored" data-anchor-id="installation-of-the-obitools"><span class="header-section-number">1.2</span> Installation of the obitools</h2>
+<section id="availability-of-the-obitools" class="level3" data-number="1.2.1">
+<h3 data-number="1.2.1" class="anchored" data-anchor-id="availability-of-the-obitools"><span class="header-section-number">1.2.1</span> Availability of the OBITools</h3>
+<p>The <em>OBITools</em> are open source and protected by the <a href="http://www.cecill.info/licences/Licence_CeCILL_V2.1-en.html">CeCILL 2.1 license</a>.</p>
+<p>All the sources of the <a href="http://metabarcoding.org/obitools4"><em>OBITools4</em></a> can be downloaded from the metabarcoding git server (https://git.metabarcoding.org).</p>
 </section>
-<section id="the-iupac-code" class="level3" data-number="1.2.2">
-<h3 data-number="1.2.2" class="anchored" data-anchor-id="the-iupac-code"><span class="header-section-number">1.2.2</span> The IUPAC Code</h3>
-<p>The International Union of Pure and Applied Chemistry (IUPAC_) defined the standard code for representing protein or DNA sequences.</p>
-<section id="DNA-IUPAC" class="level4" data-number="1.2.2.1">
-<h4 data-number="1.2.2.1" class="anchored" data-anchor-id="DNA-IUPAC"><span class="header-section-number">1.2.2.1</span> Nucleic IUPAC Code</h4>
-<table class="table">
-<thead>
-<tr class="header">
-<th><strong>Code</strong></th>
-<th><strong>Nucleotide</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>A</td>
-<td>Adenine</td>
-</tr>
-<tr class="even">
-<td>C</td>
-<td>Cytosine</td>
-</tr>
-<tr class="odd">
-<td>G</td>
-<td>Guanine</td>
-</tr>
-<tr class="even">
-<td>T</td>
-<td>Thymine</td>
-</tr>
-<tr class="odd">
-<td>U</td>
-<td>Uracil</td>
-</tr>
-<tr class="even">
-<td>R</td>
-<td>Purine (A or G)</td>
-</tr>
-<tr class="odd">
-<td>Y</td>
-<td>Pyrimidine (C, T, or U)</td>
-</tr>
-<tr class="even">
-<td>M</td>
-<td>C or A</td>
-</tr>
-<tr class="odd">
-<td>K</td>
-<td>T, U, or G</td>
-</tr>
-<tr class="even">
-<td>W</td>
-<td>T, U, or A</td>
-</tr>
-<tr class="odd">
-<td>S</td>
-<td>C or G</td>
-</tr>
-<tr class="even">
-<td>B</td>
-<td>C, T, U, or G (not A)</td>
-</tr>
-<tr class="odd">
-<td>D</td>
-<td>A, T, U, or G (not C)</td>
-</tr>
-<tr class="even">
-<td>H</td>
-<td>A, T, U, or C (not G)</td>
-</tr>
-<tr class="odd">
-<td>V</td>
-<td>A, C, or G (not T, not U)</td>
-</tr>
-<tr class="even">
-<td>N</td>
-<td>Any base (A, C, G, T, or U)</td>
-</tr>
-</tbody>
-</table>
-</section>
-</section>
-<section id="classical-fasta" class="level3" data-number="1.2.3">
-<h3 data-number="1.2.3" class="anchored" data-anchor-id="classical-fasta"><span class="header-section-number">1.2.3</span> The <em>fasta</em> format</h3>
-<p>The <strong>fasta format</strong> is certainly the most widely used sequence file format. This is certainly due to its great simplicity. It was originally created for the Lipman and Pearson <a href="http://www.ncbi.nlm.nih.gov/pubmed/3162770?dopt=Citation">FASTA program</a>. OBITools use in more of the classical :ref:<code>fasta</code> format an :ref:<code>extended version</code> of this format where structured data are included in the title line.</p>
-<p>In <em>fasta</em> format a sequence is represented by a title line beginning with a <strong><code>&gt;</code></strong> character and the sequences by itself following the :doc:<code>iupac</code> code. The sequence is usually split other severals lines of the same length (expect for the last one)</p>
-<pre><code>&gt;my_sequence this is my pretty sequence
-ACGTTGCAGTACGTTGCAGTACGTTGCAGTACGTTGCAGTACGTTGCAGTACGTTGCAGT
-GTGCTGACGTTGCAGTACGTTGCAGTACGTTGCAGTACGTTGCAGTACGTTGCAGTGTTT
-AACGACGTTGCAGTACGTTGCAGT</code></pre>
-<p>This is no special format for the title line excepting that this line should be unique. Usually the first word following the <strong>&gt;</strong> character is considered as the sequence identifier. The end of the title line corresponding to a description of the sequence. Several sequences can be concatenated in a same file. The description of the next sequence is just pasted at the end of the record of the previous one</p>
-<pre><code>&gt;sequence_A this is my first pretty sequence
-ACGTTGCAGTACGTTGCAGTACGTTGCAGTACGTTGCAGTACGTTGCAGTACGTTGCAGT
-GTGCTGACGTTGCAGTACGTTGCAGTACGTTGCAGTACGTTGCAGTACGTTGCAGTGTTT
-AACGACGTTGCAGTACGTTGCAGT
-&gt;sequence_B this is my second pretty sequence
-ACGTTGCAGTACGTTGCAGTACGTTGCAGTACGTTGCAGTACGTTGCAGTACGTTGCAGT
-GTGCTGACGTTGCAGTACGTTGCAGTACGTTGCAGTACGTTGCAGTACGTTGCAGTGTTT
-AACGACGTTGCAGTACGTTGCAGT
-&gt;sequence_C this is my third pretty sequence
-ACGTTGCAGTACGTTGCAGTACGTTGCAGTACGTTGCAGTACGTTGCAGTACGTTGCAGT
-GTGCTGACGTTGCAGTACGTTGCAGTACGTTGCAGTACGTTGCAGTACGTTGCAGTGTTT
-AACGACGTTGCAGTACGTTGCAGT</code></pre>
-</section>
-<section id="classical-fastq" class="level3" data-number="1.2.4">
-<h3 data-number="1.2.4" class="anchored" data-anchor-id="classical-fastq"><span class="header-section-number">1.2.4</span> The <em>fastq</em> sequence format<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a></h3>
-<p><strong>fastq format</strong> is a text-based format for storing both a biological sequence (usually nucleotide sequence) and its corresponding quality scores. Both the sequence letter and quality score are encoded with a single ASCII character for brevity. It was originally developed at the <code>Wellcome Trust Sanger Institute</code> to bundle a <a href="#classical-fasta">fasta</a> sequence and its quality data, but has recently become the <em>de facto</em> standard for storing the output of high throughput sequencing instruments such as the Illumina Genome Analyzer Illumina <span class="citation" data-cites="cock2010sanger">(<a href="references.html#ref-cock2010sanger" role="doc-biblioref">Cock et al. 2010</a>)</span> .</p>
-<p>A fastq file normally uses four lines per sequence.</p>
-<ul>
-<li>Line 1 begins with a ‘@’ character and is followed by a sequence identifier and an <em>optional</em> description (like a :ref:<code>fasta</code> title line).</li>
-<li>Line 2 is the raw sequence letters.</li>
-<li>Line 3 begins with a ‘+’ character and is <em>optionally</em> followed by the same sequence identifier (and any description) again.</li>
-<li>Line 4 encodes the quality values for the sequence in Line 2, and must contain the same number of symbols as letters in the sequence.</li>
-</ul>
-<p>A fastq file containing a single sequence might look like this:</p>
-<pre><code>@SEQ_ID
-GATTTGGGGTTCAAAGCAGTATCGATCAAATAGTAAATCCATTTGTTCAACTCACAGTTT
-+
-!''*((((***+))%%%++)(%%%%).1***-+*''))**55CCF&gt;&gt;&gt;&gt;&gt;&gt;CCCCCCC65</code></pre>
-<p>The character ‘!’ represents the lowest quality while ‘~’ is the highest. Here are the quality value characters in left-to-right increasing order of quality (<code>ASCII</code>):</p>
-<pre><code>!"#$%&amp;'()*+,-./0123456789:;&lt;=&gt;?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~</code></pre>
-<p>The original Sanger FASTQ files also allowed the sequence and quality strings to be wrapped (split over multiple lines), but this is generally discouraged as it can make parsing complicated due to the unfortunate choice of “@” and “+” as markers (these characters can also occur in the quality string).</p>
-<section id="variations" class="level4" data-number="1.2.4.1">
-<h4 data-number="1.2.4.1" class="anchored" data-anchor-id="variations"><span class="header-section-number">1.2.4.1</span> Variations</h4>
-<section id="quality" class="level5" data-number="1.2.4.1.1">
-<h5 data-number="1.2.4.1.1" class="anchored" data-anchor-id="quality"><span class="header-section-number">1.2.4.1.1</span> Quality</h5>
-<p>A quality value <em>Q</em> is an integer mapping of <em>p</em> (i.e., the probability that the corresponding base call is incorrect). Two different equations have been in use. The first is the standard Sanger variant to assess reliability of a base call, otherwise known as Phred quality score:</p>
-<p><span class="math display">\[
-Q_\text{sanger} = -10 \, \log_{10} p
-\]</span></p>
-<p>The Solexa pipeline (i.e., the software delivered with the Illumina Genome Analyzer) earlier used a different mapping, encoding the odds <span class="math inline">\(\mathbf{p}/(1-\mathbf{p})\)</span> instead of the probability <span class="math inline">\(\mathbf{p}\)</span>:</p>
-<p><span class="math display">\[
-Q_\text{solexa-prior to v.1.3} = -10 \, \log_{10} \frac{p}{1-p}
-\]</span></p>
-<p>Although both mappings are asymptotically identical at higher quality values, they differ at lower quality levels (i.e., approximately <span class="math inline">\(\mathbf{p} &gt; 0.05\)</span>, or equivalently, <span class="math inline">\(\mathbf{Q} &lt; 13\)</span>).</p>
-<p>|Relationship between <em>Q</em> and <em>p</em> using the Sanger (red) and Solexa (black) equations (described above). The vertical dotted line indicates <span class="math inline">\(\mathbf{p}= 0.05\)</span>, or equivalently, <span class="math inline">\(Q = 13\)</span>.|</p>
-</section>
-</section>
-<section id="encoding" class="level4" data-number="1.2.4.2">
-<h4 data-number="1.2.4.2" class="anchored" data-anchor-id="encoding"><span class="header-section-number">1.2.4.2</span> Encoding</h4>
-<ul>
-<li>Sanger format can encode a Phred quality score from 0 to 93 using ASCII 33 to 126 (although in raw read data the Phred quality score rarely exceeds 60, higher scores are possible in assemblies or read maps).</li>
-<li>Solexa/Illumina 1.0 format can encode a Solexa/Illumina quality score from -5 to 62 using ASCII 59 to 126 (although in raw read data Solexa scores from -5 to 40 only are expected)</li>
-<li>Starting with Illumina 1.3 and before Illumina 1.8, the format encoded a Phred quality score from 0 to 62 using ASCII 64 to 126 (although in raw read data Phred scores from 0 to 40 only are expected).</li>
-<li>Starting in Illumina 1.5 and before Illumina 1.8, the Phred scores 0 to 2 have a slightly different meaning. The values 0 and 1 are no longer used and the value 2, encoded by ASCII 66 “B”.</li>
-</ul>
-<p>Sequencing Control Software, Version 2.6, Catalog # SY-960-2601, Part # 15009921 Rev.&nbsp;A, November 2009]&nbsp;<a href="[http://watson.nci.nih.gov/solexa/Using_SCSv2.6_15009921_A.pdf](http://watson.nci.nih.gov/solexa/Using_SCSv2.6_15009921_A.pdf){.uri}" class="uri">[http://watson.nci.nih.gov/solexa/Using_SCSv2.6_15009921_A.pdf\\](http://watson.nci.nih.gov/solexa/Using_SCSv2.6_15009921_A.pdf){.uri}</a> (page 30) states the following: <em>If a read ends with a segment of mostly low quality (Q15 or below), then all of the quality values in the segment are replaced with a value of 2 (encoded as the letter B in Illumina’s text-based encoding of quality scores)… This Q2 indicator does not predict a specific error rate, but rather indicates that a specific final portion of the read should not be used in further analyses.</em> Also, the quality score encoded as “B” letter may occur internally within reads at least as late as pipeline version 1.6, as shown in the following example:</p>
-<pre><code>@HWI-EAS209_0006_FC706VJ:5:58:5894:21141#ATCACG/1
-TTAATTGGTAAATAAATCTCCTAATAGCTTAGATNTTACCTTNNNNNNNNNNTAGTTTCTTGAGATTTGTTGGGGGAGACATTTTTGTGATTGCCTTGAT
-+HWI-EAS209_0006_FC706VJ:5:58:5894:21141#ATCACG/1
-efcfffffcfeefffcffffffddf`feed]`]_Ba_^__[YBBBBBBBBBBRTT\]][]dddd`ddd^dddadd^BBBBBBBBBBBBBBBBBBBBBBBB</code></pre>
-<p>An alternative interpretation of this ASCII encoding has been proposed. Also, in Illumina runs using PhiX controls, the character ‘B’ was observed to represent an “unknown quality score”. The error rate of ‘B’ reads was roughly 3 phred scores lower the mean observed score of a given run.</p>
-<ul>
-<li>Starting in Illumina 1.8, the quality scores have basically returned to the use of the Sanger format (Phred+33).</li>
-</ul>
-</section>
-</section>
-</section>
-<section id="file-extension" class="level2" data-number="1.3">
-<h2 data-number="1.3" class="anchored" data-anchor-id="file-extension"><span class="header-section-number">1.3</span> File extension</h2>
-<p>There is no standard file extension for a FASTQ file, but .fq and .fastq, are commonly used.</p>
-</section>
-<section id="see-also" class="level2" data-number="1.4">
-<h2 data-number="1.4" class="anchored" data-anchor-id="see-also"><span class="header-section-number">1.4</span> See also</h2>
-<ul>
-<li>:ref:<code>fasta</code></li>
-</ul>
-</section>
-<section id="references" class="level2" data-number="1.5">
-<h2 data-number="1.5" class="anchored" data-anchor-id="references"><span class="header-section-number">1.5</span> References</h2>
-<p>.. [1] Cock et al (2009) The Sanger FASTQ file format for sequences with quality scores, and the Solexa/Illumina FASTQ variants. Nucleic Acids Research,</p>
-<p>.. [2] Illumina Quality Scores, Tobias Mann, Bioinformatics, San Diego, Illumina <code>1</code>__</p>
-<p>.. |Relationship between <em>Q</em> and <em>p</em> using the Sanger (red) and Solexa (black) equations (described above). The vertical dotted line indicates <em>p</em> = 0.05, or equivalently, <em>Q</em> Å 13.| image:: Probability metrics.png</p>
-<p>See <a href="http://en.wikipedia.org/wiki/FASTQ_format" class="uri">http://en.wikipedia.org/wiki/FASTQ_format</a></p>
+<section id="prerequisites" class="level3" data-number="1.2.2">
+<h3 data-number="1.2.2" class="anchored" data-anchor-id="prerequisites"><span class="header-section-number">1.2.2</span> Prerequisites</h3>
+<p>The <em>OBITools4</em> are developped using the <a href="https://go.dev/">GO programming language</a>, we stick to the latest version of the language, today the <span class="math inline">\(1.19.5\)</span>. If you want to download and compile the sources yourself, you first need to install the corresponding compiler on your system. Some parts of the soft are also written in C, therefore a recent C compiler is also requested, GCC on Linux or Windows, the Developer Tools on Mac.</p>
+<p>Whatever the installation you decide for, you will have to ensure that a C compiler is available on your system.</p>
 
 
 <div id="refs" class="references csl-bib-body hanging-indent" role="doc-bibliography" style="display: none">
-<div id="ref-cock2010sanger" class="csl-entry" role="doc-biblioentry">
-Cock, Peter JA, Christopher J Fields, Naohisa Goto, Michael L Heuer, and Peter M Rice. 2010. <span>“The Sanger FASTQ File Format for Sequences with Quality Scores, and the Solexa/Illumina FASTQ Variants.”</span> <em>Nucleic Acids Research</em> 38 (6): 1767–71.
+<div id="ref-Andersen2012-gj" class="csl-entry" role="doc-biblioentry">
+Andersen, Kenneth, Karen Lise Bird, Morten Rasmussen, James Haile, Henrik Breuning-Madsen, Kurt H Kjaer, Ludovic Orlando, M Thomas P Gilbert, and Eske Willerslev. 2012. <span>“<span class="nocase">Meta-barcoding of <span class="nocase">ë</span>dirt<span class="nocase">ı́</span>DNA from soil reflects vertebrate biodiversity</span>.”</span> <em>Molecular Ecology</em> 21 (8): 1966–79.
+</div>
+<div id="ref-Baldwin2013-yc" class="csl-entry" role="doc-biblioentry">
+Baldwin, Darren S, Matthew J Colloff, Gavin N Rees, Anthony A Chariton, Garth O Watson, Leon N Court, Diana M Hartley, et al. 2013. <span>“<span class="nocase">Impacts of inundation and drought on eukaryote biodiversity in semi-arid floodplain soils</span>.”</span> <em>Molecular Ecology</em> 22 (6): 1746–58. <a href="https://doi.org/10.1111/mec.12190">https://doi.org/10.1111/mec.12190</a>.
+</div>
+<div id="ref-Caporaso2010-ii" class="csl-entry" role="doc-biblioentry">
+Caporaso, J Gregory, Justin Kuczynski, Jesse Stombaugh, Kyle Bittinger, Frederic D Bushman, Elizabeth K Costello, Noah Fierer, et al. 2010. <span>“<span class="nocase">QIIME allows analysis of high-throughput community sequencing data</span>.”</span> <em>Nature Methods</em> 7 (5): 335–36. <a href="https://doi.org/10.1038/nmeth.f.303">https://doi.org/10.1038/nmeth.f.303</a>.
+</div>
+<div id="ref-Chariton2010-cz" class="csl-entry" role="doc-biblioentry">
+Chariton, Anthony A, Anthony C Roach, Stuart L Simpson, and Graeme E Batley. 2010. <span>“<span class="nocase">Influence of the choice of physical and chemistry variables on interpreting patterns of sediment contaminants and their relationships with estuarine macrobenthic communities</span>.”</span> <em>Marine and Freshwater Research</em>. <a href="https://doi.org/10.1071/mf09263">https://doi.org/10.1071/mf09263</a>.
+</div>
+<div id="ref-Deagle2009-yh" class="csl-entry" role="doc-biblioentry">
+Deagle, Bruce E, Roger Kirkwood, and Simon N Jarman. 2009. <span>“<span class="nocase">Analysis of Australian fur seal diet by pyrosequencing prey DNA in faeces</span>.”</span> <em>Molecular Ecology</em> 18 (9): 2022–38. <a href="https://doi.org/10.1111/j.1365-294X.2009.04158.x">https://doi.org/10.1111/j.1365-294X.2009.04158.x</a>.
+</div>
+<div id="ref-Kowalczyk2011-kg" class="csl-entry" role="doc-biblioentry">
+Kowalczyk, Rafał, Pierre Taberlet, Eric Coissac, Alice Valentini, Christian Miquel, Tomasz Kamiński, and Jan M Wójcik. 2011. <span>“<span class="nocase">Influence of management practices on large herbivore diet—Case of European bison in Bia<span class="nocase">ł</span>owie<span class="nocase">ż</span>a Primeval Forest (Poland)</span>.”</span> <em>Forest Ecology and Management</em> 261 (4): 821–28. <a href="https://doi.org/10.1016/j.foreco.2010.11.026">https://doi.org/10.1016/j.foreco.2010.11.026</a>.
+</div>
+<div id="ref-Parducci2012-rn" class="csl-entry" role="doc-biblioentry">
+Parducci, Laura, Tina Jørgensen, Mari Mette Tollefsrud, Ellen Elverland, Torbjørn Alm, Sonia L Fontana, K D Bennett, et al. 2012. <span>“<span class="nocase">Glacial survival of boreal trees in northern Scandinavia</span>.”</span> <em>Science</em> 335 (6072): 1083–86. <a href="https://doi.org/10.1126/science.1216043">https://doi.org/10.1126/science.1216043</a>.
+</div>
+<div id="ref-Schloss2009-qy" class="csl-entry" role="doc-biblioentry">
+Schloss, Patrick D, Sarah L Westcott, Thomas Ryabin, Justine R Hall, Martin Hartmann, Emily B Hollister, Ryan A Lesniewski, et al. 2009. <span>“<span class="nocase">Introducing mothur: open-source, platform-independent, community-supported software for describing and comparing microbial communities</span>.”</span> <em>Applied and Environmental Microbiology</em> 75 (23): 7537–41. <a href="https://doi.org/10.1128/AEM.01541-09">https://doi.org/10.1128/AEM.01541-09</a>.
+</div>
+<div id="ref-Shehzad2012-pn" class="csl-entry" role="doc-biblioentry">
+Shehzad, Wasim, Tiayyba Riaz, Muhammad A Nawaz, Christian Miquel, Carole Poillot, Safdar A Shah, Francois Pompanon, Eric Coissac, and Pierre Taberlet. 2012. <span>“<span class="nocase">Carnivore diet analysis based on next-generation sequencing: Application to the leopard cat (Prionailurus bengalensis) in Pakistan</span>.”</span> <em>Molecular Ecology</em> 21 (8): 1951–65. <a href="https://onlinelibrary.wiley.com/doi/abs/10.1111/j.1365-294X.2011.05424.x">https://onlinelibrary.wiley.com/doi/abs/10.1111/j.1365-294X.2011.05424.x</a>.
+</div>
+<div id="ref-Sogin2006-ab" class="csl-entry" role="doc-biblioentry">
+Sogin, Mitchell L, Hilary G Morrison, Julie A Huber, David Mark Welch, Susan M Huse, Phillip R Neal, Jesus M Arrieta, and Gerhard J Herndl. 2006. <span>“<span class="nocase">Microbial diversity in the deep sea and the underexplored "rare biosphere"</span>.”</span> <em>Proceedings of the National Academy of Sciences of the United States of America</em> 103 (32): 12115–20. <a href="https://doi.org/10.1073/pnas.0605127103">https://doi.org/10.1073/pnas.0605127103</a>.
+</div>
+<div id="ref-Sonstebo2010-vv" class="csl-entry" role="doc-biblioentry">
+Sønstebø, J H, L Gielly, A K Brysting, R Elven, M Edwards, J Haile, E Willerslev, et al. 2010. <span>“<span class="nocase">Using next-generation sequencing for molecular reconstruction of past Arctic vegetation and climate</span>.”</span> <em>Molecular Ecology Resources</em> 10 (6): 1009–18. <a href="https://doi.org/10.1111/j.1755-0998.2010.02855.x">https://doi.org/10.1111/j.1755-0998.2010.02855.x</a>.
+</div>
+<div id="ref-Taberlet2012-pf" class="csl-entry" role="doc-biblioentry">
+Taberlet, Pierre, Eric Coissac, Mehrdad Hajibabaei, and Loren H Rieseberg. 2012. <span>“<span>Environmental DNA</span>.”</span> <em>Molecular Ecology</em> 21 (8): 1789–93. <a href="https://doi.org/10.1111/j.1365-294X.2012.05542.x">https://doi.org/10.1111/j.1365-294X.2012.05542.x</a>.
+</div>
+<div id="ref-Thomsen2012-au" class="csl-entry" role="doc-biblioentry">
+Thomsen, Philip Francis, Jos Kielgast, Lars L Iversen, Carsten Wiuf, Morten Rasmussen, M Thomas P Gilbert, Ludovic Orlando, and Eske Willerslev. 2012. <span>“<span class="nocase">Monitoring endangered freshwater biodiversity using environmental DNA</span>.”</span> <em>Molecular Ecology</em> 21 (11): 2565–73. <a href="https://doi.org/10.1111/j.1365-294X.2011.05418.x">https://doi.org/10.1111/j.1365-294X.2011.05418.x</a>.
+</div>
+<div id="ref-Valentini2009-ay" class="csl-entry" role="doc-biblioentry">
+Valentini, Alice, Christian Miquel, Muhammad Ali Nawaz, Eva Bellemain, Eric Coissac, François Pompanon, Ludovic Gielly, et al. 2009. <span>“<span class="nocase">New perspectives in diet analysis based on DNA barcoding and parallel pyrosequencing: the trnL approach</span>.”</span> <em>Molecular Ecology Resources</em> 9 (1): 51–60. <a href="https://doi.org/10.1111/j.1755-0998.2008.02352.x">https://doi.org/10.1111/j.1755-0998.2008.02352.x</a>.
+</div>
+<div id="ref-Yoccoz2012-ix" class="csl-entry" role="doc-biblioentry">
+Yoccoz, N G, K A Bråthen, L Gielly, J Haile, M E Edwards, T Goslar, H Von Stedingk, et al. 2012. <span>“<span class="nocase">DNA from soil mirrors plant taxonomic and growth form diversity</span>.”</span> <em>Molecular Ecology</em> 21 (15): 3647–55. <a href="https://doi.org/10.1111/j.1365-294X.2012.05545.x">https://doi.org/10.1111/j.1365-294X.2012.05545.x</a>.
 </div>
 </div>
 </section>
-<section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes">
-<hr>
-<ol>
-<li id="fn1"><p>This article uses material from the Wikipedia article <a href="http://en.wikipedia.org/wiki/FASTQ_format"><code>FASTQ format</code></a> which is released under the <code>Creative Commons Attribution-Share-Alike License 3.0</code><a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-</ol>
 </section>
 
 </main> <!-- /main -->
@@ -529,8 +401,8 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
       </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="./tutorial.html" class="pagination-link">
-        <span class="nav-page-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">OBITools V4 Tutorial</span></span> <i class="bi bi-arrow-right-short"></i>
+      <a href="./formats.html" class="pagination-link">
+        <span class="nav-page-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">File formats usable with <em>OBITools</em></span></span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>

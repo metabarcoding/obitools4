@@ -10,6 +10,7 @@ book:
   chapters:
     - index.qmd
     - intro.qmd
+    - formats.qmd
     - tutorial.qmd
     - commands.qmd
     - library.qmd
@@ -26,6 +27,8 @@ format:
     theme: zephyr
   pdf:
     documentclass: scrreprt
+  epub: default
+
 
 
 

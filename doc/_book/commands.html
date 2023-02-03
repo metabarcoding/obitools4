@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>OBITools V4 - 3&nbsp; The OBITools V4 commands</title>
+<title>OBITools V4 - 4&nbsp; The OBITools V4 commands</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -90,7 +90,7 @@ div.csl-indent {
   <header id="quarto-header" class="headroom fixed-top">
   <nav class="quarto-secondary-nav" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
     <div class="container-fluid d-flex justify-content-between">
-      <h1 class="quarto-secondary-nav-title"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">The <em>OBITools V4</em> commands</span></h1>
+      <h1 class="quarto-secondary-nav-title"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">The <em>OBITools V4</em> commands</span></h1>
       <button type="button" class="quarto-btn-toggle btn" aria-label="Show secondary navigation">
         <i class="bi bi-chevron-right"></i>
       </button>
@@ -125,22 +125,27 @@ div.csl-indent {
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./tutorial.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">OBITools V4 Tutorial</span></a>
+  <a href="./formats.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">File formats usable with <em>OBITools</em></span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./commands.html" class="sidebar-item-text sidebar-link active"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">The <em>OBITools V4</em> commands</span></a>
+  <a href="./tutorial.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">OBITools V4 Tutorial</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./library.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">The GO <em>OBITools</em> library</span></a>
+  <a href="./commands.html" class="sidebar-item-text sidebar-link active"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">The <em>OBITools V4</em> commands</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./annexes.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Annexes</span></a>
+  <a href="./library.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">The GO <em>OBITools</em> library</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./annexes.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Annexes</span></a>
   </div>
 </li>
         <li class="sidebar-item">
@@ -157,29 +162,29 @@ div.csl-indent {
     <h2 id="toc-title">Table of contents</h2>
    
   <ul>
-  <li><a href="#specifying-the-input-files-to-obitools-commands" id="toc-specifying-the-input-files-to-obitools-commands" class="nav-link active" data-scroll-target="#specifying-the-input-files-to-obitools-commands"><span class="toc-section-number">3.1</span>  Specifying the input files to <em>OBITools</em> commands</a></li>
-  <li><a href="#options-common-to-most-of-the-obitools-commands" id="toc-options-common-to-most-of-the-obitools-commands" class="nav-link" data-scroll-target="#options-common-to-most-of-the-obitools-commands"><span class="toc-section-number">3.2</span>  Options common to most of the <em>OBITools</em> commands</a>
+  <li><a href="#specifying-the-input-files-to-obitools-commands" id="toc-specifying-the-input-files-to-obitools-commands" class="nav-link active" data-scroll-target="#specifying-the-input-files-to-obitools-commands"><span class="toc-section-number">4.1</span>  Specifying the input files to <em>OBITools</em> commands</a></li>
+  <li><a href="#options-common-to-most-of-the-obitools-commands" id="toc-options-common-to-most-of-the-obitools-commands" class="nav-link" data-scroll-target="#options-common-to-most-of-the-obitools-commands"><span class="toc-section-number">4.2</span>  Options common to most of the <em>OBITools</em> commands</a>
   <ul class="collapse">
-  <li><a href="#specifying-input-format" id="toc-specifying-input-format" class="nav-link" data-scroll-target="#specifying-input-format"><span class="toc-section-number">3.2.1</span>  Specifying input format</a></li>
-  <li><a href="#specifying-output-format" id="toc-specifying-output-format" class="nav-link" data-scroll-target="#specifying-output-format"><span class="toc-section-number">3.2.2</span>  Specifying output format</a></li>
-  <li><a href="#format-of-the-annotations-in-fasta-and-fastq-files" id="toc-format-of-the-annotations-in-fasta-and-fastq-files" class="nav-link" data-scroll-target="#format-of-the-annotations-in-fasta-and-fastq-files"><span class="toc-section-number">3.2.3</span>  Format of the annotations in Fasta and Fastq files</a></li>
+  <li><a href="#specifying-input-format" id="toc-specifying-input-format" class="nav-link" data-scroll-target="#specifying-input-format"><span class="toc-section-number">4.2.1</span>  Specifying input format</a></li>
+  <li><a href="#specifying-output-format" id="toc-specifying-output-format" class="nav-link" data-scroll-target="#specifying-output-format"><span class="toc-section-number">4.2.2</span>  Specifying output format</a></li>
+  <li><a href="#the-fasta-and-fastq-annotations-format" id="toc-the-fasta-and-fastq-annotations-format" class="nav-link" data-scroll-target="#the-fasta-and-fastq-annotations-format"><span class="toc-section-number">4.2.3</span>  The Fasta and Fastq annotations format</a></li>
   </ul></li>
-  <li><a href="#obitools-expression-language" id="toc-obitools-expression-language" class="nav-link" data-scroll-target="#obitools-expression-language"><span class="toc-section-number">3.3</span>  OBITools expression language</a>
+  <li><a href="#obitools-expression-language" id="toc-obitools-expression-language" class="nav-link" data-scroll-target="#obitools-expression-language"><span class="toc-section-number">4.3</span>  OBITools expression language</a>
   <ul class="collapse">
-  <li><a href="#variables-usable-in-the-expression" id="toc-variables-usable-in-the-expression" class="nav-link" data-scroll-target="#variables-usable-in-the-expression"><span class="toc-section-number">3.3.1</span>  Variables usable in the expression</a></li>
-  <li><a href="#function-defined-in-the-language" id="toc-function-defined-in-the-language" class="nav-link" data-scroll-target="#function-defined-in-the-language"><span class="toc-section-number">3.3.2</span>  Function defined in the language</a></li>
-  <li><a href="#accessing-to-the-sequence-annotations" id="toc-accessing-to-the-sequence-annotations" class="nav-link" data-scroll-target="#accessing-to-the-sequence-annotations"><span class="toc-section-number">3.3.3</span>  Accessing to the sequence annotations</a></li>
+  <li><a href="#variables-usable-in-the-expression" id="toc-variables-usable-in-the-expression" class="nav-link" data-scroll-target="#variables-usable-in-the-expression"><span class="toc-section-number">4.3.1</span>  Variables usable in the expression</a></li>
+  <li><a href="#function-defined-in-the-language" id="toc-function-defined-in-the-language" class="nav-link" data-scroll-target="#function-defined-in-the-language"><span class="toc-section-number">4.3.2</span>  Function defined in the language</a></li>
+  <li><a href="#accessing-to-the-sequence-annotations" id="toc-accessing-to-the-sequence-annotations" class="nav-link" data-scroll-target="#accessing-to-the-sequence-annotations"><span class="toc-section-number">4.3.3</span>  Accessing to the sequence annotations</a></li>
   </ul></li>
-  <li><a href="#metabarcode-design-and-quality-assessment" id="toc-metabarcode-design-and-quality-assessment" class="nav-link" data-scroll-target="#metabarcode-design-and-quality-assessment"><span class="toc-section-number">3.4</span>  Metabarcode design and quality assessment</a></li>
-  <li><a href="#file-format-conversions" id="toc-file-format-conversions" class="nav-link" data-scroll-target="#file-format-conversions"><span class="toc-section-number">3.5</span>  File format conversions</a></li>
-  <li><a href="#sequence-annotations" id="toc-sequence-annotations" class="nav-link" data-scroll-target="#sequence-annotations"><span class="toc-section-number">3.6</span>  Sequence annotations</a></li>
-  <li><a href="#computations-on-sequences" id="toc-computations-on-sequences" class="nav-link" data-scroll-target="#computations-on-sequences"><span class="toc-section-number">3.7</span>  Computations on sequences</a>
+  <li><a href="#metabarcode-design-and-quality-assessment" id="toc-metabarcode-design-and-quality-assessment" class="nav-link" data-scroll-target="#metabarcode-design-and-quality-assessment"><span class="toc-section-number">4.4</span>  Metabarcode design and quality assessment</a></li>
+  <li><a href="#file-format-conversions" id="toc-file-format-conversions" class="nav-link" data-scroll-target="#file-format-conversions"><span class="toc-section-number">4.5</span>  File format conversions</a></li>
+  <li><a href="#sequence-annotations" id="toc-sequence-annotations" class="nav-link" data-scroll-target="#sequence-annotations"><span class="toc-section-number">4.6</span>  Sequence annotations</a></li>
+  <li><a href="#computations-on-sequences" id="toc-computations-on-sequences" class="nav-link" data-scroll-target="#computations-on-sequences"><span class="toc-section-number">4.7</span>  Computations on sequences</a>
   <ul class="collapse">
-  <li><a href="#obipairing" id="toc-obipairing" class="nav-link" data-scroll-target="#obipairing"><span class="toc-section-number">3.7.1</span>  <code>obipairing</code></a></li>
+  <li><a href="#obipairing" id="toc-obipairing" class="nav-link" data-scroll-target="#obipairing"><span class="toc-section-number">4.7.1</span>  <code>obipairing</code></a></li>
   </ul></li>
-  <li><a href="#sequence-sampling-and-filtering" id="toc-sequence-sampling-and-filtering" class="nav-link" data-scroll-target="#sequence-sampling-and-filtering"><span class="toc-section-number">3.8</span>  Sequence sampling and filtering</a>
+  <li><a href="#sequence-sampling-and-filtering" id="toc-sequence-sampling-and-filtering" class="nav-link" data-scroll-target="#sequence-sampling-and-filtering"><span class="toc-section-number">4.8</span>  Sequence sampling and filtering</a>
   <ul class="collapse">
-  <li><a href="#utilities" id="toc-utilities" class="nav-link" data-scroll-target="#utilities"><span class="toc-section-number">3.8.1</span>  Utilities</a></li>
+  <li><a href="#utilities" id="toc-utilities" class="nav-link" data-scroll-target="#utilities"><span class="toc-section-number">4.8.1</span>  Utilities</a></li>
   </ul></li>
   </ul>
 </nav>
@@ -189,7 +194,7 @@ div.csl-indent {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title d-none d-lg-block"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">The <em>OBITools V4</em> commands</span></h1>
+<h1 class="title d-none d-lg-block"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">The <em>OBITools V4</em> commands</span></h1>
 </div>
 
 
@@ -204,26 +209,26 @@ div.csl-indent {
 
 </header>
 
-<section id="specifying-the-input-files-to-obitools-commands" class="level2" data-number="3.1">
-<h2 data-number="3.1" class="anchored" data-anchor-id="specifying-the-input-files-to-obitools-commands"><span class="header-section-number">3.1</span> Specifying the input files to <em>OBITools</em> commands</h2>
+<section id="specifying-the-input-files-to-obitools-commands" class="level2" data-number="4.1">
+<h2 data-number="4.1" class="anchored" data-anchor-id="specifying-the-input-files-to-obitools-commands"><span class="header-section-number">4.1</span> Specifying the input files to <em>OBITools</em> commands</h2>
 </section>
-<section id="options-common-to-most-of-the-obitools-commands" class="level2" data-number="3.2">
-<h2 data-number="3.2" class="anchored" data-anchor-id="options-common-to-most-of-the-obitools-commands"><span class="header-section-number">3.2</span> Options common to most of the <em>OBITools</em> commands</h2>
-<section id="specifying-input-format" class="level3" data-number="3.2.1">
-<h3 data-number="3.2.1" class="anchored" data-anchor-id="specifying-input-format"><span class="header-section-number">3.2.1</span> Specifying input format</h3>
-<p>Five sequence formats are accepted for input files. <a href="#fasta-classical" title="Fasta format description">Fasta</a> and <a href="#fastq-classical" title="Fastq format description">Fastq</a> are the main ones, EMBL and Genbank allow the use of flat files produced by these two international databases. The last one, ecoPCR, is maintained for compatibility with previous <em>OBITools</em> and allows to read <em>ecoPCR</em> outputs as sequence files.</p>
+<section id="options-common-to-most-of-the-obitools-commands" class="level2" data-number="4.2">
+<h2 data-number="4.2" class="anchored" data-anchor-id="options-common-to-most-of-the-obitools-commands"><span class="header-section-number">4.2</span> Options common to most of the <em>OBITools</em> commands</h2>
+<section id="specifying-input-format" class="level3" data-number="4.2.1">
+<h3 data-number="4.2.1" class="anchored" data-anchor-id="specifying-input-format"><span class="header-section-number">4.2.1</span> Specifying input format</h3>
+<p>Five sequence formats are accepted for input files. <em>Fasta</em> (<a href="formats.html#sec-fasta"><span>Section&nbsp;2.1.2</span></a>) and <em>Fastq</em> (<a href="formats.html#sec-fastq"><span>Section&nbsp;2.1.3</span></a>) are the main ones, EMBL and Genbank allow the use of flat files produced by these two international databases. The last one, ecoPCR, is maintained for compatibility with previous <em>OBITools</em> and allows to read <em>ecoPCR</em> outputs as sequence files.</p>
 <ul>
 <li><code>--ecopcr</code> : Read data following the <em>ecoPCR</em> output format.</li>
 <li><code>--embl</code> Read data following the <em>EMBL</em> flatfile format.</li>
 <li><code>--genbank</code> Read data following the <em>Genbank</em> flatfile format.</li>
 </ul>
-<p>Several encoding schemes have been proposed for quality scores in <a href="#fastq-classical" title="Fastq format description">Fastq</a> format. Currently, <em>OBITools</em> considers Sanger encoding as the standard. For reasons of compatibility with older datasets produced with <em>Solexa</em> sequencers, it is possible, by using the following option, to force the use of the corresponding quality encoding scheme when reading these older files.</p>
+<p>Several encoding schemes have been proposed for quality scores in <em>Fastq</em> format. Currently, <em>OBITools</em> considers Sanger encoding as the standard. For reasons of compatibility with older datasets produced with <em>Solexa</em> sequencers, it is possible, by using the following option, to force the use of the corresponding quality encoding scheme when reading these older files.</p>
 <ul>
 <li><code>--solexa</code> Decodes quality string according to the Solexa specification. (default: false)</li>
 </ul>
 </section>
-<section id="specifying-output-format" class="level3" data-number="3.2.2">
-<h3 data-number="3.2.2" class="anchored" data-anchor-id="specifying-output-format"><span class="header-section-number">3.2.2</span> Specifying output format</h3>
+<section id="specifying-output-format" class="level3" data-number="4.2.2">
+<h3 data-number="4.2.2" class="anchored" data-anchor-id="specifying-output-format"><span class="header-section-number">4.2.2</span> Specifying output format</h3>
 <p>Only two output sequence formats are supported by OBITools, Fasta and Fastq. Fastq is used when output sequences are associated with quality information. Otherwise, Fasta is the default format. However, it is possible to force the output format by using one of the following two options. Forcing the use of Fasta results in the loss of quality information. Conversely, when the Fastq format is forced with sequences that have no quality data, dummy qualities set to 40 for each nucleotide are added.</p>
 <ul>
 <li><code>--fasta-output</code> Read data following the ecoPCR output format.</li>
@@ -231,12 +236,12 @@ div.csl-indent {
 </ul>
 <p>OBITools allows multiple input files to be specified for a single command.</p>
 <ul>
-<li><code>--no-order</code> When several input files are provided, indicates that there is no order among them. (default: false)</li>
+<li><code>--no-order</code> When several input files are provided, indicates that there is no order among them. (default: false). Using such option can increase a lot the processing of the data.</li>
 </ul>
 </section>
-<section id="format-of-the-annotations-in-fasta-and-fastq-files" class="level3" data-number="3.2.3">
-<h3 data-number="3.2.3" class="anchored" data-anchor-id="format-of-the-annotations-in-fasta-and-fastq-files"><span class="header-section-number">3.2.3</span> Format of the annotations in Fasta and Fastq files</h3>
-<p>OBITools extend the <a href="#fasta-classical" title="Fasta format description">Fasta</a> and <a href="#fastq-classical" title="Fastq format description">Fastq</a> formats by introducing a format for the title lines of these formats allowing to annotate every sequence. While the previous version of OBITools used an <em>ad-hoc</em> format for these annotation, this new version introduce the usage of the standard JSON format to store them.</p>
+<section id="the-fasta-and-fastq-annotations-format" class="level3" data-number="4.2.3">
+<h3 data-number="4.2.3" class="anchored" data-anchor-id="the-fasta-and-fastq-annotations-format"><span class="header-section-number">4.2.3</span> The Fasta and Fastq annotations format</h3>
+<p>OBITools extend the <a href="#the-fasta-sequence-format">Fasta</a> and <a href="#the-fastq-sequence-format">Fastq</a> formats by introducing a format for the title lines of these formats allowing to annotate every sequence. While the previous version of OBITools used an <em>ad-hoc</em> format for these annotation, this new version introduce the usage of the standard JSON format to store them.</p>
 <p>On input, OBITools automatically recognize the format of the annotations, but two options allows to force the parsing following one of them. You should normally not need to use these options.</p>
 <ul>
 <li><p><code>--input-OBI-header</code> FASTA/FASTQ title line annotations follow OBI format. (default: false)</p></li>
@@ -247,8 +252,8 @@ div.csl-indent {
 <li><p><code>--output-OBI-header|-O</code> output FASTA/FASTQ title line annotations follow OBI format. (default: false)</p></li>
 <li><p><code>--output-json-header</code> output FASTA/FASTQ title line annotations follow json format. (default: false)</p></li>
 </ul>
-<section id="system-related-options" class="level4" data-number="3.2.3.1">
-<h4 data-number="3.2.3.1" class="anchored" data-anchor-id="system-related-options"><span class="header-section-number">3.2.3.1</span> System related options</h4>
+<section id="system-related-options" class="level4" data-number="4.2.3.1">
+<h4 data-number="4.2.3.1" class="anchored" data-anchor-id="system-related-options"><span class="header-section-number">4.2.3.1</span> System related options</h4>
 <ul>
 <li><code>--debug</code> (default: false)</li>
 <li><code>--help\|-h\|-?</code> (default: false)</li>
@@ -258,78 +263,78 @@ div.csl-indent {
 </section>
 </section>
 </section>
-<section id="obitools-expression-language" class="level2" data-number="3.3">
-<h2 data-number="3.3" class="anchored" data-anchor-id="obitools-expression-language"><span class="header-section-number">3.3</span> OBITools expression language</h2>
+<section id="obitools-expression-language" class="level2" data-number="4.3">
+<h2 data-number="4.3" class="anchored" data-anchor-id="obitools-expression-language"><span class="header-section-number">4.3</span> OBITools expression language</h2>
 <p>Several OBITools (<em>e.g.</em> obigrep, obiannotate) allow the user to specify some simple expressions to compute values or define predicates. This expressions are parsed and evaluated using the <a href="https://pkg.go.dev/github.com/PaesslerAG/gval" title="Gval (Go eVALuate) for evaluating arbitrary expressions Go-like expressions.">gval</a> go package, which allows for evaluating go-Like expression.</p>
-<section id="variables-usable-in-the-expression" class="level3" data-number="3.3.1">
-<h3 data-number="3.3.1" class="anchored" data-anchor-id="variables-usable-in-the-expression"><span class="header-section-number">3.3.1</span> Variables usable in the expression</h3>
-<section id="sequence" class="level4" data-number="3.3.1.1">
-<h4 data-number="3.3.1.1" class="anchored" data-anchor-id="sequence"><span class="header-section-number">3.3.1.1</span> sequence</h4>
+<section id="variables-usable-in-the-expression" class="level3" data-number="4.3.1">
+<h3 data-number="4.3.1" class="anchored" data-anchor-id="variables-usable-in-the-expression"><span class="header-section-number">4.3.1</span> Variables usable in the expression</h3>
+<section id="sequence" class="level4" data-number="4.3.1.1">
+<h4 data-number="4.3.1.1" class="anchored" data-anchor-id="sequence"><span class="header-section-number">4.3.1.1</span> sequence</h4>
 <p>sequence is the sequence object on which the expression is evaluated</p>
 </section>
-<section id="annotation" class="level4" data-number="3.3.1.2">
-<h4 data-number="3.3.1.2" class="anchored" data-anchor-id="annotation"><span class="header-section-number">3.3.1.2</span> annotation</h4>
+<section id="annotation" class="level4" data-number="4.3.1.2">
+<h4 data-number="4.3.1.2" class="anchored" data-anchor-id="annotation"><span class="header-section-number">4.3.1.2</span> annotation</h4>
 </section>
 </section>
-<section id="function-defined-in-the-language" class="level3" data-number="3.3.2">
-<h3 data-number="3.3.2" class="anchored" data-anchor-id="function-defined-in-the-language"><span class="header-section-number">3.3.2</span> Function defined in the language</h3>
-<section id="len" class="level4" data-number="3.3.2.1">
-<h4 data-number="3.3.2.1" class="anchored" data-anchor-id="len"><span class="header-section-number">3.3.2.1</span> len</h4>
+<section id="function-defined-in-the-language" class="level3" data-number="4.3.2">
+<h3 data-number="4.3.2" class="anchored" data-anchor-id="function-defined-in-the-language"><span class="header-section-number">4.3.2</span> Function defined in the language</h3>
+<section id="len" class="level4" data-number="4.3.2.1">
+<h4 data-number="4.3.2.1" class="anchored" data-anchor-id="len"><span class="header-section-number">4.3.2.1</span> len</h4>
 </section>
-<section id="ismap" class="level4" data-number="3.3.2.2">
-<h4 data-number="3.3.2.2" class="anchored" data-anchor-id="ismap"><span class="header-section-number">3.3.2.2</span> ismap</h4>
+<section id="ismap" class="level4" data-number="4.3.2.2">
+<h4 data-number="4.3.2.2" class="anchored" data-anchor-id="ismap"><span class="header-section-number">4.3.2.2</span> ismap</h4>
 </section>
-<section id="hasattribute" class="level4" data-number="3.3.2.3">
-<h4 data-number="3.3.2.3" class="anchored" data-anchor-id="hasattribute"><span class="header-section-number">3.3.2.3</span> hasattribute</h4>
+<section id="hasattribute" class="level4" data-number="4.3.2.3">
+<h4 data-number="4.3.2.3" class="anchored" data-anchor-id="hasattribute"><span class="header-section-number">4.3.2.3</span> hasattribute</h4>
 </section>
-<section id="min" class="level4" data-number="3.3.2.4">
-<h4 data-number="3.3.2.4" class="anchored" data-anchor-id="min"><span class="header-section-number">3.3.2.4</span> min</h4>
+<section id="min" class="level4" data-number="4.3.2.4">
+<h4 data-number="4.3.2.4" class="anchored" data-anchor-id="min"><span class="header-section-number">4.3.2.4</span> min</h4>
 </section>
-<section id="max" class="level4" data-number="3.3.2.5">
-<h4 data-number="3.3.2.5" class="anchored" data-anchor-id="max"><span class="header-section-number">3.3.2.5</span> max</h4>
-</section>
-</section>
-<section id="accessing-to-the-sequence-annotations" class="level3" data-number="3.3.3">
-<h3 data-number="3.3.3" class="anchored" data-anchor-id="accessing-to-the-sequence-annotations"><span class="header-section-number">3.3.3</span> Accessing to the sequence annotations</h3>
+<section id="max" class="level4" data-number="4.3.2.5">
+<h4 data-number="4.3.2.5" class="anchored" data-anchor-id="max"><span class="header-section-number">4.3.2.5</span> max</h4>
 </section>
 </section>
-<section id="metabarcode-design-and-quality-assessment" class="level2" data-number="3.4">
-<h2 data-number="3.4" class="anchored" data-anchor-id="metabarcode-design-and-quality-assessment"><span class="header-section-number">3.4</span> Metabarcode design and quality assessment</h2>
-<section id="obipcr" class="level4" data-number="3.4.0.1">
-<h4 data-number="3.4.0.1" class="anchored" data-anchor-id="obipcr"><span class="header-section-number">3.4.0.1</span> <code>obipcr</code></h4>
+<section id="accessing-to-the-sequence-annotations" class="level3" data-number="4.3.3">
+<h3 data-number="4.3.3" class="anchored" data-anchor-id="accessing-to-the-sequence-annotations"><span class="header-section-number">4.3.3</span> Accessing to the sequence annotations</h3>
+</section>
+</section>
+<section id="metabarcode-design-and-quality-assessment" class="level2" data-number="4.4">
+<h2 data-number="4.4" class="anchored" data-anchor-id="metabarcode-design-and-quality-assessment"><span class="header-section-number">4.4</span> Metabarcode design and quality assessment</h2>
+<section id="obipcr" class="level4" data-number="4.4.0.1">
+<h4 data-number="4.4.0.1" class="anchored" data-anchor-id="obipcr"><span class="header-section-number">4.4.0.1</span> <code>obipcr</code></h4>
 <blockquote class="blockquote">
 <p>Replace the <code>ecoPCR</code> original <em>OBITools</em></p>
 </blockquote>
 </section>
 </section>
-<section id="file-format-conversions" class="level2" data-number="3.5">
-<h2 data-number="3.5" class="anchored" data-anchor-id="file-format-conversions"><span class="header-section-number">3.5</span> File format conversions</h2>
-<section id="obiconvert" class="level4" data-number="3.5.0.1">
-<h4 data-number="3.5.0.1" class="anchored" data-anchor-id="obiconvert"><span class="header-section-number">3.5.0.1</span> <code>obiconvert</code></h4>
+<section id="file-format-conversions" class="level2" data-number="4.5">
+<h2 data-number="4.5" class="anchored" data-anchor-id="file-format-conversions"><span class="header-section-number">4.5</span> File format conversions</h2>
+<section id="obiconvert" class="level4" data-number="4.5.0.1">
+<h4 data-number="4.5.0.1" class="anchored" data-anchor-id="obiconvert"><span class="header-section-number">4.5.0.1</span> <code>obiconvert</code></h4>
 </section>
 </section>
-<section id="sequence-annotations" class="level2" data-number="3.6">
-<h2 data-number="3.6" class="anchored" data-anchor-id="sequence-annotations"><span class="header-section-number">3.6</span> Sequence annotations</h2>
-<section id="obitag" class="level4" data-number="3.6.0.1">
-<h4 data-number="3.6.0.1" class="anchored" data-anchor-id="obitag"><span class="header-section-number">3.6.0.1</span> <code>obitag</code></h4>
+<section id="sequence-annotations" class="level2" data-number="4.6">
+<h2 data-number="4.6" class="anchored" data-anchor-id="sequence-annotations"><span class="header-section-number">4.6</span> Sequence annotations</h2>
+<section id="obitag" class="level4" data-number="4.6.0.1">
+<h4 data-number="4.6.0.1" class="anchored" data-anchor-id="obitag"><span class="header-section-number">4.6.0.1</span> <code>obitag</code></h4>
 </section>
 </section>
-<section id="computations-on-sequences" class="level2" data-number="3.7">
-<h2 data-number="3.7" class="anchored" data-anchor-id="computations-on-sequences"><span class="header-section-number">3.7</span> Computations on sequences</h2>
-<section id="obipairing" class="level3" data-number="3.7.1">
-<h3 data-number="3.7.1" class="anchored" data-anchor-id="obipairing"><span class="header-section-number">3.7.1</span> <code>obipairing</code></h3>
+<section id="computations-on-sequences" class="level2" data-number="4.7">
+<h2 data-number="4.7" class="anchored" data-anchor-id="computations-on-sequences"><span class="header-section-number">4.7</span> Computations on sequences</h2>
+<section id="obipairing" class="level3" data-number="4.7.1">
+<h3 data-number="4.7.1" class="anchored" data-anchor-id="obipairing"><span class="header-section-number">4.7.1</span> <code>obipairing</code></h3>
 <blockquote class="blockquote">
 <p>Replace the <code>illuminapairedends</code> original <em>OBITools</em></p>
 </blockquote>
-<section id="alignment-procedure" class="level4" data-number="3.7.1.1">
-<h4 data-number="3.7.1.1" class="anchored" data-anchor-id="alignment-procedure"><span class="header-section-number">3.7.1.1</span> Alignment procedure</h4>
+<section id="alignment-procedure" class="level4" data-number="4.7.1.1">
+<h4 data-number="4.7.1.1" class="anchored" data-anchor-id="alignment-procedure"><span class="header-section-number">4.7.1.1</span> Alignment procedure</h4>
 <p><code>obipairing</code> is introducing a new alignment algorithm compared to the <code>illuminapairedend</code> command of the <code>OBITools V2</code>. Nethertheless this new algorithm has been design to produce the same results than the previous, except in very few cases.</p>
 <p>The new algorithm is a two-step procedure. First, a FASTN-type algorithm <span class="citation" data-cites="Lipman1985-hw">(<a href="references.html#ref-Lipman1985-hw" role="doc-biblioref">Lipman and Pearson 1985</a>)</span> identifies the best offset between the two matched readings. This identifies the region of overlap.</p>
 <p>In the second step, the matching regions of the two reads are extracted along with a flanking sequence of <span class="math inline">\(\Delta\)</span> base pairs. The two subsequences are then aligned using a “one side free end-gap” dynamic programming algorithm. This latter step is only called if at least one mismatch is detected by the FASTP step.</p>
 <p>Unless the similarity between the two reads at their overlap region is very low, the addition of the flanking regions in the second step of the alignment ensures the same alignment as if the dynamic programming alignment was performed on the full reads.</p>
 </section>
-<section id="the-scoring-system" class="level4" data-number="3.7.1.2">
-<h4 data-number="3.7.1.2" class="anchored" data-anchor-id="the-scoring-system"><span class="header-section-number">3.7.1.2</span> The scoring system</h4>
+<section id="the-scoring-system" class="level4" data-number="4.7.1.2">
+<h4 data-number="4.7.1.2" class="anchored" data-anchor-id="the-scoring-system"><span class="header-section-number">4.7.1.2</span> The scoring system</h4>
 <p>In the dynamic programming step, the match and mismatch scores take into account the quality scores of the two aligned nucleotides. By taking these into account, the probability of a true match can be calculated for each aligned base pair.</p>
 <p>If we consider a nucleotide read with a quality score <span class="math inline">\(Q\)</span>, the probability of misreading this base (<span class="math inline">\(P_E\)</span>) is : <span class="math display">\[
 P_E = 10^{-\frac{Q}{10}}
@@ -394,38 +399,38 @@ P(MATCH | X_1 \neq X_2) =  (1-P_{E1})\frac{P_{E2}}{3} +  (1-P_{E2})\frac{P_{E1}}
 </div>
 </div>
 </section>
-<section id="obimultiplex" class="level4" data-number="3.7.1.3">
-<h4 data-number="3.7.1.3" class="anchored" data-anchor-id="obimultiplex"><span class="header-section-number">3.7.1.3</span> <code>obimultiplex</code></h4>
+<section id="obimultiplex" class="level4" data-number="4.7.1.3">
+<h4 data-number="4.7.1.3" class="anchored" data-anchor-id="obimultiplex"><span class="header-section-number">4.7.1.3</span> <code>obimultiplex</code></h4>
 <blockquote class="blockquote">
 <p>Replace the <code>ngsfilter</code> original <em>OBITools</em></p>
 </blockquote>
 </section>
-<section id="obicomplement" class="level4" data-number="3.7.1.4">
-<h4 data-number="3.7.1.4" class="anchored" data-anchor-id="obicomplement"><span class="header-section-number">3.7.1.4</span> <code>obicomplement</code></h4>
+<section id="obicomplement" class="level4" data-number="4.7.1.4">
+<h4 data-number="4.7.1.4" class="anchored" data-anchor-id="obicomplement"><span class="header-section-number">4.7.1.4</span> <code>obicomplement</code></h4>
 </section>
-<section id="obiclean" class="level4" data-number="3.7.1.5">
-<h4 data-number="3.7.1.5" class="anchored" data-anchor-id="obiclean"><span class="header-section-number">3.7.1.5</span> <code>obiclean</code></h4>
+<section id="obiclean" class="level4" data-number="4.7.1.5">
+<h4 data-number="4.7.1.5" class="anchored" data-anchor-id="obiclean"><span class="header-section-number">4.7.1.5</span> <code>obiclean</code></h4>
 </section>
-<section id="obiuniq" class="level4" data-number="3.7.1.6">
-<h4 data-number="3.7.1.6" class="anchored" data-anchor-id="obiuniq"><span class="header-section-number">3.7.1.6</span> <code>obiuniq</code></h4>
+<section id="obiuniq" class="level4" data-number="4.7.1.6">
+<h4 data-number="4.7.1.6" class="anchored" data-anchor-id="obiuniq"><span class="header-section-number">4.7.1.6</span> <code>obiuniq</code></h4>
 </section>
 </section>
 </section>
-<section id="sequence-sampling-and-filtering" class="level2" data-number="3.8">
-<h2 data-number="3.8" class="anchored" data-anchor-id="sequence-sampling-and-filtering"><span class="header-section-number">3.8</span> Sequence sampling and filtering</h2>
-<section id="obigrep" class="level4" data-number="3.8.0.1">
-<h4 data-number="3.8.0.1" class="anchored" data-anchor-id="obigrep"><span class="header-section-number">3.8.0.1</span> <code>obigrep</code></h4>
+<section id="sequence-sampling-and-filtering" class="level2" data-number="4.8">
+<h2 data-number="4.8" class="anchored" data-anchor-id="sequence-sampling-and-filtering"><span class="header-section-number">4.8</span> Sequence sampling and filtering</h2>
+<section id="obigrep" class="level4" data-number="4.8.0.1">
+<h4 data-number="4.8.0.1" class="anchored" data-anchor-id="obigrep"><span class="header-section-number">4.8.0.1</span> <code>obigrep</code></h4>
 </section>
-<section id="utilities" class="level3" data-number="3.8.1">
-<h3 data-number="3.8.1" class="anchored" data-anchor-id="utilities"><span class="header-section-number">3.8.1</span> Utilities</h3>
-<section id="obicount" class="level4" data-number="3.8.1.1">
-<h4 data-number="3.8.1.1" class="anchored" data-anchor-id="obicount"><span class="header-section-number">3.8.1.1</span> <code>obicount</code></h4>
+<section id="utilities" class="level3" data-number="4.8.1">
+<h3 data-number="4.8.1" class="anchored" data-anchor-id="utilities"><span class="header-section-number">4.8.1</span> Utilities</h3>
+<section id="obicount" class="level4" data-number="4.8.1.1">
+<h4 data-number="4.8.1.1" class="anchored" data-anchor-id="obicount"><span class="header-section-number">4.8.1.1</span> <code>obicount</code></h4>
 </section>
-<section id="obidistribute" class="level4" data-number="3.8.1.2">
-<h4 data-number="3.8.1.2" class="anchored" data-anchor-id="obidistribute"><span class="header-section-number">3.8.1.2</span> <code>obidistribute</code></h4>
+<section id="obidistribute" class="level4" data-number="4.8.1.2">
+<h4 data-number="4.8.1.2" class="anchored" data-anchor-id="obidistribute"><span class="header-section-number">4.8.1.2</span> <code>obidistribute</code></h4>
 </section>
-<section id="obifind" class="level4" data-number="3.8.1.3">
-<h4 data-number="3.8.1.3" class="anchored" data-anchor-id="obifind"><span class="header-section-number">3.8.1.3</span> <code>obifind</code></h4>
+<section id="obifind" class="level4" data-number="4.8.1.3">
+<h4 data-number="4.8.1.3" class="anchored" data-anchor-id="obifind"><span class="header-section-number">4.8.1.3</span> <code>obifind</code></h4>
 <blockquote class="blockquote">
 <p>Replace the <code>ecofind</code> original <em>OBITools.</em></p>
 </blockquote>
@@ -577,12 +582,12 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
       <a href="./tutorial.html" class="pagination-link">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">OBITools V4 Tutorial</span></span>
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">OBITools V4 Tutorial</span></span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">
       <a href="./library.html" class="pagination-link">
-        <span class="nav-page-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">The GO <em>OBITools</em> library</span></span> <i class="bi bi-arrow-right-short"></i>
+        <span class="nav-page-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">The GO <em>OBITools</em> library</span></span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>
