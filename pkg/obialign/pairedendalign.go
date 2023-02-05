@@ -322,9 +322,13 @@ func PEAlign(seqA, seqB *obiseq.BioSequence,
 			}
 			extra5 = -startA
 			startB = 0
+
 			rawSeqA = seqA.Sequence()[startA:]
 			qualSeqA = seqA.Qualities()[startA:]
 			partLen = len(rawSeqA)
+			if partLen > seqB.Len() {
+				partLen = seqB.Len()
+			}
 			rawSeqB = seqB.Sequence()[0:partLen]
 			qualSeqB = seqB.Qualities()[0:partLen]
 			extra3 = seqB.Len() - partLen
@@ -343,6 +347,9 @@ func PEAlign(seqA, seqB *obiseq.BioSequence,
 			rawSeqB = seqB.Sequence()[startB:]
 			qualSeqB = seqB.Qualities()[startB:]
 			partLen = len(rawSeqB)
+			if partLen > seqA.Len() {
+				partLen = seqA.Len()
+			}
 			rawSeqA = seqA.Sequence()[:partLen]
 			qualSeqA = seqA.Qualities()[:partLen]
 			extra3 = partLen - seqA.Len()

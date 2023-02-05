@@ -121,13 +121,14 @@ func AssemblePESequences(seqA, seqB *obiseq.BioSequence,
 	lcons := cons.Len()
 	aliLength := lcons - _Abs(left) - _Abs(right)
 	identity := float64(match) / float64(aliLength)
+	if aliLength == 0 {
+		identity = 0
+	}
+	annot := cons.Annotations()
 
 	if aliLength >= minOverlap && identity >= minIdentity {
+		annot["mode"] = "alignment"
 		if withStats {
-			annot := cons.Annotations()
-			annot["mode"] = "alignment"
-			annot["score"] = score
-
 			if left < 0 {
 				annot["seq_a_single"] = -left
 				annot["ali_dir"] = "left"
@@ -142,29 +143,28 @@ func AssemblePESequences(seqA, seqB *obiseq.BioSequence,
 			} else {
 				annot["seq_b_single"] = right
 			}
-
-			scoreNorm := float64(0)
-			if aliLength > 0 {
-				scoreNorm = math.Round(float64(match)/float64(aliLength)*1000) / 1000
-			}
-
-			annot["ali_length"] = aliLength
-			annot["seq_ab_match"] = match
-			annot["score_norm"] = scoreNorm
-
-			if inplace {
-				seqA.Recycle()
-				seqB.Recycle()
-			}
+		}
+		if inplace {
+			seqA.Recycle()
+			seqB.Recycle()
 		}
 	} else {
 		cons = JoinPairedSequence(seqA, seqB, inplace)
+		annot = cons.Annotations()
+		annot["mode"] = "join"
+	}
 
-		if withStats {
-			annot := cons.Annotations()
-			annot["mode"] = "join"
+	if withStats {
+		annot["score"] = score
+		scoreNorm := float64(0)
+		if aliLength > 0 {
+			scoreNorm = math.Round(float64(match)/float64(aliLength)*1000) / 1000
+		} else {
+			scoreNorm = 0
 		}
-
+		annot["ali_length"] = aliLength
+		annot["seq_ab_match"] = match
+		annot["score_norm"] = scoreNorm
 	}
 
 	return cons

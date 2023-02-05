@@ -122,6 +122,10 @@ func FastShiftFourMer(index [][]int, seq *obiseq.BioSequence, buffer *[]byte) (i
 		if count > maxcount {
 			maxshift = shift
 			maxcount = count
+		} else {
+			if count == maxcount && shift < maxshift {
+				maxshift = shift
+			}
 		}
 	}
 
