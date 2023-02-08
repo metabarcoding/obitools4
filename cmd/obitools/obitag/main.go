@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obiconvert"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obitag"
 
@@ -36,6 +37,7 @@ func main() {
 	identified := obitag.AssignTaxonomy(fs)
 
 	obiconvert.WriteBioSequences(identified, true)
+	obiiter.WaitForLastPipe()
 
 	fmt.Println("")
 }

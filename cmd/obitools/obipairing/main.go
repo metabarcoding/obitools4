@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obioptions"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obiconvert"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obipairing"
@@ -39,4 +40,6 @@ func main() {
 		obioptions.CLIParallelWorkers(),
 	)
 	obiconvert.WriteBioSequences(paired, true)
+
+	obiiter.WaitForLastPipe()
 }

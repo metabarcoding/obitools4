@@ -61,6 +61,7 @@ func WriteFastq(iterator obiiter.IBioSequence,
 
 	nwriters := opt.ParallelWorkers()
 
+	obiiter.RegisterAPipe()
 	chunkchan := make(chan FileChunck)
 
 	header_format := opt.FormatFastSeqHeader()
@@ -74,6 +75,7 @@ func WriteFastq(iterator obiiter.IBioSequence,
 			time.Sleep(time.Millisecond)
 		}
 		close(chunkchan)
+		obiiter.UnregisterPipe()
 		log.Debugln("End of the fastq file writing")
 	}()
 
@@ -123,7 +125,6 @@ func WriteFastq(iterator obiiter.IBioSequence,
 				file.Close()
 			}
 		}
-
 	}()
 
 	return newIter, nil

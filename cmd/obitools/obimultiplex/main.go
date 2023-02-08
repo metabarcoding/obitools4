@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obioptions"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obiconvert"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obimultiplex"
@@ -32,4 +33,6 @@ func main() {
 	amplicons, _ := obimultiplex.IExtractBarcode(sequences)
 	obiconvert.WriteBioSequences(amplicons, true)
 	amplicons.Wait()
+	obiiter.WaitForLastPipe()
+
 }

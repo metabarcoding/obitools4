@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 
@@ -71,6 +72,7 @@ func WriteFasta(iterator obiiter.IBioSequence,
 
 	nwriters := opt.ParallelWorkers()
 
+	obiiter.RegisterAPipe()
 	chunkchan := make(chan FileChunck)
 
 	header_format := opt.FormatFastSeqHeader()
@@ -79,7 +81,11 @@ func WriteFasta(iterator obiiter.IBioSequence,
 
 	go func() {
 		newIter.WaitAndClose()
+		for len(chunkchan) > 0 {
+			time.Sleep(time.Millisecond)
+		}
 		close(chunkchan)
+		obiiter.UnregisterPipe()
 		log.Debugln("End of the fasta file writing")
 	}()
 

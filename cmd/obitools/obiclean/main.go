@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obiclean"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obiconvert"
 
@@ -19,4 +20,7 @@ func main() {
 	cleaned := obiclean.IOBIClean(fs)
 
 	obiconvert.WriteBioSequences(cleaned, true)
+
+	obiiter.WaitForLastPipe()
+
 }

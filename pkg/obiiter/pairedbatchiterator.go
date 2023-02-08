@@ -2,6 +2,7 @@ package obiiter
 
 import (
 	"sync"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 
@@ -96,6 +97,8 @@ func MakeIPairedBioSequenceBatch(sizes ...int) IPairedBioSequenceBatch {
 	waiting := sync.WaitGroup{}
 	i.all_done = &waiting
 	ii := IPairedBioSequenceBatch{&i}
+
+	RegisterAPipe()
 	return ii
 }
 
@@ -113,6 +116,21 @@ func (iterator IPairedBioSequenceBatch) Wait() {
 
 func (iterator IPairedBioSequenceBatch) Channel() chan PairedBioSequenceBatch {
 	return iterator.pointer.channel
+}
+
+func (iterator IPairedBioSequenceBatch) Close() {
+	close(iterator.pointer.channel)
+	UnregisterPipe()
+}
+
+func (iterator IPairedBioSequenceBatch) WaitAndClose() {
+	iterator.Wait()
+
+	for len(iterator.Channel()) > 0 {
+		time.Sleep(time.Millisecond)
+	}
+
+	iterator.Close()
 }
 
 func (iterator IPairedBioSequenceBatch) IsNil() bool {

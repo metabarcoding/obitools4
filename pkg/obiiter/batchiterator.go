@@ -15,6 +15,25 @@ import (
 	"github.com/tevino/abool/v2"
 )
 
+var globalLocker sync.WaitGroup
+var globalLockerCounter = 0
+
+func RegisterAPipe() {
+	globalLocker.Add(1)
+	globalLockerCounter++
+	log.Debugln(globalLockerCounter, " Pipes are registered now")
+}
+
+func UnregisterPipe() {
+	globalLocker.Done()
+	globalLockerCounter--
+	log.Debugln(globalLockerCounter, "are still registered")
+}
+
+func WaitForLastPipe() {
+	globalLocker.Wait()
+}
+
 // Structure implementing an iterator over bioseq.BioSequenceBatch
 // based on a channel.
 type _IBioSequence struct {
@@ -61,6 +80,9 @@ func MakeIBioSequence(sizes ...int) IBioSequence {
 	lock := sync.RWMutex{}
 	i.lock = &lock
 	ii := IBioSequence{&i}
+
+	RegisterAPipe()
+
 	return ii
 }
 
@@ -229,6 +251,7 @@ func (iterator IBioSequence) Push(batch BioSequenceBatch) {
 
 func (iterator IBioSequence) Close() {
 	close(iterator.pointer.channel)
+	UnregisterPipe()
 }
 
 func (iterator IBioSequence) WaitAndClose() {
@@ -237,6 +260,7 @@ func (iterator IBioSequence) WaitAndClose() {
 	for len(iterator.Channel()) > 0 {
 		time.Sleep(time.Millisecond)
 	}
+
 	iterator.Close()
 }
 
@@ -258,20 +282,21 @@ func (iterator IBioSequence) SortBatches(sizes ...int) IBioSequence {
 	newIter.Add(1)
 
 	go func() {
-		newIter.Wait()
-		close(newIter.pointer.channel)
+		newIter.WaitAndClose()
 	}()
 
 	next_to_send := 0
+	//log.Println("wait for batch #", next_to_send)
 	received := make(map[int]BioSequenceBatch)
 	go func() {
 		for iterator.Next() {
 			batch := iterator.Get()
-			// log.Println("Pushd seq #", batch.order, next_to_send)
+			// log.Println("\nPushd seq #\n", batch.order, next_to_send)
 
 			if batch.order == next_to_send {
 				newIter.pointer.channel <- batch
 				next_to_send++
+				//log.Println("\nwait for batch #\n", next_to_send)
 				batch, ok := received[next_to_send]
 				for ok {
 					newIter.pointer.channel <- batch
@@ -386,8 +411,7 @@ func (iterator IBioSequence) Rebatch(size int, sizes ...int) IBioSequence {
 	newIter.Add(1)
 
 	go func() {
-		newIter.Wait()
-		close(newIter.pointer.channel)
+		newIter.WaitAndClose()
 	}()
 
 	go func() {
@@ -427,6 +451,7 @@ func (iterator IBioSequence) Recycle() {
 	for iterator.Next() {
 		// iterator.Get()
 		batch := iterator.Get()
+		log.Debugln("Recycling batch #", batch.Order())
 		for _, seq := range batch.Slice() {
 			seq.Recycle()
 			recycled++
@@ -488,8 +513,7 @@ func (iterator IBioSequence) PairWith(reverse IBioSequence,
 	newIter.Add(1)
 
 	go func() {
-		newIter.Wait()
-		close(newIter.Channel())
+		newIter.WaitAndClose()
 		log.Println("End of association of paired reads")
 	}()
 
