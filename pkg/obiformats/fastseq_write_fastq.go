@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sync"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -69,12 +70,15 @@ func WriteFastq(iterator obiiter.IBioSequence,
 
 	newIter.Add(nwriters)
 
+	var waitWriter sync.WaitGroup
+
 	go func() {
 		newIter.WaitAndClose()
 		for len(chunkchan) > 0 {
 			time.Sleep(time.Millisecond)
 		}
 		close(chunkchan)
+		waitWriter.Wait()
 		obiiter.UnregisterPipe()
 		log.Debugln("End of the fastq file writing")
 	}()
@@ -101,6 +105,7 @@ func WriteFastq(iterator obiiter.IBioSequence,
 	next_to_send := 0
 	received := make(map[int]FileChunck, 100)
 
+	waitWriter.Add(1)
 	go func() {
 		for chunk := range chunkchan {
 			if chunk.order == next_to_send {
@@ -125,6 +130,8 @@ func WriteFastq(iterator obiiter.IBioSequence,
 				file.Close()
 			}
 		}
+
+		waitWriter.Done()
 	}()
 
 	return newIter, nil

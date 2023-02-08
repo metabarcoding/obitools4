@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -78,6 +79,7 @@ func WriteFasta(iterator obiiter.IBioSequence,
 	header_format := opt.FormatFastSeqHeader()
 
 	newIter.Add(nwriters)
+	var waitWriter sync.WaitGroup
 
 	go func() {
 		newIter.WaitAndClose()
@@ -85,6 +87,7 @@ func WriteFasta(iterator obiiter.IBioSequence,
 			time.Sleep(time.Millisecond)
 		}
 		close(chunkchan)
+		waitWriter.Wait()
 		obiiter.UnregisterPipe()
 		log.Debugln("End of the fasta file writing")
 	}()
@@ -112,6 +115,7 @@ func WriteFasta(iterator obiiter.IBioSequence,
 	next_to_send := 0
 	received := make(map[int]FileChunck, 100)
 
+	waitWriter.Add(1)
 	go func() {
 		for chunk := range chunkchan {
 			if chunk.order == next_to_send {
@@ -136,6 +140,7 @@ func WriteFasta(iterator obiiter.IBioSequence,
 				file.Close()
 			}
 		}
+		waitWriter.Done()
 
 	}()
 
