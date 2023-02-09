@@ -1,6 +1,11 @@
 package obiannotate
 
 import (
+	"io/ioutil"
+	"log"
+	"os"
+	"strings"
+
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obiconvert"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obigrep"
 	"github.com/DavidGamba/go-getoptions"
@@ -15,6 +20,7 @@ var _tagList = ""
 var _clearAll = false
 var _setSeqLength = false
 var _uniqueID = false
+var _ahoCorazick = ""
 
 func SequenceAnnotationOptionSet(options *getoptions.GetOpt) {
 	// options.BoolVar(&_addRank, "seq-rank", _addRank,
@@ -29,6 +35,8 @@ func SequenceAnnotationOptionSet(options *getoptions.GetOpt) {
 		options.Description("Adds attribute with seq_length as a key and sequence length as a value."),
 	)
 
+	options.StringVar(&_ahoCorazick, "aho-corasick", _ahoCorazick,
+		options.Description("Adds an aho-corasick attribut with the count of matches of the provided patterns."))
 	// options.BoolVar(&_uniqueID, "uniq-id", _uniqueID,
 	// 	options.Description("Forces sequence record ids to be unique."),
 	// )
@@ -130,4 +138,29 @@ func CLIHasSetLengthFlag() bool {
 
 func CLIHasClearAllFlag() bool {
 	return _clearAll
+}
+
+func CLIHasAhoCorasick() bool {
+	_, err := os.Stat(_ahoCorazick)
+	return err == nil
+}
+
+func CLIAhoCorazick() []string {
+	content, err := ioutil.ReadFile(_ahoCorazick)
+	if err != nil {
+		log.Fatalln("Cannot open file ", _ahoCorazick)
+	}
+	lines := strings.Split(string(content), "\n")
+
+	j := 0
+	for _, s := range lines {
+		if len(s) > 0 {
+			lines[j] = strings.ToLower(s)
+			j++
+		}
+	}
+
+	lines = lines[0:j]
+
+	return lines
 }

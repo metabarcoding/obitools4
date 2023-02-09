@@ -36,7 +36,7 @@ func main() {
 
 	sequences, _ := obiconvert.ReadBioSequences(args...)
 	annotator := obiannotate.CLIAnnotationPipeline()
-	obiconvert.WriteBioSequences(sequences.Pipe(annotator), true)
+	obiconvert.WriteBioSequences(sequences.Pipe(annotator).Speed(), true)
 
 	obiiter.WaitForLastPipe()
 

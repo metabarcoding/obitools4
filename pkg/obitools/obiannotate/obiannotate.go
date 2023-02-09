@@ -1,6 +1,9 @@
 package obiannotate
 
 import (
+	"log"
+
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obicorazick"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitax"
@@ -115,6 +118,14 @@ func CLIAnnotationWorker() obiseq.SeqWorker {
 
 	if CLIHasSetLengthFlag() {
 		w := AddSeqLengthWorker()
+		annotator = annotator.ChainWorkers(w)
+	}
+
+	if CLIHasAhoCorasick() {
+		patterns := CLIAhoCorazick()
+		log.Println("Matching : ", len(patterns), " patterns on sequences")
+		w := obicorazick.AhoCorazickWorker("aho_corasick", patterns)
+		log.Println("Automata built")
 		annotator = annotator.ChainWorkers(w)
 	}
 
