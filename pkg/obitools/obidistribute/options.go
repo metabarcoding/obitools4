@@ -2,8 +2,9 @@ package obidistribute
 
 import (
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obiconvert"
@@ -15,6 +16,7 @@ var _SequenceClassifierTag = ""
 var _BatchCount = 0
 var _HashSize = 0
 var _NAValue = "NA"
+var _append = false
 
 func DistributeOptionSet(options *getoptions.GetOpt) {
 	options.StringVar(&_FilenamePattern, "pattern", _FilenamePattern,
@@ -37,6 +39,10 @@ func DistributeOptionSet(options *getoptions.GetOpt) {
 		options.Alias("n"),
 		options.Description("Indicates in how many batches the input file must bee splitted."))
 
+	options.BoolVar(&_append, "append", _append,
+		options.Alias("A"),
+		options.Description("Indicates to append sequence to files if they already exist."))
+
 	options.IntVar(&_HashSize, "hash", 0,
 		options.Alias("H"),
 		options.Description("Indicates to split the input into at most <n> batch based on a hash code of the seequence."))
@@ -46,6 +52,10 @@ func OptionSet(options *getoptions.GetOpt) {
 	obiconvert.InputOptionSet(options)
 	obiconvert.OutputOptionSet(options)
 	DistributeOptionSet(options)
+}
+
+func CLIAppendSequences() bool {
+	return _append
 }
 
 func CLISequenceClassifier() *obiseq.BioSequenceClassifier {

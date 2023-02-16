@@ -157,7 +157,19 @@ func WriteFastaToFile(iterator obiiter.IBioSequence,
 	filename string,
 	options ...WithOption) (obiiter.IBioSequence, error) {
 
-	file, err := os.Create(filename)
+	var file *os.File
+	var err error
+
+	opt := MakeOptions(options)
+
+	if opt.AppendFile() {
+		log.Debug("Open files in appending mode")
+		file, err = os.OpenFile(filename,
+			os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	} else {
+		file, err = os.Create(filename)
+	}
+
 
 	if err != nil {
 		log.Fatalf("open file error: %v", err)
