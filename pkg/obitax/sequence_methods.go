@@ -21,10 +21,10 @@ func (taxonomy *Taxonomy) SetTaxonAtRank(sequence *obiseq.BioSequence, rank stri
 		taxonAtRank = taxon.TaxonAtRank(rank)
 		if taxonAtRank != nil {
 			// log.Printf("Taxid: %d  Rank: %s --> proposed : %d (%s)", taxid, rank, taxonAtRank.taxid, *(taxonAtRank.scientificname))
-			sequence.SetAttribute(rank, taxonAtRank.taxid)
+			sequence.SetAttribute(rank+"_taxid", taxonAtRank.taxid)
 			sequence.SetAttribute(rank+"_name", *taxonAtRank.scientificname)
 		} else {
-			sequence.SetAttribute(rank, -1)
+			sequence.SetAttribute(rank+"_taxid", -1)
 			sequence.SetAttribute(rank+"_name", "NA")
 		}
 	}
