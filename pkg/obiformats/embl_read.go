@@ -23,7 +23,18 @@ type _FileChunk struct {
 	order int
 }
 
-// It looks for the last occurrence of the pattern `<CR>?<LF>//<CR>?<LF>` in the buffer
+// _EndOfLastEntry finds the index of the last entry in the given byte slice 'buff'
+// using a pattern match of the form:
+// <CR>?<LF>//<CR>?<LF>
+// where <CR> and <LF> are the ASCII codes for carriage return and line feed,
+// respectively. The function returns the index of the end of the last entry
+// or -1 if no match is found.
+//
+// Arguments:
+// buff []byte - a byte slice to search for the end of the last entry
+//
+// Returns:
+// int - the index of the end of the last entry or -1 if no match is found.
 func _EndOfLastEntry(buff []byte) int {
 	//  6    5  43 2    1
 	// <CR>?<LF>//<CR>?<LF>
@@ -150,6 +161,19 @@ func _ParseEmblFile(input <-chan _FileChunk, out obiiter.IBioSequence) {
 
 }
 
+// _ReadFlatFileChunk reads a chunk of data from the given 'reader' and sends it to the
+// 'readers' channel as a _FileChunk struct. The function reads from the reader until
+// the end of the last entry is found, then sends the chunk to the channel. If the end
+// of the last entry is not found in the current chunk, the function reads from the reader
+// in 1 MB increments until the end of the last entry is found. The function repeats this
+// process until the end of the file is reached.
+//
+// Arguments:
+// reader io.Reader - an io.Reader to read data from
+// readers chan _FileChunk - a channel to send the data as a _FileChunk struct
+//
+// Returns:
+// None
 func _ReadFlatFileChunk(reader io.Reader, readers chan _FileChunk) {
 	var err error
 	var buff []byte
@@ -158,44 +182,58 @@ func _ReadFlatFileChunk(reader io.Reader, readers chan _FileChunk) {
 	l := 0
 	i := 0
 
+	// Initialize the buffer to the size of a chunk of data
 	buff = make([]byte, _FileChunkSize)
+
+	// Read from the reader until the end of the last entry is found or the end of the file is reached
 	for err == nil {
+
+		// Read from the reader until the buffer is full or the end of the file is reached
 		for ; err == nil && l < len(buff); l += size {
 			size, err = reader.Read(buff[l:])
 		}
 
+		// Create an extended buffer to read from if the end of the last entry is not found in the current buffer
 		extbuff := make([]byte, 1<<20)
 		buff = buff[:l]
 		end := 0
 		ic := 0
+
+		// Read from the reader in 1 MB increments until the end of the last entry is found
 		for end = _EndOfLastEntry(buff); err == nil && end < 0; end = _EndOfLastEntry(extbuff[:size]) {
 			ic++
 			size, err = reader.Read(extbuff)
 			buff = append(buff, extbuff[:size]...)
 		}
 
-		if ic > 0 {
-			end = _EndOfLastEntry(buff)
+		end = _EndOfLastEntry(buff)
+
+		// If an extension was read, log the size and number of extensions
+		log.Debugf("Flat File chunck : final buff size %d bytes (%d extensions) -> end = %d\n",
+			len(buff),
+			ic,
+			end,
+		)
+
+		if len(buff) > 0 {
+			remains := buff[end:]
+			buff = buff[:end]
+	
+			// Send the chunk of data as a _FileChunk struct to the readers channel
+			io := bytes.NewBuffer(buff)
+			readers <- _FileChunk{io, i}
+			i++
+	
+			// Set the buffer to the size of a chunk of data and copy any remaining data to the new buffer
+			buff = make([]byte, _FileChunkSize)
+			copy(buff, remains)
+			l = len(remains)	
 		}
-
-		remains := buff[end:]
-		buff = buff[:end]
-
-		if ic > 0 {
-			log.Debugf("EMBL File chunck : final buff size %d bytes (%d extensions)\n",
-				len(buff),
-				ic)
-		}
-
-		io := bytes.NewBuffer(buff)
-		readers <- _FileChunk{io, i}
-		i++
-		buff = make([]byte, _FileChunkSize)
-		copy(buff, remains)
-		l = len(remains)
 	}
 
+	// Close the readers channel when the end of the file is reached
 	close(readers)
+
 }
 
 //	6    5  43 2    1
