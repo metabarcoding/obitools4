@@ -225,3 +225,4 @@ func ExpressionPredicat(expression string) SequencePredicate {
 
 	return f
 }
+

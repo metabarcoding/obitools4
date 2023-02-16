@@ -1,12 +1,21 @@
 package obiiter
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/schollz/progressbar/v3"
 )
 
 func (iterator IBioSequence) Speed(message ...string) IBioSequence {
+
+	// If the STDERR is redicted and doesn't end up to a terminal
+	// No progress bar is printed.
+	o, _ := os.Stderr.Stat()
+	if (o.Mode() & os.ModeCharDevice) != os.ModeCharDevice {
+		return iterator
+	}
+
 	newIter := MakeIBioSequence()
 
 	newIter.Add(1)
@@ -44,6 +53,7 @@ func (iterator IBioSequence) Speed(message ...string) IBioSequence {
 			bar.Add(l)
 		}
 
+		fmt.Fprintln(os.Stderr)
 		newIter.Done()
 	}()
 

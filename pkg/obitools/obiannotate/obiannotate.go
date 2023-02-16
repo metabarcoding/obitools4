@@ -5,6 +5,7 @@ import (
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obicorazick"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obioptions"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitax"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obigrep"
@@ -65,6 +66,21 @@ func RenameAttributeWorker(toBeRenamed map[string]string) obiseq.SeqWorker {
 	return f
 }
 
+func EvalAttributeWorker(expression map[string]string) obiseq.SeqWorker {
+	var w obiseq.SeqWorker
+	w = nil
+
+	for a,e := range expression {
+		if w == nil {
+			w = obiseq.EditAttributeWorker(a,e)
+		} else {
+			w.ChainWorkers(obiseq.EditAttributeWorker(a,e))
+		}
+	}
+
+	return w
+}
+
 func AddTaxonAtRankWorker(taxonomy *obitax.Taxonomy, ranks ...string) obiseq.SeqWorker {
 	f := func(s *obiseq.BioSequence) *obiseq.BioSequence {
 		for _, r := range ranks {
@@ -121,6 +137,11 @@ func CLIAnnotationWorker() obiseq.SeqWorker {
 		annotator = annotator.ChainWorkers(w)
 	}
 
+	if CLIHasSetAttributeExpression() {
+		w := EvalAttributeWorker(CLISetAttributeExpression())
+		annotator = annotator.ChainWorkers(w)
+	}
+
 	if CLIHasAhoCorasick() {
 		patterns := CLIAhoCorazick()
 		log.Println("Matching : ", len(patterns), " patterns on sequences")
@@ -138,7 +159,7 @@ func CLIAnnotationPipeline() obiiter.Pipeable {
 	worker := CLIAnnotationWorker()
 
 	annotator := obiseq.SeqToSliceConditionalWorker(worker, predicate, true)
-	f := obiiter.SliceWorkerPipe(annotator)
+	f := obiiter.SliceWorkerPipe(annotator, obioptions.CLIParallelWorkers())
 
 	return f
 }

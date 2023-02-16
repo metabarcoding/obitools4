@@ -16,6 +16,7 @@ var _toBeRenamed = make(map[string]string, 0)
 var _toBeDeleted = make([]string, 0)
 var _keepOnly = make([]string, 0)
 var _taxonAtRank = make([]string, 0)
+var _evalAttribute = make(map[string]string, 0)
 var _tagList = ""
 var _clearAll = false
 var _setSeqLength = false
@@ -40,6 +41,12 @@ func SequenceAnnotationOptionSet(options *getoptions.GetOpt) {
 	// options.BoolVar(&_uniqueID, "uniq-id", _uniqueID,
 	// 	options.Description("Forces sequence record ids to be unique."),
 	// )
+
+	options.StringMapVar(&_evalAttribute, "set-tag", 1, 1,
+		options.Alias("S"),
+		options.ArgName("KEY=EXPRESSION"),
+		options.Description("Creates a new attribute named with a key <KEY> "+
+			"sets with a value computed from <EXPRESSION>."))
 
 	options.StringMapVar(&_toBeRenamed, "rename-tag", 1, 1,
 		options.Alias("R"),
@@ -139,6 +146,17 @@ func CLIHasSetLengthFlag() bool {
 func CLIHasClearAllFlag() bool {
 	return _clearAll
 }
+
+func CLIHasSetAttributeExpression() bool {
+	return len(_evalAttribute) > 0
+}
+
+func CLISetAttributeExpression() map[string]string {
+	return _evalAttribute
+}
+
+
+
 
 func CLIHasAhoCorasick() bool {
 	_, err := os.Stat(_ahoCorazick)
