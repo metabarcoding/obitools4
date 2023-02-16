@@ -44,7 +44,7 @@ func IExtractBarcode(iterator obiiter.IBioSequence) (obiiter.IBioSequence, error
 			obioptions.CLIBatchSize())
 
 		go func() {
-			_, err := obiconvert.WriteBioSequences(unidentified,
+			_, err := obiconvert.CLIWriteBioSequences(unidentified,
 				true,
 				CLIUnidentifiedFileName())
 

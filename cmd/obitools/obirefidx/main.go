@@ -18,7 +18,7 @@ func main() {
 	fs, _ := obiconvert.ReadBioSequences(args...)
 	indexed := obirefidx.IndexReferenceDB(fs)
 
-	obiconvert.WriteBioSequences(indexed, true)
+	obiconvert.CLIWriteBioSequences(indexed, true)
 	obiiter.WaitForLastPipe()
 
 }

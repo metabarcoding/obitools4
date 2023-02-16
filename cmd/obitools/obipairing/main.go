@@ -39,7 +39,7 @@ func main() {
 		obipairing.WithStats(),
 		obioptions.CLIParallelWorkers(),
 	)
-	obiconvert.WriteBioSequences(paired, true)
+	obiconvert.CLIWriteBioSequences(paired, true)
 
 	obiiter.WaitForLastPipe()
 }

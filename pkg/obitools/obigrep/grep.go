@@ -22,7 +22,7 @@ func IFilterSequence(iterator obiiter.IBioSequence) obiiter.IBioSequence {
 				obioptions.CLIBatchSize())
 
 			go func() {
-				_, err := obiconvert.WriteBioSequences(discarded,
+				_, err := obiconvert.CLIWriteBioSequences(discarded,
 					true,
 					CLIDiscardedFileName())
 

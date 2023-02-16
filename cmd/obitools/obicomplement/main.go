@@ -18,7 +18,7 @@ func main() {
 	fs, _ := obiconvert.ReadBioSequences(args...)
 
 	comp := fs.MakeIWorker(obiseq.ReverseComplementWorker(true))
-	obiconvert.WriteBioSequences(comp, true)
+	obiconvert.CLIWriteBioSequences(comp, true)
 
 	obiiter.WaitForLastPipe()
 

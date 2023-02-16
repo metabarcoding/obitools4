@@ -36,7 +36,7 @@ func main() {
 	fs, _ := obiconvert.ReadBioSequences(args...)
 	identified := obitag.AssignTaxonomy(fs)
 
-	obiconvert.WriteBioSequences(identified, true)
+	obiconvert.CLIWriteBioSequences(identified, true)
 	obiiter.WaitForLastPipe()
 
 	fmt.Println("")

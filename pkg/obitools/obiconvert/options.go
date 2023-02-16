@@ -24,6 +24,8 @@ var __output_fastjson_format__ = false
 var __output_fastobi_format__ = false
 var __output_solexa_quality__ = false
 
+var __no_progress_bar__ = false
+
 func InputOptionSet(options *getoptions.GetOpt) {
 	// options.IntVar(&__skipped_entries__, "skip", __skipped_entries__,
 	// 	options.Description("The N first sequence records of the file are discarded from the analysis and not reported to the output file."))
@@ -67,8 +69,8 @@ func OutputOptionSet(options *getoptions.GetOpt) {
 		options.Alias("O"),
 		options.Description("output FASTA/FASTQ title line annotations follow OBI format."))
 
-	options.BoolVar(&__output_solexa_quality__, "solexa-output", false,
-		options.Description("Encodes quality string according to the Solexa specification."))
+	options.BoolVar(&__no_progress_bar__, "no-progressbar", false,
+		options.Description("Disable the progress bar printing"))
 }
 
 func OptionSet(options *getoptions.GetOpt) {
@@ -153,4 +155,8 @@ func CLIOutputQualityShift() int {
 	} else {
 		return 33
 	}
+}
+
+func CLIProgressBar() bool {
+	return !__no_progress_bar__
 }

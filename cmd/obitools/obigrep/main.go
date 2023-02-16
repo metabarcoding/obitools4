@@ -36,7 +36,7 @@ func main() {
 
 	sequences, _ := obiconvert.ReadBioSequences(args...)
 	selected := obigrep.IFilterSequence(sequences)
-	obiconvert.WriteBioSequences(selected, true)
+	obiconvert.CLIWriteBioSequences(selected, true)
 	obiiter.WaitForLastPipe()
 
 }

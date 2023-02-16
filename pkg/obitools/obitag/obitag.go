@@ -192,5 +192,5 @@ func AssignTaxonomy(iterator obiiter.IBioSequence) obiiter.IBioSequence {
 
 	worker := IdentifySeqWorker(references, refcounts, taxo, CLIRunExact())
 
-	return iterator.Rebatch(17).MakeIWorker(worker, obioptions.CLIParallelWorkers(), 0).Speed("Annotated sequences").Rebatch(1000)
+	return iterator.Rebatch(17).MakeIWorker(worker, obioptions.CLIParallelWorkers(), 0).Rebatch(1000)
 }

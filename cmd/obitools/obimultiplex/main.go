@@ -31,7 +31,7 @@ func main() {
 
 	sequences, _ := obiconvert.ReadBioSequences(args...)
 	amplicons, _ := obimultiplex.IExtractBarcode(sequences)
-	obiconvert.WriteBioSequences(amplicons, true)
+	obiconvert.CLIWriteBioSequences(amplicons, true)
 	amplicons.Wait()
 	obiiter.WaitForLastPipe()
 

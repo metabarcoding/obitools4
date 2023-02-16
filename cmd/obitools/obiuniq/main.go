@@ -36,7 +36,7 @@ func main() {
 
 	sequences, _ := obiconvert.ReadBioSequences(args...)
 	unique := obiuniq.Unique(sequences)
-	obiconvert.WriteBioSequences(unique, true)
+	obiconvert.CLIWriteBioSequences(unique, true)
 
 	obiiter.WaitForLastPipe()
 

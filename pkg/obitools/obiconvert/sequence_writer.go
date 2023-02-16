@@ -8,9 +8,12 @@ import (
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obioptions"
 )
 
-func WriteBioSequences(iterator obiiter.IBioSequence,
+func CLIWriteBioSequences(iterator obiiter.IBioSequence,
 	terminalAction bool, filenames ...string) (obiiter.IBioSequence, error) {
 
+	if CLIProgressBar() {
+		iterator = iterator.Speed()
+	}
 	var newIter obiiter.IBioSequence
 
 	opts := make([]obiformats.WithOption, 0, 10)
