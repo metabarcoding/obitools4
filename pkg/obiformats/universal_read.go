@@ -78,7 +78,7 @@ func ReadSequencesFromFile(filename string,
 	}
 
 	filetype := GuessSeqFileType(string(tag))
-	log.Debug("File guessed format : %s (tag: %s)",
+	log.Debugf("File guessed format : %s (tag: %s)",
 		filetype, (strings.Split(string(tag), "\n"))[0])
 	reader = breader
 

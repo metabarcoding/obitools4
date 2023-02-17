@@ -13,12 +13,12 @@ import (
 
 var _FilenamePattern = ""
 var _SequenceClassifierTag = ""
+var _DirectoryTag = ""
 var _BatchCount = 0
 var _HashSize = 0
 var _NAValue = "NA"
 var _append = false
 var _compressed = false
-
 
 func DistributeOptionSet(options *getoptions.GetOpt) {
 	options.StringVar(&_FilenamePattern, "pattern", _FilenamePattern,
@@ -30,9 +30,16 @@ func DistributeOptionSet(options *getoptions.GetOpt) {
 
 	options.StringVar(&_SequenceClassifierTag, "classifier", _SequenceClassifierTag,
 		options.Alias("c"),
-		options.Description("The name of a tag annotating thes sequences. "+
+		options.Description("The name of a tag annotating the sequences. "+
 			"The name must corresponds to a string, a integer or a boolean value. "+
 			"That value will be used to dispatch sequences amoong the different files"))
+
+	options.StringVar(&_DirectoryTag, "directory", _DirectoryTag,
+		options.Alias("d"),
+		options.Description("The name of a tag annotating the sequences. "+
+			"The name must corresponds to a string, a integer or a boolean value. "+
+			"That value will be used to dispatch sequences amoong the different directory " +
+			"in conjunction with the -c|--classifier options"))
 
 	options.StringVar(&_NAValue, "na-value", _NAValue,
 		options.Description("Value used when the classifier tag is not defined for a sequence."))
@@ -71,7 +78,7 @@ func CLICompressed() bool {
 func CLISequenceClassifier() *obiseq.BioSequenceClassifier {
 	switch {
 	case _SequenceClassifierTag != "":
-		return obiseq.AnnotationClassifier(_SequenceClassifierTag, _NAValue)
+		return obiseq.DualAnnotationClassifier(_SequenceClassifierTag,_DirectoryTag, _NAValue)
 	case _BatchCount > 0:
 		return obiseq.RotateClassifier(_BatchCount)
 	case _HashSize > 0:

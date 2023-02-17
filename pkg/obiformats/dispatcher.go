@@ -1,7 +1,10 @@
 package obiformats
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 
@@ -33,11 +36,35 @@ func WriterDispatcher(prototypename string,
 					log.Fatalf("Cannot retreive the new chanel : %v", err)
 				}
 
-				name:=fmt.Sprintf(prototypename, dispatcher.Classifier().Value(newflux))
-				if opt.CompressedFile() && ! strings.HasSuffix(name,".gz") {
+				key := dispatcher.Classifier().Value(newflux)
+				directory := ""
+				if dispatcher.Classifier().Type == "DualAnnotationClassifier" {
+					var keys [2]string
+					err := json.Unmarshal([]byte(key), &keys)
+					if err != nil {
+						log.Fatalf("Error in parsing dispatch key %s", key)
+					}
+					key = keys[0]
+					directory = keys[1]
+				}
+
+				name := fmt.Sprintf(prototypename, key)
+				if opt.CompressedFile() && !strings.HasSuffix(name, ".gz") {
 					name = name + ".gz"
 				}
-				
+
+				if directory != "" {
+					info, err := os.Stat(directory)
+					switch {
+					case !os.IsNotExist(err) && !info.IsDir():
+						log.Fatalln("Cannot Create the directory %s", directory)
+					case os.IsNotExist(err):
+						os.Mkdir(directory, 0755)
+					}
+
+					name = filepath.Join(directory, name)
+				}
+
 				out, err := formater(data,
 					name,
 					options...)

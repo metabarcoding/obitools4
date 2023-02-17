@@ -80,8 +80,6 @@ func WriteFastq(iterator obiiter.IBioSequence,
 		}
 		close(chunkchan)
 		waitWriter.Wait()
-		obiiter.UnregisterPipe()
-		log.Debugln("End of the fastq file writing")
 	}()
 
 	ff := func(iterator obiiter.IBioSequence) {
@@ -134,6 +132,8 @@ func WriteFastq(iterator obiiter.IBioSequence,
 			}
 		}
 
+		log.Debugln("End of the fastq file writing")
+		obiiter.UnregisterPipe()
 		waitWriter.Done()
 	}()
 

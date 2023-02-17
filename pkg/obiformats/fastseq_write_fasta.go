@@ -89,8 +89,6 @@ func WriteFasta(iterator obiiter.IBioSequence,
 		}
 		close(chunkchan)
 		waitWriter.Wait()
-		obiiter.UnregisterPipe()
-		log.Debugln("End of the fasta file writing")
 	}()
 
 	ff := func(iterator obiiter.IBioSequence) {
@@ -143,6 +141,9 @@ func WriteFasta(iterator obiiter.IBioSequence,
 				file.Close()
 			}
 		}
+
+		log.Debugln("End of the fasta file writing")
+		obiiter.UnregisterPipe()
 		waitWriter.Done()
 
 	}()

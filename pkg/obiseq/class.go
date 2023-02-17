@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"sync"
 
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/goutils"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -24,6 +25,7 @@ type BioSequenceClassifier struct {
 	Value func(int) string
 	Reset func()
 	Clone func() *BioSequenceClassifier
+	Type  string
 }
 
 // It creates a classifier that returns the value of the annotation key as an integer. If the
@@ -88,7 +90,90 @@ func AnnotationClassifier(key string, na string) *BioSequenceClassifier {
 		return AnnotationClassifier(key, na)
 	}
 
-	c := BioSequenceClassifier{code, value, reset, clone}
+	c := BioSequenceClassifier{code, value, reset, clone,"AnnotationClassifier"}
+	return &c
+}
+
+// It creates a classifier that returns the value of the annotation key as an integer. If the
+// annotation key is not present, it returns the integer value of the string na
+func DualAnnotationClassifier(key1, key2 string, na string) *BioSequenceClassifier {
+	encode := make(map[string]int, 1000)
+	decode := make([]string, 0, 1000)
+	locke := sync.RWMutex{}
+	maxcode := 0
+
+	code := func(sequence *BioSequence) int {
+		var val1 = na
+		var val2 = ""
+		var ok bool
+		if sequence.HasAnnotation() {
+			value, ok := sequence.Annotations()[key1]
+			if ok {
+				switch value := value.(type) {
+				case string:
+					val1 = value
+				default:
+					val1 = fmt.Sprint(value)
+				}
+			}
+
+			if key2 != "" {
+				value, ok := sequence.Annotations()[key2]
+				if ok {
+					switch value := value.(type) {
+					case string:
+						val2 = value
+					default:
+						val2 = fmt.Sprint(value)
+					}
+				} else {
+					val2=na
+				}
+			}
+		}
+
+		locke.Lock()
+		defer locke.Unlock()
+
+		jb, _ := goutils.JsonMarshal([2]string{val1, val2})
+		json := string(jb)
+		k, ok := encode[json]
+
+		if !ok {
+			k = maxcode
+			maxcode++
+			encode[json] = k
+			decode = append(decode, json)
+		}
+
+		return k
+	}
+
+	value := func(k int) string {
+
+		locke.RLock()
+		defer locke.RUnlock()
+		if k >= maxcode {
+			log.Fatalf("value %d not register")
+		}
+		return decode[k]
+	}
+
+	reset := func() {
+		locke.Lock()
+		defer locke.Unlock()
+
+		for k := range encode {
+			delete(encode, k)
+		}
+		decode = decode[:0]
+	}
+
+	clone := func() *BioSequenceClassifier {
+		return DualAnnotationClassifier(key1, key2, na)
+	}
+
+	c := BioSequenceClassifier{code, value, reset, clone,"DualAnnotationClassifier"}
 	return &c
 }
 
@@ -121,7 +206,7 @@ func PredicateClassifier(predicate SequencePredicate) *BioSequenceClassifier {
 		return PredicateClassifier(predicate)
 	}
 
-	c := BioSequenceClassifier{code, value, reset, clone}
+	c := BioSequenceClassifier{code, value, reset, clone,"PredicateClassifier"}
 	return &c
 }
 
@@ -143,7 +228,7 @@ func HashClassifier(size int) *BioSequenceClassifier {
 		return HashClassifier(size)
 	}
 
-	c := BioSequenceClassifier{code, value, reset, clone}
+	c := BioSequenceClassifier{code, value, reset, clone,"HashClassifier"}
 	return &c
 }
 
@@ -198,7 +283,7 @@ func SequenceClassifier() *BioSequenceClassifier {
 		return SequenceClassifier()
 	}
 
-	c := BioSequenceClassifier{code, value, reset, clone}
+	c := BioSequenceClassifier{code, value, reset, clone,"SequenceClassifier"}
 	return &c
 }
 
@@ -228,6 +313,6 @@ func RotateClassifier(size int) *BioSequenceClassifier {
 		return RotateClassifier(size)
 	}
 
-	c := BioSequenceClassifier{code, value, reset, clone}
+	c := BioSequenceClassifier{code, value, reset, clone,"RotateClassifier"}
 	return &c
 }
