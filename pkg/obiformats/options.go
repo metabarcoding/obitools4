@@ -14,6 +14,7 @@ type __options__ struct {
 	parallel_workers      int
 	closefile             bool
 	appendfile            bool
+	compressed            bool
 }
 
 type Options struct {
@@ -33,6 +34,7 @@ func MakeOptions(setters []WithOption) Options {
 		batch_size:            5000,
 		closefile:             false,
 		appendfile:            false,
+		compressed:            false,
 	}
 
 	opt := Options{&o}
@@ -80,6 +82,10 @@ func (opt Options) AppendFile() bool {
 	return opt.pointer.appendfile
 }
 
+func (opt Options) CompressedFile() bool {
+	return opt.pointer.compressed
+}
+
 func OptionsBufferSize(size int) WithOption {
 	f := WithOption(func(opt Options) {
 		opt.pointer.buffer_size = size
@@ -107,6 +113,14 @@ func OptionDontCloseFile() WithOption {
 func OptionsAppendFile() WithOption {
 	f := WithOption(func(opt Options) {
 		opt.pointer.appendfile = true
+	})
+
+	return f
+}
+
+func OptionsCompressed() WithOption {
+	f := WithOption(func(opt Options) {
+		opt.pointer.compressed = true
 	})
 
 	return f

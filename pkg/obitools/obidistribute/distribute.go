@@ -40,6 +40,9 @@ func DistributeSequence(sequences obiiter.IBioSequence) {
 		opts = append(opts, obiformats.OptionsAppendFile())
 	}
 
+	if CLICompressed() {
+		opts = append(opts, obiformats.OptionsCompressed())
+	}
 	var formater obiformats.SequenceBatchWriterToFile
 
 	switch obiconvert.CLIOutputFormat() {

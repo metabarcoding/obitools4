@@ -11,6 +11,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/goutils"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
@@ -138,6 +139,8 @@ func WriteFasta(iterator obiiter.IBioSequence,
 			switch file := file.(type) {
 			case *os.File:
 				file.Close()
+			case *goutils.Wfile:
+				file.Close()
 			}
 		}
 		waitWriter.Done()
@@ -157,19 +160,13 @@ func WriteFastaToFile(iterator obiiter.IBioSequence,
 	filename string,
 	options ...WithOption) (obiiter.IBioSequence, error) {
 
-	var file *os.File
-	var err error
 
 	opt := MakeOptions(options)
 
-	if opt.AppendFile() {
-		log.Debug("Open files in appending mode")
-		file, err = os.OpenFile(filename,
-			os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	} else {
-		file, err = os.Create(filename)
-	}
-
+	file,err := goutils.OpenWritingFile(filename,
+		opt.CompressedFile(),
+		opt.AppendFile(),
+	)
 
 	if err != nil {
 		log.Fatalf("open file error: %v", err)

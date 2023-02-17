@@ -71,6 +71,7 @@ func OutputOptionSet(options *getoptions.GetOpt) {
 
 	options.BoolVar(&__no_progress_bar__, "no-progressbar", false,
 		options.Description("Disable the progress bar printing"))
+
 }
 
 func OptionSet(options *getoptions.GetOpt) {
