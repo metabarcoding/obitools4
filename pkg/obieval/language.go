@@ -3,6 +3,7 @@ package obieval
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/goutils"
 	"github.com/PaesslerAG/gval"
@@ -144,6 +145,10 @@ var OBILang = gval.NewLanguage(
 	}),
 	gval.Function("printf", func(args ...interface{}) (interface{}, error) {
 		text := fmt.Sprintf(args[0].(string), args[1:]...)
+		return text, nil
+	}),
+	gval.Function("subspc", func(args ...interface{}) (interface{}, error) {
+		text := strings.ReplaceAll(args[0].(string), " ", "_")
 		return text, nil
 	}),
 	gval.Function("int", func(args ...interface{}) (interface{}, error) {
