@@ -25,7 +25,8 @@ void* ecoError(int error,
 			   int *errno,
 			   char **error_msg)
 {
-	asprintf(error_msg, 
+	*error_msg = malloc(1001);
+	snprintf(*error_msg,1000, 
 	         "Error %d in file %s line %d : %s", 
 	               error,
 	               filename,
