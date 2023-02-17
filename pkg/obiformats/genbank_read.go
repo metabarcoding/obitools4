@@ -31,6 +31,7 @@ func _ParseGenbankFile(input <-chan _FileChunk, out obiiter.IBioSequence) {
 	state := inHeader
 
 	for chunks := range input {
+		log.Debugln("Chunk size", (chunks.raw.(*bytes.Buffer)).Len())
 		scanner := bufio.NewScanner(chunks.raw)
 		order := chunks.order
 		sequences := make(obiseq.BioSequenceSlice, 0, 100)
@@ -40,15 +41,15 @@ func _ParseGenbankFile(input <-chan _FileChunk, out obiiter.IBioSequence) {
 		featBytes := new(bytes.Buffer)
 		seqBytes := new(bytes.Buffer)
 		taxid := 1
+		nl := 0
+		sl := 0
 		for scanner.Scan() {
-
+			nl++
 			line := scanner.Text()
-
-			if !strings.HasPrefix(line, " ") && state != inHeader {
-				state = inEntry
-			}
-
 			switch {
+			case state==inDefinition && ! strings.HasPrefix(line, "            "):
+				state = inEntry
+				fallthrough
 			case strings.HasPrefix(line, "LOCUS       "):
 				state = inEntry
 				id = strings.SplitN(line[12:], " ", 2)[0]
@@ -62,27 +63,8 @@ func _ParseGenbankFile(input <-chan _FileChunk, out obiiter.IBioSequence) {
 				state = inFeature
 			case strings.HasPrefix(line, "ORIGIN      "):
 				state = inSequence
-			case strings.HasPrefix(line, "     "):
-				switch state {
-				case inDefinition:
-					defBytes.WriteByte(' ')
-					defBytes.WriteString(strings.TrimSpace(line[5:]))
-				case inFeature:
-					featBytes.WriteByte('\n')
-					featBytes.WriteString(line)
-					if strings.HasPrefix(line, `                     /db_xref="taxon:`) {
-						taxid, _ = strconv.Atoi(strings.SplitN(line[37:], `"`, 2)[0])
-					}
-				case inSequence:
-					parts := strings.SplitN(line[10:], " ", 7)
-					lparts := len(parts)
-					for i := 0; i < lparts; i++ {
-						seqBytes.WriteString(parts[i])
-					}
-				default: // Do nothing
-				}
-
 			case line == "//":
+				log.Debugln("Total lines := ", nl)
 				sequence := obiseq.NewBioSequence(id,
 					bytes.ToLower(seqBytes.Bytes()),
 					defBytes.String())
@@ -98,7 +80,29 @@ func _ParseGenbankFile(input <-chan _FileChunk, out obiiter.IBioSequence) {
 				defBytes = new(bytes.Buffer)
 				featBytes = new(bytes.Buffer)
 				seqBytes = new(bytes.Buffer)
+				nl=0
+				sl=0
+			default:
+				switch state {
+				case inDefinition:
+					defBytes.WriteByte(' ')
+					defBytes.WriteString(strings.TrimSpace(line[5:]))
+				case inFeature:
+					featBytes.WriteByte('\n')
+					featBytes.WriteString(line)
+					if strings.HasPrefix(line, `                     /db_xref="taxon:`) {
+						taxid, _ = strconv.Atoi(strings.SplitN(line[37:], `"`, 2)[0])
+					}
+				case inSequence:
+					sl++
+					parts := strings.SplitN(line[10:], " ", 7)
+					lparts := len(parts)
+					for i := 0; i < lparts; i++ {
+						seqBytes.WriteString(parts[i])
+					}
+				}
 			}
+
 		}
 		out.Push(obiiter.MakeBioSequenceBatch(order, sequences))
 	}

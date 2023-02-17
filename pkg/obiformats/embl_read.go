@@ -209,25 +209,28 @@ func _ReadFlatFileChunk(reader io.Reader, readers chan _FileChunk) {
 		end = _EndOfLastEntry(buff)
 
 		// If an extension was read, log the size and number of extensions
-		log.Debugf("Flat File chunck : final buff size %d bytes (%d extensions) -> end = %d\n",
-			len(buff),
-			ic,
-			end,
-		)
 
 		if len(buff) > 0 {
 			remains := buff[end:]
 			buff = buff[:end]
-	
+
 			// Send the chunk of data as a _FileChunk struct to the readers channel
 			io := bytes.NewBuffer(buff)
+
+			log.Debugf("Flat File chunck : final buff size %d bytes (%d) (%d extensions) -> end = %d\n",
+				len(buff),
+				io.Cap(),
+				ic,
+				end,
+			)
+
 			readers <- _FileChunk{io, i}
 			i++
-	
+
 			// Set the buffer to the size of a chunk of data and copy any remaining data to the new buffer
 			buff = make([]byte, _FileChunkSize)
 			copy(buff, remains)
-			l = len(remains)	
+			l = len(remains)
 		}
 	}
 
