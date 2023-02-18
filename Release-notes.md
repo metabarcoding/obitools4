@@ -1,6 +1,6 @@
 # OBITools release notes
 
-## February $18^th$, 2023. Release 4.0.0
+## February 18th, 2023. Release 4.0.0
 
 It is the first version of the *OBITools* version 4. I decided to tag then following two weeks
 of intensive data analysis with them allowing to discover many small bugs present in the previous
