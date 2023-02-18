@@ -110,17 +110,17 @@ func OptionDontCloseFile() WithOption {
 	return f
 }
 
-func OptionsAppendFile() WithOption {
+func OptionsAppendFile(append bool) WithOption {
 	f := WithOption(func(opt Options) {
-		opt.pointer.appendfile = true
+		opt.pointer.appendfile = append
 	})
 
 	return f
 }
 
-func OptionsCompressed() WithOption {
+func OptionsCompressed(compressed bool) WithOption {
 	f := WithOption(func(opt Options) {
-		opt.pointer.compressed = true
+		opt.pointer.compressed = compressed
 	})
 
 	return f

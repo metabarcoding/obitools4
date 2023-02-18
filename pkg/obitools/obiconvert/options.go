@@ -25,6 +25,7 @@ var __output_fastobi_format__ = false
 var __output_solexa_quality__ = false
 
 var __no_progress_bar__ = false
+var __compressed__ = false
 
 func InputOptionSet(options *getoptions.GetOpt) {
 	// options.IntVar(&__skipped_entries__, "skip", __skipped_entries__,
@@ -72,6 +73,10 @@ func OutputOptionSet(options *getoptions.GetOpt) {
 	options.BoolVar(&__no_progress_bar__, "no-progressbar", false,
 		options.Description("Disable the progress bar printing"))
 
+	options.BoolVar(&__compressed__, "--compress", false,
+		options.Alias("Z"),
+		options.Description("Output is compressed"))
+
 }
 
 func OptionSet(options *getoptions.GetOpt) {
@@ -108,6 +113,10 @@ func CLIOutputFormat() string {
 	default:
 		return "guessed"
 	}
+}
+
+func CLICompressed() bool {
+	return __compressed__
 }
 
 func CLIInputFastHeaderFormat() string {

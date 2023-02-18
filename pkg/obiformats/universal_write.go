@@ -7,12 +7,11 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/goutils"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
 )
 
 func WriteSequence(iterator obiiter.IBioSequence,
-	file io.Writer,
+	file io.WriteCloser,
 	options ...WithOption) (obiiter.IBioSequence, error) {
 
 	iterator = iterator.Rebatch(1000)
@@ -56,13 +55,13 @@ func WriteSequencesToFile(iterator obiiter.IBioSequence,
 	filename string,
 	options ...WithOption) (obiiter.IBioSequence, error) {
 
-
 	opt := MakeOptions(options)
+	flags := os.O_WRONLY | os.O_CREATE
 
-	file, err := goutils.OpenWritingFile(filename,
-		opt.CompressedFile(),
-		opt.AppendFile(),
-	)
+	if opt.AppendFile() {
+		flags |= os.O_APPEND
+	}
+	file, err := os.OpenFile(filename, flags, 0660)
 
 	if err != nil {
 		log.Fatalf("open file error: %v", err)

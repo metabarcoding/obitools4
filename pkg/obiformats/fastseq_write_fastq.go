@@ -54,9 +54,11 @@ type FileChunck struct {
 }
 
 func WriteFastq(iterator obiiter.IBioSequence,
-	file io.Writer,
+	file io.WriteCloser,
 	options ...WithOption) (obiiter.IBioSequence, error) {
 	opt := MakeOptions(options)
+
+	file,_ = goutils.CompressStream(file,opt.CompressedFile(),opt.CloseFile())
 
 	buffsize := iterator.BufferSize()
 	newIter := obiiter.MakeIBioSequence(buffsize)
@@ -123,14 +125,7 @@ func WriteFastq(iterator obiiter.IBioSequence,
 
 		}
 
-		if opt.CloseFile() {
-			switch file := file.(type) {
-			case *os.File:
-				file.Close()
-			case *goutils.Wfile:
-				file.Close()
-			}
-		}
+		file.Close()
 
 		log.Debugln("End of the fastq file writing")
 		obiiter.UnregisterPipe()
@@ -151,12 +146,13 @@ func WriteFastqToFile(iterator obiiter.IBioSequence,
 	options ...WithOption) (obiiter.IBioSequence, error) {
 
 	opt := MakeOptions(options)
+	flags := os.O_WRONLY | os.O_CREATE
 
-	file, err := goutils.OpenWritingFile(filename,
-		opt.CompressedFile(),
-		opt.AppendFile(),
-	)
-
+	if opt.AppendFile() {
+		flags |= os.O_APPEND
+	}
+	file, err := os.OpenFile(filename, flags, 0660)
+	
 	if err != nil {
 		log.Fatalf("open file error: %v", err)
 		return obiiter.NilIBioSequence, err

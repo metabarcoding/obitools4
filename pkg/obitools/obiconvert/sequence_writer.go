@@ -41,6 +41,8 @@ func CLIWriteBioSequences(iterator obiiter.IBioSequence,
 
 	opts = append(opts, obiformats.OptionsQualityShift(CLIOutputQualityShift()))
 
+	opts = append(opts, obiformats.OptionsCompressed(CLICompressed()))
+
 	var err error
 
 	if len(filenames) == 0 {

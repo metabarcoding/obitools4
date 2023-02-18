@@ -18,7 +18,6 @@ var _BatchCount = 0
 var _HashSize = 0
 var _NAValue = "NA"
 var _append = false
-var _compressed = false
 
 func DistributeOptionSet(options *getoptions.GetOpt) {
 	options.StringVar(&_FilenamePattern, "pattern", _FilenamePattern,
@@ -52,10 +51,6 @@ func DistributeOptionSet(options *getoptions.GetOpt) {
 		options.Alias("A"),
 		options.Description("Indicates to append sequence to files if they already exist."))
 
-	options.BoolVar(&_compressed, "--compress", false,
-		options.Alias("Z"),
-		options.Description("Output is compressed"))
-
 	options.IntVar(&_HashSize, "hash", 0,
 		options.Alias("H"),
 		options.Description("Indicates to split the input into at most <n> batch based on a hash code of the seequence."))
@@ -71,9 +66,6 @@ func CLIAppendSequences() bool {
 	return _append
 }
 
-func CLICompressed() bool {
-	return _compressed
-}
 
 func CLISequenceClassifier() *obiseq.BioSequenceClassifier {
 	switch {

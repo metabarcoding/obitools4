@@ -3,12 +3,14 @@ package goutils
 import (
 	"bufio"
 	"compress/gzip"
+	"io"
 	"os"
 )
 
 type Wfile struct {
 	compressed bool
-	f          *os.File
+	close      bool
+	out        io.WriteCloser
 	gf         *gzip.Writer
 	fw         *bufio.Writer
 }
@@ -36,10 +38,33 @@ func OpenWritingFile(name string, compressed bool, append bool) (*Wfile, error) 
 		fw = bufio.NewWriter(fi)
 	}
 
-	return &Wfile{compressed: compressed,
-		f:  fi,
-		gf: gf,
-		fw: fw,
+	return &Wfile{
+		compressed: compressed,
+		close:      true,
+		out:        fi,
+		gf:         gf,
+		fw:         fw,
+	}, nil
+}
+
+func CompressStream(out io.WriteCloser, compressed bool, close bool) (*Wfile, error) {
+	var gf *gzip.Writer
+	var fw *bufio.Writer
+
+	if compressed {
+		gf = gzip.NewWriter(out)
+		fw = bufio.NewWriter(gf)
+	} else {
+		gf = nil
+		fw = bufio.NewWriter(out)
+	}
+
+	return &Wfile{
+		compressed: compressed,
+		close:      close,
+		out:        out,
+		gf:         gf,
+		fw:         fw,
 	}, nil
 }
 
@@ -56,12 +81,17 @@ func (w *Wfile) Close() error {
 	err = nil
 
 	w.fw.Flush()
-	
+
 	if w.compressed {
 		err = w.gf.Close()
 	}
 
-	err2 := w.f.Close()
+	var err2 error
+	err2 = nil
+
+	if w.close {
+		err2 = w.out.Close()
+	}
 
 	if err == nil {
 		err = err2
