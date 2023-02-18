@@ -55,6 +55,8 @@ func (w *Wfile) Close() error {
 	var err error
 	err = nil
 
+	w.fw.Flush()
+	
 	if w.compressed {
 		err = w.gf.Close()
 	}
