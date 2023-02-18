@@ -1,0 +1,26 @@
+## Utilities
+
+### `obicount`
+
+`obicount` counts the number of sequence records, the sum of the ``count`` attributes, and the sum
+of the length of all the sequences.
+
+*Example:*
+
+``` bash        
+obicount seq.fasta  
+```
+Prints the number of sequence records contained in the ``seq.fasta`` 
+file and the sum of their ``count`` attributes.
+
+*Options specific to the command*
+
+-  `--reads|-r `            Prints read counts. 
+-   `--symbols|-s`           Prints symbol counts. 
+-   `--variants|-v`          Prints variant counts. 
+
+### `obidistribute`
+
+### `obifind`
+
+> Replace the `ecofind` original *OBITools.*

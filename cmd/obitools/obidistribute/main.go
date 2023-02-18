@@ -16,6 +16,7 @@ func main() {
 	_, args, _ := optionParser(os.Args)
 
 	fs, _ := obiconvert.ReadBioSequences(args...)
+	
 	obidistribute.DistributeSequence(fs)
 
 	obiiter.WaitForLastPipe()

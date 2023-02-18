@@ -20,6 +20,69 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1.6em;
   vertical-align: middle;
 }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { color: #008000; } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { color: #008000; font-weight: bold; } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
 div.csl-bib-body { }
 div.csl-entry {
   clear: both;
@@ -175,16 +238,36 @@ div.csl-indent {
   <li><a href="#function-defined-in-the-language" id="toc-function-defined-in-the-language" class="nav-link" data-scroll-target="#function-defined-in-the-language"><span class="toc-section-number">4.3.2</span>  Function defined in the language</a></li>
   <li><a href="#accessing-to-the-sequence-annotations" id="toc-accessing-to-the-sequence-annotations" class="nav-link" data-scroll-target="#accessing-to-the-sequence-annotations"><span class="toc-section-number">4.3.3</span>  Accessing to the sequence annotations</a></li>
   </ul></li>
-  <li><a href="#metabarcode-design-and-quality-assessment" id="toc-metabarcode-design-and-quality-assessment" class="nav-link" data-scroll-target="#metabarcode-design-and-quality-assessment"><span class="toc-section-number">4.4</span>  Metabarcode design and quality assessment</a></li>
-  <li><a href="#file-format-conversions" id="toc-file-format-conversions" class="nav-link" data-scroll-target="#file-format-conversions"><span class="toc-section-number">4.5</span>  File format conversions</a></li>
-  <li><a href="#sequence-annotations" id="toc-sequence-annotations" class="nav-link" data-scroll-target="#sequence-annotations"><span class="toc-section-number">4.6</span>  Sequence annotations</a></li>
+  <li><a href="#metabarcode-design-and-quality-assessment" id="toc-metabarcode-design-and-quality-assessment" class="nav-link" data-scroll-target="#metabarcode-design-and-quality-assessment"><span class="toc-section-number">4.4</span>  Metabarcode design and quality assessment</a>
+  <ul class="collapse">
+  <li><a href="#obipcr" id="toc-obipcr" class="nav-link" data-scroll-target="#obipcr"><span class="toc-section-number">4.4.1</span>  <code>obipcr</code></a></li>
+  </ul></li>
+  <li><a href="#file-format-conversions" id="toc-file-format-conversions" class="nav-link" data-scroll-target="#file-format-conversions"><span class="toc-section-number">4.5</span>  File format conversions</a>
+  <ul class="collapse">
+  <li><a href="#obiconvert" id="toc-obiconvert" class="nav-link" data-scroll-target="#obiconvert"><span class="toc-section-number">4.5.1</span>  <code>obiconvert</code></a></li>
+  </ul></li>
+  <li><a href="#sequence-annotations" id="toc-sequence-annotations" class="nav-link" data-scroll-target="#sequence-annotations"><span class="toc-section-number">4.6</span>  Sequence annotations</a>
+  <ul class="collapse">
+  <li><a href="#obiannotate" id="toc-obiannotate" class="nav-link" data-scroll-target="#obiannotate"><span class="toc-section-number">4.6.1</span>  <code>obiannotate</code></a></li>
+  <li><a href="#obitag" id="toc-obitag" class="nav-link" data-scroll-target="#obitag"><span class="toc-section-number">4.6.2</span>  <code>obitag</code></a></li>
+  </ul></li>
   <li><a href="#computations-on-sequences" id="toc-computations-on-sequences" class="nav-link" data-scroll-target="#computations-on-sequences"><span class="toc-section-number">4.7</span>  Computations on sequences</a>
   <ul class="collapse">
   <li><a href="#obipairing" id="toc-obipairing" class="nav-link" data-scroll-target="#obipairing"><span class="toc-section-number">4.7.1</span>  <code>obipairing</code></a></li>
+  <li><a href="#obimultiplex" id="toc-obimultiplex" class="nav-link" data-scroll-target="#obimultiplex"><span class="toc-section-number">4.7.2</span>  <code>obimultiplex</code></a></li>
+  <li><a href="#obicomplement" id="toc-obicomplement" class="nav-link" data-scroll-target="#obicomplement"><span class="toc-section-number">4.7.3</span>  <code>obicomplement</code></a></li>
+  <li><a href="#obiclean" id="toc-obiclean" class="nav-link" data-scroll-target="#obiclean"><span class="toc-section-number">4.7.4</span>  <code>obiclean</code></a></li>
+  <li><a href="#obiuniq" id="toc-obiuniq" class="nav-link" data-scroll-target="#obiuniq"><span class="toc-section-number">4.7.5</span>  <code>obiuniq</code></a></li>
   </ul></li>
   <li><a href="#sequence-sampling-and-filtering" id="toc-sequence-sampling-and-filtering" class="nav-link" data-scroll-target="#sequence-sampling-and-filtering"><span class="toc-section-number">4.8</span>  Sequence sampling and filtering</a>
   <ul class="collapse">
-  <li><a href="#utilities" id="toc-utilities" class="nav-link" data-scroll-target="#utilities"><span class="toc-section-number">4.8.1</span>  Utilities</a></li>
+  <li><a href="#obigrep" id="toc-obigrep" class="nav-link" data-scroll-target="#obigrep"><span class="toc-section-number">4.8.1</span>  <code>obigrep</code></a></li>
+  </ul></li>
+  <li><a href="#utilities" id="toc-utilities" class="nav-link" data-scroll-target="#utilities"><span class="toc-section-number">4.9</span>  Utilities</a>
+  <ul class="collapse">
+  <li><a href="#obicount" id="toc-obicount" class="nav-link" data-scroll-target="#obicount"><span class="toc-section-number">4.9.1</span>  <code>obicount</code></a></li>
+  <li><a href="#obidistribute" id="toc-obidistribute" class="nav-link" data-scroll-target="#obidistribute"><span class="toc-section-number">4.9.2</span>  <code>obidistribute</code></a></li>
+  <li><a href="#obifind" id="toc-obifind" class="nav-link" data-scroll-target="#obifind"><span class="toc-section-number">4.9.3</span>  <code>obifind</code></a></li>
   </ul></li>
   </ul>
 </nav>
@@ -268,40 +351,52 @@ div.csl-indent {
 <p>Several OBITools (<em>e.g.</em> obigrep, obiannotate) allow the user to specify some simple expressions to compute values or define predicates. This expressions are parsed and evaluated using the <a href="https://pkg.go.dev/github.com/PaesslerAG/gval" title="Gval (Go eVALuate) for evaluating arbitrary expressions Go-like expressions.">gval</a> go package, which allows for evaluating go-Like expression.</p>
 <section id="variables-usable-in-the-expression" class="level3" data-number="4.3.1">
 <h3 data-number="4.3.1" class="anchored" data-anchor-id="variables-usable-in-the-expression"><span class="header-section-number">4.3.1</span> Variables usable in the expression</h3>
-<section id="sequence" class="level4" data-number="4.3.1.1">
-<h4 data-number="4.3.1.1" class="anchored" data-anchor-id="sequence"><span class="header-section-number">4.3.1.1</span> sequence</h4>
-<p>sequence is the sequence object on which the expression is evaluated</p>
-</section>
-<section id="annotation" class="level4" data-number="4.3.1.2">
-<h4 data-number="4.3.1.2" class="anchored" data-anchor-id="annotation"><span class="header-section-number">4.3.1.2</span> annotation</h4>
-</section>
+<ul>
+<li><code>sequence</code> is the sequence object on which the expression is evaluated.</li>
+<li><code>annotations</code>is a map object containing every annotations associated to the currently processed sequence.</li>
+</ul>
 </section>
 <section id="function-defined-in-the-language" class="level3" data-number="4.3.2">
 <h3 data-number="4.3.2" class="anchored" data-anchor-id="function-defined-in-the-language"><span class="header-section-number">4.3.2</span> Function defined in the language</h3>
-<section id="len" class="level4" data-number="4.3.2.1">
-<h4 data-number="4.3.2.1" class="anchored" data-anchor-id="len"><span class="header-section-number">4.3.2.1</span> len</h4>
+<section id="instrospection-functions" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="instrospection-functions">Instrospection functions</h4>
+<ul>
+<li><code>len(x)</code>is a generic function allowing to retreive the size of a object. It returns the length of a sequences, the number of element in a map like <code>annotations</code>, the number of elements in an array. The reurned value is an <code>int</code>.</li>
+</ul>
 </section>
-<section id="ismap" class="level4" data-number="4.3.2.2">
-<h4 data-number="4.3.2.2" class="anchored" data-anchor-id="ismap"><span class="header-section-number">4.3.2.2</span> ismap</h4>
+<section id="cast-functions" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="cast-functions">Cast functions</h4>
+<ul>
+<li><code>int(x)</code> converts if possible the <code>x</code> value to an integer value. The function returns an <code>int</code>.</li>
+<li><code>numeric(x)</code> converts if possible the <code>x</code> value to a float value. The function returns a <code>float</code>.</li>
+<li><code>bool(x)</code> converts if possible the <code>x</code> value to a boolean value. The function returns a <code>bool</code>.</li>
+</ul>
 </section>
-<section id="hasattribute" class="level4" data-number="4.3.2.3">
-<h4 data-number="4.3.2.3" class="anchored" data-anchor-id="hasattribute"><span class="header-section-number">4.3.2.3</span> hasattribute</h4>
-</section>
-<section id="min" class="level4" data-number="4.3.2.4">
-<h4 data-number="4.3.2.4" class="anchored" data-anchor-id="min"><span class="header-section-number">4.3.2.4</span> min</h4>
-</section>
-<section id="max" class="level4" data-number="4.3.2.5">
-<h4 data-number="4.3.2.5" class="anchored" data-anchor-id="max"><span class="header-section-number">4.3.2.5</span> max</h4>
+<section id="string-related-functions" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="string-related-functions">String related functions</h4>
+<ul>
+<li><code>printf(format,...)</code> allows to combine several values to build a string. <code>format</code> follows the classical C <code>printf</code> syntax. The function returns a <code>string</code>.</li>
+<li><code>subspc(x)</code> substitutes every space in the <code>x</code> string by the underscore (<code>_</code>) character. The function returns a <code>string</code>.</li>
+</ul>
 </section>
 </section>
 <section id="accessing-to-the-sequence-annotations" class="level3" data-number="4.3.3">
 <h3 data-number="4.3.3" class="anchored" data-anchor-id="accessing-to-the-sequence-annotations"><span class="header-section-number">4.3.3</span> Accessing to the sequence annotations</h3>
+<p>The <code>annotations</code> variable is a map object containing all the annotations associated to the currently processed sequence. Index of the map are the attribute names. It exists to possibillities to retreive an annotation. It is possible to use the classical <code>[]</code> indexing operator, putting the attribute name quoted by double quotes between them.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode go code-with-copy"><code class="sourceCode go"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>annotations<span class="op">[</span><span class="st">"direction"</span><span class="op">]</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>The above code retreives the <code>direction</code> annotation. A second notation using the dot (<code>.</code>) is often more convenient.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode go code-with-copy"><code class="sourceCode go"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>annotations<span class="op">.</span>direction</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Special attributes of the sequence are accessible only by dedicated methods of the <code>sequence</code> object.</p>
+<ul>
+<li>The sequence identifier : <code>Id()</code></li>
+<li>THe sequence definition : <code>Definition()</code></li>
+</ul>
 </section>
 </section>
 <section id="metabarcode-design-and-quality-assessment" class="level2" data-number="4.4">
 <h2 data-number="4.4" class="anchored" data-anchor-id="metabarcode-design-and-quality-assessment"><span class="header-section-number">4.4</span> Metabarcode design and quality assessment</h2>
-<section id="obipcr" class="level4" data-number="4.4.0.1">
-<h4 data-number="4.4.0.1" class="anchored" data-anchor-id="obipcr"><span class="header-section-number">4.4.0.1</span> <code>obipcr</code></h4>
+<section id="obipcr" class="level3" data-number="4.4.1">
+<h3 data-number="4.4.1" class="anchored" data-anchor-id="obipcr"><span class="header-section-number">4.4.1</span> <code>obipcr</code></h3>
 <blockquote class="blockquote">
 <p>Replace the <code>ecoPCR</code> original <em>OBITools</em></p>
 </blockquote>
@@ -309,14 +404,17 @@ div.csl-indent {
 </section>
 <section id="file-format-conversions" class="level2" data-number="4.5">
 <h2 data-number="4.5" class="anchored" data-anchor-id="file-format-conversions"><span class="header-section-number">4.5</span> File format conversions</h2>
-<section id="obiconvert" class="level4" data-number="4.5.0.1">
-<h4 data-number="4.5.0.1" class="anchored" data-anchor-id="obiconvert"><span class="header-section-number">4.5.0.1</span> <code>obiconvert</code></h4>
+<section id="obiconvert" class="level3" data-number="4.5.1">
+<h3 data-number="4.5.1" class="anchored" data-anchor-id="obiconvert"><span class="header-section-number">4.5.1</span> <code>obiconvert</code></h3>
 </section>
 </section>
 <section id="sequence-annotations" class="level2" data-number="4.6">
 <h2 data-number="4.6" class="anchored" data-anchor-id="sequence-annotations"><span class="header-section-number">4.6</span> Sequence annotations</h2>
-<section id="obitag" class="level4" data-number="4.6.0.1">
-<h4 data-number="4.6.0.1" class="anchored" data-anchor-id="obitag"><span class="header-section-number">4.6.0.1</span> <code>obitag</code></h4>
+<section id="obiannotate" class="level3" data-number="4.6.1">
+<h3 data-number="4.6.1" class="anchored" data-anchor-id="obiannotate"><span class="header-section-number">4.6.1</span> <code>obiannotate</code></h3>
+</section>
+<section id="obitag" class="level3" data-number="4.6.2">
+<h3 data-number="4.6.2" class="anchored" data-anchor-id="obitag"><span class="header-section-number">4.6.2</span> <code>obitag</code></h3>
 </section>
 </section>
 <section id="computations-on-sequences" class="level2" data-number="4.7">
@@ -326,15 +424,15 @@ div.csl-indent {
 <blockquote class="blockquote">
 <p>Replace the <code>illuminapairedends</code> original <em>OBITools</em></p>
 </blockquote>
-<section id="alignment-procedure" class="level4" data-number="4.7.1.1">
-<h4 data-number="4.7.1.1" class="anchored" data-anchor-id="alignment-procedure"><span class="header-section-number">4.7.1.1</span> Alignment procedure</h4>
+<section id="alignment-procedure" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="alignment-procedure">Alignment procedure</h4>
 <p><code>obipairing</code> is introducing a new alignment algorithm compared to the <code>illuminapairedend</code> command of the <code>OBITools V2</code>. Nethertheless this new algorithm has been design to produce the same results than the previous, except in very few cases.</p>
 <p>The new algorithm is a two-step procedure. First, a FASTN-type algorithm <span class="citation" data-cites="Lipman1985-hw">(<a href="references.html#ref-Lipman1985-hw" role="doc-biblioref">Lipman and Pearson 1985</a>)</span> identifies the best offset between the two matched readings. This identifies the region of overlap.</p>
 <p>In the second step, the matching regions of the two reads are extracted along with a flanking sequence of <span class="math inline">\(\Delta\)</span> base pairs. The two subsequences are then aligned using a “one side free end-gap” dynamic programming algorithm. This latter step is only called if at least one mismatch is detected by the FASTP step.</p>
 <p>Unless the similarity between the two reads at their overlap region is very low, the addition of the flanking regions in the second step of the alignment ensures the same alignment as if the dynamic programming alignment was performed on the full reads.</p>
 </section>
-<section id="the-scoring-system" class="level4" data-number="4.7.1.2">
-<h4 data-number="4.7.1.2" class="anchored" data-anchor-id="the-scoring-system"><span class="header-section-number">4.7.1.2</span> The scoring system</h4>
+<section id="the-scoring-system" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="the-scoring-system">The scoring system</h4>
 <p>In the dynamic programming step, the match and mismatch scores take into account the quality scores of the two aligned nucleotides. By taking these into account, the probability of a true match can be calculated for each aligned base pair.</p>
 <p>If we consider a nucleotide read with a quality score <span class="math inline">\(Q\)</span>, the probability of misreading this base (<span class="math inline">\(P_E\)</span>) is : <span class="math display">\[
 P_E = 10^{-\frac{Q}{10}}
@@ -388,6 +486,12 @@ P(MATCH | X_1 \neq X_2) =  (1-P_{E1})\frac{P_{E2}}{3} +  (1-P_{E2})\frac{P_{E1}}
 \end{aligned}
 \]</span></p>
 <p><strong>Probability of a match under the random model</strong></p>
+<p>The second considered model is a pure random model where every base is equiprobable, hence having a probability of occurrence of a nucleotide equals <span class="math inline">\(0.25\)</span>. Under that hypothesis</p>
+<p><span class="math display">\[
+P(MATCH | \text{Random model}) = 0.25
+\]</span></p>
+<p><strong>The score is a log ration of likelyhood</strong></p>
+<p>Score is define as the logarithm of the ratio between the likelyhood of the observations considering the sequencer error model over tha likelyhood u</p>
 <div class="cell">
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
@@ -399,38 +503,49 @@ P(MATCH | X_1 \neq X_2) =  (1-P_{E1})\frac{P_{E2}}{3} +  (1-P_{E2})\frac{P_{E1}}
 </div>
 </div>
 </section>
-<section id="obimultiplex" class="level4" data-number="4.7.1.3">
-<h4 data-number="4.7.1.3" class="anchored" data-anchor-id="obimultiplex"><span class="header-section-number">4.7.1.3</span> <code>obimultiplex</code></h4>
+</section>
+<section id="obimultiplex" class="level3" data-number="4.7.2">
+<h3 data-number="4.7.2" class="anchored" data-anchor-id="obimultiplex"><span class="header-section-number">4.7.2</span> <code>obimultiplex</code></h3>
 <blockquote class="blockquote">
 <p>Replace the <code>ngsfilter</code> original <em>OBITools</em></p>
 </blockquote>
 </section>
-<section id="obicomplement" class="level4" data-number="4.7.1.4">
-<h4 data-number="4.7.1.4" class="anchored" data-anchor-id="obicomplement"><span class="header-section-number">4.7.1.4</span> <code>obicomplement</code></h4>
+<section id="obicomplement" class="level3" data-number="4.7.3">
+<h3 data-number="4.7.3" class="anchored" data-anchor-id="obicomplement"><span class="header-section-number">4.7.3</span> <code>obicomplement</code></h3>
 </section>
-<section id="obiclean" class="level4" data-number="4.7.1.5">
-<h4 data-number="4.7.1.5" class="anchored" data-anchor-id="obiclean"><span class="header-section-number">4.7.1.5</span> <code>obiclean</code></h4>
+<section id="obiclean" class="level3" data-number="4.7.4">
+<h3 data-number="4.7.4" class="anchored" data-anchor-id="obiclean"><span class="header-section-number">4.7.4</span> <code>obiclean</code></h3>
 </section>
-<section id="obiuniq" class="level4" data-number="4.7.1.6">
-<h4 data-number="4.7.1.6" class="anchored" data-anchor-id="obiuniq"><span class="header-section-number">4.7.1.6</span> <code>obiuniq</code></h4>
-</section>
+<section id="obiuniq" class="level3" data-number="4.7.5">
+<h3 data-number="4.7.5" class="anchored" data-anchor-id="obiuniq"><span class="header-section-number">4.7.5</span> <code>obiuniq</code></h3>
 </section>
 </section>
 <section id="sequence-sampling-and-filtering" class="level2" data-number="4.8">
 <h2 data-number="4.8" class="anchored" data-anchor-id="sequence-sampling-and-filtering"><span class="header-section-number">4.8</span> Sequence sampling and filtering</h2>
-<section id="obigrep" class="level4" data-number="4.8.0.1">
-<h4 data-number="4.8.0.1" class="anchored" data-anchor-id="obigrep"><span class="header-section-number">4.8.0.1</span> <code>obigrep</code></h4>
+<section id="obigrep" class="level3" data-number="4.8.1">
+<h3 data-number="4.8.1" class="anchored" data-anchor-id="obigrep"><span class="header-section-number">4.8.1</span> <code>obigrep</code></h3>
 </section>
-<section id="utilities" class="level3" data-number="4.8.1">
-<h3 data-number="4.8.1" class="anchored" data-anchor-id="utilities"><span class="header-section-number">4.8.1</span> Utilities</h3>
-<section id="obicount" class="level4" data-number="4.8.1.1">
-<h4 data-number="4.8.1.1" class="anchored" data-anchor-id="obicount"><span class="header-section-number">4.8.1.1</span> <code>obicount</code></h4>
 </section>
-<section id="obidistribute" class="level4" data-number="4.8.1.2">
-<h4 data-number="4.8.1.2" class="anchored" data-anchor-id="obidistribute"><span class="header-section-number">4.8.1.2</span> <code>obidistribute</code></h4>
+<section id="utilities" class="level2" data-number="4.9">
+<h2 data-number="4.9" class="anchored" data-anchor-id="utilities"><span class="header-section-number">4.9</span> Utilities</h2>
+<section id="obicount" class="level3" data-number="4.9.1">
+<h3 data-number="4.9.1" class="anchored" data-anchor-id="obicount"><span class="header-section-number">4.9.1</span> <code>obicount</code></h3>
+<p><code>obicount</code> counts the number of sequence records, the sum of the <code>count</code> attributes, and the sum of the length of all the sequences.</p>
+<p><em>Example:</em></p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">obicount</span> seq.fasta  </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Prints the number of sequence records contained in the <code>seq.fasta</code> file and the sum of their <code>count</code> attributes.</p>
+<p><em>Options specific to the command</em></p>
+<ul>
+<li><code>--reads|-r</code> Prints read counts.</li>
+<li><code>--symbols|-s</code> Prints symbol counts.</li>
+<li><code>--variants|-v</code> Prints variant counts.</li>
+</ul>
 </section>
-<section id="obifind" class="level4" data-number="4.8.1.3">
-<h4 data-number="4.8.1.3" class="anchored" data-anchor-id="obifind"><span class="header-section-number">4.8.1.3</span> <code>obifind</code></h4>
+<section id="obidistribute" class="level3" data-number="4.9.2">
+<h3 data-number="4.9.2" class="anchored" data-anchor-id="obidistribute"><span class="header-section-number">4.9.2</span> <code>obidistribute</code></h3>
+</section>
+<section id="obifind" class="level3" data-number="4.9.3">
+<h3 data-number="4.9.3" class="anchored" data-anchor-id="obifind"><span class="header-section-number">4.9.3</span> <code>obifind</code></h3>
 <blockquote class="blockquote">
 <p>Replace the <code>ecofind</code> original <em>OBITools.</em></p>
 </blockquote>
@@ -441,7 +556,6 @@ P(MATCH | X_1 \neq X_2) =  (1-P_{E1})\frac{P_{E2}}{3} +  (1-P_{E2})\frac{P_{E1}}
 Lipman, D J, and W R Pearson. 1985. <span>“<span class="nocase">Rapid and sensitive protein similarity searches</span>.”</span> <em>Science</em> 227 (4693): 1435–41. <a href="http://www.ncbi.nlm.nih.gov/pubmed/2983426">http://www.ncbi.nlm.nih.gov/pubmed/2983426</a>.
 </div>
 </div>
-</section>
 </section>
 </section>
 
