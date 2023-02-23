@@ -1,0 +1,153 @@
+---
+title: "obigrep"
+section: 1
+author: Eric Coissac <eric.coissac@metabarcoding.org>
+format:  
+  html: default
+  man: default
+---
+
+# NAME
+
+obigrep -- filters sequence files according to numerous conditions
+
+# SYNOPSIS
+
+
+**obigrep**     \[**\--attribute** | **-a** _KEY=VALUE_]... 
+                \[**\--compress** | **-Z**] 
+                \[**\--debug**] 
+                \[**\--definition**|**-D** _PATTERN_]...  
+                \[**\--ecopcr**] 
+                \[**\--embl**] 
+                \[**\--fasta-output**]
+                \[**\--fastq-output**] 
+                \[**\--genbank**] 
+                \[**\--has-attribute** | **-A** _KEY_]...
+                \[**\--help** | **-h** | **-?**] 
+                \[**\--id-list** _FILENAME_] 
+                \[**\--identifier** | **-I** _PATTERN_]...
+                \[**\--ignore-taxon** | **-i** _TAXID_]... 
+                \[**\--input-OBI-header**]
+                \[**\--input-json-header**] 
+                \[**\--inverse-match** | **-v**] 
+                \[**\--max-count**|**-C** _COUNT_]
+                \[**\--max-cpu** _INT_] 
+                \[**\--max-length** | **-L** _LENGTH_] 
+                \[**\--min-count** | **-c** _COUNT_]
+                \[**\--min-length** | **-l** _LENGTH_] 
+                \[**\--no-order**] 
+                \[**\--no-progressbar**]
+                \[**\--out** | **-o** _FILENAME_] 
+                \[**\--output-OBI-header** | **-O**] 
+                \[**\--output-json-header**]
+                \[**\--paired-mode** _forward|reverse|and|or|andnot|xor_]
+                \[**\--paired-with** _FILENAME_] 
+                \[**\--predicate**|**-p** _EXPRESSION_]...
+                \[**\--require-rank** _RANK_NAME_]... 
+                \[**\--restrict-to-taxon** | **-r** _TAXID_]...
+                \[**\--save-discarded** _FILENAME_] 
+                \[**\--sequence**|**-s** _PATTERN_]... 
+                \[**\--solexa**]
+                \[**\--taxdump** | **-t** _DIRECTORY_] 
+                \[**\--workers** | **-w** _INT_] [_FILENAMES_]
+
+# DESCRIPTION
+
+{{< include ../lib/descriptions/_obigrep.qmd >}}
+
+# OPTIONS
+
+## General options
+
+{{< include ../lib/options/_system.qmd >}}
+
+## Input format options
+
+The OBITools are centered around the [FASTA] (https://en.wikipedia.org/wiki/FASTA_format) and [FASTQ] (https://en.wikipedia.org/wiki/FASTQ_format) formats. These formats are automaticaly recognized when data are read both from files, and from standard input (`stdin`). Other formats (genbank, EMBL, ecopcr) are also automatically identified when data are read from files, but for stdin input, input format must be indicated using one of the following options.
+
+
+## Output format options
+
+{{< include ../lib/options/_output.qmd >}}
+
+## Paired reads options
+
+**\--paired-with** _FILENAME_
+
+**\--paired-mode** _forward|reverse|and|or|andnot|xor_
+
+## Taxonomy related options
+
+**\--taxdump** | **-t** _DIRECTORY_
+
+**\--ignore-taxon** | **-i** _TAXID_
+
+**\--require-rank** _RANK_NAME_
+
+**\--restrict-to-taxon** | **-r** _TAXID_
+
+## Filtering options
+
+**\--has-attribute** | **-A** _KEY_...
+
+**\--id-list** _FILENAME_ 
+
+**\--identifier** | **-I** _PATTERN_
+
+{{< include ../lib/options/selection/_max-count.qmd >}}
+
+{{< include ../lib/options/selection/_min-count.qmd >}}
+
+**\--max-length** | **-L** _LENGTH_
+
+**\--min-length** | **-l** _LENGTH_
+
+**\--predicate**|**-p** _EXPRESSION_
+
+**\--sequence**|**-s** _PATTERN_
+
+**\--inverse-match** | **-v**
+
+**\--save-discarded** _FILENAME_
+
+# ENVIRONMENT
+
+**OBICPUMAX**
+
+# EXAMPLES
+
+- Filtering sequence file to keep only barcodes between 8 and 130 bp.
+
+  ```bash
+  obigrep -l 8 -L 130 data_SPER01.fasta > data_goodLength_SPER01.fasta
+  ```
+
+- Filtering reads without anbiguity base code in its sequence.
+
+  ```bash
+  obigrep -s '^[acgt]+$' data_SPER01.fasta > data_onlyACGT_SPER01.fasta
+  ```  
+- Filtering paired files for keeping only pairs of read without ambiguity.
+
+  ```bash
+  obigrep  -s '^[acgt]+$' \
+           --paired-mode and --paired-with wolf_R.fastq.gz \
+           --out wolf_good.fastq \
+           wolf_F.fastq.gz
+  ```
+
+  That command produces two files `wolf_good_R1.fastq` and `wolf_good_R1.fastq`
+  containing respectively the filtered forward and reverse reads.
+
+# SEE ALSO
+
+`obiannotate`
+
+# HISTORY
+
+# BUGS
+
+Submit bug reports online at: https://git.metabarcoding.org/obitools/obitools4/obitools4/-/issues
+
+
