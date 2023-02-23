@@ -43,6 +43,11 @@ all: obitools
 packages: $(patsubst %,pkg-%,$(PACKAGES))
 obitools: $(patsubst %,$(OBITOOLS_PREFIX)%,$(OBITOOLS)) 
 
+man: 
+	make -C doc man
+obibook: 
+	make -C doc obibook
+doc: man obibook
 
 macos-pkg: 
 	@bash pkgs/macos/macos-installer-builder-master/macOS-x64/build-macos-x64.sh \
@@ -57,3 +62,4 @@ $(foreach P,$(PACKAGE_DIRS),$(eval $(call MAKE_PKG_RULE,$(P))))
 
 $(foreach P,$(OBITOOLS_DIRS),$(eval $(call MAKE_OBITOOLS_RULE,$(P))))
 
+.PHONY: all packages obitools man obibook doc

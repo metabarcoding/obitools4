@@ -24,6 +24,7 @@ require (
 	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/rrethy/ahocorasick v1.0.0 // indirect
+	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/vc60er/deptree v0.0.0-20220713110736-c48b0387dddc // indirect
 	github.com/yuin/goldmark v1.4.13 // indirect
 	golang.org/x/crypto v0.0.0-20220131195533-30dcbda58838 // indirect

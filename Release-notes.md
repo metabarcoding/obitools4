@@ -1,5 +1,38 @@
 # OBITools release notes
 
+## On going changes
+
+### Corrected bugs
+
+- Makes progress bar updating at most 10 times per second.
+- Makes the command exiting on error if undefined options are used.
+
+### New features
+
+- Takes into account the `OBIMAXCPU` environmental variable to limit the number of CPU cores used
+  by OBITools in bash the below command will limit to 4 cores the usage of OBITools
+
+  ```bash
+  export OBICPUMAX=4
+  ```
+
+- Adds a new option --out|-o allowing to specify the name of an outpout file.
+  
+  ```bash
+  obiconvert -o xyz.fasta xxx.fastq
+  ```
+
+  is thus equivalent to
+
+  ```bash
+  obiconvert  xxx.fastq > xyz.fasta
+  ````
+
+  That option is actually mainly useful for dealing with paired reads sequence files.
+
+- Some OBITools (now `obigrep` and `obiconvert`) are capable of using paired read files. 
+  Options have been added for this (**--paired-with** _FILENAME_, and **--paired-mode** _forward|reverse|and|andnot|xor_). This, in combination with the **--out** option shown above, ensures that the two matched files remain consistent when processed. 
+
 ## February $18^th$, 2023. Release 4.0.0
 
 It is the first version of the *OBITools* version 4. I decided to tag then following two weeks
@@ -17,7 +50,7 @@ to use the git ticket system to mention them. But they seems to produce now reli
 - The `obipairing` tools had a non deterministic comportment when aligning a paor very low quality reads.
   This induced that the result of the same low quality read pair was not the same from run to run.
 
-### New functionality
+### New features
 
 - Adding of a `--compress|-Z` option to every obitools allowing to produce `gz` compressed output. OBITools
   were already able to deal with gziped input files transparently. They can now produce their résults in the same format.
