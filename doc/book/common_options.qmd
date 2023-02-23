@@ -1,0 +1,46 @@
+# Options common to most of the *OBITools* commands
+
+## Helpful options
+
+{{< include ../lib/options/system/_help.qmd >}}
+
+{{< include ../lib/options/system/_no-progressbar.qmd >}}
+
+## System related options
+
+**Managing parallel execution of tasks**
+
+A new feature of *OBITools* V4 is the ability to run multiple tasks in parallel, reading files, calculating on the data, formatting and writing the results. Each of these tasks can itself be parallelized by dividing the data into batches and running the calculation on several batches in parallel. This allows the overall calculation time of an *OBITools* command to be reduced considerably. The parameters organizing the parallel calculation are determined automatically to use the maximum capacity of your computer. But in some circumstances, it is necessary to override these default settings either to try to optimize the computation on a given machine, or to limit the OBITools to using only a part of the computational capacity. There are two options for doing this.
+
+{{< include ../lib/options/system/_max-cpu.qmd >}}
+
+{{< include ../lib/options/system/_workers.qmd >}}
+
+If your computer has 8 cores, but you want to limit *OBITools* to use only two of them you have several solution:
+
+- If you want to set the limit for a single execution you can use the **--max-cpu** option
+
+  ```bash
+  obiconvert --max-cpu 2 --fasta-output data.fastq > data.fasta
+  ```
+
+  or you can precede the command by setting the environment variable `OBIMAXCPU` 
+
+  ```bash
+  OBIMAXCPU=2 obiconvert --fasta-output data.fastq > data.fasta
+  ```
+
+- If you want to set the limit to your complete session, you have to export `OBIMAXCPU` 
+
+  ```bash
+  export OBIMAXCPU=2 
+  ```
+
+  all the following OBITools commands will be limited to use at max 2 CPU cores.
+
+- If all the time you want to impose this limit, you must include the above `export` 
+  command in your `.bashrc` file.
+
+**OBITools debuging related options**
+
+{{< include ../lib/options/system/_debug.qmd >}}

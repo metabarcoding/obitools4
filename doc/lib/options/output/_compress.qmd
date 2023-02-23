@@ -1,0 +1,3 @@
+**\--compress**, **-Z**
+
+: The ouput is compressed following the [gzip](https://en.wikipedia.org/wiki/Gzip) format.

@@ -1,0 +1,22 @@
+{{< include ../lib/options/input/_embl.qmd >}}
+
+{{< include ../lib/options/input/_genbank.qmd >}}
+
+{{< include ../lib/options/input/_ecopcr.qmd >}}
+
+
+**\--input-OBI-header**
+
+: OBITools V4 introduced a new format based on [JSON](https://en.wikipedia.org/wiki/JSON) for storing annotations in the FASTA and FASTQ title lines. Nevertheless they continue to parse the old OBITools format for these annotation (`KEY=VALUE;`). Both formats for annotations are automatically recognizd. That option force the parsing of the annotations following the genuine OBITools format.
+
+**\--input-json-header**
+
+: Forces the parsing of the FASTA and FASTQ annotations usng the new OBITools JSON based format. 
+
+**\--solexa**
+
+: Sequence quality scores in FASTQ format are supposed to follow to Sanger convention for their ASCII encoding. Somme old raw data files produced by Solexa sequencers used another encoding schema. That options allows to correctly read these ald FASTQ files.  
+
+**\--no-order**
+
+: OBITools V4 are massively parallelized. When several input files are provided this option allows to processed them in parallel. But the order of the file indicated on the command line will no more be related to the order of the sequences in the output of the command.

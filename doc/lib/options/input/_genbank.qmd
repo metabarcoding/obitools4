@@ -1,0 +1,4 @@
+**\--genbank**
+
+: indicates that the input data follow the Genbank flatfile format.
+

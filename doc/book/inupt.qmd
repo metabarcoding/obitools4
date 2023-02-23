@@ -1,0 +1,15 @@
+# Specifying the data input to *OBITools* commands
+
+
+## Specifying input format
+
+Five sequence formats are accepted for input files. *Fasta* (@sec-fasta) and *Fastq* (@sec-fastq) are the main ones, EMBL and Genbank allow the use of flat files produced by these two international databases. The last one, ecoPCR, is maintained for compatibility with previous *OBITools* and allows to read *ecoPCR* outputs as sequence files.
+
+-   `--ecopcr` : Read data following the *ecoPCR* output format.
+-   `--embl` Read data following the *EMBL* flatfile format.
+-   `--genbank` Read data following the *Genbank* flatfile format.
+
+Several encoding schemes have been proposed for quality scores in *Fastq* format. Currently, *OBITools* considers Sanger encoding as the standard. For reasons of compatibility with older datasets produced with *Solexa* sequencers, it is possible, by using the following option, to force the use of the corresponding quality encoding scheme when reading these older files.
+
+-   `--solexa` Decodes quality string according to the Solexa specification. (default: false)
+

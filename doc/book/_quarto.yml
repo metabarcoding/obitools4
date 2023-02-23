@@ -1,0 +1,53 @@
+project:
+  type: book
+  output-dir: ../build/_book
+
+engine: jupyter
+
+book:
+  title: "OBITools V4"
+  author: "Eric Coissac"
+  date: "1/17/2023"
+  page-navigation: true
+  chapters:
+    - index.qmd
+    - part: intro.qmd
+      chapters:
+        - installation.qmd
+        - formats.qmd
+        - tutorial.qmd
+    - part: commands.qmd
+      chapters:
+        - inupt.qmd
+        - output.qmd
+        - common_options.qmd
+        - expressions.qmd
+        - comm_metabarcode_design.qmd
+        - comm_reformat.qmd
+        - comm_annotation.qmd
+        - comm_computation.qmd
+        - comm_sampling.qmd
+        - comm_utilities.qmd
+    - part: library.qmd
+  appendices:
+    - annexes.qmd
+    - references.qmd
+
+bibliography: ../lib/book.bib
+
+execute: 
+  freeze: auto
+
+format:
+  html:
+    theme: zephyr
+  pdf:
+    documentclass: scrreprt
+    keep-tex: true
+  epub: 
+    html-math-method: mathml
+
+
+
+
+

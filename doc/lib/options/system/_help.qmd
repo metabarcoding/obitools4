@@ -1,0 +1,3 @@
+**\--help**, **-h**
+
+: Display a friendly help message.

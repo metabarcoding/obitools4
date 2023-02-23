@@ -1,0 +1,6 @@
+# Metabarcode design and quality assessment
+
+## `obipcr`
+
+> Replace the `ecoPCR` original *OBITools*
+

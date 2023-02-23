@@ -1,0 +1,18 @@
+# Installation of the obitools
+
+## Availability of the OBITools
+
+The *OBITools* are open source and protected by the [CeCILL 2.1 license](http://www.cecill.info/licences/Licence_CeCILL_V2.1-en.html).
+
+All the sources of the [*OBITools4*](http://metabarcoding.org/obitools4) can be downloaded from the metabarcoding git server (https://git.metabarcoding.org).
+
+## Prerequisites
+
+The *OBITools4* are developped using the [GO programming language](https://go.dev/), we stick to the latest version of the language, today the $1.19.5$. If you want to download and compile the sources yourself, you first need to install the corresponding compiler on your system. Some parts of the soft are also written in C, therefore a recent C compiler is also requested, GCC on Linux or Windows, the Developer Tools on Mac.
+
+Whatever the installation you decide for, you will have to ensure that a C compiler is available on your system.
+
+## Installation with the install script
+
+## Compilation from sources
+

@@ -1,0 +1,15 @@
+**Helpful options**
+
+{{< include ../lib/options/system/_help.qmd >}}
+
+{{< include ../lib/options/system/_no-progressbar.qmd >}}
+
+**Managing parallel execution**
+
+{{< include ../lib/options/system/_max-cpu.qmd >}}
+
+{{< include ../lib/options/system/_workers.qmd >}}
+
+**OBITools debuging related options**
+
+{{< include ../lib/options/system/_debug.qmd >}}

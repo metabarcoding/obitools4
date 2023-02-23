@@ -1,0 +1,3 @@
+**\--out** _FILENAME_, **-o**
+
+: OBITools, as all standard UNIX tools, print their results to the standard output (`stdout`). To save them, stdout must be redirected to a file. That option allows to specify explicitely an output file to the command. This is especially useful when OBITools are processing paired files. In that later case, the indicated output file names is modified by adding to it the *\_R1* (forward file) and *\_R2* (reverse file) suffix just before the extensions (*e.g.* sequence.fasta becomes sequence_R1.fasta and sequence_R2.fasta). If that option is not specified and paired files are processed only the forward data are ouputed to the _stdout_.

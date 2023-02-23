@@ -1,0 +1,4 @@
+**\--embl**
+
+: indicates that the input data follow the EMBL flatfile format.
+

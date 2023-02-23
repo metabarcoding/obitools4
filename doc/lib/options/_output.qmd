@@ -1,0 +1,11 @@
+**\--fasta-output** 
+
+**\--fastq-output** 
+
+**\--output-OBI-header**, **-O** 
+
+**\--output-json-header**
+
+{{< include ../lib/options/output/_out.qmd >}}
+
+{{< include ../lib/options/output/_compress.qmd >}}

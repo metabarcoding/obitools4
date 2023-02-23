@@ -1,0 +1,25 @@
+# Sequence sampling and filtering 
+
+## `obigrep` -- filters sequence files according to numerous conditions
+
+{{< include ../lib/descriptions/_obigrep.qmd >}}
+
+### The options usable with `obigrep`
+
+#### Selecting sequences based on their caracteristics
+
+Sequences can be selected on several of their caracteristics, their length, their id, their sequence. Options allow for specifying the condition if selection.
+
+
+
+{{< include ../lib/options/selection/_min-count.qmd >}}
+
+{{< include ../lib/options/selection/_max-count.qmd >}}
+
+Example
+
+: Selecting sequence records representing at least five reads in the dataset.
+
+```bash
+obigrep -c 5 data_SPER01.fasta > data_norare_SPER01.fasta
+```

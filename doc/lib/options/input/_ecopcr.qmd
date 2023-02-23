@@ -1,0 +1,3 @@
+**\--ecopcr**
+
+: indicates that the input data follow the ecopcr tabular format produced by [ecoPCR](https://metabarcoding.org/ecopcr).

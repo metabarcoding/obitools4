@@ -1,0 +1,3 @@
+**\--min-count** | **-c** _COUNT_
+
+: only sequences reprensenting at least _COUNT_ reads will be selected. That option rely on the `count` attribute. If the `count` attribute is not defined for a sequence record, it is assumed equal to $1$. 
