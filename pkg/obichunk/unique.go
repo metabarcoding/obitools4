@@ -133,5 +133,5 @@ func IUniqueSequence(iterator obiiter.IBioSequence,
 		opts.BufferSize(),
 	)
 
-	return iMerged.Speed("Variants identified"), nil
+	return iMerged, nil
 }

@@ -23,7 +23,7 @@ func NewBioSequenceSlice(size ...int) *BioSequenceSlice {
 	slice := _BioSequenceSlicePool.Get().(*BioSequenceSlice)
 	if len(size) > 0 {
 		s := size[0]
-		slice.InsureCapacity(s)
+		slice = slice.InsureCapacity(s)
 		(*slice)=(*slice)[0:s]
 	}
 	return slice

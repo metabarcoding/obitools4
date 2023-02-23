@@ -6,8 +6,8 @@ import (
 	"github.com/DavidGamba/go-getoptions"
 )
 
-var _ForwardFiles = make([]string, 0, 10)
-var _ReverseFiles = make([]string, 0, 10)
+var _ForwardFile = ""
+var _ReverseFile = ""
 var _Delta = 5
 var _MinOverlap = 20
 var _GapPenality = float64(2.0)
@@ -15,15 +15,15 @@ var _WithoutStats = false
 var _MinIdentity = 0.9
 
 func PairingOptionSet(options *getoptions.GetOpt) {
-	options.StringSliceVar(&_ForwardFiles, "forward-reads",
-		1, 1000,
+	options.StringVar(&_ForwardFile, "forward-reads", "",
 		options.Alias("F"),
-		options.Required("You must provide at least one forward file"),
+		options.ArgName("FILENAME_F"),
+		options.Required("You must provide at a forward file"),
 		options.Description("The file names containing the forward reads"))
-	options.StringSliceVar(&_ReverseFiles, "reverse-reads",
-		1, 1000,
+	options.StringVar(&_ReverseFile, "reverse-reads", "",
 		options.Alias("R"),
-		options.Required("You must provide at least one reverse file"),
+		options.ArgName("FILENAME_R"),
+		options.Required("You must provide a reverse file"),
 		options.Description("The file names containing the reverse reads"))
 	options.IntVar(&_Delta, "delta", _Delta,
 		options.Alias("D"),
@@ -42,42 +42,43 @@ func PairingOptionSet(options *getoptions.GetOpt) {
 }
 
 func OptionSet(options *getoptions.GetOpt) {
-	obiconvert.OptionSet(options)
+	obiconvert.OutputOptionSet(options)
+	obiconvert.InputOptionSet(options)
 	PairingOptionSet(options)
 }
 
-func IBatchPairedSequence() (obiiter.IPairedBioSequenceBatch, error) {
-	forward, err := obiconvert.ReadBioSequences(_ForwardFiles...)
+func CLIPairedSequence() (obiiter.IBioSequence, error) {
+	forward, err := obiconvert.CLIReadBioSequences(_ForwardFile)
 	if err != nil {
-		return obiiter.NilIPairedBioSequenceBatch, err
+		return obiiter.NilIBioSequence, err
 	}
 
-	reverse, err := obiconvert.ReadBioSequences(_ReverseFiles...)
+	reverse, err := obiconvert.CLIReadBioSequences(_ReverseFile)
 	if err != nil {
-		return obiiter.NilIPairedBioSequenceBatch, err
+		return obiiter.NilIBioSequence, err
 	}
 
-	paired := forward.PairWith(reverse)
+	paired := forward.PairTo(reverse)
 
 	return paired, nil
 }
 
-func Delta() int {
+func CLIDelta() int {
 	return _Delta
 }
 
-func MinOverlap() int {
+func CLIMinOverlap() int {
 	return _MinOverlap
 }
 
-func MinIdentity() float64 {
+func CLIMinIdentity() float64 {
 	return _MinIdentity
 }
 
-func GapPenality() float64 {
+func CLIGapPenality() float64 {
 	return _GapPenality
 }
 
-func WithStats() bool {
+func CLIWithStats() bool {
 	return !_WithoutStats
 }

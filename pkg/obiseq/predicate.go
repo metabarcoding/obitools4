@@ -11,6 +11,61 @@ import (
 
 type SequencePredicate func(*BioSequence) bool
 
+type SeqPredicateMode int
+
+const (
+	ForwardOnly SeqPredicateMode = iota
+	ReverseOnly
+	And
+	Or
+	AndNot
+	Xor
+)
+
+func (predicate SequencePredicate) PredicateOnPaired(ifnotpaired bool) SequencePredicate {
+	if predicate == nil {
+		return nil
+	}
+
+	p := func(sequence *BioSequence) bool {
+		if sequence.IsPaired() {
+			return predicate(sequence.PairedWith())
+		}
+		return ifnotpaired
+	}
+
+	return p
+}
+
+func (predicate SequencePredicate) PairedPredicat(mode SeqPredicateMode) SequencePredicate {
+	if predicate == nil {
+		return nil
+	}
+
+	p := func(sequence *BioSequence) bool {
+		good := predicate(sequence)
+
+		if sequence.IsPaired() && mode != ForwardOnly {
+			pgood := predicate(sequence.PairedWith())
+			switch mode {
+			case ReverseOnly:
+				good = pgood
+			case And:
+				good = good && pgood
+			case Or:
+				good = good || pgood
+			case AndNot:
+				good = good && !pgood
+			case Xor:
+				good = (good || pgood) && !(good && pgood)
+			}
+		}
+		return good
+	}
+
+	return p
+}
+
 func (predicate1 SequencePredicate) And(predicate2 SequencePredicate) SequencePredicate {
 	switch {
 	case predicate1 == nil:
@@ -209,8 +264,8 @@ func ExpressionPredicat(expression string) SequencePredicate {
 	f := func(sequence *BioSequence) bool {
 		value, err := exp.EvalBool(context.Background(),
 			map[string]interface{}{
-				"annotations":     sequence.Annotations(),
-				"sequence":  sequence,
+				"annotations": sequence.Annotations(),
+				"sequence":    sequence,
 			},
 		)
 
@@ -225,4 +280,3 @@ func ExpressionPredicat(expression string) SequencePredicate {
 
 	return f
 }
-

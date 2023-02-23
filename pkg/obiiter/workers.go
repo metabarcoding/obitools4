@@ -54,6 +54,10 @@ func (iterator IBioSequence) MakeIWorker(worker obiseq.SeqWorker, sizes ...int) 
 	}
 	go f(iterator)
 
+	if iterator.IsPaired() {
+		newIter.MarkAsPaired()
+	}
+
 	return newIter
 }
 
@@ -99,6 +103,10 @@ func (iterator IBioSequence) MakeIConditionalWorker(predicate obiseq.SequencePre
 	}
 	go f(iterator)
 
+	if iterator.IsPaired() {
+		newIter.MarkAsPaired()
+	}
+
 	return newIter
 }
 
@@ -137,6 +145,10 @@ func (iterator IBioSequence) MakeISliceWorker(worker obiseq.SeqSliceWorker, size
 		go f(iterator.Split())
 	}
 	go f(iterator)
+
+	if iterator.IsPaired() {
+		newIter.MarkAsPaired()
+	}
 
 	return newIter
 }

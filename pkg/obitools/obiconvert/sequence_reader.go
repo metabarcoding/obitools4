@@ -67,7 +67,7 @@ func _ExpandListOfFiles(check_ext bool, filenames ...string) ([]string, error) {
 	return list_of_files, nil
 }
 
-func ReadBioSequences(filenames ...string) (obiiter.IBioSequence, error) {
+func CLIReadBioSequences(filenames ...string) (obiiter.IBioSequence, error) {
 	var iterator obiiter.IBioSequence
 	var reader func(string, ...obiformats.WithOption) (obiiter.IBioSequence, error)
 
@@ -142,6 +142,17 @@ func ReadBioSequences(filenames ...string) (obiiter.IBioSequence, error) {
 			if err != nil {
 				return obiiter.NilIBioSequence, err
 			}
+
+			if CLIPairedFileName() != "" {
+				ip, err := reader(CLIPairedFileName(), opts...)
+
+				if err != nil {
+					return obiiter.NilIBioSequence, err
+				}
+
+				iterator = iterator.PairTo(ip)
+			}
+
 		}
 
 		// list_of_files = list_of_files[1:]

@@ -3,12 +3,12 @@ package obipairing
 import (
 	"math"
 	"os"
-	"runtime"
 
 	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obialign"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obioptions"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 	"github.com/schollz/progressbar/v3"
 )
@@ -203,12 +203,16 @@ func AssemblePESequences(seqA, seqB *obiseq.BioSequence,
 //
 // The function returns an iterator over batches of obiseq.Biosequence object.
 // each pair of processed sequences produces one sequence in the result iterator.
-func IAssemblePESequencesBatch(iterator obiiter.IPairedBioSequenceBatch,
+func IAssemblePESequencesBatch(iterator obiiter.IBioSequence,
 	gap float64, delta, minOverlap int,
 	minIdentity float64,
 	withStats bool, sizes ...int) obiiter.IBioSequence {
 
-	nworkers := runtime.NumCPU() * 3 / 2
+	if !iterator.IsPaired() {
+		log.Fatalln("Sequence data must be paired")
+	}
+
+	nworkers := obioptions.CLIMaxCPU() * 3 / 2
 	buffsize := iterator.BufferSize()
 
 	if len(sizes) > 0 {
@@ -236,15 +240,15 @@ func IAssemblePESequencesBatch(iterator obiiter.IPairedBioSequenceBatch,
 		progressbar.OptionShowIts(),
 		progressbar.OptionSetDescription("[Sequence Pairing]"))
 
-	f := func(iterator obiiter.IPairedBioSequenceBatch, wid int) {
+	f := func(iterator obiiter.IBioSequence, wid int) {
 		arena := obialign.MakePEAlignArena(150, 150)
 
 		for iterator.Next() {
 			batch := iterator.Get()
-			cons := make(obiseq.BioSequenceSlice, len(batch.Forward()))
+			cons := make(obiseq.BioSequenceSlice, len(batch.Slice()))
 			processed := 0
-			for i, A := range batch.Forward() {
-				B := batch.Reverse()[i]
+			for i, A := range batch.Slice() {
+				B := A.PairedWith()
 				cons[i] = AssemblePESequences(A, B, gap, delta, minOverlap, minIdentity, withStats, true, arena)
 				if i%59 == 0 {
 					bar.Add(59)

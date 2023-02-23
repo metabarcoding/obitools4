@@ -1,6 +1,9 @@
 package obiconvert
 
 import (
+	"path/filepath"
+	"strings"
+
 	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiformats"
@@ -8,6 +11,27 @@ import (
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obioptions"
 )
 
+func BuildPairedFileNames(filename string) (string, string) {
+
+	dir, name := filepath.Split(filename)
+	parts := strings.SplitN(name, ".", 2)
+
+	forward := parts[0] + "_R1"
+	reverse := parts[0] + "_R2"
+
+	if parts[1] != "" {
+		suffix := "." + parts[1]
+		forward += suffix
+		reverse += suffix
+	}
+
+	if dir != "" {
+		forward = filepath.Join(dir, forward)
+		reverse = filepath.Join(dir, reverse)
+	}
+
+	return forward, reverse
+}
 func CLIWriteBioSequences(iterator obiiter.IBioSequence,
 	terminalAction bool, filenames ...string) (obiiter.IBioSequence, error) {
 
@@ -45,7 +69,32 @@ func CLIWriteBioSequences(iterator obiiter.IBioSequence,
 
 	var err error
 
-	if len(filenames) == 0 {
+	// No file names are specified or it is "-" : the output is done on stdout
+
+	if CLIOutPutFileName() != "-" || (len(filenames) > 0 && filenames[0] != "-") {
+		var fn string
+
+		if len(filenames) == 0 {
+			fn = CLIOutPutFileName()
+		} else {
+			fn = filenames[0]
+		}
+
+		if iterator.IsPaired() {
+			var reverse string
+			fn, reverse = BuildPairedFileNames(fn)
+			opts = append(opts, obiformats.WritePairedReadsTo(reverse))
+		}
+
+		switch CLIOutputFormat() {
+		case "fastq":
+			newIter, err = obiformats.WriteFastqToFile(iterator, fn, opts...)
+		case "fasta":
+			newIter, err = obiformats.WriteFastaToFile(iterator, fn, opts...)
+		default:
+			newIter, err = obiformats.WriteSequencesToFile(iterator, fn, opts...)
+		}
+	} else {
 		switch CLIOutputFormat() {
 		case "fastq":
 			newIter, err = obiformats.WriteFastqToStdout(iterator, opts...)
@@ -53,15 +102,6 @@ func CLIWriteBioSequences(iterator obiiter.IBioSequence,
 			newIter, err = obiformats.WriteFastaToStdout(iterator, opts...)
 		default:
 			newIter, err = obiformats.WriteSequencesToStdout(iterator, opts...)
-		}
-	} else {
-		switch CLIOutputFormat() {
-		case "fastq":
-			newIter, err = obiformats.WriteFastqToFile(iterator, filenames[0], opts...)
-		case "fasta":
-			newIter, err = obiformats.WriteFastaToFile(iterator, filenames[0], opts...)
-		default:
-			newIter, err = obiformats.WriteSequencesToFile(iterator, filenames[0], opts...)
 		}
 	}
 

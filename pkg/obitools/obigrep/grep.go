@@ -8,10 +8,14 @@ import (
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obiconvert"
 )
 
-func IFilterSequence(iterator obiiter.IBioSequence) obiiter.IBioSequence {
+func CLIFilterSequence(iterator obiiter.IBioSequence) obiiter.IBioSequence {
 	var newIter obiiter.IBioSequence
 
 	predicate := CLISequenceSelectionPredicate()
+
+	if obiconvert.CLIHasPairedFile() {
+		predicate = predicate.PairedPredicat(CLIPairedReadMode())
+	}
 
 	if predicate != nil {
 		if CLISaveDiscardedSequences() {

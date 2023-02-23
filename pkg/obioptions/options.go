@@ -11,7 +11,7 @@ import (
 )
 
 var _Debug = false
-var _ParallelWorkers = runtime.NumCPU() - 1
+var _ParallelWorkers = runtime.NumCPU() * 2 - 1
 var _MaxAllowedCPU = runtime.NumCPU()
 var _BufferSize = 1
 var _BatchSize = 5000
@@ -19,7 +19,10 @@ var _BatchSize = 5000
 type ArgumentParser func([]string) (*getoptions.GetOpt, []string, error)
 
 func GenerateOptionParser(optionset ...func(*getoptions.GetOpt)) ArgumentParser {
+
 	options := getoptions.New()
+	options.SetMode(getoptions.Bundling)
+	options.SetUnknownMode(getoptions.Fail)
 	options.Bool("help", false, options.Alias("h", "?"))
 	options.BoolVar(&_Debug, "debug", false)
 
@@ -28,6 +31,7 @@ func GenerateOptionParser(optionset ...func(*getoptions.GetOpt)) ArgumentParser 
 		options.Description("Number of parallele threads computing the result"))
 
 	options.IntVar(&_MaxAllowedCPU, "max-cpu", _MaxAllowedCPU,
+		options.GetEnv("OBIMAXCPU"),
 		options.Description("Number of parallele threads computing the result"))
 
 	for _, o := range optionset {
@@ -42,6 +46,10 @@ func GenerateOptionParser(optionset ...func(*getoptions.GetOpt)) ArgumentParser 
 		runtime.GOMAXPROCS(_MaxAllowedCPU)
 		if options.Called("max-cpu") {
 			log.Printf("CPU number limited to %d", _MaxAllowedCPU)
+			if ! options.Called("workers") {
+				_ParallelWorkers=_MaxAllowedCPU * 2 - 1
+				log.Printf("Number of workers set %d", _ParallelWorkers)
+			}
 		}
 
 		if options.Called("no-singleton") {

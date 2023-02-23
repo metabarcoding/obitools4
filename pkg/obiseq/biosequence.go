@@ -55,6 +55,7 @@ type BioSequence struct {
 	sequence    []byte // The sequence itself, it is accessible by the methode Sequence
 	qualities   []byte // The quality scores of the sequence.
 	feature     []byte
+	paired      *BioSequence // A pointer to the paired sequence
 	annotations Annotation
 }
 
@@ -69,6 +70,7 @@ func MakeEmptyBioSequence() BioSequence {
 		sequence:    nil,
 		qualities:   nil,
 		feature:     nil,
+		paired:      nil,
 		annotations: nil,
 	}
 }
@@ -275,3 +277,4 @@ func (s *BioSequence) WriteByte(data byte) error {
 func (s *BioSequence) Clear() {
 	s.sequence = s.sequence[0:0]
 }
+

@@ -15,6 +15,11 @@ type __options__ struct {
 	closefile             bool
 	appendfile            bool
 	compressed            bool
+	csv_ids               bool
+	cvs_sequence          bool
+	csv_definition        bool
+	csv_separator         string
+	paired_filename       string
 }
 
 type Options struct {
@@ -35,6 +40,11 @@ func MakeOptions(setters []WithOption) Options {
 		closefile:             false,
 		appendfile:            false,
 		compressed:            false,
+		csv_ids:               true,
+		csv_definition:        false,
+		cvs_sequence:          true,
+		csv_separator:         ",",
+		paired_filename: "",
 	}
 
 	opt := Options{&o}
@@ -84,6 +94,18 @@ func (opt Options) AppendFile() bool {
 
 func (opt Options) CompressedFile() bool {
 	return opt.pointer.compressed
+}
+
+func (opt Options) CSVIds() bool {
+	return opt.pointer.csv_ids
+}
+
+func (opt Options) HaveToSavePaired() bool {
+	return opt.pointer.paired_filename != ""
+}
+
+func (opt Options) PairedFileName() string {
+	return opt.pointer.paired_filename
 }
 
 func OptionsBufferSize(size int) WithOption {
@@ -216,3 +238,12 @@ func OptionsWithoutProgressBar() WithOption {
 
 	return f
 }
+
+func WritePairedReadsTo(filename string) WithOption {
+	f := WithOption(func(opt Options) {
+		opt.pointer.paired_filename = filename
+	})
+
+	return f
+}
+

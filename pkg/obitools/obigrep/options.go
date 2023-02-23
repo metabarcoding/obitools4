@@ -40,6 +40,8 @@ var _AttributePatterns = make(map[string]string, 0)
 var _InvertMatch = false
 var _SaveRejected = ""
 
+var _PairedMode = "forward"
+
 func TaxonomySelectionOptionSet(options *getoptions.GetOpt) {
 
 	options.StringVar(&_Taxdump, "taxdump", _Taxdump,
@@ -135,6 +137,11 @@ func SequenceSelectionOptionSet(options *getoptions.GetOpt) {
 			"Several -a options can be used on the same command line and in this last case, the selected "+
 			"sequence records will match all constraints."))
 
+	options.StringVar(&_PairedMode, "paired-mode", _PairedMode,
+		options.ArgName("forward|reverse|and|or|andnot|xor"),
+		options.Description("If paired reads are passed to obibrep, that option determines how the conditions "+
+			"are applied to both reads."),
+	)
 }
 
 // OptionSet adds to the basic option set every options declared for
@@ -411,4 +418,25 @@ func CLISaveDiscardedSequences() bool {
 
 func CLIDiscardedFileName() string {
 	return _SaveRejected
+}
+
+func CLIPairedReadMode() obiseq.SeqPredicateMode {
+	switch _PairedMode {
+	case "forward":
+		return obiseq.ForwardOnly
+	case "reverse":
+		return obiseq.ReverseOnly
+	case "and":
+		return obiseq.And
+	case "or":
+		return obiseq.Or
+	case "andnot":
+		return obiseq.AndNot
+	case "xor":
+		return obiseq.Xor
+	default:
+		log.Fatalf("Paired reads mode must be forward, reverse, and, or, andnot, or xor (%s)", _PairedMode)
+	}
+
+	return obiseq.ForwardOnly
 }

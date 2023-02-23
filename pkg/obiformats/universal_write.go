@@ -69,5 +69,19 @@ func WriteSequencesToFile(iterator obiiter.IBioSequence,
 	}
 
 	options = append(options, OptionCloseFile())
-	return WriteSequence(iterator, file, options...)
+
+	iterator, err = WriteSequence(iterator, file, options...)
+
+	if opt.HaveToSavePaired() {
+		var revfile *os.File
+
+		revfile, err = os.OpenFile(opt.PairedFileName(), flags, 0660)
+		if err != nil {
+			log.Fatalf("open file error: %v", err)
+			return obiiter.NilIBioSequence, err
+		}
+		iterator, err = WriteSequence(iterator.PairedWith(), revfile, options...)
+	}
+
+	return iterator, err
 }

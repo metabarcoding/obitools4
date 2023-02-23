@@ -58,7 +58,7 @@ func WriteFastq(iterator obiiter.IBioSequence,
 	options ...WithOption) (obiiter.IBioSequence, error) {
 	opt := MakeOptions(options)
 
-	file,_ = goutils.CompressStream(file,opt.CompressedFile(),opt.CloseFile())
+	file, _ = goutils.CompressStream(file, opt.CompressedFile(), opt.CloseFile())
 
 	buffsize := iterator.BufferSize()
 	newIter := obiiter.MakeIBioSequence(buffsize)
@@ -152,7 +152,7 @@ func WriteFastqToFile(iterator obiiter.IBioSequence,
 		flags |= os.O_APPEND
 	}
 	file, err := os.OpenFile(filename, flags, 0660)
-	
+
 	if err != nil {
 		log.Fatalf("open file error: %v", err)
 		return obiiter.NilIBioSequence, err
@@ -160,5 +160,18 @@ func WriteFastqToFile(iterator obiiter.IBioSequence,
 
 	options = append(options, OptionCloseFile())
 
-	return WriteFastq(iterator, file, options...)
+	iterator, err = WriteFastq(iterator, file, options...)
+
+	if opt.HaveToSavePaired() {
+		var revfile *os.File
+
+		revfile, err = os.OpenFile(opt.PairedFileName(), flags, 0660)
+		if err != nil {
+			log.Fatalf("open file error: %v", err)
+			return obiiter.NilIBioSequence, err
+		}
+		iterator, err = WriteFastq(iterator.PairedWith(), revfile, options...)
+	}
+
+	return iterator, err
 }

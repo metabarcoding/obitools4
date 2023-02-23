@@ -3,6 +3,7 @@ package obiiter
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/schollz/progressbar/v3"
 )
@@ -45,18 +46,29 @@ func (iterator IBioSequence) Speed(message ...string) IBioSequence {
 	bar := progressbar.NewOptions(-1, pbopt...)
 
 	go func() {
+		c := 0
+		start := time.Now()
 
 		for iterator.Next() {
 			batch := iterator.Get()
-			l := batch.Len()
+			c += batch.Len()
 			newIter.Push(batch)
-			bar.Add(l)
+			elapsed := time.Since(start)
+			if elapsed > (time.Millisecond * 100) {
+				bar.Add(c)
+				c = 0
+				start = time.Now()
+			}
 		}
 
 		fmt.Fprintln(os.Stderr)
 		newIter.Done()
 	}()
 
+	if iterator.IsPaired() {
+		newIter.MarkAsPaired()
+	}
+	
 	return newIter
 }
 

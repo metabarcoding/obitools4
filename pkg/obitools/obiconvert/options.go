@@ -27,6 +27,9 @@ var __output_solexa_quality__ = false
 var __no_progress_bar__ = false
 var __compressed__ = false
 
+var __output_file_name__ = "-"
+var __paired_file_name__ = ""
+
 func InputOptionSet(options *getoptions.GetOpt) {
 	// options.IntVar(&__skipped_entries__, "skip", __skipped_entries__,
 	// 	options.Description("The N first sequence records of the file are discarded from the analysis and not reported to the output file."))
@@ -73,15 +76,29 @@ func OutputOptionSet(options *getoptions.GetOpt) {
 	options.BoolVar(&__no_progress_bar__, "no-progressbar", false,
 		options.Description("Disable the progress bar printing"))
 
-	options.BoolVar(&__compressed__, "--compress", false,
+	options.BoolVar(&__compressed__, "compress", false,
 		options.Alias("Z"),
 		options.Description("Output is compressed"))
 
+	options.StringVar(&__output_file_name__, "out", __output_file_name__,
+		options.Alias("o"),
+		options.ArgName("FILENAME"),
+		options.Description("Filename used for saving the output"),
+	)
+
+}
+
+func PairedFilesOptionSet(options *getoptions.GetOpt) {
+	options.StringVar(&__paired_file_name__, "paired-with", __paired_file_name__,
+		options.ArgName("FILENAME"),
+		options.Description("Filename containing the paired reads"),
+	)
 }
 
 func OptionSet(options *getoptions.GetOpt) {
 	InputOptionSet(options)
 	OutputOptionSet(options)
+	PairedFilesOptionSet(options)
 }
 
 // Returns true if the number of reads described in the
@@ -169,4 +186,15 @@ func CLIOutputQualityShift() int {
 
 func CLIProgressBar() bool {
 	return !__no_progress_bar__
+}
+
+func CLIOutPutFileName() string {
+	return __output_file_name__
+}
+
+func CLIHasPairedFile() bool {
+	return __paired_file_name__ != ""
+}
+func CLIPairedFileName() string {
+	return __paired_file_name__
 }

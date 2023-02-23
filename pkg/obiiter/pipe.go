@@ -40,5 +40,10 @@ func (input IBioSequence) CopyTee() (IBioSequence, IBioSequence) {
 		}
 	}()
 
+	if input.IsPaired() {
+		first.MarkAsPaired()
+		second.MarkAsPaired()
+	}
+
 	return first, second
 }
