@@ -31,7 +31,7 @@ func main() {
 
 	_, args, _ := optionParser(os.Args)
 
-	sequences, _ := obiconvert.ReadBioSequences(args...)
+	sequences, _ := obiconvert.CLIReadBioSequences(args...)
 	amplicons, _ := obipcr.PCR(sequences)
 	obiconvert.CLIWriteBioSequences(amplicons, true)
 	obiiter.WaitForLastPipe()

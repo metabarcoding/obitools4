@@ -15,7 +15,7 @@ func main() {
 
 	_, args, _ := optionParser(os.Args)
 
-	fs, _ := obiconvert.ReadBioSequences(args...)
+	fs, _ := obiconvert.CLIReadBioSequences(args...)
 
 	comp := fs.MakeIWorker(obiseq.ReverseComplementWorker(true))
 	obiconvert.CLIWriteBioSequences(comp, true)

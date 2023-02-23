@@ -29,7 +29,7 @@ func main() {
 
 	_, args, _ := optionParser(os.Args)
 
-	sequences, _ := obiconvert.ReadBioSequences(args...)
+	sequences, _ := obiconvert.CLIReadBioSequences(args...)
 	amplicons, _ := obimultiplex.IExtractBarcode(sequences)
 	obiconvert.CLIWriteBioSequences(amplicons, true)
 	amplicons.Wait()

@@ -33,7 +33,7 @@ func main() {
 
 	_, args, _ := optionParser(os.Args)
 
-	fs, _ := obiconvert.ReadBioSequences(args...)
+	fs, _ := obiconvert.CLIReadBioSequences(args...)
 	identified := obitag.AssignTaxonomy(fs)
 
 	obiconvert.CLIWriteBioSequences(identified, true)

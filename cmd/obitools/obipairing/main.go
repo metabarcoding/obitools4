@@ -30,15 +30,16 @@ func main() {
 	optionParser := obioptions.GenerateOptionParser(obipairing.OptionSet)
 
 	optionParser(os.Args)
-	pairs, _ := obipairing.IBatchPairedSequence()
+	pairs, _ := obipairing.CLIPairedSequence()
 	paired := obipairing.IAssemblePESequencesBatch(pairs,
-		obipairing.GapPenality(),
-		obipairing.Delta(),
-		obipairing.MinOverlap(),
-		obipairing.MinIdentity(),
-		obipairing.WithStats(),
+		obipairing.CLIGapPenality(),
+		obipairing.CLIDelta(),
+		obipairing.CLIMinOverlap(),
+		obipairing.CLIMinIdentity(),
+		obipairing.CLIWithStats(),
 		obioptions.CLIParallelWorkers(),
 	)
+	
 	obiconvert.CLIWriteBioSequences(paired, true)
 
 	obiiter.WaitForLastPipe()

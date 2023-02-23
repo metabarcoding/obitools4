@@ -34,7 +34,7 @@ func main() {
 
 	_, args, _ := optionParser(os.Args)
 
-	sequences, _ := obiconvert.ReadBioSequences(args...)
+	sequences, _ := obiconvert.CLIReadBioSequences(args...)
 	unique := obiuniq.Unique(sequences)
 	obiconvert.CLIWriteBioSequences(unique, true)
 
