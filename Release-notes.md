@@ -33,7 +33,7 @@
 - Some OBITools (now `obigrep` and `obiconvert`) are capable of using paired read files. 
   Options have been added for this (**--paired-with** _FILENAME_, and **--paired-mode** _forward|reverse|and|andnot|xor_). This, in combination with the **--out** option shown above, ensures that the two matched files remain consistent when processed. 
 
-## February $18^th$, 2023. Release 4.0.0
+## February 18th, 2023. Release 4.0.0
 
 It is the first version of the *OBITools* version 4. I decided to tag then following two weeks
 of intensive data analysis with them allowing to discover many small bugs present in the previous
