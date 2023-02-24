@@ -2,7 +2,6 @@ package obipairing
 
 import (
 	"math"
-	"os"
 
 	log "github.com/sirupsen/logrus"
 
@@ -10,7 +9,6 @@ import (
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obioptions"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
-	"github.com/schollz/progressbar/v3"
 )
 
 func _Abs(x int) int {
@@ -232,30 +230,16 @@ func IAssemblePESequencesBatch(iterator obiiter.IBioSequence,
 		log.Printf("End of the sequence Pairing")
 	}()
 
-	bar := progressbar.NewOptions(
-		-1,
-		progressbar.OptionSetWriter(os.Stderr),
-		progressbar.OptionSetWidth(15),
-		progressbar.OptionShowCount(),
-		progressbar.OptionShowIts(),
-		progressbar.OptionSetDescription("[Sequence Pairing]"))
-
 	f := func(iterator obiiter.IBioSequence, wid int) {
 		arena := obialign.MakePEAlignArena(150, 150)
 
 		for iterator.Next() {
 			batch := iterator.Get()
 			cons := make(obiseq.BioSequenceSlice, len(batch.Slice()))
-			processed := 0
 			for i, A := range batch.Slice() {
 				B := A.PairedWith()
-				cons[i] = AssemblePESequences(A, B, gap, delta, minOverlap, minIdentity, withStats, true, arena)
-				if i%59 == 0 {
-					bar.Add(59)
-					processed += 59
-				}
+				cons[i] = AssemblePESequences(A, B.ReverseComplement(true), gap, delta, minOverlap, minIdentity, withStats, true, arena)
 			}
-			bar.Add(batch.Len() - processed)
 			newIter.Push(obiiter.MakeBioSequenceBatch(
 				batch.Order(),
 				cons,
