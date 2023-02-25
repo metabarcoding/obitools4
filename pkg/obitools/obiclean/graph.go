@@ -26,6 +26,10 @@ type Ratio struct {
 	CTo    int
 	Pos    int
 	Length int
+	A      int
+	C      int
+	G      int
+	T      int
 }
 
 type Edge struct {
@@ -94,16 +98,16 @@ func EmpiricalDistCsv(filename string, data [][]Ratio) {
 		progressbar.OptionSetWidth(15),
 		progressbar.OptionShowIts(),
 		progressbar.OptionSetPredictTime(true),
-		progressbar.OptionSetDescription("[Save CSV stat ratio file"),
+		progressbar.OptionSetDescription("[Save CSV stat ratio file]"),
 	)
 
 	bar := progressbar.NewOptions(len(data), pbopt...)
 
-	fmt.Fprintln(file, "Sample,Father_id,Father_status,From,To,Weight_from,Weight_to,Count_from,Count_to,Position,length")
+	fmt.Fprintln(file, "Sample,Father_id,Father_status,From,To,Weight_from,Weight_to,Count_from,Count_to,Position,length,A,C,G,T")
 	for code, dist := range data {
 		a1, a2 := intToNucPair(code)
 		for _, ratio := range dist {
-			fmt.Fprintf(file, "%s,%s,%s,%c,%c,%d,%d,%d,%d,%d,%d\n",
+			fmt.Fprintf(file, "%s,%s,%s,%c,%c,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\n",
 				ratio.Sample,
 				ratio.SeqID,
 				ratio.status,
@@ -113,7 +117,12 @@ func EmpiricalDistCsv(filename string, data [][]Ratio) {
 				ratio.CFrom,
 				ratio.CTo,
 				ratio.Pos,
-				ratio.Length)
+				ratio.Length,
+				ratio.A,
+				ratio.C,
+				ratio.G,
+				ratio.T,
+			)
 		}
 		bar.Add(1)
 	}
@@ -137,7 +146,7 @@ func Gml(seqs *[]*seqPCR, sample string, statThreshold int) string {
 				h {{ Sqrt $data.Count }}
 				w {{ Sqrt $data.Count }}
 			]
-		     
+		    weight {{$data.Count}}
          ]
 		 {{ end }}
 		 {{ end }}
@@ -467,13 +476,18 @@ func EstimateRatio(samples map[string]*[]*seqPCR, minStatRatio int) [][]Ratio {
 			for _, edge := range seq.Edges {
 				father := (*seqs)[edge.Father]
 				if father.Weight >= minStatRatio && edge.Dist == 1 {
+					s := father.Sequence.Sequence()
 					ratio[edge.NucPair] = append(ratio[edge.NucPair],
 						Ratio{name,
 							father.Sequence.Id(), Status(father.Sequence)[name],
 							father.Weight, seq.Weight,
 							father.Count, seq.Count,
 							edge.Pos,
-							father.Sequence.Len()})
+							father.Sequence.Len(),
+							bytes.Count(s, []byte("a")),
+							bytes.Count(s, []byte("c")),
+							bytes.Count(s, []byte("g")),
+							bytes.Count(s, []byte("t"))})
 				}
 			}
 
