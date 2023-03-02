@@ -15,7 +15,6 @@ OBITOOLS_SRC:= $(wildcard cmd/obitools/*/*.go)
 OBITOOLS_DIRS:=$(sort $(patsubst %/,%,$(dir $(OBITOOLS_SRC))))
 OBITOOLS:=$(notdir $(OBITOOLS_DIRS))
 
-.PHONY: all obitools 
 
 define MAKE_PKG_RULE
 pkg-$(notdir $(1)): $(1)
