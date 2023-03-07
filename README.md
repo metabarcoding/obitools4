@@ -38,3 +38,9 @@ curl -L https://metabarcoding.org/obitools4/install.sh | \
 ```
 
 In this case, the binaries will be installed in the `test_install` directory and all command names will be prefixed with the letter `k`. Thus `obigrep` will be named `kobigrep`.
+
+## Continuing the analysis...
+
+Before with OBITools2 to continue the analysis, obitab was used as last command to produce a tab delimited file that was loadable in R or in any spreadsheet. The generated file was huge and required to load the full dataset in memory to be produced. Hereby OBITools4 proposes to substitute the obitabusage the [ROBIFastRead](https://git.metabarcoding.org/obitools/obitools4/robireadfasta) R module.
+
+
