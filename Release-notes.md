@@ -6,6 +6,13 @@
 
 - Makes progress bar updating at most 10 times per second.
 - Makes the command exiting on error if undefined options are used.
+  
+### Enhancement
+
+- *OBITools* are automatically processing all the sequences files contained in a directory and its sub-directory   
+  recursively if its name is provided as input. To process easily Genbank files, the corresponding filename
+  extensions have been added. Today the following extensions are recognized as sequence files : `.fasta`, `.fastq`, 
+  `.seq`, `.gb`, `.dat`, and `.ecopcr`. The corresponding gziped version are also recognized (e.g. `.fasta.gz`)
 
 ### New features
 
@@ -32,6 +39,10 @@
 
 - Some OBITools (now `obigrep` and `obiconvert`) are capable of using paired read files. 
   Options have been added for this (**--paired-with** _FILENAME_, and **--paired-mode** _forward|reverse|and|andnot|xor_). This, in combination with the **--out** option shown above, ensures that the two matched files remain consistent when processed. 
+
+ - Adding of the function `ifelse` to the expression language for computing conditionnal values. 
+ - Adding two function to the expression language related to sequence conposition : `composition` and `gcskew`.
+   Both are taking a sequence as single argument.
 
 ## February 18th, 2023. Release 4.0.0
 
