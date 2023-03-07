@@ -13,7 +13,7 @@ import (
 func main() {
 	optionParser := obioptions.GenerateOptionParser(obirefidx.OptionSet)
 
-	_, args, _ := optionParser(os.Args)
+	_, args := optionParser(os.Args)
 
 	fs, _ := obiconvert.CLIReadBioSequences(args...)
 	indexed := obirefidx.IndexReferenceDB(fs)

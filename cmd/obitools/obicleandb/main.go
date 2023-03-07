@@ -12,7 +12,7 @@ import (
 func main() {
 	optionParser := obioptions.GenerateOptionParser(obicleandb.OptionSet)
 
-	_, args, _ := optionParser(os.Args)
+	_, args := optionParser(os.Args)
 
 	fs, _ := obiconvert.CLIReadBioSequences(args...)
 

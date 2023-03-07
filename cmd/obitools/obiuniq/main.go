@@ -32,7 +32,7 @@ func main() {
 
 	optionParser := obioptions.GenerateOptionParser(obiuniq.OptionSet)
 
-	_, args, _ := optionParser(os.Args)
+	_, args := optionParser(os.Args)
 
 	sequences, _ := obiconvert.CLIReadBioSequences(args...)
 	unique := obiuniq.Unique(sequences)

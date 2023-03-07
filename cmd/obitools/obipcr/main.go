@@ -29,7 +29,7 @@ func main() {
 
 	optionParser := obioptions.GenerateOptionParser(obipcr.OptionSet)
 
-	_, args, _ := optionParser(os.Args)
+	_, args := optionParser(os.Args)
 
 	sequences, _ := obiconvert.CLIReadBioSequences(args...)
 	amplicons, _ := obipcr.PCR(sequences)

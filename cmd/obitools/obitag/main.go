@@ -31,7 +31,7 @@ func main() {
 
 	optionParser := obioptions.GenerateOptionParser(obitag.OptionSet)
 
-	_, args, _ := optionParser(os.Args)
+	_, args := optionParser(os.Args)
 
 	fs, _ := obiconvert.CLIReadBioSequences(args...)
 	identified := obitag.AssignTaxonomy(fs)

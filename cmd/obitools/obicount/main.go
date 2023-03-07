@@ -31,7 +31,7 @@ func main() {
 		obicount.OptionSet,
 	)
 
-	_, args, _ := optionParser(os.Args)
+	_, args := optionParser(os.Args)
 
 	fs, _ := obiconvert.CLIReadBioSequences(args...)
 	nvariant, nread, nsymbol := fs.Count(true)

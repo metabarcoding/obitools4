@@ -11,7 +11,7 @@ import (
 func main() {
 	optionParser := obioptions.GenerateOptionParser(obifind.OptionSet)
 
-	_, args, _ := optionParser(os.Args)
+	_, args := optionParser(os.Args)
 
 	//prof, _ := os.Create("obifind.prof")
 	//pprof.StartCPUProfile(prof)
