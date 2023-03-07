@@ -138,7 +138,7 @@ func CLIReadBioSequences(filenames ...string) (obiiter.IBioSequence, error) {
 			}
 
 			iterator = obiformats.ReadSequencesBatchFromFiles(
-				filenames,
+				list_of_files,
 				reader,
 				nreader,
 				opts...,
@@ -162,34 +162,11 @@ func CLIReadBioSequences(filenames ...string) (obiiter.IBioSequence, error) {
 
 		}
 
-		// list_of_files = list_of_files[1:]
-		// others := make([]obiiter.IBioSequenceBatch, 0, len(list_of_files))
-
-		// for _, fn := range list_of_files {
-		// 	r, err := reader(fn, opts...)
-		// 	if err != nil {
-		// 		return obiiter.NilIBioSequenceBatch, err
-		// 	}
-		// 	others = append(others, r)
-		// }
-
-		// if len(others) > 0 {
-		// 	if CLINoInputOrder() {
-		// 		iterator = iterator.Pool(others...)
-		// 	} else {
-		// 		iterator = iterator.Concat(others...)
-		// 	}
-		// }
-
 	}
 
-	// if SequencesToSkip() > 0 {
-	// 	iterator = iterator.Skip(SequencesToSkip())
-	// }
-
-	// if AnalyzeOnly() > 0 {
-	// 	iterator = iterator.Head(AnalyzeOnly())
-	// }
+	if CLIProgressBar() {
+		iterator = iterator.Speed()
+	}
 
 	return iterator, nil
 }

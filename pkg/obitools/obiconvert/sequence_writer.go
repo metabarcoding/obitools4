@@ -35,9 +35,6 @@ func BuildPairedFileNames(filename string) (string, string) {
 func CLIWriteBioSequences(iterator obiiter.IBioSequence,
 	terminalAction bool, filenames ...string) (obiiter.IBioSequence, error) {
 
-	if CLIProgressBar() {
-		iterator = iterator.Speed()
-	}
 	var newIter obiiter.IBioSequence
 
 	opts := make([]obiformats.WithOption, 0, 10)

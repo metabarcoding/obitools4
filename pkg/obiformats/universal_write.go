@@ -14,8 +14,6 @@ func WriteSequence(iterator obiiter.IBioSequence,
 	file io.WriteCloser,
 	options ...WithOption) (obiiter.IBioSequence, error) {
 
-	iterator = iterator.Rebatch(1000)
-
 	ok := iterator.Next()
 
 	if ok {

@@ -235,9 +235,9 @@ func (iterator IBioSequence) Push(batch BioSequenceBatch) {
 	if batch.IsNil() {
 		log.Panicln("A Nil batch is pushed on the channel")
 	}
-	if batch.Len() == 0 {
-		log.Panicln("An empty batch is pushed on the channel")
-	}
+	// if batch.Len() == 0 {
+	// 	log.Panicln("An empty batch is pushed on the channel")
+	// }
 
 	iterator.pointer.channel <- batch
 }

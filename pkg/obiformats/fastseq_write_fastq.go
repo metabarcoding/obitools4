@@ -56,6 +56,9 @@ type FileChunck struct {
 func WriteFastq(iterator obiiter.IBioSequence,
 	file io.WriteCloser,
 	options ...WithOption) (obiiter.IBioSequence, error) {
+
+	iterator = iterator.Rebatch(10000)
+
 	opt := MakeOptions(options)
 
 	file, _ = goutils.CompressStream(file, opt.CompressedFile(), opt.CloseFile())
