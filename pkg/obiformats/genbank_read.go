@@ -47,7 +47,7 @@ func _ParseGenbankFile(input <-chan _FileChunk, out obiiter.IBioSequence) {
 			nl++
 			line := scanner.Text()
 			switch {
-			case state==inDefinition && ! strings.HasPrefix(line, "            "):
+			case state == inDefinition && !strings.HasPrefix(line, "            "):
 				state = inEntry
 				fallthrough
 			case strings.HasPrefix(line, "LOCUS       "):
@@ -61,7 +61,7 @@ func _ParseGenbankFile(input <-chan _FileChunk, out obiiter.IBioSequence) {
 			case strings.HasPrefix(line, "FEATURES    "):
 				featBytes.WriteString(line)
 				state = inFeature
-			case strings.HasPrefix(line, "ORIGIN      "):
+			case strings.HasPrefix(line, "ORIGIN"):
 				state = inSequence
 			case line == "//":
 				log.Debugln("Total lines := ", nl)
@@ -76,12 +76,15 @@ func _ParseGenbankFile(input <-chan _FileChunk, out obiiter.IBioSequence) {
 				annot["scientific_name"] = scientificName
 				annot["taxid"] = taxid
 				// log.Println(FormatFasta(sequence, FormatFastSeqJsonHeader))
+				log.Debugf("Read sequences %s: %dbp (%d)", sequence.Id(),
+					sequence.Len(), seqBytes.Len())
+
 				sequences = append(sequences, sequence)
 				defBytes = new(bytes.Buffer)
 				featBytes = new(bytes.Buffer)
 				seqBytes = new(bytes.Buffer)
-				nl=0
-				sl=0
+				nl = 0
+				sl = 0
 			default:
 				switch state {
 				case inDefinition:

@@ -1,6 +1,7 @@
 package obiconvert
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -20,6 +21,9 @@ func _ExpandListOfFiles(check_ext bool, filenames ...string) ([]string, error) {
 		err = filepath.Walk(fn,
 			func(path string, info os.FileInfo, err error) error {
 				var e error
+				if info == nil {
+					return fmt.Errorf("cannot open path")
+				}
 				for info.Mode()&os.ModeSymlink == os.ModeSymlink {
 					path, e = filepath.EvalSymlinks(path)
 					if e != nil {

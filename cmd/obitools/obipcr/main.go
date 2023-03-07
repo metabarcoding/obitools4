@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obioptions"
@@ -31,7 +32,13 @@ func main() {
 
 	_, args := optionParser(os.Args)
 
-	sequences, _ := obiconvert.CLIReadBioSequences(args...)
+	sequences, err := obiconvert.CLIReadBioSequences(args...)
+
+	if err != nil {
+		log.Errorf("Cannot open file (%v)",err)
+		os.Exit(1)
+	}
+
 	amplicons, _ := obipcr.PCR(sequences)
 	obiconvert.CLIWriteBioSequences(amplicons, true)
 	obiiter.WaitForLastPipe()

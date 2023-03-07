@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obiconvert"
@@ -33,7 +34,13 @@ func main() {
 
 	_, args := optionParser(os.Args)
 
-	fs, _ := obiconvert.CLIReadBioSequences(args...)
+	fs, err := obiconvert.CLIReadBioSequences(args...)
+
+	if err != nil {
+		log.Errorf("Cannot open file (%v)",err)
+		os.Exit(1)
+	}
+
 	identified := obitag.AssignTaxonomy(fs)
 
 	obiconvert.CLIWriteBioSequences(identified, true)

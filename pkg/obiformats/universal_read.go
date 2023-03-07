@@ -85,8 +85,8 @@ func ReadSequencesFromFile(filename string,
 	switch filetype {
 	case "fastq", "fasta":
 		file.Close()
-		is, _ := ReadFastSeqFromFile(filename, options...)
-		return is, nil
+		is, err := ReadFastSeqFromFile(filename, options...)
+		return is, err
 	case "ecopcr":
 		return ReadEcoPCR(reader, options...), nil
 	case "embl":

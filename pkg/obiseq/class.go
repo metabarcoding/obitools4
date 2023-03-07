@@ -90,7 +90,7 @@ func AnnotationClassifier(key string, na string) *BioSequenceClassifier {
 		return AnnotationClassifier(key, na)
 	}
 
-	c := BioSequenceClassifier{code, value, reset, clone,"AnnotationClassifier"}
+	c := BioSequenceClassifier{code, value, reset, clone, "AnnotationClassifier"}
 	return &c
 }
 
@@ -127,7 +127,7 @@ func DualAnnotationClassifier(key1, key2 string, na string) *BioSequenceClassifi
 						val2 = fmt.Sprint(value)
 					}
 				} else {
-					val2=na
+					val2 = na
 				}
 			}
 		}
@@ -173,7 +173,7 @@ func DualAnnotationClassifier(key1, key2 string, na string) *BioSequenceClassifi
 		return DualAnnotationClassifier(key1, key2, na)
 	}
 
-	c := BioSequenceClassifier{code, value, reset, clone,"DualAnnotationClassifier"}
+	c := BioSequenceClassifier{code, value, reset, clone, "DualAnnotationClassifier"}
 	return &c
 }
 
@@ -206,7 +206,7 @@ func PredicateClassifier(predicate SequencePredicate) *BioSequenceClassifier {
 		return PredicateClassifier(predicate)
 	}
 
-	c := BioSequenceClassifier{code, value, reset, clone,"PredicateClassifier"}
+	c := BioSequenceClassifier{code, value, reset, clone, "PredicateClassifier"}
 	return &c
 }
 
@@ -228,7 +228,7 @@ func HashClassifier(size int) *BioSequenceClassifier {
 		return HashClassifier(size)
 	}
 
-	c := BioSequenceClassifier{code, value, reset, clone,"HashClassifier"}
+	c := BioSequenceClassifier{code, value, reset, clone, "HashClassifier"}
 	return &c
 }
 
@@ -283,7 +283,7 @@ func SequenceClassifier() *BioSequenceClassifier {
 		return SequenceClassifier()
 	}
 
-	c := BioSequenceClassifier{code, value, reset, clone,"SequenceClassifier"}
+	c := BioSequenceClassifier{code, value, reset, clone, "SequenceClassifier"}
 	return &c
 }
 
@@ -313,7 +313,6 @@ func RotateClassifier(size int) *BioSequenceClassifier {
 		return RotateClassifier(size)
 	}
 
-	c := BioSequenceClassifier{code, value, reset, clone,"RotateClassifier"}
+	c := BioSequenceClassifier{code, value, reset, clone, "RotateClassifier"}
 	return &c
 }
-

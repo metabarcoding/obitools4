@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obioptions"
@@ -30,7 +31,13 @@ func main() {
 	optionParser := obioptions.GenerateOptionParser(obipairing.OptionSet)
 
 	optionParser(os.Args)
-	pairs, _ := obipairing.CLIPairedSequence()
+	pairs, err := obipairing.CLIPairedSequence()
+
+	if err != nil {
+		log.Errorf("Cannot open file (%v)",err)
+		os.Exit(1)
+	}
+
 	paired := obipairing.IAssemblePESequencesBatch(pairs,
 		obipairing.CLIGapPenality(),
 		obipairing.CLIDelta(),
