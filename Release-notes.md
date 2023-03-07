@@ -2,6 +2,8 @@
 
 ## On going changes
 
+## March 7th, 2023. Release 4.0.1
+
 ### Corrected bugs
 
 - Makes progress bar updating at most 10 times per second.
