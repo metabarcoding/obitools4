@@ -2,6 +2,10 @@
 
 ## On going changes
 
+### Corrected bugs
+
+- Better managment of non existing files. The produced error message is not yet perfectly clear.
+  
 ## March 7th, 2023. Release 4.0.1
 
 ### Corrected bugs
