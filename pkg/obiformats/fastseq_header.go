@@ -19,6 +19,5 @@ func IParseFastSeqHeaderBatch(iterator obiiter.IBioSequence,
 	options ...WithOption) obiiter.IBioSequence {
 	opt := MakeOptions(options)
 	return iterator.MakeIWorker(obiseq.AnnotatorToSeqWorker(opt.ParseFastSeqHeader()),
-		opt.ParallelWorkers(),
-		opt.BufferSize())
+		opt.ParallelWorkers())
 }

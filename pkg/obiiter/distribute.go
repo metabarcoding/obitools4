@@ -36,7 +36,6 @@ func (dist *IDistribute) Classifier() *obiseq.BioSequenceClassifier {
 
 func (iterator IBioSequence) Distribute(class *obiseq.BioSequenceClassifier, sizes ...int) IDistribute {
 	batchsize := 5000
-	buffsize := 2
 
 	outputs := make(map[int]IBioSequence, 100)
 	slices := make(map[int]*obiseq.BioSequenceSlice, 100)
@@ -47,9 +46,7 @@ func (iterator IBioSequence) Distribute(class *obiseq.BioSequenceClassifier, siz
 		batchsize = sizes[0]
 	}
 
-	if len(sizes) > 1 {
-		buffsize = sizes[1]
-	}
+
 
 	jobDone := sync.WaitGroup{}
 	lock := sync.Mutex{}
@@ -80,7 +77,7 @@ func (iterator IBioSequence) Distribute(class *obiseq.BioSequenceClassifier, siz
 					orders[key] = 0
 
 					lock.Lock()
-					outputs[key] = MakeIBioSequence(buffsize)
+					outputs[key] = MakeIBioSequence()
 					lock.Unlock()
 
 					news <- key

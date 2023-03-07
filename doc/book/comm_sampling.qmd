@@ -10,13 +10,39 @@
 
 Sequences can be selected on several of their caracteristics, their length, their id, their sequence. Options allow for specifying the condition if selection.
 
+**Selection based on the sequence**
+
+
+Sequence records can be selected according if they match or not with a pattern. The simplest pattern is as short sequence (*e.g* `AACCTT`). But the usage of regular patterns allows for looking for more complex pattern. As example, `A[TG]C+G` matches a `A`, followed by a `T` or a `G`, then one or several `C` and endly a `G`.
+
+{{< include ../lib/options/selection/_sequence.qmd >}}
+
+*Examples:*
+
+: Selects only the sequence records that contain an *EcoRI* restriction site.
+
+```bash   
+obigrep -s 'GAATTC' seq1.fasta > seq2.fasta
+```
+    
+: Selects only the sequence records that contain a stretch of at least 10 ``A``.    
+    
+```bash   
+obigrep -s 'A{10,}' seq1.fasta > seq2.fasta
+```
+
+: Selects only the sequence records that do not contain ambiguous nucleotides.
+    
+```bash   
+obigrep -s '^[ACGT]+$' seq1.fasta > seq2.fasta
+```
 
 
 {{< include ../lib/options/selection/_min-count.qmd >}}
 
 {{< include ../lib/options/selection/_max-count.qmd >}}
 
-Example
+*Examples*
 
 : Selecting sequence records representing at least five reads in the dataset.
 

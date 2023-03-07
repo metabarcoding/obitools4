@@ -60,6 +60,21 @@ func InputOptionSet(options *getoptions.GetOpt) {
 
 }
 
+func OutputModeOptionSet(options *getoptions.GetOpt) {
+	options.BoolVar(&__no_progress_bar__, "no-progressbar", false,
+		options.Description("Disable the progress bar printing"))
+
+	options.BoolVar(&__compressed__, "compress", false,
+		options.Alias("Z"),
+		options.Description("Output is compressed"))
+
+	options.StringVar(&__output_file_name__, "out", __output_file_name__,
+		options.Alias("o"),
+		options.ArgName("FILENAME"),
+		options.Description("Filename used for saving the output"),
+	)
+}
+
 func OutputOptionSet(options *getoptions.GetOpt) {
 	options.BoolVar(&__output_in_fasta__, "fasta-output", false,
 		options.Description("Read data following the ecoPCR output format."))
@@ -73,19 +88,7 @@ func OutputOptionSet(options *getoptions.GetOpt) {
 		options.Alias("O"),
 		options.Description("output FASTA/FASTQ title line annotations follow OBI format."))
 
-	options.BoolVar(&__no_progress_bar__, "no-progressbar", false,
-		options.Description("Disable the progress bar printing"))
-
-	options.BoolVar(&__compressed__, "compress", false,
-		options.Alias("Z"),
-		options.Description("Output is compressed"))
-
-	options.StringVar(&__output_file_name__, "out", __output_file_name__,
-		options.Alias("o"),
-		options.ArgName("FILENAME"),
-		options.Description("Filename used for saving the output"),
-	)
-
+	OutputModeOptionSet(options)
 }
 
 func PairedFilesOptionSet(options *getoptions.GetOpt) {

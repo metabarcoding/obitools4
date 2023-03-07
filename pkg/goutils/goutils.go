@@ -13,6 +13,7 @@ import (
 	"github.com/barkimedes/go-deepcopy"
 )
 
+
 // InterfaceToInt converts a interface{} to an integer value if possible.
 // If not a "NotAnInteger" error is returned via the err
 // return value and val is set to 0.
@@ -300,15 +301,6 @@ func ReadLines(path string) (lines []string, err error) {
 		err = nil
 	}
 	return
-}
-
-func Contains[T comparable](arr []T, x T) bool {
-	for _, v := range arr {
-		if v == x {
-			return true
-		}
-	}
-	return false
 }
 
 func AtomicCounter(initial ...int) func() int {

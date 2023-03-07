@@ -13,7 +13,6 @@ type _Options struct {
 	circular        bool
 	forwardError    int
 	reverseError    int
-	bufferSize      int
 	batchSize       int
 	parallelWorkers int
 	forward         ApatPattern
@@ -66,12 +65,6 @@ func (options Options) Circular() bool {
 	return options.pointer.circular
 }
 
-// BufferSize returns the size of the channel
-// buffer specified by the options
-func (options Options) BufferSize() int {
-	return options.pointer.bufferSize
-}
-
 // BatchSize returns the size of the
 // sequence batch used by the PCR algorithm
 func (options Options) BatchSize() int {
@@ -95,7 +88,6 @@ func MakeOptions(setters []WithOption) Options {
 		circular:        false,
 		parallelWorkers: 4,
 		batchSize:       100,
-		bufferSize:      100,
 		forward:         NilApatPattern,
 		cfwd:            NilApatPattern,
 		reverse:         NilApatPattern,
@@ -183,16 +175,6 @@ func OptionReversePrimer(primer string, max int) WithOption {
 func OptionCircular(circular bool) WithOption {
 	f := WithOption(func(opt Options) {
 		opt.pointer.circular = circular
-	})
-
-	return f
-}
-
-// OptionBufferSize sets the requested channel
-// buffer size.
-func OptionBufferSize(size int) WithOption {
-	f := WithOption(func(opt Options) {
-		opt.pointer.bufferSize = size
 	})
 
 	return f

@@ -60,17 +60,11 @@ type IBioSequence struct {
 var NilIBioSequence = IBioSequence{pointer: nil}
 
 func MakeIBioSequence(sizes ...int) IBioSequence {
-	buffsize := int32(0)
-
-	if len(sizes) > 0 {
-		buffsize = int32(sizes[0])
-	}
 
 	i := _IBioSequence{
-		channel:         make(chan BioSequenceBatch, buffsize),
+		channel:         make(chan BioSequenceBatch),
 		current:         NilBioSequenceBatch,
 		pushBack:        abool.New(),
-		buffer_size:     buffsize,
 		batch_size:      -1,
 		sequence_format: "",
 		finished:        abool.New(),
@@ -158,14 +152,6 @@ func (iterator IBioSequence) IsNil() bool {
 	}
 
 	return iterator.pointer == nil
-}
-
-func (iterator IBioSequence) BufferSize() int {
-	if iterator.pointer == nil {
-		log.Panic("call of IBioSequenceBatch.BufferSize method on NilIBioSequenceBatch")
-	}
-
-	return int(atomic.LoadInt32(&iterator.pointer.buffer_size))
 }
 
 func (iterator IBioSequence) BatchSize() int {
@@ -279,13 +265,8 @@ func (iterator IBioSequence) Finished() bool {
 
 // Sorting the batches of sequences.
 func (iterator IBioSequence) SortBatches(sizes ...int) IBioSequence {
-	buffsize := iterator.BufferSize()
 
-	if len(sizes) > 0 {
-		buffsize = sizes[0]
-	}
-
-	newIter := MakeIBioSequence(buffsize)
+	newIter := MakeIBioSequence()
 
 	newIter.Add(1)
 
@@ -338,8 +319,7 @@ func (iterator IBioSequence) Concat(iterators ...IBioSequence) IBioSequence {
 		allPaired = allPaired && i.IsPaired()
 	}
 
-	buffsize := iterator.BufferSize()
-	newIter := MakeIBioSequence(buffsize)
+	newIter := MakeIBioSequence()
 
 	newIter.Add(1)
 
@@ -396,8 +376,7 @@ func (iterator IBioSequence) Pool(iterators ...IBioSequence) IBioSequence {
 	}
 
 	nextCounter := goutils.AtomicCounter()
-	buffsize := iterator.BufferSize()
-	newIter := MakeIBioSequence(buffsize)
+	newIter := MakeIBioSequence()
 
 	newIter.Add(niterator)
 
@@ -431,13 +410,8 @@ func (iterator IBioSequence) Pool(iterators ...IBioSequence) IBioSequence {
 // indicated in parameter. Rebatching implies to sort the
 // source IBioSequenceBatch.
 func (iterator IBioSequence) Rebatch(size int, sizes ...int) IBioSequence {
-	buffsize := iterator.BufferSize()
 
-	if len(sizes) > 0 {
-		buffsize = sizes[0]
-	}
-
-	newIter := MakeIBioSequence(buffsize)
+	newIter := MakeIBioSequence()
 
 	newIter.Add(1)
 
@@ -532,14 +506,9 @@ func (iterator IBioSequence) Count(recycle bool) (int, int, int) {
 // iterator following the predicate value.
 func (iterator IBioSequence) DivideOn(predicate obiseq.SequencePredicate,
 	size int, sizes ...int) (IBioSequence, IBioSequence) {
-	buffsize := iterator.BufferSize()
 
-	if len(sizes) > 0 {
-		buffsize = sizes[0]
-	}
-
-	trueIter := MakeIBioSequence(buffsize)
-	falseIter := MakeIBioSequence(buffsize)
+	trueIter := MakeIBioSequence()
+	falseIter := MakeIBioSequence()
 
 	trueIter.Add(1)
 	falseIter.Add(1)
@@ -604,18 +573,13 @@ func (iterator IBioSequence) DivideOn(predicate obiseq.SequencePredicate,
 // A function that takes a predicate and a batch of sequences and returns a filtered batch of sequences.
 func (iterator IBioSequence) FilterOn(predicate obiseq.SequencePredicate,
 	size int, sizes ...int) IBioSequence {
-	buffsize := iterator.BufferSize()
 	nworkers := 4
 
 	if len(sizes) > 0 {
 		nworkers = sizes[0]
 	}
 
-	if len(sizes) > 1 {
-		buffsize = sizes[1]
-	}
-
-	trueIter := MakeIBioSequence(buffsize)
+	trueIter := MakeIBioSequence()
 
 	trueIter.Add(nworkers)
 
@@ -661,18 +625,13 @@ func (iterator IBioSequence) FilterOn(predicate obiseq.SequencePredicate,
 
 func (iterator IBioSequence) FilterAnd(predicate obiseq.SequencePredicate,
 	size int, sizes ...int) IBioSequence {
-	buffsize := iterator.BufferSize()
 	nworkers := 4
 
 	if len(sizes) > 0 {
 		nworkers = sizes[0]
 	}
 
-	if len(sizes) > 1 {
-		buffsize = sizes[1]
-	}
-
-	trueIter := MakeIBioSequence(buffsize)
+	trueIter := MakeIBioSequence()
 
 	trueIter.Add(nworkers)
 
@@ -740,13 +699,7 @@ func (iterator IBioSequence) Load() obiseq.BioSequenceSlice {
 func IBatchOver(data obiseq.BioSequenceSlice,
 	size int, sizes ...int) IBioSequence {
 
-	buffsize := 0
-
-	if len(sizes) > 0 {
-		buffsize = sizes[0]
-	}
-
-	newIter := MakeIBioSequence(buffsize)
+	newIter := MakeIBioSequence()
 
 	newIter.Add(1)
 

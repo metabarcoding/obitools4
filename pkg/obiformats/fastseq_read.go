@@ -105,7 +105,7 @@ func ReadFastSeqFromFile(filename string, options ...WithOption) (obiiter.IBioSe
 		size = -1
 	}
 
-	newIter := obiiter.MakeIBioSequence(opt.BufferSize())
+	newIter := obiiter.MakeIBioSequence()
 	newIter.Add(1)
 
 	go func() {
@@ -127,7 +127,7 @@ func ReadFastSeqFromFile(filename string, options ...WithOption) (obiiter.IBioSe
 
 func ReadFastSeqFromStdin(options ...WithOption) obiiter.IBioSequence {
 	opt := MakeOptions(options)
-	newIter := obiiter.MakeIBioSequence(opt.BufferSize())
+	newIter := obiiter.MakeIBioSequence()
 
 	newIter.Add(1)
 

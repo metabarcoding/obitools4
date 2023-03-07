@@ -1,4 +1,4 @@
-package obieval
+package obiseq
 
 import (
 	"fmt"
@@ -174,8 +174,19 @@ var OBILang = gval.NewLanguage(
 			log.Fatalf("%v cannot be converted to a boolan value", args[0])
 		}
 		return val, nil
+	}),
+	gval.Function("ifelse", func(args ...interface{}) (interface{}, error) {
+		if args[0].(bool) {
+			return args[1], nil
+		} else {
+			return args[2], nil
+		}
+	}),
+	gval.Function("gcskew", func(args ...interface{}) (interface{}, error) {
+		composition := (args[0].(*BioSequence)).Composition()
+		return float64(composition['g']-composition['c']) / float64(composition['g']+composition['c']), nil
+	}),
+	gval.Function("composition", func(args ...interface{}) (interface{}, error) {
+		return (args[0].(*BioSequence)).Composition(), nil
 	}))
 
-func Expression(expression string) (gval.Evaluable, error) {
-	return OBILang.NewEvaluable(expression)
-}

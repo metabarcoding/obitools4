@@ -11,26 +11,64 @@ Several OBITools (*e.g.* obigrep, obiannotate) allow the user to specify some si
 
 ### Instrospection functions {.unnumbered}
 
-- `len(x)`is a generic function allowing to retreive the size of a object. It returns 
+**`len(x)`**
+
+: It is a generic function allowing to retreive the size of a object. It returns 
   the length of a sequences, the number of element in a map like `annotations`, the number
   of elements in an array. The reurned value is an `int`.
 
 ### Cast functions {.unnumbered}
 
-- `int(x)`  converts if possible the `x` value to an integer value. The function 
+**`int(x)`**  
+
+: Converts if possible the `x` value to an integer value. The function 
   returns an `int`.
-- `numeric(x)` converts if possible the `x` value to a float value. The function 
+
+**`numeric(x)`** 
+
+: Converts if possible the `x` value to a float value. The function 
   returns a `float`.
-- `bool(x)` converts if possible the `x` value to a boolean value. The function 
+
+**`bool(x)`** 
+
+: Converts if possible the `x` value to a boolean value. The function 
   returns a `bool`.
 
 ### String related functions {.unnumbered}
 
-- `printf(format,...)` allows to combine several values to build a string. `format` follows the
+**`printf(format,...)`** 
+
+: Allows to combine several values to build a string. `format` follows the
    classical C `printf` syntax. The function returns a `string`.
-- `subspc(x)` substitutes every space in the `x` string by the underscore (`_`) character. The function 
+
+**`subspc(x)`** 
+
+: substitutes every space in the `x` string by the underscore (`_`) character. The function 
    returns a `string`. 
 
+### Condition function {.unnumbered}
+
+**`ifelse(condition,val1,val2)`**
+
+: The `condition` value has to be a `bool` value. If it is `true` the function returns `val1`,
+  otherwise, it is returning `val2`.
+
+### Sequence analysis related function
+
+**`composition(sequence)`**
+
+: The nucleotide composition of the sequence is returned as as map indexed by `a`, `c`, `g`, or `t` and
+  each value is the number of occurrences of that nucleotide. A fifth key `others` accounts for
+  all others symboles.  
+
+**`gcskew(sequence)`**
+
+: Computes the excess of g compare to c of the sequence, known as the GC skew.
+
+    $$
+    Skew_{GC}=\frac{G-C}{G+C}
+    $$
+    
 ## Accessing to the sequence annotations
 
 The `annotations` variable is a map object containing all the annotations associated to the currently processed sequence. Index of the map are the attribute names. It exists to possibillities to retreive
@@ -53,4 +91,7 @@ Special attributes of the sequence are accessible only by dedicated methods of t
 - The sequence identifier : `Id()`
 - THe sequence definition : `Definition()`
 
+```go
+sequence.Id()
+```
 

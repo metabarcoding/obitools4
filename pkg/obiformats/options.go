@@ -15,10 +15,15 @@ type __options__ struct {
 	closefile             bool
 	appendfile            bool
 	compressed            bool
-	csv_ids               bool
-	cvs_sequence          bool
+	csv_id                bool
+	csv_sequence          bool
+	csv_quality           bool
 	csv_definition        bool
+	csv_count             bool
+	csv_taxon             bool
+	csv_keys              []string
 	csv_separator         string
+	csv_navalue           string
 	paired_filename       string
 }
 
@@ -40,11 +45,16 @@ func MakeOptions(setters []WithOption) Options {
 		closefile:             false,
 		appendfile:            false,
 		compressed:            false,
-		csv_ids:               true,
+		csv_id:                true,
 		csv_definition:        false,
-		cvs_sequence:          true,
+		csv_count:             false,
+		csv_taxon:             false,
+		csv_sequence:          true,
+		csv_quality:           false,
 		csv_separator:         ",",
-		paired_filename: "",
+		csv_navalue: "NA",
+		csv_keys:              make([]string, 0),
+		paired_filename:       "",
 	}
 
 	opt := Options{&o}
@@ -58,10 +68,6 @@ func MakeOptions(setters []WithOption) Options {
 
 func (opt Options) QualityShift() int {
 	return opt.pointer.quality_shift
-}
-
-func (opt Options) BufferSize() int {
-	return opt.pointer.buffer_size
 }
 
 func (opt Options) BatchSize() int {
@@ -96,8 +102,40 @@ func (opt Options) CompressedFile() bool {
 	return opt.pointer.compressed
 }
 
-func (opt Options) CSVIds() bool {
-	return opt.pointer.csv_ids
+func (opt Options) CSVId() bool {
+	return opt.pointer.csv_id
+}
+
+func (opt Options) CSVDefinition() bool {
+	return opt.pointer.csv_definition
+}
+
+func (opt Options) CSVCount() bool {
+	return opt.pointer.csv_count
+}
+
+func (opt Options) CSVTaxon() bool {
+	return opt.pointer.csv_taxon
+}
+
+func (opt Options) CSVSequence() bool {
+	return opt.pointer.csv_sequence
+}
+
+func (opt Options) CSVQuality() bool {
+	return opt.pointer.csv_quality
+}
+
+func (opt Options) CSVKeys() []string {
+	return opt.pointer.csv_keys
+}
+
+func (opt Options) CSVSeparator() string {
+	return opt.pointer.csv_separator
+}
+
+func (opt Options) CSVNAValue() string {
+	return opt.pointer.csv_navalue
 }
 
 func (opt Options) HaveToSavePaired() bool {
@@ -106,14 +144,6 @@ func (opt Options) HaveToSavePaired() bool {
 
 func (opt Options) PairedFileName() string {
 	return opt.pointer.paired_filename
-}
-
-func OptionsBufferSize(size int) WithOption {
-	f := WithOption(func(opt Options) {
-		opt.pointer.buffer_size = size
-	})
-
-	return f
 }
 
 func OptionCloseFile() WithOption {
@@ -247,3 +277,82 @@ func WritePairedReadsTo(filename string) WithOption {
 	return f
 }
 
+func CSVId(include bool) WithOption {
+	f := WithOption(func(opt Options) {
+		opt.pointer.csv_id = include
+	})
+
+	return f
+}
+
+func CSVSequence(include bool) WithOption {
+	f := WithOption(func(opt Options) {
+		opt.pointer.csv_sequence = include
+	})
+
+	return f
+}
+
+func CSVQuality(include bool) WithOption {
+	f := WithOption(func(opt Options) {
+		opt.pointer.csv_quality = include
+	})
+
+	return f
+}
+
+func CSVDefinition(include bool) WithOption {
+	f := WithOption(func(opt Options) {
+		opt.pointer.csv_definition = include
+	})
+
+	return f
+}
+
+func CSVCount(include bool) WithOption {
+	f := WithOption(func(opt Options) {
+		opt.pointer.csv_count = include
+	})
+
+	return f
+}
+
+func CSVTaxon(include bool) WithOption {
+	f := WithOption(func(opt Options) {
+		opt.pointer.csv_taxon = include
+	})
+
+	return f
+}
+
+func CSVKey(key string) WithOption {
+	f := WithOption(func(opt Options) {
+		opt.pointer.csv_keys = append(opt.pointer.csv_keys, key)
+	})
+
+	return f
+}
+
+func CSVKeys(keys []string) WithOption {
+	f := WithOption(func(opt Options) {
+		opt.pointer.csv_keys = append(opt.pointer.csv_keys, keys...)
+	})
+
+	return f
+}
+
+func CSVSeparator(separator string) WithOption {
+	f := WithOption(func(opt Options) {
+		opt.pointer.csv_separator = separator
+	})
+
+	return f
+}
+
+func CSVNAValue(navalue string) WithOption {
+	f := WithOption(func(opt Options) {
+		opt.pointer.csv_navalue = navalue
+	})
+
+	return f
+}

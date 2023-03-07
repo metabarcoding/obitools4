@@ -39,7 +39,6 @@ func CLIFilterSequence(iterator obiiter.IBioSequence) obiiter.IBioSequence {
 			newIter = iterator.FilterOn(predicate,
 				obioptions.CLIBatchSize(),
 				obioptions.CLIParallelWorkers(),
-				obioptions.CLIBufferSize(),
 			)
 		}
 	} else {

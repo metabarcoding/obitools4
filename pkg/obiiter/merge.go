@@ -4,16 +4,12 @@ import "git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 
 func (iterator IBioSequence) IMergeSequenceBatch(na string, statsOn []string, sizes ...int) IBioSequence {
 	batchsize := 100
-	buffsize := iterator.BufferSize()
 
 	if len(sizes) > 0 {
 		batchsize = sizes[0]
 	}
-	if len(sizes) > 1 {
-		buffsize = sizes[1]
-	}
 
-	newIter := MakeIBioSequence(buffsize)
+	newIter := MakeIBioSequence()
 
 	newIter.Add(1)
 

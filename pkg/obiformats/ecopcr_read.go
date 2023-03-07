@@ -166,7 +166,7 @@ func ReadEcoPCR(reader io.Reader, options ...WithOption) obiiter.IBioSequence {
 
 	opt := MakeOptions(options)
 
-	newIter := obiiter.MakeIBioSequence(opt.BufferSize())
+	newIter := obiiter.MakeIBioSequence()
 	newIter.Add(1)
 
 	go func() {

@@ -1,0 +1,3 @@
+**\--min-length** | **-l** _LENGTH_
+
+: Keeps sequence records whose sequence length is equal or longer than _LENGTH_.

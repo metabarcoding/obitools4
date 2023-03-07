@@ -316,3 +316,4 @@ func RotateClassifier(size int) *BioSequenceClassifier {
 	c := BioSequenceClassifier{code, value, reset, clone,"RotateClassifier"}
 	return &c
 }
+

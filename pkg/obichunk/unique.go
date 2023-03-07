@@ -19,7 +19,7 @@ func IUniqueSequence(iterator obiiter.IBioSequence,
 	opts := MakeOptions(options)
 	nworkers := opts.ParallelWorkers()
 
-	iUnique := obiiter.MakeIBioSequence(opts.BufferSize())
+	iUnique := obiiter.MakeIBioSequence()
 
 	iterator = iterator.Speed("Splitting data set")
 
@@ -28,8 +28,7 @@ func IUniqueSequence(iterator obiiter.IBioSequence,
 	if opts.SortOnDisk() {
 		nworkers = 1
 		iterator, err = ISequenceChunkOnDisk(iterator,
-			obiseq.HashClassifier(opts.BatchCount()),
-			0)
+			obiseq.HashClassifier(opts.BatchCount()))
 
 		if err != nil {
 			return obiiter.NilIBioSequence, err
@@ -37,8 +36,7 @@ func IUniqueSequence(iterator obiiter.IBioSequence,
 
 	} else {
 		iterator, err = ISequenceChunk(iterator,
-			obiseq.HashClassifier(opts.BatchCount()),
-			opts.BufferSize())
+			obiseq.HashClassifier(opts.BatchCount()))
 
 		if err != nil {
 			return obiiter.NilIBioSequence, err
@@ -78,12 +76,11 @@ func IUniqueSequence(iterator obiiter.IBioSequence,
 		icat--
 		input, err = ISequenceSubChunk(input,
 			classifier,
-			1,
-			opts.BufferSize())
+			1)
 
 		var next obiiter.IBioSequence
 		if icat >= 0 {
-			next = obiiter.MakeIBioSequence(opts.BufferSize())
+			next = obiiter.MakeIBioSequence()
 
 			iUnique.Add(1)
 
@@ -130,7 +127,6 @@ func IUniqueSequence(iterator obiiter.IBioSequence,
 
 	iMerged := iUnique.IMergeSequenceBatch(opts.NAValue(),
 		opts.StatsOn(),
-		opts.BufferSize(),
 	)
 
 	return iMerged, nil

@@ -6,7 +6,6 @@ type __options__ struct {
 	navalue         string
 	cacheOnDisk     bool
 	batchCount      int
-	bufferSize      int
 	batchSize       int
 	parallelWorkers int
 	noSingleton     bool
@@ -25,7 +24,6 @@ func MakeOptions(setters []WithOption) Options {
 		navalue:         "NA",
 		cacheOnDisk:     false,
 		batchCount:      100,
-		bufferSize:      2,
 		batchSize:       5000,
 		parallelWorkers: 4,
 		noSingleton:     false,
@@ -63,10 +61,6 @@ func (opt Options) NAValue() string {
 
 func (opt Options) BatchCount() int {
 	return opt.pointer.batchCount
-}
-
-func (opt Options) BufferSize() int {
-	return opt.pointer.bufferSize
 }
 
 func (opt Options) BatchSize() int {
@@ -143,14 +137,6 @@ func OptionsParallelWorkers(nworkers int) WithOption {
 func OptionsBatchSize(size int) WithOption {
 	f := WithOption(func(opt Options) {
 		opt.pointer.batchSize = size
-	})
-
-	return f
-}
-
-func OptionsBufferSize(size int) WithOption {
-	f := WithOption(func(opt Options) {
-		opt.pointer.bufferSize = size
 	})
 
 	return f

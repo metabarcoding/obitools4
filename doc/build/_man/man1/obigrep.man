@@ -174,14 +174,22 @@ selected.
 That option rely on the \f[V]count\f[R] attribute.
 If the \f[V]count\f[R] attribute is not defined for a sequence record,
 it is assumed equal to 1.
-.PP
+.TP
 \f[B]--max-length\f[R] | \f[B]-L\f[R] \f[I]LENGTH\f[R]
-.PP
+Keeps sequence records whose sequence length is equal or shorter than
+\f[I]LENGTH\f[R].
+.TP
 \f[B]--min-length\f[R] | \f[B]-l\f[R] \f[I]LENGTH\f[R]
+Keeps sequence records whose sequence length is equal or longer than
+\f[I]LENGTH\f[R].
 .PP
 \f[B]--predicate\f[R]|\f[B]-p\f[R] \f[I]EXPRESSION\f[R]
-.PP
+.TP
 \f[B]--sequence\f[R]|\f[B]-s\f[R] \f[I]PATTERN\f[R]
+Regular expression pattern to be tested against the sequence itself.
+The pattern is case insensitive.
+A complete description of the regular pattern grammar is available
+here (https://yourbasic.org/golang/regexp-cheat-sheet/#cheat-sheet).
 .PP
 \f[B]--inverse-match\f[R] | \f[B]-v\f[R]
 .PP

@@ -71,8 +71,7 @@ func WriteFasta(iterator obiiter.IBioSequence,
 
 	file, _ = goutils.CompressStream(file, opt.CompressedFile(), opt.CloseFile())
 
-	buffsize := iterator.BufferSize()
-	newIter := obiiter.MakeIBioSequence(buffsize)
+	newIter := obiiter.MakeIBioSequence()
 
 	nwriters := opt.ParallelWorkers()
 

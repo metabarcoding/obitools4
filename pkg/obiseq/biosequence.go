@@ -278,3 +278,28 @@ func (s *BioSequence) Clear() {
 	s.sequence = s.sequence[0:0]
 }
 
+func (s *BioSequence) Composition() map[byte]int {
+
+	a := 0
+	c := 0
+	g := 0
+	t := 0
+	other := 0
+	for _, char := range s.sequence {
+		switch char {
+		case 'a':
+			a++
+		case 'c':
+			c++
+		case 'g':
+			g++
+		case 't':
+			t++
+		default:
+			other++
+
+		}
+	}
+
+	return map[byte]int{'a': a, 'c': c, 'g': g, 't': t, 'o': other}
+}

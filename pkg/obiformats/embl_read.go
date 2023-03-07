@@ -244,9 +244,9 @@ func _ReadFlatFileChunk(reader io.Reader, readers chan _FileChunk) {
 // <CR>?<LF>//<CR>?<LF>
 func ReadEMBL(reader io.Reader, options ...WithOption) obiiter.IBioSequence {
 	opt := MakeOptions(options)
-	entry_channel := make(chan _FileChunk, opt.BufferSize())
+	entry_channel := make(chan _FileChunk)
 
-	newIter := obiiter.MakeIBioSequence(opt.BufferSize())
+	newIter := obiiter.MakeIBioSequence()
 
 	nworkers := opt.ParallelWorkers()
 	newIter.Add(nworkers)

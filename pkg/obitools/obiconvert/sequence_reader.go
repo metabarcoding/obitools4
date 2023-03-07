@@ -48,6 +48,10 @@ func _ExpandListOfFiles(check_ext bool, filenames ...string) ([]string, error) {
 						strings.HasSuffix(path, "fasta.gz") ||
 						strings.HasSuffix(path, "fastq") ||
 						strings.HasSuffix(path, "fastq.gz") ||
+						strings.HasSuffix(path, "seq") ||
+						strings.HasSuffix(path, "seq.gz") ||
+						strings.HasSuffix(path, "gb") ||
+						strings.HasSuffix(path, "gb.gz") ||
 						strings.HasSuffix(path, "dat") ||
 						strings.HasSuffix(path, "dat.gz") ||
 						strings.HasSuffix(path, "ecopcr") ||
@@ -82,13 +86,12 @@ func CLIReadBioSequences(filenames ...string) (obiiter.IBioSequence, error) {
 		opts = append(opts, obiformats.OptionsFastSeqHeaderParser(obiformats.ParseGuessedFastSeqHeader))
 	}
 
-	nworkers := obioptions.CLIParallelWorkers() // / 4
+	nworkers := obioptions.CLIParallelWorkers()
 	if nworkers < 2 {
 		nworkers = 2
 	}
 
 	opts = append(opts, obiformats.OptionsParallelWorkers(nworkers))
-	opts = append(opts, obiformats.OptionsBufferSize(obioptions.CLIBufferSize()))
 	opts = append(opts, obiformats.OptionsBatchSize(obioptions.CLIBatchSize()))
 
 	opts = append(opts, obiformats.OptionsQualityShift(CLIInputQualityShift()))

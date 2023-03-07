@@ -20,7 +20,6 @@ func IExtractBarcode(iterator obiiter.IBioSequence) (obiiter.IBioSequence, error
 		obingslibrary.OptionDiscardErrors(!CLIConservedErrors()),
 		obingslibrary.OptionParallelWorkers(obioptions.CLIParallelWorkers()),
 		obingslibrary.OptionBatchSize(obioptions.CLIBatchSize()),
-		obingslibrary.OptionBufferSize(obioptions.CLIBufferSize()),
 	)
 
 	ngsfilter, err := CLINGSFIlter()

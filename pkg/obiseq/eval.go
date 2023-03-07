@@ -4,22 +4,21 @@ import (
 	"context"
 	"fmt"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obieval"
 	log "github.com/sirupsen/logrus"
 )
 
-func Expression(expression string) func(*BioSequence) (interface{},error) {
+func Expression(expression string) func(*BioSequence) (interface{}, error) {
 
-	exp, err := obieval.OBILang.NewEvaluable(expression)
+	exp, err := OBILang.NewEvaluable(expression)
 	if err != nil {
 		log.Fatalf("Error in the expression : %s", expression)
 	}
 
-	f := func(sequence *BioSequence) (interface{},error) {
+	f := func(sequence *BioSequence) (interface{}, error) {
 		return exp(context.Background(),
 			map[string]interface{}{
-				"annotations":     sequence.Annotations(),
-				"sequence":  sequence,
+				"annotations": sequence.Annotations(),
+				"sequence":    sequence,
 			},
 		)
 	}
@@ -30,14 +29,14 @@ func Expression(expression string) func(*BioSequence) (interface{},error) {
 func EditIdWorker(expression string) SeqWorker {
 	e := Expression(expression)
 	f := func(sequence *BioSequence) *BioSequence {
-		v,err := e(sequence)
+		v, err := e(sequence)
 
 		if err != nil {
 			log.Fatalf("Expression '%s' cannot be evaluated on sequence %s",
 				expression,
 				sequence.Id())
 		}
-		sequence.SetId(fmt.Sprintf("%v",v))
+		sequence.SetId(fmt.Sprintf("%v", v))
 		return sequence
 	}
 
@@ -47,14 +46,14 @@ func EditIdWorker(expression string) SeqWorker {
 func EditAttributeWorker(key string, expression string) SeqWorker {
 	e := Expression(expression)
 	f := func(sequence *BioSequence) *BioSequence {
-		v,err := e(sequence)
+		v, err := e(sequence)
 
 		if err != nil {
 			log.Fatalf("Expression '%s' cannot be evaluated on sequence %s",
 				expression,
 				sequence.Id())
 		}
-		sequence.SetAttribute(key,v)
+		sequence.SetAttribute(key, v)
 		return sequence
 	}
 

@@ -1,0 +1,7 @@
+**\--sequence**|**-s** _PATTERN_
+
+: Regular expression pattern to be tested against the
+  sequence itself. The pattern is case insensitive. A
+  complete description of the regular pattern grammar
+  is available [here](https://yourbasic.org/golang/regexp-cheat-sheet/#cheat-sheet).
+  

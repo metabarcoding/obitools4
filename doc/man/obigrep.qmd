@@ -99,13 +99,13 @@ The OBITools are centered around the [FASTA] (https://en.wikipedia.org/wiki/FAST
 
 {{< include ../lib/options/selection/_min-count.qmd >}}
 
-**\--max-length** | **-L** _LENGTH_
+{{< include ../lib/options/selection/_max-length.qmd >}}
 
-**\--min-length** | **-l** _LENGTH_
+{{< include ../lib/options/selection/_min-length.qmd >}}
 
 **\--predicate**|**-p** _EXPRESSION_
 
-**\--sequence**|**-s** _PATTERN_
+{{< include ../lib/options/selection/_sequence.qmd >}}
 
 **\--inverse-match** | **-v**
 

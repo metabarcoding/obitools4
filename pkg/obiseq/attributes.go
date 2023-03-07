@@ -8,6 +8,15 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+func (s *BioSequence) HasAttribute(key string) bool {
+	ok := s.annotations != nil
+
+	if ok {
+		_, ok = s.annotations[key]
+	}
+
+	return ok
+}
 // A method that returns the value of the key in the annotation map.
 func (s *BioSequence) GetAttribute(key string) (interface{}, bool) {
 	var val interface{}

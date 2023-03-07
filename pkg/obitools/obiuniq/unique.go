@@ -51,8 +51,6 @@ func Unique(sequences obiiter.IBioSequence) obiiter.IBioSequence {
 	options = append(options,
 		obichunk.OptionsParallelWorkers(
 			obioptions.CLIParallelWorkers()),
-		obichunk.OptionsBufferSize(
-			obioptions.CLIBufferSize()),
 		obichunk.OptionsBatchSize(
 			obioptions.CLIBatchSize()),
 		obichunk.OptionNAValue(CLINAValue()),

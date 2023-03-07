@@ -11,12 +11,11 @@ import (
 )
 
 var _Debug = false
-var _ParallelWorkers = runtime.NumCPU() * 2 - 1
+var _ParallelWorkers = runtime.NumCPU()*2 - 1
 var _MaxAllowedCPU = runtime.NumCPU()
-var _BufferSize = 1
 var _BatchSize = 5000
 
-type ArgumentParser func([]string) (*getoptions.GetOpt, []string, error)
+type ArgumentParser func([]string) (*getoptions.GetOpt, []string)
 
 func GenerateOptionParser(optionset ...func(*getoptions.GetOpt)) ArgumentParser {
 
@@ -38,16 +37,20 @@ func GenerateOptionParser(optionset ...func(*getoptions.GetOpt)) ArgumentParser 
 		o(options)
 	}
 
-	return func(args []string) (*getoptions.GetOpt, []string, error) {
+	return func(args []string) (*getoptions.GetOpt, []string) {
 
 		remaining, err := options.Parse(args[1:])
+
+		if err != nil {
+			log.Fatalf("Error on the commande line : %v",err)
+		}
 
 		// Setup the maximum number of CPU usable by the program
 		runtime.GOMAXPROCS(_MaxAllowedCPU)
 		if options.Called("max-cpu") {
 			log.Printf("CPU number limited to %d", _MaxAllowedCPU)
-			if ! options.Called("workers") {
-				_ParallelWorkers=_MaxAllowedCPU * 2 - 1
+			if !options.Called("workers") {
+				_ParallelWorkers = _MaxAllowedCPU*2 - 1
 				log.Printf("Number of workers set %d", _ParallelWorkers)
 			}
 		}
@@ -67,7 +70,7 @@ func GenerateOptionParser(optionset ...func(*getoptions.GetOpt)) ArgumentParser 
 			log.Debugln("Switch to debug level logging")
 		}
 
-		return options, remaining, err
+		return options, remaining
 	}
 }
 
@@ -86,11 +89,6 @@ func CLIParallelWorkers() int {
 // the command line option --workers|-w.
 func CLIMaxCPU() int {
 	return _MaxAllowedCPU
-}
-
-// CLIBufferSize returns the expeted channel buffer size for obitools
-func CLIBufferSize() int {
-	return _BufferSize
 }
 
 // CLIBatchSize returns the expeted size of the sequence batches

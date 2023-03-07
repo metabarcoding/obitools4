@@ -31,7 +31,6 @@ func DistributeSequence(sequences obiiter.IBioSequence) {
 	}
 
 	opts = append(opts, obiformats.OptionsParallelWorkers(nworkers),
-		obiformats.OptionsBufferSize(obioptions.CLIBufferSize()),
 		obiformats.OptionsBatchSize(obioptions.CLIBatchSize()),
 		obiformats.OptionsQualityShift(obiconvert.CLIOutputQualityShift()),
 		obiformats.OptionsAppendFile(CLIAppendSequences()),

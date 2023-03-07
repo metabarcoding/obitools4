@@ -113,9 +113,9 @@ func _ParseGenbankFile(input <-chan _FileChunk, out obiiter.IBioSequence) {
 
 func ReadGenbank(reader io.Reader, options ...WithOption) obiiter.IBioSequence {
 	opt := MakeOptions(options)
-	entry_channel := make(chan _FileChunk, opt.BufferSize())
+	entry_channel := make(chan _FileChunk)
 
-	newIter := obiiter.MakeIBioSequence(opt.BufferSize())
+	newIter := obiiter.MakeIBioSequence()
 
 	nworkers := opt.ParallelWorkers()
 	newIter.Add(nworkers)

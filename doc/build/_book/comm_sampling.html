@@ -314,6 +314,23 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <section id="selecting-sequences-based-on-their-caracteristics" class="level4" data-number="12.1.1.1">
 <h4 data-number="12.1.1.1" class="anchored" data-anchor-id="selecting-sequences-based-on-their-caracteristics"><span class="header-section-number">12.1.1.1</span> Selecting sequences based on their caracteristics</h4>
 <p>Sequences can be selected on several of their caracteristics, their length, their id, their sequence. Options allow for specifying the condition if selection.</p>
+<p><strong>Selection based on the sequence</strong></p>
+<p>Sequence records can be selected according if they match or not with a pattern. The simplest pattern is as short sequence (<em>e.g</em> <code>AACCTT</code>). But the usage of regular patterns allows for looking for more complex pattern. As example, <code>A[TG]C+G</code> matches a <code>A</code>, followed by a <code>T</code> or a <code>G</code>, then one or several <code>C</code> and endly a <code>G</code>.</p>
+<dl>
+<dt><strong>--sequence</strong>|<strong>-s</strong> <em>PATTERN</em></dt>
+<dd>
+<p>Regular expression pattern to be tested against the sequence itself. The pattern is case insensitive. A complete description of the regular pattern grammar is available <a href="https://yourbasic.org/golang/regexp-cheat-sheet/#cheat-sheet">here</a>.</p>
+</dd>
+<dt><em>Examples:</em></dt>
+<dd>
+<p>Selects only the sequence records that contain an <em>EcoRI</em> restriction site.</p>
+</dd>
+</dl>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">obigrep</span> <span class="at">-s</span> <span class="st">'GAATTC'</span> seq1.fasta <span class="op">&gt;</span> seq2.fasta</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>: Selects only the sequence records that contain a stretch of at least 10 <code>A</code>.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">obigrep</span> <span class="at">-s</span> <span class="st">'A{10,}'</span> seq1.fasta <span class="op">&gt;</span> seq2.fasta</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>: Selects only the sequence records that do not contain ambiguous nucleotides.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">obigrep</span> <span class="at">-s</span> <span class="st">'^[ACGT]+$'</span> seq1.fasta <span class="op">&gt;</span> seq2.fasta</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <dl>
 <dt><strong>--min-count</strong> | <strong>-c</strong> <em>COUNT</em></dt>
 <dd>
@@ -323,12 +340,12 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <dd>
 <p>only sequences reprensenting no more than <em>COUNT</em> reads will be selected. That option rely on the <code>count</code> attribute. If the <code>count</code> attribute is not defined for a sequence record, it is assumed equal to <span class="math inline">\(1\)</span>.</p>
 </dd>
-<dt>Example</dt>
+<dt><em>Examples</em></dt>
 <dd>
 <p>Selecting sequence records representing at least five reads in the dataset.</p>
 </dd>
 </dl>
-<div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">obigrep</span> <span class="at">-c</span> 5 data_SPER01.fasta <span class="op">&gt;</span> data_norare_SPER01.fasta</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">obigrep</span> <span class="at">-c</span> 5 data_SPER01.fasta <span class="op">&gt;</span> data_norare_SPER01.fasta</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 
 
 </section>

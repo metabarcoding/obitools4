@@ -10,16 +10,9 @@ import (
 )
 
 func ISequenceChunk(iterator obiiter.IBioSequence,
-	classifier *obiseq.BioSequenceClassifier,
-	sizes ...int) (obiiter.IBioSequence, error) {
+	classifier *obiseq.BioSequenceClassifier) (obiiter.IBioSequence, error) {
 
-	bufferSize := iterator.BufferSize()
-
-	if len(sizes) > 0 {
-		bufferSize = sizes[0]
-	}
-
-	newIter := obiiter.MakeIBioSequence(bufferSize)
+	newIter := obiiter.MakeIBioSequence()
 
 	newIter.Add(1)
 

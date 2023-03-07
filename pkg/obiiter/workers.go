@@ -6,7 +6,6 @@ import (
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
 
-
 // That method allows for applying a SeqWorker function on every sequences.
 //
 // Sequences are provided by the iterator and modified sequences are pushed
@@ -17,17 +16,12 @@ import (
 //   - The second the size of the chanel buffer. By default set to the same value than the input buffer.
 func (iterator IBioSequence) MakeIWorker(worker obiseq.SeqWorker, sizes ...int) IBioSequence {
 	nworkers := 4
-	buffsize := iterator.BufferSize()
 
 	if len(sizes) > 0 {
 		nworkers = sizes[0]
 	}
 
-	if len(sizes) > 1 {
-		buffsize = sizes[1]
-	}
-
-	newIter := MakeIBioSequence(buffsize)
+	newIter := MakeIBioSequence()
 
 	newIter.Add(nworkers)
 
@@ -64,17 +58,12 @@ func (iterator IBioSequence) MakeIWorker(worker obiseq.SeqWorker, sizes ...int) 
 func (iterator IBioSequence) MakeIConditionalWorker(predicate obiseq.SequencePredicate,
 	worker obiseq.SeqWorker, sizes ...int) IBioSequence {
 	nworkers := 4
-	buffsize := iterator.BufferSize()
 
 	if len(sizes) > 0 {
 		nworkers = sizes[0]
 	}
 
-	if len(sizes) > 1 {
-		buffsize = sizes[1]
-	}
-
-	newIter := MakeIBioSequence(buffsize)
+	newIter := MakeIBioSequence()
 
 	newIter.Add(nworkers)
 
@@ -112,17 +101,12 @@ func (iterator IBioSequence) MakeIConditionalWorker(predicate obiseq.SequencePre
 
 func (iterator IBioSequence) MakeISliceWorker(worker obiseq.SeqSliceWorker, sizes ...int) IBioSequence {
 	nworkers := 4
-	buffsize := iterator.BufferSize()
 
 	if len(sizes) > 0 {
 		nworkers = sizes[0]
 	}
 
-	if len(sizes) > 1 {
-		buffsize = sizes[1]
-	}
-
-	newIter := MakeIBioSequence(buffsize)
+	newIter := MakeIBioSequence()
 
 	newIter.Add(nworkers)
 
@@ -140,7 +124,7 @@ func (iterator IBioSequence) MakeISliceWorker(worker obiseq.SeqSliceWorker, size
 		newIter.Done()
 	}
 
-	log.Printf("Start of the batch slice workers on %d workers (buffer : %d)\n", nworkers, buffsize)
+	log.Printf("Start of the batch slice workers on %d workers\n", nworkers)
 	for i := 0; i < nworkers-1; i++ {
 		go f(iterator.Split())
 	}
@@ -168,4 +152,3 @@ func SliceWorkerPipe(worker obiseq.SeqSliceWorker, sizes ...int) Pipeable {
 
 	return f
 }
-

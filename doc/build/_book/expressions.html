@@ -124,6 +124,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   }
 }</script>
 
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
 
 </head>
 
@@ -284,6 +285,8 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   <li><a href="#instrospection-functions" id="toc-instrospection-functions" class="nav-link" data-scroll-target="#instrospection-functions">Instrospection functions</a></li>
   <li><a href="#cast-functions" id="toc-cast-functions" class="nav-link" data-scroll-target="#cast-functions">Cast functions</a></li>
   <li><a href="#string-related-functions" id="toc-string-related-functions" class="nav-link" data-scroll-target="#string-related-functions">String related functions</a></li>
+  <li><a href="#condition-function" id="toc-condition-function" class="nav-link" data-scroll-target="#condition-function">Condition function</a></li>
+  <li><a href="#sequence-analysis-related-function" id="toc-sequence-analysis-related-function" class="nav-link" data-scroll-target="#sequence-analysis-related-function"><span class="toc-section-number">7.2.1</span>  Sequence analysis related function</a></li>
   </ul></li>
   <li><a href="#accessing-to-the-sequence-annotations" id="toc-accessing-to-the-sequence-annotations" class="nav-link" data-scroll-target="#accessing-to-the-sequence-annotations"><span class="toc-section-number">7.3</span>  Accessing to the sequence annotations</a></li>
   </ul>
@@ -321,24 +324,67 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <h2 data-number="7.2" class="anchored" data-anchor-id="function-defined-in-the-language"><span class="header-section-number">7.2</span> Function defined in the language</h2>
 <section id="instrospection-functions" class="level3 unnumbered">
 <h3 class="unnumbered anchored" data-anchor-id="instrospection-functions">Instrospection functions</h3>
-<ul>
-<li><code>len(x)</code>is a generic function allowing to retreive the size of a object. It returns the length of a sequences, the number of element in a map like <code>annotations</code>, the number of elements in an array. The reurned value is an <code>int</code>.</li>
-</ul>
+<dl>
+<dt><strong><code>len(x)</code></strong></dt>
+<dd>
+<p>It is a generic function allowing to retreive the size of a object. It returns the length of a sequences, the number of element in a map like <code>annotations</code>, the number of elements in an array. The reurned value is an <code>int</code>.</p>
+</dd>
+</dl>
 </section>
 <section id="cast-functions" class="level3 unnumbered">
 <h3 class="unnumbered anchored" data-anchor-id="cast-functions">Cast functions</h3>
-<ul>
-<li><code>int(x)</code> converts if possible the <code>x</code> value to an integer value. The function returns an <code>int</code>.</li>
-<li><code>numeric(x)</code> converts if possible the <code>x</code> value to a float value. The function returns a <code>float</code>.</li>
-<li><code>bool(x)</code> converts if possible the <code>x</code> value to a boolean value. The function returns a <code>bool</code>.</li>
-</ul>
+<dl>
+<dt><strong><code>int(x)</code></strong></dt>
+<dd>
+<p>Converts if possible the <code>x</code> value to an integer value. The function returns an <code>int</code>.</p>
+</dd>
+<dt><strong><code>numeric(x)</code></strong></dt>
+<dd>
+<p>Converts if possible the <code>x</code> value to a float value. The function returns a <code>float</code>.</p>
+</dd>
+<dt><strong><code>bool(x)</code></strong></dt>
+<dd>
+<p>Converts if possible the <code>x</code> value to a boolean value. The function returns a <code>bool</code>.</p>
+</dd>
+</dl>
 </section>
 <section id="string-related-functions" class="level3 unnumbered">
 <h3 class="unnumbered anchored" data-anchor-id="string-related-functions">String related functions</h3>
-<ul>
-<li><code>printf(format,...)</code> allows to combine several values to build a string. <code>format</code> follows the classical C <code>printf</code> syntax. The function returns a <code>string</code>.</li>
-<li><code>subspc(x)</code> substitutes every space in the <code>x</code> string by the underscore (<code>_</code>) character. The function returns a <code>string</code>.</li>
-</ul>
+<dl>
+<dt><strong><code>printf(format,...)</code></strong></dt>
+<dd>
+<p>Allows to combine several values to build a string. <code>format</code> follows the classical C <code>printf</code> syntax. The function returns a <code>string</code>.</p>
+</dd>
+<dt><strong><code>subspc(x)</code></strong></dt>
+<dd>
+<p>substitutes every space in the <code>x</code> string by the underscore (<code>_</code>) character. The function returns a <code>string</code>.</p>
+</dd>
+</dl>
+</section>
+<section id="condition-function" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="condition-function">Condition function</h3>
+<dl>
+<dt><strong><code>ifelse(condition,val1,val2)</code></strong></dt>
+<dd>
+<p>The <code>condition</code> value has to be a <code>bool</code> value. If it is <code>true</code> the function returns <code>val1</code>, otherwise, it is returning <code>val2</code>.</p>
+</dd>
+</dl>
+</section>
+<section id="sequence-analysis-related-function" class="level3" data-number="7.2.1">
+<h3 data-number="7.2.1" class="anchored" data-anchor-id="sequence-analysis-related-function"><span class="header-section-number">7.2.1</span> Sequence analysis related function</h3>
+<dl>
+<dt><strong><code>composition(sequence)</code></strong></dt>
+<dd>
+<p>The nucleotide composition of the sequence is returned as as map indexed by <code>a</code>, <code>c</code>, <code>g</code>, or <code>t</code> and each value is the number of occurrences of that nucleotide. A fifth key <code>others</code> accounts for all others symboles.</p>
+</dd>
+<dt><strong><code>gcskew(sequence)</code></strong></dt>
+<dd>
+<p>Computes the excess of g compare to c of the sequence, known as the GC skew.</p>
+<p><span class="math display">\[
+Skew_{GC}=\frac{G-C}{G+C}
+\]</span></p>
+</dd>
+</dl>
 </section>
 </section>
 <section id="accessing-to-the-sequence-annotations" class="level2" data-number="7.3">
@@ -352,6 +398,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li>The sequence identifier : <code>Id()</code></li>
 <li>THe sequence definition : <code>Definition()</code></li>
 </ul>
+<div class="sourceCode" id="cb3"><pre class="sourceCode go code-with-copy"><code class="sourceCode go"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>sequence<span class="op">.</span>Id<span class="op">()</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 
 
 </section>

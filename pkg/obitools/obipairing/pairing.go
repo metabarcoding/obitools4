@@ -211,17 +211,13 @@ func IAssemblePESequencesBatch(iterator obiiter.IBioSequence,
 	}
 
 	nworkers := obioptions.CLIMaxCPU() * 3 / 2
-	buffsize := iterator.BufferSize()
 
 	if len(sizes) > 0 {
 		nworkers = sizes[0]
 	}
 
-	if len(sizes) > 1 {
-		buffsize = sizes[1]
-	}
 
-	newIter := obiiter.MakeIBioSequence(buffsize)
+	newIter := obiiter.MakeIBioSequence()
 
 	newIter.Add(nworkers)
 

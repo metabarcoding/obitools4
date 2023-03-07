@@ -58,20 +58,13 @@ func (by _By) Sort(seqs []sSS) {
 
 func ISequenceSubChunk(iterator obiiter.IBioSequence,
 	classifier *obiseq.BioSequenceClassifier,
-	sizes ...int) (obiiter.IBioSequence, error) {
+	nworkers int) (obiiter.IBioSequence, error) {
 
-	bufferSize := iterator.BufferSize()
-	nworkers := 4
-
-	if len(sizes) > 0 {
-		nworkers = sizes[0]
+	if nworkers <=0 {
+		nworkers = 4
 	}
 
-	if len(sizes) > 1 {
-		bufferSize = sizes[1]
-	}
-
-	newIter := obiiter.MakeIBioSequence(bufferSize)
+	newIter := obiiter.MakeIBioSequence()
 
 	newIter.Add(nworkers)
 

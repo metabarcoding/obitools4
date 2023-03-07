@@ -11,7 +11,6 @@ type _Options struct {
 	withProgressBar bool
 	parallelWorkers int
 	batchSize       int
-	bufferSize      int
 }
 
 // Options stores a set of option usable by the
@@ -56,16 +55,6 @@ func OptionAllowedMismatches(count int) WithOption {
 	return f
 }
 
-// OptionBufferSize sets the requested channel
-// buffer size.
-func OptionBufferSize(size int) WithOption {
-	f := WithOption(func(opt Options) {
-		opt.pointer.bufferSize = size
-	})
-
-	return f
-}
-
 // OptionParallelWorkers sets how many search
 // jobs will be run in parallel.
 func OptionParallelWorkers(nworkers int) WithOption {
@@ -102,12 +91,6 @@ func (options Options) WithProgressBar() bool {
 	return options.pointer.withProgressBar
 }
 
-// BufferSize returns the size of the channel
-// buffer specified by the options
-func (options Options) BufferSize() int {
-	return options.pointer.bufferSize
-}
-
 // BatchSize returns the size of the
 // sequence batch used by the PCR algorithm
 func (options Options) BatchSize() int {
@@ -130,7 +113,6 @@ func MakeOptions(setters []WithOption) Options {
 		withProgressBar: false,
 		parallelWorkers: 4,
 		batchSize:       1000,
-		bufferSize:      100,
 	}
 
 	opt := Options{&o}

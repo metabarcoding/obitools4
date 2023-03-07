@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"regexp"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obieval"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -256,7 +255,7 @@ func IsIdIn(ids ...string) SequencePredicate {
 
 func ExpressionPredicat(expression string) SequencePredicate {
 
-	exp, err := obieval.OBILang.NewEvaluable(expression)
+	exp, err := OBILang.NewEvaluable(expression)
 	if err != nil {
 		log.Fatalf("Error in the expression : %s", expression)
 	}
