@@ -41,8 +41,7 @@ Stat_error.Rmd
 /Estimate_proba_true_seq.Rmd
 /modele_error_euka.qmd
 /obitools.code-workspace
-doc/.DS_Store
-.DS_Store/
+.DS_Store
 .RData
 x
 xxx
@@ -62,3 +61,14 @@ euka03.csv*
 gbbct793.seq.gz
 gbinv1003.seq.gz
 gbpln210.seq
+/doc/book/OBITools-V4.aux
+/doc/book/OBITools-V4.fdb_latexmk
+/doc/book/OBITools-V4.fls
+/doc/book/OBITools-V4.log
+/doc/book/OBITools-V4.pdf
+/doc/book/OBITools-V4.synctex.gz
+/doc/book/OBITools-V4.tex
+/doc/book/OBITools-V4.toc
+getoptions.adoc
+Archive.zip
+.DS_Store
