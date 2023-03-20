@@ -59,7 +59,7 @@ func OptionSet(options *getoptions.GetOpt) {
 // ForwardPrimer returns the sequence of the forward primer as indicated by the
 // --forward command line option
 func ForwardPrimer() string {
-	pattern, err := obiapat.MakeApatPattern(_ForwardPrimer, _AllowedMismatch)
+	pattern, err := obiapat.MakeApatPattern(_ForwardPrimer, _AllowedMismatch, false)
 	
 	if err != nil {
 		log.Fatalf("%+v", err)
@@ -73,7 +73,7 @@ func ForwardPrimer() string {
 // ReversePrimer returns the sequence of the reverse primer as indicated by the
 // --reverse command line option
 func ReversePrimer() string {
-	pattern, err := obiapat.MakeApatPattern(_ReversePrimer, _AllowedMismatch)
+	pattern, err := obiapat.MakeApatPattern(_ReversePrimer, _AllowedMismatch,false)
 
 	if err != nil {
 		log.Fatalf("%+v", err)

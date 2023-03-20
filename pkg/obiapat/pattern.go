@@ -13,6 +13,8 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/goutils"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obialign"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
 
@@ -65,14 +67,20 @@ var NilApatSequence = ApatSequence{nil}
 // the errormax parameter. Some positions can be marked as not
 // allowed for mismatches. They have to be signaled using a '#'
 // sign after the corresponding nucleotide.
-func MakeApatPattern(pattern string, errormax int) (ApatPattern, error) {
+func MakeApatPattern(pattern string, errormax int, allowsIndel bool) (ApatPattern, error) {
 	cpattern := C.CString(pattern)
 	defer C.free(unsafe.Pointer(cpattern))
 	cerrormax := C.int32_t(errormax)
+
+	callosindel := C.uint8_t(0)
+	if allowsIndel {
+		callosindel = C.uint8_t(1)
+	}
+
 	var errno C.int32_t
 	var errmsg *C.char
 
-	apc := C.buildPattern(cpattern, cerrormax, &errno, &errmsg)
+	apc := C.buildPattern(cpattern, cerrormax, callosindel, &errno, &errmsg)
 
 	if apc == nil {
 		message := C.GoString(errmsg)
@@ -281,16 +289,13 @@ func (sequence ApatSequence) Free() {
 // values of the [3]int indicate respectively the start and the end position of
 // the match. Following the GO convention the end position is not included in the
 // match. The third value indicates the number of error detected for this occurrence.
-func (pattern ApatPattern) FindAllIndex(sequence ApatSequence, limits ...int) (loc [][3]int) {
-	begin := 0
-	length := sequence.Len()
-
-	if len(limits) > 0 {
-		begin = limits[0]
+func (pattern ApatPattern) FindAllIndex(sequence ApatSequence, begin, length int) (loc [][3]int) {
+	if begin < 0 {
+		begin = 0
 	}
 
-	if len(limits) > 1 {
-		length = limits[1]
+	if length < 0 {
+		length = sequence.Len()
 	}
 
 	nhits := int(C.ManberAll(sequence.pointer.pointer,
@@ -310,13 +315,70 @@ func (pattern ApatPattern) FindAllIndex(sequence ApatSequence, limits ...int) (l
 	for i := 0; i < nhits; i++ {
 		start := int(stktmp[i])
 		err := int(errtmp[i])
-
+		log.Debugln(C.GoString(pattern.pointer.pointer.cpat), start, err)
 		loc = append(loc, [3]int{start, start + patlen, err})
 	}
 
+	log.Debugln("------------")
 	return loc
 }
 
+func (pattern ApatPattern) BestMatch(sequence ApatSequence, begin, length int) (start int, end int, nerr int, matched bool) {
+	res := pattern.FindAllIndex(sequence, begin, length)
+
+	sbuffer := [(int(C.MAX_PAT_LEN) + int(C.MAX_PAT_ERR) + 1) * (int(C.MAX_PAT_LEN) + 1)]uint64{}
+	buffer := sbuffer[:]
+
+	if len(res) == 0 {
+		matched = false
+		return
+	}
+
+	matched = true
+
+	best := [3]int{0, 0, 10000}
+	for _, m := range res {
+		if m[2] < best[2] {
+			best = m
+			log.Debugln(best)
+		}
+	}
+
+	nerr = best[2]
+	end = best[1]
+
+	if nerr == 0 || !pattern.pointer.pointer.hasIndel {
+		start = best[0]
+		log.Debugln("No nws ", start, nerr)
+		return
+	}
+
+	start = best[0] - nerr
+	end = best[0] + int(pattern.pointer.pointer.patlen) + nerr
+	start = goutils.MaxInt(start, 0)
+	end = goutils.MinInt(end, sequence.Len())
+
+	cpattern := (*[1 << 30]byte)(unsafe.Pointer(pattern.pointer.pointer.cpat))
+	cseq := (*[1 << 30]byte)(unsafe.Pointer(sequence.pointer.pointer.cseq))
+
+	log.Debugln(
+		string((*cseq)[start:end]),
+		string((*cpattern)[0:int(pattern.pointer.pointer.patlen)]),
+		best[0], nerr, int(pattern.pointer.pointer.patlen),
+		sequence.Len(), start, end)
+
+	score, lali := obialign.FastLCSEGFScoreByte(
+		(*cseq)[start:end],
+		(*cpattern)[0:int(pattern.pointer.pointer.patlen)],
+		nerr*2, true, &buffer)
+
+	nerr = lali - score
+	start = best[0] + int(pattern.pointer.pointer.patlen) - lali
+	log.Println("results", score, lali, start, nerr)
+	return
+}
+
+// tagaacaggctcctctag
 // func AllocatedApaSequences() int {
 // 	return int(_AllocatedApaSequences)
 // }

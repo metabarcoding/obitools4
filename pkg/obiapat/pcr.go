@@ -133,7 +133,7 @@ func OptionForwardPrimer(primer string, max int) WithOption {
 	f := WithOption(func(opt Options) {
 		var err error
 
-		opt.pointer.forward, err = MakeApatPattern(primer, max)
+		opt.pointer.forward, err = MakeApatPattern(primer, max, false)
 		if err != nil {
 			log.Fatalf("error : %v\n", err)
 		}
@@ -155,7 +155,7 @@ func OptionReversePrimer(primer string, max int) WithOption {
 	f := WithOption(func(opt Options) {
 		var err error
 
-		opt.pointer.reverse, err = MakeApatPattern(primer, max)
+		opt.pointer.reverse, err = MakeApatPattern(primer, max, false)
 		if err != nil {
 			log.Fatalf("error : %v\n", err)
 		}
@@ -210,7 +210,7 @@ func _Pcr(seq ApatSequence,
 	reverse := opt.pointer.reverse
 	crev := opt.pointer.crev
 
-	forwardMatches := forward.FindAllIndex(seq)
+	forwardMatches := forward.FindAllIndex(seq,0,-1)
 
 	if len(forwardMatches) > 0 {
 
@@ -284,7 +284,7 @@ func _Pcr(seq ApatSequence,
 		}
 	}
 
-	forwardMatches = reverse.FindAllIndex(seq)
+	forwardMatches = reverse.FindAllIndex(seq,0,-1)
 	if forwardMatches != nil {
 
 		begin := forwardMatches[0][0]

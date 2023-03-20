@@ -118,7 +118,7 @@ ecoseq_t *new_ecoseq_with_data( char *AC,
 
 int32_t  delete_apatseq(SeqPtr pseq, 
 				   int *errno, char **errmsg);
-PatternPtr buildPattern(const char *pat, int32_t error_max, int *errno, char **errmsg);
+PatternPtr buildPattern(const char *pat, int32_t error_max, uint8_t hasIndel, int *errno, char **errmsg);
 PatternPtr complementPattern(PatternPtr pat, int *errno, char **errmsg);
 
 SeqPtr new_apatseq(const char *in,int32_t circular, int32_t seqlen,

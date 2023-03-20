@@ -27,11 +27,11 @@ type DemultiplexMatch struct {
 	Error             error
 }
 
-func (library *NGSLibrary) Compile(maxError int) error {
+func (library *NGSLibrary) Compile(maxError int, allowsIndel bool) error {
 	for primers, marker := range *library {
 		err := marker.Compile(primers.Forward,
 			primers.Reverse,
-			maxError)
+			maxError, allowsIndel)
 		if err != nil {
 			return err
 		}
@@ -57,15 +57,13 @@ func (library *NGSLibrary) ExtractBarcode(sequence *obiseq.BioSequence, inplace 
 	return match.ExtractBarcode(sequence, inplace)
 }
 
-func (marker *Marker) Compile(forward, reverse string, maxError int) error {
+func (marker *Marker) Compile(forward, reverse string, maxError int, allowsIndel bool) error {
 	var err error
-	marker.forward, err = obiapat.MakeApatPattern(forward,
-		maxError)
+	marker.forward, err = obiapat.MakeApatPattern(forward, maxError, allowsIndel)
 	if err != nil {
 		return err
 	}
-	marker.reverse, err = obiapat.MakeApatPattern(reverse,
-		maxError)
+	marker.reverse, err = obiapat.MakeApatPattern(reverse, maxError, allowsIndel)
 	if err != nil {
 		return err
 	}
@@ -105,33 +103,34 @@ func (marker *Marker) Compile(forward, reverse string, maxError int) error {
 	return nil
 }
 
+
+
 func (marker *Marker) Match(sequence *obiseq.BioSequence) *DemultiplexMatch {
 	aseq, _ := obiapat.MakeApatSequence(sequence, false)
-	match := marker.forward.FindAllIndex(aseq, marker.taglength)
-
-	if len(match) > 0 {
+	start, end, nerr ,matched := marker.forward.BestMatch(aseq, marker.taglength,-1)
+	if matched {
 		sseq := sequence.String()
-		direct := sseq[match[0][0]:match[0][1]]
-		ftag := strings.ToLower(sseq[(match[0][0] - marker.taglength):match[0][0]])
+		direct := sseq[start:end]
+		ftag := strings.ToLower(sseq[(start - marker.taglength):start])
 
 		m := DemultiplexMatch{
 			ForwardMatch:      direct,
 			ForwardTag:        ftag,
-			BarcodeStart:      match[0][1],
-			ForwardMismatches: match[0][2],
+			BarcodeStart:      end,
+			ForwardMismatches: nerr,
 			IsDirect:          true,
 			Error:             nil,
 		}
 
-		rmatch := marker.creverse.FindAllIndex(aseq, match[0][1])
+		start, end, nerr ,matched = marker.creverse.BestMatch(aseq, start,-1)
 
-		if len(rmatch) > 0 {
+		if matched {
 
 			// extracting primer matches
-			reverse, _ := sequence.Subsequence(rmatch[0][0], rmatch[0][1], false)
+			reverse, _ := sequence.Subsequence(start,end, false)
 			defer reverse.Recycle()
 			reverse = reverse.ReverseComplement(true)
-			rtag, err := sequence.Subsequence(rmatch[0][1], rmatch[0][1]+marker.taglength, false)
+			rtag, err := sequence.Subsequence(end, end+marker.taglength, false)
 			defer rtag.Recycle()
 			srtag := ""
 
@@ -143,8 +142,8 @@ func (marker *Marker) Match(sequence *obiseq.BioSequence) *DemultiplexMatch {
 			}
 
 			m.ReverseMatch = strings.ToLower(reverse.String())
-			m.ReverseMismatches = rmatch[0][2]
-			m.BarcodeEnd = rmatch[0][0]
+			m.ReverseMismatches = nerr
+			m.BarcodeEnd = start
 			m.ReverseTag = srtag
 
 			sample, ok := marker.samples[TagPair{ftag, srtag}]
@@ -162,32 +161,32 @@ func (marker *Marker) Match(sequence *obiseq.BioSequence) *DemultiplexMatch {
 		return &m
 	}
 
-	match = marker.reverse.FindAllIndex(aseq, marker.taglength)
+	start, end, nerr ,matched = marker.reverse.BestMatch(aseq, marker.taglength,-1)
 
-	if len(match) > 0 {
+	if matched {
 		sseq := sequence.String()
 
-		reverse := strings.ToLower(sseq[match[0][0]:match[0][1]])
-		rtag := strings.ToLower(sseq[(match[0][0] - marker.taglength):match[0][0]])
+		reverse := strings.ToLower(sseq[start:end])
+		rtag := strings.ToLower(sseq[(start - marker.taglength):start])
 
 		m := DemultiplexMatch{
 			ReverseMatch:      reverse,
 			ReverseTag:        rtag,
-			BarcodeStart:      match[0][1],
-			ReverseMismatches: match[0][2],
+			BarcodeStart:      end,
+			ReverseMismatches: nerr,
 			IsDirect:          false,
 			Error:             nil,
 		}
 
-		rmatch := marker.cforward.FindAllIndex(aseq, match[0][1])
+		start, end, nerr ,matched = marker.cforward.BestMatch(aseq, end,-1)
 
-		if len(rmatch) > 0 {
+		if matched {
 
-			direct, _ := sequence.Subsequence(rmatch[0][0], rmatch[0][1], false)
+			direct, _ := sequence.Subsequence(start,end, false)
 			defer direct.Recycle()
 			direct = direct.ReverseComplement(true)
 
-			ftag, err := sequence.Subsequence(rmatch[0][1], rmatch[0][1]+marker.taglength, false)
+			ftag, err := sequence.Subsequence(end,end+marker.taglength, false)
 			defer ftag.Recycle()
 			sftag := ""
 			if err != nil {
@@ -200,8 +199,8 @@ func (marker *Marker) Match(sequence *obiseq.BioSequence) *DemultiplexMatch {
 
 			m.ForwardMatch = direct.String()
 			m.ForwardTag = sftag
-			m.ReverseMismatches = rmatch[0][2]
-			m.BarcodeEnd = rmatch[0][0]
+			m.ReverseMismatches = nerr
+			m.BarcodeEnd = start
 
 			sample, ok := marker.samples[TagPair{sftag, rtag}]
 

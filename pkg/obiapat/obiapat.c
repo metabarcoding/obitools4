@@ -337,7 +337,7 @@ int32_t delete_apatseq(SeqPtr pseq,
         return 1;
 }
 
-PatternPtr buildPattern(const char *pat, int32_t error_max, 
+PatternPtr buildPattern(const char *pat, int32_t error_max, uint8_t hasIndel, 
 						int *errno, char **errmsg)
 {
 	PatternPtr pattern;
@@ -355,7 +355,7 @@ PatternPtr buildPattern(const char *pat, int32_t error_max,
 						errno,errmsg);
 						
 	pattern->ok      = true;
-	pattern->hasIndel= false;
+	pattern->hasIndel= hasIndel;
 	pattern->maxerr  = error_max;
 	
 	pattern->cpat    = (char*)pattern + sizeof(Pattern);

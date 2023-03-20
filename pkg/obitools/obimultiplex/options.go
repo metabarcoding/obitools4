@@ -13,6 +13,7 @@ import (
 var _NGSFilterFile = ""
 var _UnidentifiedFile = ""
 var _AllowedMismatch = int(2)
+var _AllowsIndel = false
 var _ConservedError = false
 
 // PCROptionSet defines every options related to a simulated PCR.
@@ -33,6 +34,9 @@ func MultiplexOptionSet(options *getoptions.GetOpt) {
 	options.BoolVar(&_ConservedError, "keep-errors", _ConservedError,
 		options.Description("Prints symbol counts."))
 
+		options.BoolVar(&_AllowsIndel, "with-indels", _AllowsIndel,
+		options.Description("Allows for indels during the primers matching."))
+
 	options.StringVar(&_UnidentifiedFile, "unidentified", _UnidentifiedFile,
 		options.Alias("u"),
 		options.Description("Filename used to store the sequences unassigned to any sample."))
@@ -52,6 +56,9 @@ func CLIAllowedMismatch() int {
 	return _AllowedMismatch
 }
 
+func CLIAllowsIndel() bool {
+	return _AllowsIndel
+}
 func CLIUnidentifiedFileName() string {
 	return _UnidentifiedFile
 }

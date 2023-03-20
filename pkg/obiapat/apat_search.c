@@ -23,7 +23,8 @@
 #define TOPCURS         CursiToTop
 #define DOWNREAD        ReadiDown
 
-#define KRONECK(x, msk) ((~x & msk) ? 0 : 1)
+//#define KRONECK(x, msk) ((~x & msk) ? 0 : 1)
+#define KRONECK(x, msk) ((x & msk) ? 0 : 1)
 #define MIN(x, y)       ((x) < (y)  ? (x) : (y))
 
 /* -------------------------------------------- */
@@ -192,8 +193,8 @@ int32_t ManberIndel(Seq *pseq, Pattern *ppat, int patnum,int begin,int length)
 {
         int       e, emax, found;
         uint32_t     pos;
-        uint32_t    smask, cmask, sindx;
-        uint32_t    *pr, r[2 * MAX_PAT_ERR + 2];
+        patword_t    smask, cmask, sindx;
+        patword_t    *pr, r[2 * MAX_PAT_ERR + 2];
         uint8_t     *data;
         StackiPtr *stkpos, *stkerr;
         uint32_t    end;
@@ -219,6 +220,9 @@ int32_t ManberIndel(Seq *pseq, Pattern *ppat, int patnum,int begin,int length)
         data   = pseq->data + begin;
         stkpos = pseq->hitpos + patnum;
         stkerr = pseq->hiterr + patnum;
+
+        EmptyStacki(stkpos[0]);
+        EmptyStacki(stkerr[0]);
 
                                         /* loop on text data    */
                                         
@@ -256,12 +260,14 @@ int32_t ManberIndel(Seq *pseq, Pattern *ppat, int patnum,int begin,int length)
 /* -------------------------------------------- */
 int32_t ManberAll(Seq *pseq, Pattern *ppat, int patnum,int begin,int length)
 {
-        if (ppat->maxerr == 0)
-           return ManberNoErr(pseq, ppat, patnum, begin, length);
-        else if (ppat->hasIndel)
+        if (ppat->maxerr == 0){
+           return ManberNoErr(pseq, ppat, patnum, begin, length);}
+        else if (ppat->hasIndel) {
            return ManberIndel(pseq, ppat, patnum, begin, length);
-        else
+        }
+        else {
            return ManberSub(pseq, ppat, patnum, begin, length);
+        }
 }
 
 
@@ -271,11 +277,9 @@ int32_t ManberAll(Seq *pseq, Pattern *ppat, int patnum,int begin,int length)
 /* (avec substitution obligatoire aux bords)    */
 /* -------------------------------------------- */
 
-int32_t NwsPatAlign(pseq, ppat, nerr, reslen, reserr)
-        Seq     *pseq;
-        Pattern *ppat;
-        int32_t   nerr, *reslen, *reserr;
-{
+int32_t NwsPatAlign(Seq *pseq, Pattern *ppat, 
+                    int32_t nerr, int32_t begin,
+                    int32_t *reslen, int32_t *reserr) {
         uint8_t  *sseq, *px;
         int32_t  i, j, lseq, lpat, npos, dindel, dsub,
                *pc, *pi, *pd, *ps;
@@ -283,7 +287,9 @@ int32_t NwsPatAlign(pseq, ppat, nerr, reslen, reserr)
 
         static int32_t sTab[(MAX_PAT_LEN+MAX_PAT_ERR+1) * (MAX_PAT_LEN+1)];
 
-        lseq = pseq->seqlen;
+        lpat = ppat->patlen;
+        lseq = MIN(lpat + MAX_PAT_ERR+1, pseq->seqlen - begin);
+        sseq = pseq->data + begin - 1;
 
         pc = sTab;              /*  |----|----| --> i   */
         pi = pc - 1;            /*  | ps | pd | |       */
@@ -291,36 +297,39 @@ int32_t NwsPatAlign(pseq, ppat, nerr, reslen, reserr)
         ps = pd - 1;            /*  | pi | pc | v j     */
                                 /*  |---------|         */
 
-        lseq = pseq->seqlen;
-        lpat = ppat->patlen;
 
-        sseq = pseq->data - 1;
 
-        amask = ONEMASK >> lpat;
+        //amask = ONEMASK >> lpat;
+        amask = 0x1L << (ppat->patlen);
 
         for (j = 0 ; j <= lpat ; j++) {
-
+           
            for (i = 0 , px = sseq ; i <= lseq ; i++, px++) {
 
               if (i && j) {
                   dindel = MIN(*pi, *pd) + 1;
+                  if (j == lpat) dindel--;
                   dsub   = *ps + KRONECK(ppat->smat[*px], amask);
+                  // fprintf(stderr, "mismatch : %d %d %d %d\n",j,*px,KRONECK(ppat->smat[*px], amask),amask);
                   *pc    = MIN(dindel, dsub);
               }
               else if (i)               /* j == 0       */
                   *pc = *pi + 1;
               else if (j)               /* i == 0       */
-                  *pc = *pd + 1;
+                  *pc = *pd;
               else                      /* root         */
                    *pc = 0;
 
+              fprintf(stderr," %02d",*pc);
               pc++;
               pi++;
               pd++;
               ps++;
            }
+              fprintf(stderr,"\n");
         
-           amask <<= 1;
+           // amask <<= 1;
+           amask >>= 1;
         }
 
         pc--;
@@ -331,6 +340,7 @@ int32_t NwsPatAlign(pseq, ppat, nerr, reslen, reserr)
                 *reserr++ = *pc;
                 npos++;
              }
+            fprintf(stderr,"i=%d *pc = %d<%d, reserr = %d npos = %d\n",i,*pc,nerr,*(reserr-1),npos);
         }
 
         return npos;

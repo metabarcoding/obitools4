@@ -8,6 +8,7 @@ type _Options struct {
 	discardErrors   bool
 	unidentified    string
 	allowedMismatch int
+	allowsIndel     bool
 	withProgressBar bool
 	parallelWorkers int
 	batchSize       int
@@ -55,6 +56,14 @@ func OptionAllowedMismatches(count int) WithOption {
 	return f
 }
 
+func OptionAllowedIndel(allowed bool) WithOption {
+	f := WithOption(func(opt Options) {
+		opt.pointer.allowsIndel = allowed
+	})
+
+	return f
+}
+
 // OptionParallelWorkers sets how many search
 // jobs will be run in parallel.
 func OptionParallelWorkers(nworkers int) WithOption {
@@ -87,6 +96,10 @@ func (options Options) AllowedMismatch() int {
 	return options.pointer.allowedMismatch
 }
 
+func (options Options) AllowsIndel() bool {
+	return options.pointer.allowsIndel
+}
+
 func (options Options) WithProgressBar() bool {
 	return options.pointer.withProgressBar
 }
@@ -110,6 +123,7 @@ func MakeOptions(setters []WithOption) Options {
 		discardErrors:   true,
 		unidentified:    "",
 		allowedMismatch: 0,
+		allowsIndel:     false,
 		withProgressBar: false,
 		parallelWorkers: 4,
 		batchSize:       1000,
@@ -145,7 +159,7 @@ func ExtractBarcodeSlice(ngslibrary NGSLibrary,
 
 	opt := MakeOptions(options)
 
-	ngslibrary.Compile(opt.AllowedMismatch())
+	ngslibrary.Compile(opt.AllowedMismatch(),opt.AllowsIndel())
 
 	return _ExtractBarcodeSlice(ngslibrary, sequences, opt)
 }
@@ -155,7 +169,7 @@ func ExtractBarcodeSliceWorker(ngslibrary NGSLibrary,
 
 	opt := MakeOptions(options)
 
-	ngslibrary.Compile(opt.AllowedMismatch())
+	ngslibrary.Compile(opt.AllowedMismatch(),opt.AllowsIndel())
 
 	worker := func(sequences obiseq.BioSequenceSlice) obiseq.BioSequenceSlice {
 		return _ExtractBarcodeSlice(ngslibrary, sequences, opt)

@@ -16,6 +16,7 @@ func IExtractBarcode(iterator obiiter.IBioSequence) (obiiter.IBioSequence, error
 
 	opts = append(opts,
 		obingslibrary.OptionAllowedMismatches(CLIAllowedMismatch()),
+		obingslibrary.OptionAllowedIndel(CLIAllowsIndel()),
 		obingslibrary.OptionUnidentified(CLIUnidentifiedFileName()),
 		obingslibrary.OptionDiscardErrors(!CLIConservedErrors()),
 		obingslibrary.OptionParallelWorkers(obioptions.CLIParallelWorkers()),

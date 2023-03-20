@@ -151,10 +151,7 @@ int32_t ManberNoErr       (Seq *pseq , Pattern *ppat, int32_t patnum,int32_t beg
 int32_t ManberSub         (Seq *pseq , Pattern *ppat, int32_t patnum,int32_t begin,int32_t length);
 int32_t ManberIndel       (Seq *pseq , Pattern *ppat, int32_t patnum,int32_t begin,int32_t length);
 int32_t ManberAll         (Seq *pseq , Pattern *ppat, int32_t patnum,int32_t begin,int32_t length);
-int32_t NwsPatAlign       (Seq *pseq , Pattern *ppat, int32_t nerr , 
-                              int32_t *reslen , int32_t *reserr);
-
-                                   /* apat_sys.c   */
+int32_t NwsPatAlign       (Seq *pseq , Pattern *ppat, int32_t nerr, int32_t begin, int32_t *reslen, int32_t *reserr);                      /* apat_sys.c   */
 
 float   UserCpuTime     (int32_t reset);
 float   SysCpuTime      (int32_t reset);
