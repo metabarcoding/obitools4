@@ -1,10 +1,27 @@
 # OBITools release notes
 
-## On going changes
+## Ongoing changes
+
+### New features
+- Add the possibility for looking pattern with indels. This has been added to `obimultiplex` 
+  through the `--with-indels` option.
+
+### Enhancement
+
+- Add support for IUPAC DNA code into the DNA sequence LCS computation and an end free gap mode.
+  This impact `obitag` and `obimultiplex` in the `--with-indels` mode.
+- Print the synopsis of the command when an error is done by the user at typing the command
 
 ### Corrected bugs
 
-- Better managment of non existing files. The produced error message is not yet perfectly clear.
+- Better management of non-existing files. The produced error message is not yet perfectly clear.
+- Patch a bug leading with some programs to crash because of : "*empty batch pushed on the channel*"
+- Patch a bug when directory names are used as input data name preventing the system to actually
+  analyze the collected files.
+- Make the `--help` or `-h` options working when mandatory options are declared
+- In `obimultiplex` correct a bug leading to a wrong report of the count of reverse mismatch for 
+  sequences in reverse direction.
+   
   
 ## March 7th, 2023. Release 4.0.1
 

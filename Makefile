@@ -42,6 +42,9 @@ all: obitools
 packages: $(patsubst %,pkg-%,$(PACKAGES))
 obitools: $(patsubst %,$(OBITOOLS_PREFIX)%,$(OBITOOLS)) 
 
+update-deps:
+	go get -u ./...
+
 man: 
 	make -C doc man
 obibook: 
@@ -61,4 +64,4 @@ $(foreach P,$(PACKAGE_DIRS),$(eval $(call MAKE_PKG_RULE,$(P))))
 
 $(foreach P,$(OBITOOLS_DIRS),$(eval $(call MAKE_OBITOOLS_RULE,$(P))))
 
-.PHONY: all packages obitools man obibook doc
+.PHONY: all packages obitools man obibook doc update-deps
