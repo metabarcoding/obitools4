@@ -41,8 +41,22 @@ func GenerateOptionParser(optionset ...func(*getoptions.GetOpt)) ArgumentParser 
 
 		remaining, err := options.Parse(args[1:])
 
+		if options.Called("help") {
+			fmt.Fprint(os.Stderr, options.Help())
+			os.Exit(1)
+		}
+
+		log.SetLevel(log.InfoLevel)
+		if options.Called("debug") {
+			log.SetLevel(log.DebugLevel)
+			log.Debugln("Switch to debug level logging")
+		}
+
+		// Handle user errors
 		if err != nil {
-			log.Fatalf("Error on the commande line : %v",err)
+			fmt.Fprintf(os.Stderr, "ERROR: %s\n\n", err)
+			fmt.Fprint(os.Stderr, options.Help(getoptions.HelpSynopsis))
+			os.Exit(1)
 		}
 
 		// Setup the maximum number of CPU usable by the program
@@ -57,17 +71,6 @@ func GenerateOptionParser(optionset ...func(*getoptions.GetOpt)) ArgumentParser 
 
 		if options.Called("no-singleton") {
 			log.Printf("No singleton option set")
-		}
-
-		if options.Called("help") {
-			fmt.Fprint(os.Stderr, options.Help())
-			os.Exit(1)
-		}
-
-		log.SetLevel(log.InfoLevel)
-		if options.Called("debug") {
-			log.SetLevel(log.DebugLevel)
-			log.Debugln("Switch to debug level logging")
 		}
 
 		return options, remaining
