@@ -199,7 +199,7 @@ func (marker *Marker) Match(sequence *obiseq.BioSequence) *DemultiplexMatch {
 
 			m.ForwardMatch = direct.String()
 			m.ForwardTag = sftag
-			m.ReverseMismatches = nerr
+			m.ForwardMismatches = nerr
 			m.BarcodeEnd = start
 
 			sample, ok := marker.samples[TagPair{sftag, rtag}]

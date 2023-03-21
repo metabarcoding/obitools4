@@ -49,6 +49,10 @@ func FastLCSEGFScoreByte(bA, bB []byte, maxError int, endgapfree bool, buffer *[
 
 	delta := lA - lB
 
+	if endgapfree {
+		maxError += delta
+	}
+
 	// The difference of length is larger the maximum allowed errors
 	if delta > maxError {
 		return -1, -1
@@ -170,6 +174,9 @@ func FastLCSEGFScoreByte(bA, bB []byte, maxError int, endgapfree bool, buffer *[
 			// 	score = _setout(score)
 			// }
 
+			if x == 0 || x == (even-1) {
+				score = _setout(score)
+			}
 			// // BEGINNING OF DEBUG CODE //
 			// if i < 2 && j < 5 {
 			// 	log.Debugf("[%d,%d]\n",i,j)

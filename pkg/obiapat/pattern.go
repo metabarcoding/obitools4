@@ -370,10 +370,11 @@ func (pattern ApatPattern) BestMatch(sequence ApatSequence, begin, length int) (
 	score, lali := obialign.FastLCSEGFScoreByte(
 		(*cseq)[start:end],
 		(*cpattern)[0:int(pattern.pointer.pointer.patlen)],
-		nerr*2, true, &buffer)
+		nerr, true, &buffer)
 
 	nerr = lali - score
 	start = best[0] + int(pattern.pointer.pointer.patlen) - lali
+	end = start + lali 
 	log.Println("results", score, lali, start, nerr)
 	return
 }
