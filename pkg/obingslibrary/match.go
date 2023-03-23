@@ -7,6 +7,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/goutils"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiapat"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
@@ -107,11 +108,13 @@ func (marker *Marker) Compile(forward, reverse string, maxError int, allowsIndel
 
 func (marker *Marker) Match(sequence *obiseq.BioSequence) *DemultiplexMatch {
 	aseq, _ := obiapat.MakeApatSequence(sequence, false)
+
 	start, end, nerr ,matched := marker.forward.BestMatch(aseq, marker.taglength,-1)
 	if matched {
 		sseq := sequence.String()
 		direct := sseq[start:end]
-		ftag := strings.ToLower(sseq[(start - marker.taglength):start])
+		tagstart := goutils.MaxInt(start - marker.taglength,0)
+		ftag := strings.ToLower(sseq[tagstart:start])
 
 		m := DemultiplexMatch{
 			ForwardMatch:      direct,
@@ -161,13 +164,15 @@ func (marker *Marker) Match(sequence *obiseq.BioSequence) *DemultiplexMatch {
 		return &m
 	}
 
+
 	start, end, nerr ,matched = marker.reverse.BestMatch(aseq, marker.taglength,-1)
 
 	if matched {
 		sseq := sequence.String()
 
 		reverse := strings.ToLower(sseq[start:end])
-		rtag := strings.ToLower(sseq[(start - marker.taglength):start])
+		tagstart := goutils.MaxInt(start - marker.taglength,0)
+		rtag := strings.ToLower(sseq[tagstart:start])
 
 		m := DemultiplexMatch{
 			ReverseMatch:      reverse,

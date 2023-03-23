@@ -375,7 +375,7 @@ func (pattern ApatPattern) BestMatch(sequence ApatSequence, begin, length int) (
 	nerr = lali - score
 	start = best[0] + int(pattern.pointer.pointer.patlen) - lali
 	end = start + lali 
-	log.Println("results", score, lali, start, nerr)
+	log.Debugln("results", score, lali, start, nerr)
 	return
 }
 
