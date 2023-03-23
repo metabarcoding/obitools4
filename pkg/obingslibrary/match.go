@@ -133,7 +133,8 @@ func (marker *Marker) Match(sequence *obiseq.BioSequence) *DemultiplexMatch {
 			reverse, _ := sequence.Subsequence(start,end, false)
 			defer reverse.Recycle()
 			reverse = reverse.ReverseComplement(true)
-			rtag, err := sequence.Subsequence(end, end+marker.taglength, false)
+			endtag := goutils.MinInt(end+marker.taglength,sequence.Len())
+			rtag, err := sequence.Subsequence(end, endtag, false)
 			defer rtag.Recycle()
 			srtag := ""
 
@@ -191,7 +192,8 @@ func (marker *Marker) Match(sequence *obiseq.BioSequence) *DemultiplexMatch {
 			defer direct.Recycle()
 			direct = direct.ReverseComplement(true)
 
-			ftag, err := sequence.Subsequence(end,end+marker.taglength, false)
+			endtag := goutils.MinInt(end+marker.taglength,sequence.Len())
+			ftag, err := sequence.Subsequence(end,endtag, false)
 			defer ftag.Recycle()
 			sftag := ""
 			if err != nil {
