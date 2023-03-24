@@ -1,8 +1,8 @@
 package obialign
 
 import (
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/goutils"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiutils"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -109,11 +109,11 @@ func FastLCSEGFScoreByte(bA, bB []byte, maxError int, endgapfree bool, buffer *[
 		// in_matrix := false
 		x1 := y - lB + extra
 		x2 := extra - y
-		xs := goutils.MaxInt(goutils.MaxInt(x1, x2), 0)
+		xs := obiutils.MaxInt(obiutils.MaxInt(x1, x2), 0)
 
 		x1 = y + extra
 		x2 = lA + extra - y
-		xf := goutils.MinInt(goutils.MinInt(x1, x2), even-1) + 1
+		xf := obiutils.MinInt(obiutils.MinInt(x1, x2), even-1) + 1
 
 		for x := xs; x < xf; x++ {
 
@@ -201,11 +201,11 @@ func FastLCSEGFScoreByte(bA, bB []byte, maxError int, endgapfree bool, buffer *[
 		// . 9   10 + 2 - 1
 		x1 = y - lB + extra + even
 		x2 = extra - y + even - 1
-		xs = goutils.MaxInt(goutils.MaxInt(x1, x2), even)
+		xs = obiutils.MaxInt(obiutils.MaxInt(x1, x2), even)
 
 		x1 = y + extra + even
 		x2 = lA + extra - y + even - 1
-		xf = goutils.MinInt(goutils.MinInt(x1, x2), width-1) + 1
+		xf = obiutils.MinInt(obiutils.MinInt(x1, x2), width-1) + 1
 
 		for x := xs; x < xf; x++ {
 

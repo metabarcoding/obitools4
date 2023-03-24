@@ -1,8 +1,8 @@
 package obicsv
 
 import (
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/goutils"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obiconvert"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiutils"
 	"github.com/DavidGamba/go-getoptions"
 )
 
@@ -103,18 +103,18 @@ func CLIToBeKeptAttributes() []string {
 		_keepOnly = append(_keepOnly, _softAttributes["obipairing"]...)
 	}
 
-	if i := goutils.LookFor(_keepOnly, "count"); i >= 0 {
-		_keepOnly = goutils.RemoveIndex(_keepOnly, i)
+	if i := obiutils.LookFor(_keepOnly, "count"); i >= 0 {
+		_keepOnly = obiutils.RemoveIndex(_keepOnly, i)
 		_outputCount = true
 	}
 
-	if i := goutils.LookFor(_keepOnly, "taxid"); i >= 0 {
-		_keepOnly = goutils.RemoveIndex(_keepOnly, i)
+	if i := obiutils.LookFor(_keepOnly, "taxid"); i >= 0 {
+		_keepOnly = obiutils.RemoveIndex(_keepOnly, i)
 		_outputTaxon = true
 	}
 
-	if i := goutils.LookFor(_keepOnly, "scientific_name"); i >= 0 {
-		_keepOnly = goutils.RemoveIndex(_keepOnly, i)
+	if i := obiutils.LookFor(_keepOnly, "scientific_name"); i >= 0 {
+		_keepOnly = obiutils.RemoveIndex(_keepOnly, i)
 		_outputTaxon = true
 	}
 

@@ -3,8 +3,8 @@ package obitax
 import (
 	log "github.com/sirupsen/logrus"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/goutils"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiutils"
 )
 
 func (taxonomy *Taxonomy) IsAValidTaxon(withAutoCorrection ...bool) obiseq.SequencePredicate {
@@ -59,7 +59,7 @@ func (taxonomy *Taxonomy) IsSubCladeOf(taxid int) obiseq.SequencePredicate {
 
 func (taxonomy *Taxonomy) HasRequiredRank(rank string) obiseq.SequencePredicate {
 
-	if !goutils.Contains(taxonomy.RankList(), rank) {
+	if !obiutils.Contains(taxonomy.RankList(), rank) {
 		log.Fatalf("%s is not a valid rank (allowed ranks are %v)",
 			rank,
 			taxonomy.RankList())

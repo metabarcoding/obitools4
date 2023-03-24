@@ -1,5 +1,4 @@
-package goutils
-
+package obiutils
 
 func Contains[T comparable](arr []T, x T) bool {
 	for _, v := range arr {
@@ -20,5 +19,5 @@ func LookFor[T comparable](arr []T, x T) int {
 }
 
 func RemoveIndex[T comparable](s []T, index int) []T {
-    return append(s[:index], s[index+1:]...)
+	return append(s[:index], s[index+1:]...)
 }

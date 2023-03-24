@@ -1,4 +1,4 @@
-package goutils
+package obiutils
 
 import (
 	"bufio"
@@ -12,7 +12,6 @@ import (
 
 	"github.com/barkimedes/go-deepcopy"
 )
-
 
 // InterfaceToInt converts a interface{} to an integer value if possible.
 // If not a "NotAnInteger" error is returned via the err
@@ -196,7 +195,6 @@ func InterfaceToFloat64Map(i interface{}) (val map[string]float64, err error) {
 
 	return
 }
-
 
 // NotABoolean defines a new type of Error : "NotABoolean"
 type NotABoolean struct {

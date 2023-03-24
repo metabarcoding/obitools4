@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"strings"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/goutils"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiutils"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -53,7 +53,7 @@ func (sequence *BioSequence) StatsOn(key string, na string) StatsOnValues {
 			newstat = false
 			var err error
 			for k, v := range istat {
-				stats[k], err = goutils.InterfaceToInt(v)
+				stats[k], err = obiutils.InterfaceToInt(v)
 				if err != nil {
 					log.Panicf("In sequence %s : %s stat tag not only containing integer values %s",
 						sequence.Id(), mkey, istat)

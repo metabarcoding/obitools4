@@ -3,8 +3,8 @@ package obiapat
 import (
 	log "github.com/sirupsen/logrus"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/goutils"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiutils"
 )
 
 type _Options struct {
@@ -210,7 +210,7 @@ func _Pcr(seq ApatSequence,
 	reverse := opt.pointer.reverse
 	crev := opt.pointer.crev
 
-	forwardMatches := forward.FindAllIndex(seq,0,-1)
+	forwardMatches := forward.FindAllIndex(seq, 0, -1)
 
 	if len(forwardMatches) > 0 {
 
@@ -256,7 +256,7 @@ func _Pcr(seq ApatSequence,
 								(opt.MaxLength() == 0 || length <= opt.MaxLength()) {
 								amplicon, _ := sequence.Subsequence(fm[1], rm[0], opt.pointer.circular)
 								annot := amplicon.Annotations()
-								goutils.MustFillMap(annot, sequence.Annotations())
+								obiutils.MustFillMap(annot, sequence.Annotations())
 								annot["forward_primer"] = forward.String()
 
 								match, _ := sequence.Subsequence(fm[0], fm[1], opt.pointer.circular)
@@ -284,7 +284,7 @@ func _Pcr(seq ApatSequence,
 		}
 	}
 
-	forwardMatches = reverse.FindAllIndex(seq,0,-1)
+	forwardMatches = reverse.FindAllIndex(seq, 0, -1)
 	if forwardMatches != nil {
 
 		begin := forwardMatches[0][0]
@@ -331,7 +331,7 @@ func _Pcr(seq ApatSequence,
 								amplicon = amplicon.ReverseComplement(true)
 
 								annot := amplicon.Annotations()
-								goutils.MustFillMap(annot, sequence.Annotations())
+								obiutils.MustFillMap(annot, sequence.Annotations())
 								annot["forward_primer"] = forward.String()
 
 								match, _ := sequence.Subsequence(rm[0], rm[1], opt.pointer.circular)

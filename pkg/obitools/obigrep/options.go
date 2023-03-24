@@ -5,11 +5,11 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/goutils"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiformats/ncbitaxdump"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitax"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obiconvert"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiutils"
 	"github.com/DavidGamba/go-getoptions"
 )
 
@@ -345,7 +345,7 @@ func CLIIdPatternPredicate() obiseq.SequencePredicate {
 func CLIIdListPredicate() obiseq.SequencePredicate {
 
 	if _IdList != "" {
-		ids, err := goutils.ReadLines(_IdList)
+		ids, err := obiutils.ReadLines(_IdList)
 
 		if err != nil {
 			log.Fatalf("cannot read the id file %s : %v", _IdList, err)

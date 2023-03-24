@@ -9,9 +9,9 @@ import (
 	"sync"
 	"time"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/goutils"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiutils"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -52,7 +52,7 @@ func CSVRecord(sequence *obiseq.BioSequence, opt Options) []string {
 			value = opt.CSVNAValue()
 		}
 
-		svalue, _ := goutils.InterfaceToString(value)
+		svalue, _ := obiutils.InterfaceToString(value)
 		record = append(record, svalue)
 	}
 
@@ -132,7 +132,7 @@ func WriteCSV(iterator obiiter.IBioSequence,
 	options ...WithOption) (obiiter.IBioSequence, error) {
 	opt := MakeOptions(options)
 
-	file, _ = goutils.CompressStream(file, opt.CompressedFile(), opt.CloseFile())
+	file, _ = obiutils.CompressStream(file, opt.CompressedFile(), opt.CloseFile())
 
 	newIter := obiiter.MakeIBioSequence()
 

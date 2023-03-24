@@ -11,9 +11,9 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/goutils"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiutils"
 )
 
 func min(x, y int) int {
@@ -70,7 +70,7 @@ func WriteFasta(iterator obiiter.IBioSequence,
 	opt := MakeOptions(options)
 
 	iterator = iterator.Rebatch(10000)
-	file, _ = goutils.CompressStream(file, opt.CompressedFile(), opt.CloseFile())
+	file, _ = obiutils.CompressStream(file, opt.CompressedFile(), opt.CloseFile())
 
 	newIter := obiiter.MakeIBioSequence()
 

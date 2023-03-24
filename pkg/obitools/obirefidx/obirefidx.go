@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/goutils"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obialign"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obikmer"
@@ -13,6 +12,7 @@ import (
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitax"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obifind"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiutils"
 	"github.com/schollz/progressbar/v3"
 )
 
@@ -38,7 +38,7 @@ func IndexSequence(seqidx int,
 
 	// log.Println("Redone : ",r,"/",t,"(",w,")")
 
-	o := goutils.IntOrder(score)
+	o := obiutils.IntOrder(score)
 
 	current_taxid, err := taxo.Taxon(references[o[0]].Taxid())
 	current_score := score[o[0]]
@@ -121,7 +121,7 @@ func IndexReferenceDB(iterator obiiter.IBioSequence) obiiter.IBioSequence {
 	indexed := obiiter.MakeIBioSequence()
 	go func() {
 		for i := 0; i < len(references); i += 10 {
-			limits <- [2]int{i, goutils.MinInt(i+10, len(references))}
+			limits <- [2]int{i, obiutils.MinInt(i+10, len(references))}
 		}
 		close(limits)
 	}()

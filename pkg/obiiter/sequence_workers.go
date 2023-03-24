@@ -2,7 +2,7 @@ package obiiter
 
 // func MakeSetAttributeWorker(rank string) obiiter.SeqWorker {
 
-// 	if !goutils.Contains(taxonomy.RankList(), rank) {
+// 	if !obiutils.Contains(taxonomy.RankList(), rank) {
 // 		log.Fatalf("%s is not a valid rank (allowed ranks are %v)",
 // 			rank,
 // 			taxonomy.RankList())

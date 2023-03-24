@@ -1,14 +1,14 @@
 package obitax
 
 import (
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/goutils"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiutils"
 	log "github.com/sirupsen/logrus"
 )
 
 func (taxonomy *Taxonomy) MakeSetTaxonAtRankWorker(rank string) obiseq.SeqWorker {
 
-	if !goutils.Contains(taxonomy.RankList(), rank) {
+	if !obiutils.Contains(taxonomy.RankList(), rank) {
 		log.Fatalf("%s is not a valid rank (allowed ranks are %v)",
 			rank,
 			taxonomy.RankList())

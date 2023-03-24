@@ -1,6 +1,8 @@
-package goutils
+package obiutils
 
-import "sort"
+import (
+	"sort"
+)
 
 // intRanker is a helper type for the rank function.
 type intRanker struct {
@@ -29,7 +31,7 @@ func IntOrder(data []int) []int {
 	}
 
 	sort.Sort(rk)
-	
+
 	return r
 }
 
@@ -49,6 +51,36 @@ func ReverseIntOrder(data []int) []int {
 	}
 
 	sort.Sort(sort.Reverse(rk))
-	
+
+	return r
+}
+
+type Ranker[T sort.Interface] struct {
+	x T     // Data to be ranked.
+	r []int // A list of indexes into f that reflects rank order after sorting.
+}
+
+// ranker satisfies the sort.Interface without mutating the reference slice, f.
+func (r Ranker[_]) Len() int           { return len(r.r) }
+func (r Ranker[T]) Less(i, j int) bool { return r.x.Less(r.r[i], r.r[j]) }
+func (r Ranker[_]) Swap(i, j int)      { r.r[i], r.r[j] = r.r[j], r.r[i] }
+
+func Order[T sort.Interface](data T) []int {
+	ldata := data.Len()
+	if ldata == 0 {
+		return nil
+	}
+	r := make([]int, ldata)
+	rk := Ranker[T]{
+		x: data,
+		r: r,
+	}
+
+	for i := 0; i < ldata; i++ {
+		rk.r[i] = i
+	}
+
+	sort.Sort(rk)
+
 	return r
 }

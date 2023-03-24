@@ -7,9 +7,9 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/goutils"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiapat"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiutils"
 )
 
 type DemultiplexMatch struct {
@@ -104,16 +104,14 @@ func (marker *Marker) Compile(forward, reverse string, maxError int, allowsIndel
 	return nil
 }
 
-
-
 func (marker *Marker) Match(sequence *obiseq.BioSequence) *DemultiplexMatch {
 	aseq, _ := obiapat.MakeApatSequence(sequence, false)
 
-	start, end, nerr ,matched := marker.forward.BestMatch(aseq, marker.taglength,-1)
+	start, end, nerr, matched := marker.forward.BestMatch(aseq, marker.taglength, -1)
 	if matched {
 		sseq := sequence.String()
 		direct := sseq[start:end]
-		tagstart := goutils.MaxInt(start - marker.taglength,0)
+		tagstart := obiutils.MaxInt(start-marker.taglength, 0)
 		ftag := strings.ToLower(sseq[tagstart:start])
 
 		m := DemultiplexMatch{
@@ -125,15 +123,15 @@ func (marker *Marker) Match(sequence *obiseq.BioSequence) *DemultiplexMatch {
 			Error:             nil,
 		}
 
-		start, end, nerr ,matched = marker.creverse.BestMatch(aseq, start,-1)
+		start, end, nerr, matched = marker.creverse.BestMatch(aseq, start, -1)
 
 		if matched {
 
 			// extracting primer matches
-			reverse, _ := sequence.Subsequence(start,end, false)
+			reverse, _ := sequence.Subsequence(start, end, false)
 			defer reverse.Recycle()
 			reverse = reverse.ReverseComplement(true)
-			endtag := goutils.MinInt(end+marker.taglength,sequence.Len())
+			endtag := obiutils.MinInt(end+marker.taglength, sequence.Len())
 			rtag, err := sequence.Subsequence(end, endtag, false)
 			defer rtag.Recycle()
 			srtag := ""
@@ -165,14 +163,13 @@ func (marker *Marker) Match(sequence *obiseq.BioSequence) *DemultiplexMatch {
 		return &m
 	}
 
-
-	start, end, nerr ,matched = marker.reverse.BestMatch(aseq, marker.taglength,-1)
+	start, end, nerr, matched = marker.reverse.BestMatch(aseq, marker.taglength, -1)
 
 	if matched {
 		sseq := sequence.String()
 
 		reverse := strings.ToLower(sseq[start:end])
-		tagstart := goutils.MaxInt(start - marker.taglength,0)
+		tagstart := obiutils.MaxInt(start-marker.taglength, 0)
 		rtag := strings.ToLower(sseq[tagstart:start])
 
 		m := DemultiplexMatch{
@@ -184,16 +181,16 @@ func (marker *Marker) Match(sequence *obiseq.BioSequence) *DemultiplexMatch {
 			Error:             nil,
 		}
 
-		start, end, nerr ,matched = marker.cforward.BestMatch(aseq, end,-1)
+		start, end, nerr, matched = marker.cforward.BestMatch(aseq, end, -1)
 
 		if matched {
 
-			direct, _ := sequence.Subsequence(start,end, false)
+			direct, _ := sequence.Subsequence(start, end, false)
 			defer direct.Recycle()
 			direct = direct.ReverseComplement(true)
 
-			endtag := goutils.MinInt(end+marker.taglength,sequence.Len())
-			ftag, err := sequence.Subsequence(end,endtag, false)
+			endtag := obiutils.MinInt(end+marker.taglength, sequence.Len())
+			ftag, err := sequence.Subsequence(end, endtag, false)
 			defer ftag.Recycle()
 			sftag := ""
 			if err != nil {

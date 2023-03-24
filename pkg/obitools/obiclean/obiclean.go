@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"os"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/goutils"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obioptions"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiutils"
 	"github.com/schollz/progressbar/v3"
 	log "github.com/sirupsen/logrus"
 )
@@ -120,7 +120,7 @@ func HeadCount(sequence *obiseq.BioSequence) int {
 	value := 0
 
 	if ok {
-		value, err = goutils.InterfaceToInt(value)
+		value, err = obiutils.InterfaceToInt(value)
 		if err != nil {
 			log.Panic("obiclean_headcount attribute of sequence %s must be an integer value not : %v", sequence.Id(), ivalue)
 		}
@@ -136,7 +136,7 @@ func InternalCount(sequence *obiseq.BioSequence) int {
 	value := 0
 
 	if ok {
-		value, err = goutils.InterfaceToInt(value)
+		value, err = obiutils.InterfaceToInt(value)
 		if err != nil {
 			log.Panic("obiclean_internalcount attribute of sequence %s must be an integer value not : %v", sequence.Id(), ivalue)
 		}
@@ -152,7 +152,7 @@ func SingletonCount(sequence *obiseq.BioSequence) int {
 	value := 0
 
 	if ok {
-		value, err = goutils.InterfaceToInt(value)
+		value, err = obiutils.InterfaceToInt(value)
 		if err != nil {
 			log.Panic("obiclean_samplecount attribute of sequence %s must be an integer value not : %v", sequence.Id(), ivalue)
 		}
@@ -271,7 +271,7 @@ func Weight(sequence *obiseq.BioSequence) map[string]int {
 		case map[string]interface{}:
 			weight = make(map[string]int)
 			for k, v := range iobistatus {
-				weight[k], err = goutils.InterfaceToInt(v)
+				weight[k], err = obiutils.InterfaceToInt(v)
 				if err != nil {
 					log.Panicf("Weight value %v cannnot be casted to an integer value\n", v)
 				}

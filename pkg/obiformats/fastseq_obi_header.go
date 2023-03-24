@@ -9,8 +9,8 @@ import (
 	"strconv"
 	"strings"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/goutils"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiutils"
 	"github.com/goccy/go-json"
 )
 
@@ -305,7 +305,7 @@ func FormatFastSeqOBIHeader(sequence *obiseq.BioSequence) string {
 				map[string]string,
 				map[string]interface{},
 				obiseq.StatsOnValues:
-				tv, err := goutils.JsonMarshal(t)
+				tv, err := obiutils.JsonMarshal(t)
 				if err != nil {
 					log.Fatalf("Cannot convert %v value", value)
 				}

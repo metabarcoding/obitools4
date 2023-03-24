@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"strings"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/goutils"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obialign"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obikmer"
@@ -15,6 +14,7 @@ import (
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitax"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obifind"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obirefidx"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiutils"
 )
 
 func FindClosests(sequence *obiseq.BioSequence,
@@ -31,7 +31,7 @@ func FindClosests(sequence *obiseq.BioSequence,
 		cw[i] = obikmer.Common4Mer(seqwords, ref)
 	}
 
-	o := goutils.ReverseIntOrder(cw)
+	o := obiutils.ReverseIntOrder(cw)
 
 	// mcw := 100000
 	// for _, i := range o {
@@ -57,11 +57,11 @@ func FindClosests(sequence *obiseq.BioSequence,
 	for i, j := range o {
 		ref := references[j]
 
-		lmin, lmax := goutils.MinMaxInt(sequence.Len(), ref.Len())
+		lmin, lmax := obiutils.MinMaxInt(sequence.Len(), ref.Len())
 		atMost := lmax - lmin + int(math.Ceil(float64(lmin-3-cw[j])/4.0)) - 2
 
 		if i == 0 {
-			maxe = goutils.MaxInt(sequence.Len(), ref.Len())
+			maxe = obiutils.MaxInt(sequence.Len(), ref.Len())
 		}
 
 		// log.Println(sequence.Id(),cw[j], maxe)

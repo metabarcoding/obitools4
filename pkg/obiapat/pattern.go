@@ -13,9 +13,9 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/goutils"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obialign"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiutils"
 )
 
 var _MaxPatLen = int(C.MAX_PAT_LEN)
@@ -355,8 +355,8 @@ func (pattern ApatPattern) BestMatch(sequence ApatSequence, begin, length int) (
 
 	start = best[0] - nerr
 	end = best[0] + int(pattern.pointer.pointer.patlen) + nerr
-	start = goutils.MaxInt(start, 0)
-	end = goutils.MinInt(end, sequence.Len())
+	start = obiutils.MaxInt(start, 0)
+	end = obiutils.MinInt(end, sequence.Len())
 
 	cpattern := (*[1 << 30]byte)(unsafe.Pointer(pattern.pointer.pointer.cpat))
 	cseq := (*[1 << 30]byte)(unsafe.Pointer(sequence.pointer.pointer.cseq))
@@ -374,7 +374,7 @@ func (pattern ApatPattern) BestMatch(sequence ApatSequence, begin, length int) (
 
 	nerr = lali - score
 	start = best[0] + int(pattern.pointer.pointer.patlen) - lali
-	end = start + lali 
+	end = start + lali
 	log.Debugln("results", score, lali, start, nerr)
 	return
 }

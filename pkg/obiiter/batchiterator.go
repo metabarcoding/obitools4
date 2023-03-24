@@ -10,8 +10,8 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/goutils"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiutils"
 	"github.com/tevino/abool/v2"
 )
 
@@ -375,7 +375,7 @@ func (iterator IBioSequence) Pool(iterators ...IBioSequence) IBioSequence {
 		allPaired = allPaired && i.IsPaired()
 	}
 
-	nextCounter := goutils.AtomicCounter()
+	nextCounter := obiutils.AtomicCounter()
 	newIter := MakeIBioSequence()
 
 	newIter.Add(niterator)

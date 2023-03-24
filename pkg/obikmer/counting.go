@@ -3,8 +3,8 @@ package obikmer
 import (
 	"math"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/goutils"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiutils"
 )
 
 type Table4mer [256]uint16
@@ -32,7 +32,7 @@ func Count4Mer(seq *obiseq.BioSequence, buffer *[]byte, counts *Table4mer) *Tabl
 func Common4Mer(count1, count2 *Table4mer) int {
 	sum := 0
 	for i := 0; i < 256; i++ {
-		sum += int(goutils.MinUInt16((*count1)[i], (*count2)[i]))
+		sum += int(obiutils.MinUInt16((*count1)[i], (*count2)[i]))
 	}
 	return sum
 }
@@ -48,7 +48,7 @@ func Sum4Mer(count *Table4mer) int {
 func LCS4MerBounds(count1, count2 *Table4mer) (int, int) {
 	s1 := Sum4Mer(count1)
 	s2 := Sum4Mer(count2)
-	smin := goutils.MinInt(s1, s2)
+	smin := obiutils.MinInt(s1, s2)
 
 	cw := Common4Mer(count1, count2)
 
@@ -65,11 +65,11 @@ func LCS4MerBounds(count1, count2 *Table4mer) (int, int) {
 func Error4MerBounds(count1, count2 *Table4mer) (int, int) {
 	s1 := Sum4Mer(count1)
 	s2 := Sum4Mer(count2)
-	smax := goutils.MaxInt(s1, s2)
+	smax := obiutils.MaxInt(s1, s2)
 
 	cw := Common4Mer(count1, count2)
 
-	errorMax := smax - cw + 2* int(math.Floor(float64(cw+5)/8.0))
+	errorMax := smax - cw + 2*int(math.Floor(float64(cw+5)/8.0))
 	errorMin := int(math.Ceil(float64(errorMax) / 4.0))
 
 	return errorMin, errorMax

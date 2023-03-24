@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"sync"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/goutils"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiutils"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -135,7 +135,7 @@ func DualAnnotationClassifier(key1, key2 string, na string) *BioSequenceClassifi
 		locke.Lock()
 		defer locke.Unlock()
 
-		jb, _ := goutils.JsonMarshal([2]string{val1, val2})
+		jb, _ := obiutils.JsonMarshal([2]string{val1, val2})
 		json := string(jb)
 		k, ok := encode[json]
 

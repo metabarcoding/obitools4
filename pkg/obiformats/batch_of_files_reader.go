@@ -3,8 +3,8 @@ package obiformats
 import (
 	"log"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/goutils"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiutils"
 )
 
 func ReadSequencesBatchFromFiles(filenames []string,
@@ -17,7 +17,7 @@ func ReadSequencesBatchFromFiles(filenames []string,
 	}
 
 	batchiter := obiiter.MakeIBioSequence(0)
-	nextCounter := goutils.AtomicCounter()
+	nextCounter := obiutils.AtomicCounter()
 
 	batchiter.Add(concurrent_readers)
 

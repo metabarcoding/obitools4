@@ -5,7 +5,7 @@ import (
 	"log"
 	"strings"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/goutils"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiutils"
 	"github.com/PaesslerAG/gval"
 )
 
@@ -136,11 +136,11 @@ func minFloatMap(values map[string]float64) float64 {
 var OBILang = gval.NewLanguage(
 	gval.Full(),
 	gval.Function("len", func(args ...interface{}) (interface{}, error) {
-		length := goutils.Len(args[0])
+		length := obiutils.Len(args[0])
 		return (float64)(length), nil
 	}),
 	gval.Function("ismap", func(args ...interface{}) (interface{}, error) {
-		ismap := goutils.IsAMap(args[0])
+		ismap := obiutils.IsAMap(args[0])
 		return ismap, nil
 	}),
 	gval.Function("printf", func(args ...interface{}) (interface{}, error) {
@@ -152,7 +152,7 @@ var OBILang = gval.NewLanguage(
 		return text, nil
 	}),
 	gval.Function("int", func(args ...interface{}) (interface{}, error) {
-		val, err := goutils.InterfaceToInt(args[0])
+		val, err := obiutils.InterfaceToInt(args[0])
 
 		if err != nil {
 			log.Fatalf("%v cannot be converted to an integer value", args[0])
@@ -160,7 +160,7 @@ var OBILang = gval.NewLanguage(
 		return val, nil
 	}),
 	gval.Function("numeric", func(args ...interface{}) (interface{}, error) {
-		val, err := goutils.InterfaceToFloat64(args[0])
+		val, err := obiutils.InterfaceToFloat64(args[0])
 
 		if err != nil {
 			log.Fatalf("%v cannot be converted to a numeric value", args[0])
@@ -168,7 +168,7 @@ var OBILang = gval.NewLanguage(
 		return val, nil
 	}),
 	gval.Function("bool", func(args ...interface{}) (interface{}, error) {
-		val, err := goutils.InterfaceToBool(args[0])
+		val, err := obiutils.InterfaceToBool(args[0])
 
 		if err != nil {
 			log.Fatalf("%v cannot be converted to a boolan value", args[0])
@@ -189,4 +189,3 @@ var OBILang = gval.NewLanguage(
 	gval.Function("composition", func(args ...interface{}) (interface{}, error) {
 		return (args[0].(*BioSequence)).Composition(), nil
 	}))
-

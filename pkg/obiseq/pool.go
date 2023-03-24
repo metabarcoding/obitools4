@@ -4,7 +4,7 @@ import (
 	"log"
 	"sync"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/goutils"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiutils"
 )
 
 var _BioSequenceByteSlicePool = sync.Pool{
@@ -72,7 +72,7 @@ func GetAnnotation(values ...Annotation) Annotation {
 	}
 
 	if len(values) > 0 {
-		goutils.MustFillMap(a, values[0])
+		obiutils.MustFillMap(a, values[0])
 	}
 
 	return a

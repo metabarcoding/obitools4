@@ -10,9 +10,9 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/goutils"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiutils"
 )
 
 func FormatFastq(seq *obiseq.BioSequence, quality_shift int, formater FormatHeader) string {
@@ -61,7 +61,7 @@ func WriteFastq(iterator obiiter.IBioSequence,
 
 	opt := MakeOptions(options)
 
-	file, _ = goutils.CompressStream(file, opt.CompressedFile(), opt.CloseFile())
+	file, _ = obiutils.CompressStream(file, opt.CompressedFile(), opt.CloseFile())
 
 	newIter := obiiter.MakeIBioSequence()
 

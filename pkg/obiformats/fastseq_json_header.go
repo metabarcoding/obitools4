@@ -6,8 +6,8 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/goutils"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiutils"
 	"github.com/goccy/go-json"
 )
 
@@ -71,7 +71,7 @@ func FormatFastSeqJsonHeader(sequence *obiseq.BioSequence) string {
 	annotations := sequence.Annotations()
 
 	if len(annotations) > 0 {
-		text, err := goutils.JsonMarshal(sequence.Annotations())
+		text, err := obiutils.JsonMarshal(sequence.Annotations())
 
 		if err != nil {
 			panic(err)
