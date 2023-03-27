@@ -25,7 +25,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	consensus := obiconsensus.Consensus(fs, 0.99)
+	consensus := obiconsensus.Consensus(fs, 0.95)
 	obiconvert.CLIWriteBioSequences(consensus, true)
 
 	obiiter.WaitForLastPipe()
