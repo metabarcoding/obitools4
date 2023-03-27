@@ -30,6 +30,8 @@ var __compressed__ = false
 var __output_file_name__ = "-"
 var __paired_file_name__ = ""
 
+var __full_file_batch__ = false
+
 func InputOptionSet(options *getoptions.GetOpt) {
 	// options.IntVar(&__skipped_entries__, "skip", __skipped_entries__,
 	// 	options.Description("The N first sequence records of the file are discarded from the analysis and not reported to the output file."))
@@ -200,4 +202,11 @@ func CLIHasPairedFile() bool {
 }
 func CLIPairedFileName() string {
 	return __paired_file_name__
+}
+
+func SetFullFileBatch() {
+	__full_file_batch__ = true
+}
+func FullFileBatch() bool {
+	return __full_file_batch__
 }

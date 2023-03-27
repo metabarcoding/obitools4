@@ -52,6 +52,7 @@ type Annotation map[string]interface{}
 type BioSequence struct {
 	id          string // The identidier of the sequence (private accessible through the method Id)
 	definition  string // The documentation of the sequence (private accessible through the method Definition)
+	source      string // The filename without directory name and extension from where the sequence was read.
 	sequence    []byte // The sequence itself, it is accessible by the methode Sequence
 	qualities   []byte // The quality scores of the sequence.
 	feature     []byte
@@ -67,6 +68,7 @@ func MakeEmptyBioSequence() BioSequence {
 	return BioSequence{
 		id:          "",
 		definition:  "",
+		source:      "",
 		sequence:    nil,
 		qualities:   nil,
 		feature:     nil,
@@ -199,6 +201,16 @@ func (s *BioSequence) Annotations() Annotation {
 	return s.annotations
 }
 
+// Checking if the BioSequence has a source.
+func (s *BioSequence) HasSource() bool {
+	return len(s.source) > 0
+}
+
+func (s *BioSequence) Source() string {
+	return s.source
+}
+
+
 // Returning the MD5 hash of the sequence.
 func (s *BioSequence) MD5() [16]byte {
 	return md5.Sum(s.sequence)
@@ -212,6 +224,11 @@ func (s *BioSequence) SetId(id string) {
 // Setting the definition of the sequence.
 func (s *BioSequence) SetDefinition(definition string) {
 	s.definition = definition
+}
+
+// Setting the source of the sequence.
+func (s *BioSequence) SetSource(source string) {
+	s.source = source
 }
 
 // Setting the features of the BioSequence.

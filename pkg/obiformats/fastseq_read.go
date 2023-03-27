@@ -10,15 +10,18 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"path"
 	"unsafe"
 
 	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiutils"
 )
 
-func _FastseqReader(seqfile C.fast_kseq_p,
+func _FastseqReader(source string,
+	seqfile C.fast_kseq_p,
 	iterator obiiter.IBioSequence,
 	batch_size int) {
 	var comment string
@@ -40,7 +43,7 @@ func _FastseqReader(seqfile C.fast_kseq_p,
 		}
 
 		rep := obiseq.NewBioSequence(name, bytes.ToLower(sequence), comment)
-
+		rep.SetSource(source)
 		if s.qual.l > C.ulong(0) {
 			cquality := unsafe.Slice(s.qual.s, C.int(s.qual.l))
 			l := int(s.qual.l)
@@ -81,6 +84,9 @@ func _FastseqReader(seqfile C.fast_kseq_p,
 }
 
 func ReadFastSeqFromFile(filename string, options ...WithOption) (obiiter.IBioSequence, error) {
+
+	options = append(options, OptionsSource(obiutils.RemoveAllExt((path.Base(filename)))))
+
 	opt := MakeOptions(options)
 
 	name := C.CString(filename)
@@ -108,14 +114,20 @@ func ReadFastSeqFromFile(filename string, options ...WithOption) (obiiter.IBioSe
 	newIter := obiiter.MakeIBioSequence()
 	newIter.Add(1)
 
-	go func() {
-		newIter.WaitAndClose()
-		log.Debugln("End of the fastq file reading")
-	}()
+	go func(iter obiiter.IBioSequence) {
+		iter.WaitAndClose()
+		log.Debugln("End of the fastx file reading")
+	}(newIter)
 
-	log.Debugln("Start of the fastq file reading")
+	log.Debugln("Start of the fastx file reading")
 
-	go _FastseqReader(pointer, newIter, opt.BatchSize())
+	go _FastseqReader(opt.Source(), pointer, newIter, opt.BatchSize())
+
+	log.Debugln("Full file batch mode : ", opt.FullFileBatch())
+	if opt.FullFileBatch() {
+		newIter = newIter.FullFileIterator()
+	}
+
 	parser := opt.ParseFastSeqHeader()
 
 	if parser != nil {
@@ -126,17 +138,26 @@ func ReadFastSeqFromFile(filename string, options ...WithOption) (obiiter.IBioSe
 }
 
 func ReadFastSeqFromStdin(options ...WithOption) obiiter.IBioSequence {
+
+	options = append(options, OptionsSource("stdin"))
+
 	opt := MakeOptions(options)
 	newIter := obiiter.MakeIBioSequence()
 
 	newIter.Add(1)
 
-	go func() {
-		newIter.WaitAndClose()
-	}()
+	go func(iter obiiter.IBioSequence) {
+		iter.WaitAndClose()
+	}(newIter)
 
-	go _FastseqReader(C.open_fast_sek_stdin(C.int32_t(opt.QualityShift())),
+	go _FastseqReader(opt.Source(),
+		C.open_fast_sek_stdin(C.int32_t(opt.QualityShift())),
 		newIter, opt.BatchSize())
+
+	log.Debugln("Full file batch mode : ", opt.FullFileBatch())
+	if opt.FullFileBatch() {
+		newIter = newIter.FullFileIterator()
+	}
 
 	parser := opt.ParseFastSeqHeader()
 

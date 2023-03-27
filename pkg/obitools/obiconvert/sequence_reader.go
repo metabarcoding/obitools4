@@ -99,9 +99,13 @@ func CLIReadBioSequences(filenames ...string) (obiiter.IBioSequence, error) {
 	opts = append(opts, obiformats.OptionsBatchSize(obioptions.CLIBatchSize()))
 
 	opts = append(opts, obiformats.OptionsQualityShift(CLIInputQualityShift()))
+	opts = append(opts, obiformats.OptionsFullFileBatch(FullFileBatch()))
+
 
 	if len(filenames) == 0 {
 		log.Printf("Reading sequences from stdin in %s\n", CLIInputFormat())
+		opts = append(opts, obiformats.OptionsSource("stdin"))
+
 		switch CLIInputFormat() {
 		case "ecopcr":
 			iterator = obiformats.ReadEcoPCR(os.Stdin, opts...)
@@ -121,7 +125,7 @@ func CLIReadBioSequences(filenames ...string) (obiiter.IBioSequence, error) {
 
 		switch CLIInputFormat() {
 		case "ecopcr":
-			reader = obiformats.ReadEcoPCRBatchFromFile
+			reader = obiformats.ReadEcoPCRFromFile
 		case "embl":
 			reader = obiformats.ReadEMBLFromFile
 		case "genbank":

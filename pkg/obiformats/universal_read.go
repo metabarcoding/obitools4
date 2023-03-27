@@ -5,11 +5,13 @@ import (
 	"compress/gzip"
 	"io"
 	"os"
+	"path"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiutils"
 )
 
 func GuessSeqFileType(firstline string) string {
@@ -49,6 +51,8 @@ func ReadSequencesFromFile(filename string,
 	var greader io.Reader
 	var err error
 
+	options = append(options, OptionsSource(obiutils.RemoveAllExt((path.Base(filename)))))
+	
 	file, err = os.Open(filename)
 
 	if err != nil {

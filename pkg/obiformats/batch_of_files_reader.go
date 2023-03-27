@@ -16,7 +16,7 @@ func ReadSequencesBatchFromFiles(filenames []string,
 		reader = ReadSequencesFromFile
 	}
 
-	batchiter := obiiter.MakeIBioSequence(0)
+	batchiter := obiiter.MakeIBioSequence()
 	nextCounter := obiutils.AtomicCounter()
 
 	batchiter.Add(concurrent_readers)
@@ -47,6 +47,8 @@ func ReadSequencesBatchFromFiles(filenames []string,
 				}
 
 				log.Printf("Start reading of file : %s", filename)
+
+				
 
 				for iter.Next() {
 					batch := iter.Get()

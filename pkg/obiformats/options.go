@@ -10,6 +10,7 @@ type __options__ struct {
 	with_progress_bar     bool
 	buffer_size           int
 	batch_size            int
+	full_file_batch       bool
 	quality_shift         int
 	parallel_workers      int
 	closefile             bool
@@ -25,6 +26,7 @@ type __options__ struct {
 	csv_separator         string
 	csv_navalue           string
 	paired_filename       string
+	source                string
 }
 
 type Options struct {
@@ -42,6 +44,7 @@ func MakeOptions(setters []WithOption) Options {
 		quality_shift:         33,
 		parallel_workers:      4,
 		batch_size:            5000,
+		full_file_batch:       false,
 		closefile:             false,
 		appendfile:            false,
 		compressed:            false,
@@ -52,9 +55,10 @@ func MakeOptions(setters []WithOption) Options {
 		csv_sequence:          true,
 		csv_quality:           false,
 		csv_separator:         ",",
-		csv_navalue: "NA",
+		csv_navalue:           "NA",
 		csv_keys:              make([]string, 0),
 		paired_filename:       "",
+		source:                "",
 	}
 
 	opt := Options{&o}
@@ -72,6 +76,10 @@ func (opt Options) QualityShift() int {
 
 func (opt Options) BatchSize() int {
 	return opt.pointer.batch_size
+}
+
+func (opt Options) FullFileBatch() bool {
+	return opt.pointer.full_file_batch
 }
 
 func (opt Options) ParallelWorkers() int {
@@ -144,6 +152,14 @@ func (opt Options) HaveToSavePaired() bool {
 
 func (opt Options) PairedFileName() string {
 	return opt.pointer.paired_filename
+}
+
+func (opt Options) HasSource() bool {
+	return opt.pointer.source != ""
+}
+
+func (opt Options) Source() string {
+	return opt.pointer.source
 }
 
 func OptionCloseFile() WithOption {
@@ -248,6 +264,22 @@ func OptionsParallelWorkers(nworkers int) WithOption {
 func OptionsBatchSize(size int) WithOption {
 	f := WithOption(func(opt Options) {
 		opt.pointer.batch_size = size
+	})
+
+	return f
+}
+
+func OptionsFullFileBatch(full bool) WithOption {
+	f := WithOption(func(opt Options) {
+		opt.pointer.full_file_batch = full
+	})
+
+	return f
+}
+
+func OptionsSource(source string) WithOption {
+	f := WithOption(func(opt Options) {
+		opt.pointer.source = source
 	})
 
 	return f

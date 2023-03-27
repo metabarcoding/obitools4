@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"io"
 	"os"
+	"path"
 	"strconv"
 	"strings"
 
@@ -14,6 +15,7 @@ import (
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiutils"
 )
 
 type gbstate int
@@ -26,7 +28,8 @@ const (
 	inSequence   gbstate = 4
 )
 
-func _ParseGenbankFile(input <-chan _FileChunk, out obiiter.IBioSequence) {
+func _ParseGenbankFile(source string,
+	input <-chan _FileChunk, out obiiter.IBioSequence) {
 
 	state := inHeader
 
@@ -68,6 +71,7 @@ func _ParseGenbankFile(input <-chan _FileChunk, out obiiter.IBioSequence) {
 				sequence := obiseq.NewBioSequence(id,
 					bytes.ToLower(seqBytes.Bytes()),
 					defBytes.String())
+				sequence.SetSource(source)
 				state = inHeader
 
 				sequence.SetFeatures(featBytes.Bytes())
@@ -129,10 +133,14 @@ func ReadGenbank(reader io.Reader, options ...WithOption) obiiter.IBioSequence {
 
 	// for j := 0; j < opt.ParallelWorkers(); j++ {
 	for j := 0; j < nworkers; j++ {
-		go _ParseGenbankFile(entry_channel, newIter)
+		go _ParseGenbankFile(opt.Source(),entry_channel, newIter)
 	}
 
 	go _ReadFlatFileChunk(reader, entry_channel)
+
+	if opt.pointer.full_file_batch {
+		newIter = newIter.FullFileIterator()
+	}
 
 	return newIter
 }
@@ -141,6 +149,9 @@ func ReadGenbankFromFile(filename string, options ...WithOption) (obiiter.IBioSe
 	var reader io.Reader
 	var greader io.Reader
 	var err error
+
+	options = append(options, OptionsSource(obiutils.RemoveAllExt((path.Base(filename)))))
+
 
 	reader, err = os.Open(filename)
 	if err != nil {

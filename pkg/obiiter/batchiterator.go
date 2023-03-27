@@ -59,7 +59,7 @@ type IBioSequence struct {
 // IBioSequenceBatch type.
 var NilIBioSequence = IBioSequence{pointer: nil}
 
-func MakeIBioSequence(sizes ...int) IBioSequence {
+func MakeIBioSequence() IBioSequence {
 
 	i := _IBioSequence{
 		channel:         make(chan BioSequenceBatch),
@@ -409,7 +409,7 @@ func (iterator IBioSequence) Pool(iterators ...IBioSequence) IBioSequence {
 // IBioSequenceBatch with every batches having the same size
 // indicated in parameter. Rebatching implies to sort the
 // source IBioSequenceBatch.
-func (iterator IBioSequence) Rebatch(size int, sizes ...int) IBioSequence {
+func (iterator IBioSequence) Rebatch(size int) IBioSequence {
 
 	newIter := MakeIBioSequence()
 
@@ -686,11 +686,39 @@ func (iterator IBioSequence) Load() obiseq.BioSequenceSlice {
 	chunck := obiseq.MakeBioSequenceSlice()
 	for iterator.Next() {
 		b := iterator.Get()
+		log.Debugf("append %d sequences",b.Len())
 		chunck = append(chunck, b.Slice()...)
 		b.Recycle()
 	}
 
 	return chunck
+}
+
+func (iterator IBioSequence) FullFileIterator() IBioSequence {
+
+	newIter := MakeIBioSequence()
+	log.Debug("Stream is read in full file mode")
+
+	newIter.Add(1)
+
+	go func() {
+		newIter.WaitAndClose()
+	}()
+
+	go func() {
+		slice := iterator.Load()
+		log.Printf("A batch of  %d sequence is read",len(slice))
+		if len(slice) > 0 {
+			newIter.Push(MakeBioSequenceBatch(0, slice))
+		}
+		newIter.Done()
+	}()
+
+	if iterator.IsPaired() {
+		newIter.MarkAsPaired()
+	}
+
+	return newIter
 }
 
 // It takes a slice of BioSequence objects, and returns an iterator that will return batches of

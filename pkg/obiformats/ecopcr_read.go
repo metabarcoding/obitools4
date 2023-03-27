@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path"
 	"strconv"
 	"strings"
 
@@ -14,6 +15,7 @@ import (
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiutils"
 )
 
 type __ecopcr_file__ struct {
@@ -177,6 +179,7 @@ func ReadEcoPCR(reader io.Reader, options ...WithOption) obiiter.IBioSequence {
 	go func() {
 
 		seq, err := __read_ecopcr_bioseq__(&ecopcr)
+		seq.SetSource(opt.Source())
 		slice := make(obiseq.BioSequenceSlice, 0, opt.BatchSize())
 		i := 0
 		ii := 0
@@ -191,6 +194,7 @@ func ReadEcoPCR(reader io.Reader, options ...WithOption) obiiter.IBioSequence {
 			}
 
 			seq, err = __read_ecopcr_bioseq__(&ecopcr)
+			seq.SetSource(opt.Source())
 		}
 
 		if len(slice) > 0 {
@@ -205,13 +209,19 @@ func ReadEcoPCR(reader io.Reader, options ...WithOption) obiiter.IBioSequence {
 
 	}()
 
+	if opt.pointer.full_file_batch {
+		newIter = newIter.FullFileIterator()
+	}
+
 	return newIter
 }
 
-func ReadEcoPCRBatchFromFile(filename string, options ...WithOption) (obiiter.IBioSequence, error) {
+func ReadEcoPCRFromFile(filename string, options ...WithOption) (obiiter.IBioSequence, error) {
 	var reader io.Reader
 	var greader io.Reader
 	var err error
+
+	options = append(options, OptionsSource(obiutils.RemoveAllExt((path.Base(filename)))))
 
 	reader, err = os.Open(filename)
 	if err != nil {

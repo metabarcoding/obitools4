@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"io"
 	"os"
+	"path"
 	"strconv"
 	"strings"
 
@@ -14,6 +15,7 @@ import (
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiutils"
 )
 
 var _FileChunkSize = 1 << 26
@@ -95,7 +97,7 @@ func _EndOfLastEntry(buff []byte) int {
 	return -1
 }
 
-func _ParseEmblFile(input <-chan _FileChunk, out obiiter.IBioSequence) {
+func _ParseEmblFile(source string, input <-chan _FileChunk, out obiiter.IBioSequence) {
 
 	for chunks := range input {
 		scanner := bufio.NewScanner(chunks.raw)
@@ -141,7 +143,8 @@ func _ParseEmblFile(input <-chan _FileChunk, out obiiter.IBioSequence) {
 				sequence := obiseq.NewBioSequence(id,
 					bytes.ToLower(seqBytes.Bytes()),
 					defBytes.String())
-
+				sequence.SetSource(source)
+				
 				sequence.SetFeatures(featBytes.Bytes())
 
 				annot := sequence.Annotations()
@@ -257,10 +260,14 @@ func ReadEMBL(reader io.Reader, options ...WithOption) obiiter.IBioSequence {
 
 	// for j := 0; j < opt.ParallelWorkers(); j++ {
 	for j := 0; j < nworkers; j++ {
-		go _ParseEmblFile(entry_channel, newIter)
+		go _ParseEmblFile(opt.Source(),entry_channel, newIter)
 	}
 
 	go _ReadFlatFileChunk(reader, entry_channel)
+
+	if opt.pointer.full_file_batch {
+		newIter = newIter.FullFileIterator()
+	}
 
 	return newIter
 }
@@ -269,6 +276,8 @@ func ReadEMBLFromFile(filename string, options ...WithOption) (obiiter.IBioSeque
 	var reader io.Reader
 	var greader io.Reader
 	var err error
+
+	options = append(options, OptionsSource(obiutils.RemoveAllExt((path.Base(filename)))))
 
 	reader, err = os.Open(filename)
 	if err != nil {
