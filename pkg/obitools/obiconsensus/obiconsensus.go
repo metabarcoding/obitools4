@@ -41,7 +41,7 @@ func BuildConsensus(seqs obiseq.BioSequenceSlice, quorum float64) (*obiseq.BioSe
 	spectrum := graph.LinkSpectrum()
 	cum := make(map[int]int)
 
-	spectrum[1]=0
+	spectrum[1] = 0
 	for i := 2; i < len(spectrum); i++ {
 		spectrum[i] += spectrum[i-1]
 		cum[spectrum[i]]++
@@ -63,26 +63,36 @@ func BuildConsensus(seqs obiseq.BioSequenceSlice, quorum float64) (*obiseq.BioSe
 			break
 		}
 	}
-
+	threshold /= 2
 	graph.FilterMin(threshold)
 	log.Printf("Graph size : %d\n", graph.Len())
 
-	seq,err :=  graph.LongestConsensus(seqs[0].Source())
+	// file, err := os.Create(
+	// 	fmt.Sprintf("%s.gml", seqs[0].Source()))
+
+	// if err != nil {
+	// 	fmt.Println(err)
+	// } else {
+	// 	file.WriteString(graph.GML())
+	// 	file.Close()
+	// }
+
+	seq, err := graph.LongestConsensus(seqs[0].Source())
 
 	seq.SetCount(len(seqs))
-	seq.SetAttribute("seq_length",seq.Len())
-	seq.SetAttribute("kmer_size",kmersize)
-	seq.SetAttribute("kmer_min_occur",threshold)
-	seq.SetAttribute("kmer_max_occur",graph.MaxLink())
-	seq.SetAttribute("filtered_graph_size",graph.Len())
-	seq.SetAttribute("full_graph_size",total_kmer)
+	seq.SetAttribute("seq_length", seq.Len())
+	seq.SetAttribute("kmer_size", kmersize)
+	seq.SetAttribute("kmer_min_occur", threshold)
+	seq.SetAttribute("kmer_max_occur", graph.MaxLink())
+	seq.SetAttribute("filtered_graph_size", graph.Len())
+	seq.SetAttribute("full_graph_size", total_kmer)
 
-	return seq,err
+	return seq, err
 }
 
 func Consensus(iterator obiiter.IBioSequence, quorum float64) obiiter.IBioSequence {
 	newIter := obiiter.MakeIBioSequence()
-    size:=10
+	size := 10
 
 	newIter.Add(1)
 
@@ -97,7 +107,7 @@ func Consensus(iterator obiiter.IBioSequence, quorum float64) obiiter.IBioSequen
 
 		for iterator.Next() {
 			seqs := iterator.Get()
-			consensus,err := BuildConsensus(seqs.Slice(),quorum)
+			consensus, err := BuildConsensus(seqs.Slice(), quorum)
 
 			if err == nil {
 				buffer = append(buffer, consensus)

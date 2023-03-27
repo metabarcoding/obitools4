@@ -3,6 +3,7 @@ package obikmer
 import (
 	"bytes"
 	"fmt"
+	"log"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
@@ -166,9 +167,10 @@ func (g *DeBruijnGraph) MaxNext(index uint64) (uint64, bool) {
 	max := uint(0)
 	rep := uint64(0)
 	for _, idx := range ns {
-		w, _ := g.graph[idx]
+		w := g.graph[idx]
 		if w > max {
 			rep = idx
+			max = w
 		}
 	}
 
@@ -191,33 +193,34 @@ func (g *DeBruijnGraph) MaxPath() []uint64 {
 }
 
 func (g *DeBruijnGraph) LongestPath() []uint64 {
-	var path []uint64 
+	var path []uint64
 	wmax := uint(0)
 	ok := true
 
-	starts:= g.Heads()
-
-	for _,idx := range starts {
+	starts := g.Heads()
+	log.Println(starts)
+	for _, idx := range starts {
 		lp := make([]uint64, 0, 1000)
+		ok = true
 		w := uint(0)
 		for ok {
-			nw:= g.graph[idx]
-			w+=nw
+			nw := g.graph[idx]
+			w += nw
 			lp = append(lp, idx)
 			idx, ok = g.MaxNext(idx)
 		}
-	
+
+		log.Printf("max : %d  current %d", wmax, w)
 		if w > wmax {
-			path=lp
-			wmax=w
+			path = lp
+			wmax = w
 		}
 	}
-
 
 	return path
 }
 
-func (g *DeBruijnGraph) LongestConsensus(id string) (*obiseq.BioSequence,error) {
+func (g *DeBruijnGraph) LongestConsensus(id string) (*obiseq.BioSequence, error) {
 	path := g.LongestPath()
 	s := g.DecodePath(path)
 
@@ -228,12 +231,11 @@ func (g *DeBruijnGraph) LongestConsensus(id string) (*obiseq.BioSequence,error) 
 			"",
 		)
 
-		return &seq,nil
+		return &seq, nil
 	}
 
-	return nil,fmt.Errorf("cannot identify optimum path")
+	return nil, fmt.Errorf("cannot identify optimum path")
 }
-
 
 func (g *DeBruijnGraph) Heads() []uint64 {
 	rep := make([]uint64, 0, 10)
@@ -281,13 +283,13 @@ func (g *DeBruijnGraph) DecodePath(path []uint64) string {
 
 		for _, idx := range path[1:] {
 			buf.WriteByte(decode[idx&3])
-		}	
+		}
 	}
 
 	return buf.String()
 }
 
-func (g *DeBruijnGraph) BestConsensus(id string) (*obiseq.BioSequence,error) {
+func (g *DeBruijnGraph) BestConsensus(id string) (*obiseq.BioSequence, error) {
 	path := g.MaxPath()
 	s := g.DecodePath(path)
 
@@ -298,10 +300,10 @@ func (g *DeBruijnGraph) BestConsensus(id string) (*obiseq.BioSequence,error) {
 			"",
 		)
 
-		return &seq,nil
+		return &seq, nil
 	}
 
-	return nil,fmt.Errorf("cannot identify optimum path")
+	return nil, fmt.Errorf("cannot identify optimum path")
 }
 
 func (g *DeBruijnGraph) Weight(index uint64) int {
@@ -372,5 +374,53 @@ func (graph *DeBruijnGraph) Push(sequence *obiseq.BioSequence) {
 	for _, idx := range init {
 		graph.append(s[graph.kmersize:], idx)
 	}
+
+}
+
+func (graph *DeBruijnGraph) GML() string {
+	buffer := bytes.NewBuffer(make([]byte, 0, 1000))
+
+	buffer.WriteString(
+		`graph [
+		comment "De Bruijn graph"
+		directed 1
+		
+		`)
+
+	for idx := range graph.graph {
+		node := graph.DecodeNode(idx)
+		buffer.WriteString(
+			fmt.Sprintf("node [ id \"%s\" ]\n", node),
+		)
+		n := graph.Nexts(uint64(idx))
+		if len(n) == 0 {
+			idx <<= 2
+			idx &= graph.kmermask
+			node := graph.DecodeNode(idx)
+			buffer.WriteString(
+				fmt.Sprintf("node [ id \"%s\" \n label \"%s\" ]\n", node, node),
+			)
+		}
+	}
+
+	for idx, weight := range graph.graph {
+		src := graph.DecodeNode(idx)
+		label := decode[idx&3]
+		idx <<= 2
+		idx &= graph.kmermask
+		dst := graph.DecodeNode(idx)
+
+		buffer.WriteString(
+			fmt.Sprintf(`edge [ source "%s"
+				target "%s" 
+				color "#00FF00"
+				label "%c[%d]"
+				]
+				
+				`, src, dst, label, weight),
+		)
+	}
+	buffer.WriteString("]\n")
+	return buffer.String()
 
 }
