@@ -29,15 +29,16 @@ const (
 )
 
 func _ParseGenbankFile(source string,
-	input <-chan _FileChunk, out obiiter.IBioSequence) {
+	input <-chan _FileChunk, out obiiter.IBioSequence,
+	chunck_order func() int) {
 
 	state := inHeader
 
 	for chunks := range input {
-		log.Debugln("Chunk size", (chunks.raw.(*bytes.Buffer)).Len())
+		// log.Debugln("Chunk size", (chunks.raw.(*bytes.Buffer)).Len())
 		scanner := bufio.NewScanner(chunks.raw)
-		order := chunks.order
 		sequences := make(obiseq.BioSequenceSlice, 0, 100)
+		sumlength:=0
 		id := ""
 		scientificName := ""
 		defBytes := new(bytes.Buffer)
@@ -67,7 +68,7 @@ func _ParseGenbankFile(source string,
 			case strings.HasPrefix(line, "ORIGIN"):
 				state = inSequence
 			case line == "//":
-				log.Debugln("Total lines := ", nl)
+				// log.Debugln("Total lines := ", nl)
 				sequence := obiseq.NewBioSequence(id,
 					seqBytes.Bytes(),
 					defBytes.String())
@@ -80,10 +81,17 @@ func _ParseGenbankFile(source string,
 				annot["scientific_name"] = scientificName
 				annot["taxid"] = taxid
 				// log.Println(FormatFasta(sequence, FormatFastSeqJsonHeader))
-				log.Debugf("Read sequences %s: %dbp (%d)", sequence.Id(),
-					sequence.Len(), seqBytes.Len())
+				// log.Debugf("Read sequences %s: %dbp (%d)", sequence.Id(),
+				//	sequence.Len(), seqBytes.Len())
 
 				sequences = append(sequences, sequence)
+				sumlength+=sequence.Len()
+
+				if len(sequences) == 100 || sumlength > 1e7 {
+					out.Push(obiiter.MakeBioSequenceBatch(chunck_order(), sequences))
+					sequences = make(obiseq.BioSequenceSlice, 0, 100)
+					sumlength = 0
+				}
 				defBytes = new(bytes.Buffer)
 				featBytes = new(bytes.Buffer)
 				seqBytes = new(bytes.Buffer)
@@ -111,8 +119,10 @@ func _ParseGenbankFile(source string,
 			}
 
 		}
-		out.Push(obiiter.MakeBioSequenceBatch(order, sequences))
-	}
+		if len(sequences) > 0 {
+			out.Push(obiiter.MakeBioSequenceBatch(chunck_order(), sequences))
+		}
+}
 
 	out.Done()
 
@@ -125,6 +135,7 @@ func ReadGenbank(reader io.Reader, options ...WithOption) obiiter.IBioSequence {
 	newIter := obiiter.MakeIBioSequence()
 
 	nworkers := opt.ParallelWorkers()
+	chunck_order := obiutils.AtomicCounter()
 	newIter.Add(nworkers)
 
 	go func() {
@@ -133,7 +144,7 @@ func ReadGenbank(reader io.Reader, options ...WithOption) obiiter.IBioSequence {
 
 	// for j := 0; j < opt.ParallelWorkers(); j++ {
 	for j := 0; j < nworkers; j++ {
-		go _ParseGenbankFile(opt.Source(),entry_channel, newIter)
+		go _ParseGenbankFile(opt.Source(), entry_channel, newIter,chunck_order)
 	}
 
 	go _ReadFlatFileChunk(reader, entry_channel)
@@ -151,7 +162,6 @@ func ReadGenbankFromFile(filename string, options ...WithOption) (obiiter.IBioSe
 	var err error
 
 	options = append(options, OptionsSource(obiutils.RemoveAllExt((path.Base(filename)))))
-
 
 	reader, err = os.Open(filename)
 	if err != nil {

@@ -6,7 +6,7 @@
 
 #include "obiapat.h"
 
-static void EncodeSequence(SeqPtr seq);
+static void EncodeSequence(SeqPtr seq, const char *in);
 static void UpperSequence(char *seq);
 
 /*
@@ -142,64 +142,6 @@ char *ecoComplementPattern(char *nucAcSeq)
     return reverseSequence(LXBioSeqComplement(nucAcSeq),1);
 }
 
-char *ecoComplementSequence(char *nucAcSeq)
-{
-    return reverseSequence(LXBioSeqComplement(nucAcSeq),0);
-}
-
-
-char *getSubSequence(char* nucAcSeq,int32_t begin,int32_t end, 
-					int *errno, char **errmsg)
-/*
-   extract subsequence from nucAcSeq [begin,end[
-*/
-{
-	static char *buffer  = NULL;
-	static int32_t buffSize= 0;
-	int32_t length;
-	
-	if (begin < end)
-	{
-		length = end - begin;
-		
-		if (length >= buffSize)
-		{
-			buffSize = length+1;
-			if (buffer)
-				buffer=ECOREALLOC(buffer,buffSize,
-						   	      "Error in reallocating sub sequence buffer",errno,errmsg);
-			else
-				buffer=ECOMALLOC(buffSize,
-				          		 "Error in allocating sub sequence buffer",errno,errmsg);
-				
-		}
-		
-		strncpy(buffer,nucAcSeq + begin,length);
-		buffer[length]=0;
-	}
-	else
-	{
-		length = end + strlen(nucAcSeq) - begin;
-		
-		if (length >= buffSize)
-		{
-			buffSize = length+1;
-			if (buffer)
-				buffer=ECOREALLOC(buffer,buffSize,
-						   	      "Error in reallocating sub sequence buffer",errno,errmsg);
-			else
-				buffer=ECOMALLOC(buffSize,
-				          		 "Error in allocating sub sequence buffer",errno,errmsg);
-				
-		}
-		strncpy(buffer,nucAcSeq+begin,length - end);
-		strncpy(buffer+(length-end),nucAcSeq ,end);
-		buffer[length]=0;
-	}
-	
-	return buffer;
-}
-
 
 /* -------------------------------------------- */
 /* uppercase sequence                           */
@@ -229,29 +171,27 @@ void UpperSequence(char *seq)
 /* -------------------------------------------- */
 
 #define IS_UPPER(c) (((c) >= 'A') && ((c) <= 'Z'))
+#define IS_LOWER(c) (((c) >= 'a') && ((c) <= 'z'))
 
 
 
-void EncodeSequence(SeqPtr seq)
+void EncodeSequence(SeqPtr seq, const char *in)
 {
         int   i;
         uint8_t *data;
-        char  *cseq;
+        const char  *cseq;
 		char nuc;
 
         data = seq->data;
-        cseq = seq->cseq;
 
-        while (*cseq) {
-			nuc = *cseq & (~32);
-            *data = (IS_UPPER(nuc) ? nuc - 'A' : 0x0);
-            data++;
-            cseq++;
+		for (i=0,cseq=in; i < seq->seqlen; i++,cseq++,data++) {
+			nuc = *cseq;
+            *data = (IS_LOWER(nuc) ? nuc - 'a' : 0x0);
         }
-        
-        for (i=0,cseq=seq->cseq;i < seq->circular; i++,cseq++,data++) {
-			nuc = *cseq & (~32);
-            *data = (IS_UPPER(nuc) ? nuc - 'A' : 0x0);
+
+        for (i=0,cseq=in; i < seq->circular; i++,cseq++,data++) {
+			nuc = *cseq;
+            *data = (IS_LOWER(nuc) ? nuc - 'a' : 0x0);
 		}
 
         for (i = 0 ; i < MAX_PATTERN ; i++)
@@ -266,6 +206,7 @@ SeqPtr new_apatseq(const char *in,int32_t circular, int32_t seqlen,
                     SeqPtr out, 
 					int *errno, char **errmsg)
 {
+		// fprintf(stderr,">>>>>>>> new_apatseq\n");
         int    i;
 
 		if (circular != 0) circular=MAX_PAT_LEN;
@@ -287,28 +228,26 @@ SeqPtr new_apatseq(const char *in,int32_t circular, int32_t seqlen,
 		}
 
 		
-		out->seqsiz = out->seqlen = seqlen;
-		out->circular = circular;
 		
 		if (!out->data)
 		{
-			out->data = ECOMALLOC((out->seqlen+circular) *sizeof(uint8_t),
+			out->data = ECOMALLOC((seqlen+circular) *sizeof(uint8_t),
 		    	     			  "Error in Allocation of a new Seq data member",
 								   errno,errmsg);    
-		   	out->datsiz=  out->seqlen+circular;
+		   	out->datsiz=  seqlen+circular;
 		}
-		else if ((out->seqlen +circular) >= out->datsiz)
+		else if ((seqlen +circular) >= out->datsiz)
 		{
-			out->data = ECOREALLOC(out->data,(out->seqlen+circular) *sizeof(uint8_t),
+			out->data = ECOREALLOC(out->data,(seqlen+circular) *sizeof(uint8_t),
 			                      "Error during Seq data buffer realloc",
 								  errno,errmsg);
-		   	out->datsiz=  out->seqlen+circular;			                      
+		   	out->datsiz=  seqlen+circular;
 		}
-
-		out->cseq = (char *)in;
 		
-		EncodeSequence(out);
-
+		out->circular = circular;
+		out->seqlen = seqlen;
+		EncodeSequence(out,in);
+		// fprintf(stderr,">>>>>>>> Encodage ok\n");
         return out;
 }
 

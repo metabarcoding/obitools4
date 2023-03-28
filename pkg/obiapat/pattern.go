@@ -27,6 +27,7 @@ var _AllocatedApaPattern = 0
 // Apat algorithm functions and methods
 type _ApatPattern struct {
 	pointer *C.Pattern
+	pattern string
 }
 
 type ApatPattern struct {
@@ -37,6 +38,7 @@ type ApatPattern struct {
 // Apat algorithm functions and methods
 type _ApatSequence struct {
 	pointer *C.Seq
+	reference *obiseq.BioSequence
 }
 
 type ApatSequence struct {
@@ -88,7 +90,8 @@ func MakeApatPattern(pattern string, errormax int, allowsIndel bool) (ApatPatter
 		return NilApatPattern, errors.New(message)
 	}
 
-	ap := _ApatPattern{apc}
+
+	ap := _ApatPattern{apc,pattern}
 
 	runtime.SetFinalizer(&ap, func(p *_ApatPattern) {
 		// log.Printf("Finaliser called on %s\n", C.GoString(p.pointer.cpat))
@@ -111,8 +114,8 @@ func (pattern ApatPattern) ReverseComplement() (ApatPattern, error) {
 		C.free(unsafe.Pointer(errmsg))
 		return ApatPattern{nil}, errors.New(message)
 	}
-
-	ap := _ApatPattern{apc}
+	spat := C.GoString(apc.cpat)
+	ap := _ApatPattern{apc,spat}
 
 	runtime.SetFinalizer(&ap, func(p *_ApatPattern) {
 		// log.Printf("Finaliser called on %s\n", C.GoString(p.pointer.cpat))
@@ -124,7 +127,8 @@ func (pattern ApatPattern) ReverseComplement() (ApatPattern, error) {
 
 // String method casts the ApatPattern to a Go String.
 func (pattern ApatPattern) String() string {
-	return C.GoString(pattern.pointer.pointer.cpat)
+	return pattern.pointer.pattern
+	//return C.GoString(pattern.pointer.pointer.cpat)
 }
 
 // Len method returns the length of the matched pattern.
@@ -166,7 +170,6 @@ func (pattern ApatPattern) Print() {
 func MakeApatSequence(sequence *obiseq.BioSequence, circular bool, recycle ...ApatSequence) (ApatSequence, error) {
 	var errno C.int32_t
 	var errmsg *C.char
-	var p unsafe.Pointer
 	seqlen := sequence.Len()
 
 	ic := 0
@@ -178,33 +181,14 @@ func MakeApatSequence(sequence *obiseq.BioSequence, circular bool, recycle ...Ap
 
 	if len(recycle) > 0 {
 		out = recycle[0].pointer.pointer
-		if (int(out.seqlen) < seqlen || int(out.seqlen) > 5*seqlen) && out.cseq != nil {
-			C.free(unsafe.Pointer(out.cseq))
-			out.cseq = nil
-		}
 	} else {
 		out = nil
 	}
 
-	if out == nil || out.cseq == nil {
-
-		p = C.malloc(C.size_t(seqlen) + 1)
-		// if p != nil {
-		// 	// atomic.AddInt64(&_AllocatedApaSequences, 1)
-		// }
-	} else {
-		p = unsafe.Pointer(out.cseq)
-	}
-
-	if p == nil {
-		log.Panicln("Cannot allocate memory chunk for Cseq Apat sequecence")
-	}
 
 	// copy the data into the buffer, by converting it to a Go array
-	cBuf := (*[1 << 31]byte)(p)
-	copy(cBuf[:], sequence.Sequence())
-	cBuf[sequence.Len()] = 0
-
+	p := unsafe.Pointer(unsafe.SliceData(sequence.Sequence()))
+	
 	pseqc := C.new_apatseq((*C.char)(p), C.int32_t(ic), C.int32_t(seqlen),
 		(*C.Seq)(out),
 		&errno, &errmsg)
@@ -221,19 +205,14 @@ func MakeApatSequence(sequence *obiseq.BioSequence, circular bool, recycle ...Ap
 
 	if out == nil {
 		// log.Printf("Make ApatSeq called on %p -> %p\n", out, pseqc)
-		seq := _ApatSequence{pointer: pseqc}
+		seq := _ApatSequence{pointer: pseqc,reference: sequence}
 
 		runtime.SetFinalizer(&seq, func(apat_p *_ApatSequence) {
 			var errno C.int32_t
 			var errmsg *C.char
-			// log.Printf("Finaliser called on %p\n", apat_p.pointer)
+			log.Debugf("Finaliser called on %p\n", apat_p.pointer)
 
 			if apat_p != nil && apat_p.pointer != nil {
-				if apat_p.pointer.cseq != nil {
-					C.free(unsafe.Pointer(apat_p.pointer.cseq))
-					apat_p.pointer.cseq = nil
-					// atomic.AddInt64(&_AllocatedApaSequences, -1)
-				}
 				C.delete_apatseq(apat_p.pointer, &errno, &errmsg)
 			}
 		})
@@ -242,6 +221,7 @@ func MakeApatSequence(sequence *obiseq.BioSequence, circular bool, recycle ...Ap
 	}
 
 	recycle[0].pointer.pointer = pseqc
+	recycle[0].pointer.reference = sequence
 
 	//log.Println(C.GoString(pseq.cseq))
 
@@ -259,16 +239,9 @@ func (sequence ApatSequence) Free() {
 	var errno C.int32_t
 	var errmsg *C.char
 
-	// log.Printf("Free called on %p\n", sequence.pointer.pointer)
+	log.Debugf("Free called on %p\n", sequence.pointer.pointer)
 
 	if sequence.pointer != nil && sequence.pointer.pointer != nil {
-
-		if sequence.pointer.pointer.cseq != nil {
-			C.free(unsafe.Pointer(sequence.pointer.pointer.cseq))
-			sequence.pointer.pointer.cseq = nil
-			// atomic.AddInt64(&_AllocatedApaSequences, -1)
-		}
-
 		C.delete_apatseq(sequence.pointer.pointer,
 			&errno, &errmsg)
 
@@ -315,11 +288,11 @@ func (pattern ApatPattern) FindAllIndex(sequence ApatSequence, begin, length int
 	for i := 0; i < nhits; i++ {
 		start := int(stktmp[i])
 		err := int(errtmp[i])
-		log.Debugln(C.GoString(pattern.pointer.pointer.cpat), start, err)
+		//log.Debugln(C.GoString(pattern.pointer.pointer.cpat), start, err)
 		loc = append(loc, [3]int{start, start + patlen, err})
 	}
 
-	log.Debugln("------------")
+	//log.Debugln("------------")
 	return loc
 }
 
@@ -359,16 +332,17 @@ func (pattern ApatPattern) BestMatch(sequence ApatSequence, begin, length int) (
 	end = obiutils.MinInt(end, sequence.Len())
 
 	cpattern := (*[1 << 30]byte)(unsafe.Pointer(pattern.pointer.pointer.cpat))
-	cseq := (*[1 << 30]byte)(unsafe.Pointer(sequence.pointer.pointer.cseq))
+    frg := sequence.pointer.reference.Sequence()[start:end]
+
 
 	log.Debugln(
-		string((*cseq)[start:end]),
+		string(frg),
 		string((*cpattern)[0:int(pattern.pointer.pointer.patlen)]),
 		best[0], nerr, int(pattern.pointer.pointer.patlen),
 		sequence.Len(), start, end)
 
 	score, lali := obialign.FastLCSEGFScoreByte(
-		(*cseq)[start:end],
+		frg,
 		(*cpattern)[0:int(pattern.pointer.pointer.patlen)],
 		nerr, true, &buffer)
 

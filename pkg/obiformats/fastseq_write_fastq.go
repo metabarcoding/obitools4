@@ -57,7 +57,7 @@ func WriteFastq(iterator obiiter.IBioSequence,
 	file io.WriteCloser,
 	options ...WithOption) (obiiter.IBioSequence, error) {
 
-	iterator = iterator.Rebatch(10000)
+	iterator = iterator.Rebatch(1000)
 
 	opt := MakeOptions(options)
 

@@ -61,15 +61,20 @@ type BioSequence struct {
 }
 
 // MakeEmptyBioSequence() creates a new BioSequence object with no data
-func MakeEmptyBioSequence() BioSequence {
+func MakeEmptyBioSequence(preallocate int) BioSequence {
 	atomic.AddInt32(&_NewSeq, 1)
 	atomic.AddInt32(&_InMemSeq, 1)
+
+	seq := []byte(nil)
+	if preallocate > 0 {
+		seq = GetSlice(preallocate)
+	}
 
 	return BioSequence{
 		id:          "",
 		definition:  "",
 		source:      "",
-		sequence:    nil,
+		sequence:    seq,
 		qualities:   nil,
 		feature:     nil,
 		paired:      nil,
@@ -78,8 +83,8 @@ func MakeEmptyBioSequence() BioSequence {
 }
 
 // `NewEmptyBioSequence()` returns a pointer to a new empty BioSequence
-func NewEmptyBioSequence() *BioSequence {
-	s := MakeEmptyBioSequence()
+func NewEmptyBioSequence(preallocate int) *BioSequence {
+	s := MakeEmptyBioSequence(preallocate)
 	return &s
 }
 
@@ -87,7 +92,7 @@ func NewEmptyBioSequence() *BioSequence {
 func MakeBioSequence(id string,
 	sequence []byte,
 	definition string) BioSequence {
-	bs := MakeEmptyBioSequence()
+	bs := MakeEmptyBioSequence(0)
 	bs.SetId(id)
 	bs.SetSequence(sequence)
 	bs.SetDefinition(definition)
@@ -127,7 +132,7 @@ func (sequence *BioSequence) Recycle() {
 
 // Copying the BioSequence.
 func (s *BioSequence) Copy() *BioSequence {
-	newSeq := MakeEmptyBioSequence()
+	newSeq := MakeEmptyBioSequence(0)
 
 	newSeq.id = s.id
 	newSeq.definition = s.definition

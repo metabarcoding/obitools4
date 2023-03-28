@@ -92,7 +92,7 @@ func (iterator IBioSequence) Distribute(class *obiseq.BioSequenceClassifier, siz
 					slices[key] = &s
 				}
 			}
-			seqs.Recycle()
+			seqs.Recycle(false)
 		}
 
 		for key, slice := range slices {

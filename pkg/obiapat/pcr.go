@@ -255,8 +255,10 @@ func _Pcr(seq ApatSequence,
 								(opt.MinLength() == 0 || length >= opt.MinLength()) &&
 								(opt.MaxLength() == 0 || length <= opt.MaxLength()) {
 								amplicon, _ := sequence.Subsequence(fm[1], rm[0], opt.pointer.circular)
+								log.Debugf("seq length : %d capacity : %d",amplicon.Len(),cap(amplicon.Sequence()))
 								annot := amplicon.Annotations()
 								obiutils.MustFillMap(annot, sequence.Annotations())
+
 								annot["forward_primer"] = forward.String()
 
 								match, _ := sequence.Subsequence(fm[0], fm[1], opt.pointer.circular)
@@ -392,6 +394,7 @@ func _PCRSlice(sequences obiseq.BioSequenceSlice,
 			results = append(results, amplicons...)
 		}
 
+		log.Debugf("Number of sequences in the slice : %d",len(sequences))
 		for _, sequence := range sequences[1:] {
 			seq, _ = MakeApatSequence(sequence, options.Circular(), seq)
 			amplicons = _Pcr(seq, sequence, options)
@@ -400,7 +403,7 @@ func _PCRSlice(sequences obiseq.BioSequenceSlice,
 			}
 		}
 
-		// log.Println(AllocatedApaSequences())
+	    //log.Debugln(AllocatedApaSequences())
 
 		// seq.Free()
 	}
@@ -426,7 +429,9 @@ func PCRSliceWorker(options ...WithOption) obiseq.SeqSliceWorker {
 
 	opt := MakeOptions(options)
 	worker := func(sequences obiseq.BioSequenceSlice) obiseq.BioSequenceSlice {
-		return _PCRSlice(sequences, opt)
+		result :=  _PCRSlice(sequences, opt)
+		sequences.Recycle(true)
+		return result
 	}
 
 	return worker

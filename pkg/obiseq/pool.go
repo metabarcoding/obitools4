@@ -20,7 +20,9 @@ func RecycleSlice(s *[]byte) {
 		if cap(*s) == 0 {
 			log.Panicln("trying to store a NIL slice in the pool", s == nil, *s == nil, cap(*s))
 		}
-		_BioSequenceByteSlicePool.Put(s)
+		if cap(*s) <= 1024 {
+			_BioSequenceByteSlicePool.Put(s)
+		}
 	}
 }
 
@@ -28,7 +30,10 @@ func RecycleSlice(s *[]byte) {
 //
 // the slice can be prefilled with the provided values
 func GetSlice(capacity int) []byte {
-	p := _BioSequenceByteSlicePool.Get().(*[]byte)
+	p := (*[]byte)(nil)
+	if capacity <= 1024 {
+		p = _BioSequenceByteSlicePool.Get().(*[]byte)
+	}
 
 	if p == nil || *p == nil || cap(*p) < capacity {
 		s := make([]byte, 0, capacity)

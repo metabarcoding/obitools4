@@ -106,7 +106,6 @@ typedef struct {                        /* sequence             */
     int32_t   datsiz;                   /* data buffer size     */
     int32_t   circular;
     uint8_t   *data;                    /* data buffer          */
-    char      *cseq;                    /* sequence buffer      */
     StackiPtr hitpos[MAX_PATTERN];      /* stack of hit pos.    */
     StackiPtr hiterr[MAX_PATTERN];      /* stack of errors      */
 } Seq, *SeqPtr;

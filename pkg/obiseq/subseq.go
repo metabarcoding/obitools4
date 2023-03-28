@@ -8,7 +8,6 @@ import (
 // Returns a sub sequence start from position 'from' included,
 // to position 'to' excluded. Coordinates start at position 0.
 func (sequence *BioSequence) Subsequence(from, to int, circular bool) (*BioSequence, error) {
-
 	if from >= to && !circular {
 		return nil, errors.New("from greater than to")
 	}
@@ -24,10 +23,11 @@ func (sequence *BioSequence) Subsequence(from, to int, circular bool) (*BioSeque
 	var newSeq *BioSequence
 
 	if from < to {
-		newSeq = NewEmptyBioSequence()
-		newSeq.Write(sequence.Sequence()[from:to])
+		newSeq = NewEmptyBioSequence(0)
+		newSeq.sequence = CopySlice(sequence.Sequence()[from:to])
 
 		if sequence.HasQualities() {
+			newSeq.qualities = CopySlice(sequence.Qualities()[from:to])
 			newSeq.WriteQualities(sequence.Qualities()[from:to])
 		}
 

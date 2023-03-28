@@ -34,14 +34,22 @@ func MakeBioSequenceSlice(size ...int) BioSequenceSlice {
 	return *NewBioSequenceSlice(size...)
 }
 
-func (s *BioSequenceSlice) Recycle() {
+func (s *BioSequenceSlice) Recycle(including_seq bool) {
 	if s == nil {
 		log.Panicln("Trying too recycle a nil pointer")
 	}
 
 	// Code added to potentially limit memory leaks
-	for i := range *s {
-		(*s)[i] = nil
+	if including_seq {
+		for i := range *s {
+			(*s)[i] .Recycle()
+			(*s)[i] = nil
+		}
+	
+	} else {
+		for i := range *s {
+			(*s)[i] = nil
+		}	
 	}
 
 	*s = (*s)[:0]

@@ -119,7 +119,7 @@ func (iterator IBioSequence) MakeISliceWorker(worker obiseq.SeqSliceWorker, size
 		for iterator.Next() {
 			batch := iterator.Get()
 			batch.slice = worker(batch.slice)
-			newIter.pointer.channel <- batch
+			newIter.Push(batch)
 		}
 		newIter.Done()
 	}

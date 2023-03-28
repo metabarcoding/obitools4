@@ -46,7 +46,7 @@ func ISequenceChunk(iterator obiiter.IBioSequence,
 				for data.Next() {
 					b := data.Get()
 					*chunk = append(*chunk, b.Slice()...)
-					b.Recycle()
+					b.Recycle(false)
 				}
 
 				jobDone.Done()

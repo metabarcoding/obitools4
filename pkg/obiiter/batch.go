@@ -47,7 +47,7 @@ func (batch BioSequenceBatch) IsNil() bool {
 	return batch.slice == nil
 }
 
-func (batch BioSequenceBatch) Recycle() {
-	batch.slice.Recycle()
+func (batch BioSequenceBatch) Recycle(including_seq bool) {
+	batch.slice.Recycle(including_seq)
 	batch.slice = nil
 }

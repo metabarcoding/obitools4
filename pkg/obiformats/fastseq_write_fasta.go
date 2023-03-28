@@ -69,7 +69,7 @@ func WriteFasta(iterator obiiter.IBioSequence,
 	options ...WithOption) (obiiter.IBioSequence, error) {
 	opt := MakeOptions(options)
 
-	iterator = iterator.Rebatch(10000)
+	iterator = iterator.Rebatch(1000)
 	file, _ = obiutils.CompressStream(file, opt.CompressedFile(), opt.CloseFile())
 
 	newIter := obiiter.MakeIBioSequence()

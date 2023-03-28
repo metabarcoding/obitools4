@@ -213,7 +213,7 @@ func (sequences BioSequenceSlice) Merge(na string, statsOn []string) *BioSequenc
 		}
 	}
 
-	sequences.Recycle()
+	sequences.Recycle(false)
 	return seq
 
 }

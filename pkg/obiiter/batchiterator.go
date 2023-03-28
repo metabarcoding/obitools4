@@ -435,7 +435,7 @@ func (iterator IBioSequence) Rebatch(size int) IBioSequence {
 					buffer = obiseq.MakeBioSequenceSlice()
 				}
 			}
-			seqs.Recycle()
+			seqs.Recycle(false)
 		}
 
 		if len(buffer) > 0 {
@@ -461,11 +461,8 @@ func (iterator IBioSequence) Recycle() {
 		// iterator.Get()
 		batch := iterator.Get()
 		log.Debugln("Recycling batch #", batch.Order())
-		for _, seq := range batch.Slice() {
-			seq.Recycle()
-			recycled++
-		}
-		batch.Recycle()
+		recycled+=batch.Len()
+		batch.Recycle(true)
 	}
 	log.Debugf("End of the recycling of %d Bioseq objects", recycled)
 }
@@ -473,7 +470,7 @@ func (iterator IBioSequence) Recycle() {
 func (iterator IBioSequence) Consume() {
 	for iterator.Next() {
 		batch := iterator.Get()
-		batch.Recycle()
+		batch.Recycle(false)
 	}
 }
 
@@ -490,12 +487,8 @@ func (iterator IBioSequence) Count(recycle bool) (int, int, int) {
 			variants++
 			reads += seq.Count()
 			nucleotides += seq.Len()
-
-			if recycle {
-				seq.Recycle()
-			}
 		}
-		batch.Recycle()
+		batch.Recycle(recycle)
 	}
 	log.Debugf("End of the counting of %d Bioseq objects", variants)
 	return variants, reads, nucleotides
@@ -547,7 +540,7 @@ func (iterator IBioSequence) DivideOn(predicate obiseq.SequencePredicate,
 					falseSlice = obiseq.MakeBioSequenceSlice()
 				}
 			}
-			seqs.Recycle()
+			seqs.Recycle(false)
 		}
 
 		if len(trueSlice) > 0 {
@@ -688,7 +681,7 @@ func (iterator IBioSequence) Load() obiseq.BioSequenceSlice {
 		b := iterator.Get()
 		log.Debugf("append %d sequences",b.Len())
 		chunck = append(chunck, b.Slice()...)
-		b.Recycle()
+		b.Recycle(false)
 	}
 
 	return chunck

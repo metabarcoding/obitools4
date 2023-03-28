@@ -106,7 +106,7 @@ func ISequenceSubChunk(iterator obiiter.IBioSequence,
 					batch.Slice()[i] = nil
 				}
 
-				batch.Recycle()
+				batch.Recycle(false)
 
 				_By(func(p1, p2 *sSS) bool {
 					return p1.code < p2.code
