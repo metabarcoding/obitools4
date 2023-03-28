@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"log"
+	"math"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
@@ -377,7 +378,7 @@ func (graph *DeBruijnGraph) Push(sequence *obiseq.BioSequence) {
 
 }
 
-func (graph *DeBruijnGraph) GML() string {
+func (graph *DeBruijnGraph) Gml() string {
 	buffer := bytes.NewBuffer(make([]byte, 0, 1000))
 
 	buffer.WriteString(
@@ -415,9 +416,14 @@ func (graph *DeBruijnGraph) GML() string {
 				target "%s" 
 				color "#00FF00"
 				label "%c[%d]"
+				graphics		[
+					width		%f
+					arrow		"last"
+					fill		"#007F80"
+					]
 				]
 				
-				`, src, dst, label, weight),
+				`, src, dst, label, weight, math.Log(float64(weight))),
 		)
 	}
 	buffer.WriteString("]\n")
