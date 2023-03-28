@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -28,10 +29,12 @@ const (
 	inSequence   gbstate = 4
 )
 
+var _seqlenght_rx = regexp.MustCompile(" +([0-9]+) bp")
+
 func _ParseGenbankFile(source string,
 	input <-chan _FileChunk, out obiiter.IBioSequence,
 	chunck_order func() int) {
-
+    var err error
 	state := inHeader
 
 	for chunks := range input {
@@ -40,6 +43,7 @@ func _ParseGenbankFile(source string,
 		sequences := make(obiseq.BioSequenceSlice, 0, 100)
 		sumlength:=0
 		id := ""
+		lseq := -1
 		scientificName := ""
 		defBytes := new(bytes.Buffer)
 		featBytes := new(bytes.Buffer)
@@ -57,6 +61,18 @@ func _ParseGenbankFile(source string,
 			case strings.HasPrefix(line, "LOCUS       "):
 				state = inEntry
 				id = strings.SplitN(line[12:], " ", 2)[0]
+				match_length := _seqlenght_rx.FindStringSubmatch(line) 
+				if len(match_length) > 0 {
+					lseq,err = strconv.Atoi(match_length[1])
+					if err != nil {
+						lseq = -1
+					}					
+				}
+				if lseq > 0 {
+					seqBytes = bytes.NewBuffer(obiseq.GetSlice(lseq + 20))
+				} else {
+					seqBytes = new(bytes.Buffer)
+				}
 			case strings.HasPrefix(line, "SOURCE      "):
 				scientificName = strings.TrimSpace(line[12:])
 			case strings.HasPrefix(line, "DEFINITION  "):
@@ -92,9 +108,8 @@ func _ParseGenbankFile(source string,
 					sequences = make(obiseq.BioSequenceSlice, 0, 100)
 					sumlength = 0
 				}
-				defBytes = new(bytes.Buffer)
+				defBytes = bytes.NewBuffer(obiseq.GetSlice(200))
 				featBytes = new(bytes.Buffer)
-				seqBytes = new(bytes.Buffer)
 				nl = 0
 				sl = 0
 			default:
