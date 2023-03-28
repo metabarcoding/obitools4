@@ -8,12 +8,17 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/DavidGamba/go-getoptions"
+
+	"net/http"
+	_ "net/http/pprof"
+
 )
 
 var _Debug = false
 var _ParallelWorkers = runtime.NumCPU()*2 - 1
 var _MaxAllowedCPU = runtime.NumCPU()
 var _BatchSize = 5000
+var _Pprof = false
 
 type ArgumentParser func([]string) (*getoptions.GetOpt, []string)
 
@@ -24,6 +29,7 @@ func GenerateOptionParser(optionset ...func(*getoptions.GetOpt)) ArgumentParser 
 	options.SetUnknownMode(getoptions.Fail)
 	options.Bool("help", false, options.Alias("h", "?"))
 	options.BoolVar(&_Debug, "debug", false)
+	options.BoolVar(&_Pprof, "pprof", false)
 
 	options.IntVar(&_ParallelWorkers, "workers", _ParallelWorkers,
 		options.Alias("w"),
@@ -50,6 +56,11 @@ func GenerateOptionParser(optionset ...func(*getoptions.GetOpt)) ArgumentParser 
 		if options.Called("debug") {
 			log.SetLevel(log.DebugLevel)
 			log.Debugln("Switch to debug level logging")
+		}
+
+		if options.Called("pprof") {
+			go http.ListenAndServe("localhost:8080", nil)
+			log.Infoln("Start a pprof server at address http://localhost:8080/debug/pprof")
 		}
 
 		// Handle user errors
