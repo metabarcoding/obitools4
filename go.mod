@@ -1,6 +1,6 @@
 module git.metabarcoding.org/lecasofts/go/obitools
 
-go 1.18
+go 1.20
 
 require (
 	cloudeng.io/algo v0.0.0-20230314235058-45ee90f9cff7
@@ -18,6 +18,7 @@ require (
 )
 
 require (
+	github.com/daichi-m/go18ds v1.12.1 // indirect
 	github.com/klauspost/compress v1.16.3 // indirect
 	github.com/mattn/go-runewidth v0.0.14 // indirect
 	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db // indirect
