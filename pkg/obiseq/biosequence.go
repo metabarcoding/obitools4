@@ -11,10 +11,10 @@
 package obiseq
 
 import (
-	"bytes"
 	"crypto/md5"
 	"sync/atomic"
 
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiutils"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -210,7 +210,6 @@ func (s *BioSequence) Source() string {
 	return s.source
 }
 
-
 // Returning the MD5 hash of the sequence.
 func (s *BioSequence) MD5() [16]byte {
 	return md5.Sum(s.sequence)
@@ -244,7 +243,7 @@ func (s *BioSequence) SetSequence(sequence []byte) {
 	if s.sequence != nil {
 		RecycleSlice(&s.sequence)
 	}
-	s.sequence = bytes.ToLower(sequence)
+	s.sequence = obiutils.InPlaceToLower(sequence)
 }
 
 // Setting the qualities of the BioSequence.

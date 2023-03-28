@@ -69,7 +69,7 @@ func _ParseGenbankFile(source string,
 			case line == "//":
 				log.Debugln("Total lines := ", nl)
 				sequence := obiseq.NewBioSequence(id,
-					bytes.ToLower(seqBytes.Bytes()),
+					seqBytes.Bytes(),
 					defBytes.String())
 				sequence.SetSource(source)
 				state = inHeader

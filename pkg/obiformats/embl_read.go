@@ -141,10 +141,10 @@ func _ParseEmblFile(source string, input <-chan _FileChunk, out obiiter.IBioSequ
 				}
 			case line == "//":
 				sequence := obiseq.NewBioSequence(id,
-					bytes.ToLower(seqBytes.Bytes()),
+					seqBytes.Bytes(),
 					defBytes.String())
 				sequence.SetSource(source)
-				
+
 				sequence.SetFeatures(featBytes.Bytes())
 
 				annot := sequence.Annotations()
