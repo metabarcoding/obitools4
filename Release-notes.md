@@ -2,15 +2,29 @@
 
 ## Ongoing changes
 
+### Compiler change
+
+*OBItools4* requires now GO 1.20 to compile.
+
 ### New features
+
 - Add the possibility for looking pattern with indels. This has been added to `obimultiplex` 
-  through the `--with-indels` option.
+  through the **--with-indels** option.
+- Every obitools command has a **--pprof** option making the command publishing a profiling web
+  site available at the address : [http://localhost:8080/debug/pprof/](http://localhost:8080/debug/pprof/)
+- A new `obiconsensus` command has been added. It is a prototype. It aims to build a consensus sequence
+  from a set of reads. The consensus is estimated for all the sequences contained in the input file.
+  If several input files, or a directory name are provided the result contains a consensus per file.
+  The id of the sequence is the name of the input file depleted of its directory name and of all its
+  extensions.
 
 ### Enhancement
 
 - Add support for IUPAC DNA code into the DNA sequence LCS computation and an end free gap mode.
-  This impact `obitag` and `obimultiplex` in the `--with-indels` mode.
+  This impact `obitag` and `obimultiplex` in the **--with-indels** mode.
 - Print the synopsis of the command when an error is done by the user at typing the command
+- Reduced the memory copy and allocation during the sequence creation.
+
 
 ### Corrected bugs
 
@@ -18,9 +32,11 @@
 - Patch a bug leading with some programs to crash because of : "*empty batch pushed on the channel*"
 - Patch a bug when directory names are used as input data name preventing the system to actually
   analyze the collected files.
-- Make the `--help` or `-h` options working when mandatory options are declared
+- Make the **--help** or **-h** options working when mandatory options are declared
 - In `obimultiplex` correct a bug leading to a wrong report of the count of reverse mismatch for 
   sequences in reverse direction.
+- In `obimultiplex` correct a bug when not enough space exist between the extremities of the sequence
+  and the primer matches to fit the sample identification tag 
    
   
 ## March 7th, 2023. Release 4.0.1
