@@ -11,11 +11,10 @@ import (
 
 	"net/http"
 	_ "net/http/pprof"
-
 )
 
 var _Debug = false
-var _ParallelWorkers = runtime.NumCPU()*2 - 1
+var _WorkerPerCore = 2
 var _MaxAllowedCPU = runtime.NumCPU()
 var _BatchSize = 5000
 var _Pprof = false
@@ -31,9 +30,9 @@ func GenerateOptionParser(optionset ...func(*getoptions.GetOpt)) ArgumentParser 
 	options.BoolVar(&_Debug, "debug", false)
 	options.BoolVar(&_Pprof, "pprof", false)
 
-	options.IntVar(&_ParallelWorkers, "workers", _ParallelWorkers,
-		options.Alias("w"),
-		options.Description("Number of parallele threads computing the result"))
+	// options.IntVar(&_ParallelWorkers, "workers", _ParallelWorkers,
+	// 	options.Alias("w"),
+	// 	options.Description("Number of parallele threads computing the result"))
 
 	options.IntVar(&_MaxAllowedCPU, "max-cpu", _MaxAllowedCPU,
 		options.GetEnv("OBIMAXCPU"),
@@ -74,16 +73,13 @@ func GenerateOptionParser(optionset ...func(*getoptions.GetOpt)) ArgumentParser 
 		runtime.GOMAXPROCS(_MaxAllowedCPU)
 		if options.Called("max-cpu") {
 			log.Printf("CPU number limited to %d", _MaxAllowedCPU)
-			if !options.Called("workers") {
-				_ParallelWorkers = _MaxAllowedCPU*2 - 1
-				log.Printf("Number of workers set %d", _ParallelWorkers)
-			}
 		}
 
 		if options.Called("no-singleton") {
 			log.Printf("No singleton option set")
 		}
 
+		log.Printf("Number of workers set %d", CLIParallelWorkers())
 		return options, remaining
 	}
 }
@@ -96,7 +92,7 @@ func CLIIsDebugMode() bool {
 // CLIParallelWorkers returns the number of parallel workers requested by
 // the command line option --workers|-w.
 func CLIParallelWorkers() int {
-	return _ParallelWorkers
+	return _MaxAllowedCPU * _WorkerPerCore
 }
 
 // CLIParallelWorkers returns the number of parallel workers requested by
@@ -118,4 +114,16 @@ func DebugOn() {
 // DebugOff sets the debug mode off.
 func DebugOff() {
 	_Debug = false
+}
+
+func SetWorkerPerCore(n int) {
+	_WorkerPerCore = n
+}
+
+func WorkerPerCore() int {
+	return _WorkerPerCore
+}
+
+func SetBatchSize(n int) {
+	_BatchSize = n
 }

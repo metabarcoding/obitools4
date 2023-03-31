@@ -5,7 +5,6 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obioptions"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obiconvert"
@@ -26,6 +25,8 @@ func main() {
 	// trace.Start(ftrace)
 	// defer trace.Stop()
 
+	obioptions.SetWorkerPerCore(1)
+	
 	optionParser := obioptions.GenerateOptionParser(obipcr.OptionSet)
 
 	_, args := optionParser(os.Args)
@@ -37,7 +38,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	amplicons, _ := obipcr.PCR(sequences)
+	amplicons, _ := obipcr.CLIPCR(sequences)
 	obiconvert.CLIWriteBioSequences(amplicons, true)
 	obiiter.WaitForLastPipe()
 
