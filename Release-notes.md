@@ -2,6 +2,8 @@
 
 ## Ongoing changes
 
+## March 31th, 2023. Release 4.0.2
+
 ### Compiler change
 
 *OBItools4* requires now GO 1.20 to compile.
@@ -17,6 +19,11 @@
   If several input files, or a directory name are provided the result contains a consensus per file.
   The id of the sequence is the name of the input file depleted of its directory name and of all its
   extensions.
+- In `obipcr` an experimental option **--fragmented** allows for spliting very long query sequences into
+  shorter fragments with an overlap between the two contiguous fragment insuring that no amplicons are
+  missed despite the split. As a site effect some amplicon can be identified twice.
+- In `obipcr` the -L option is now mandatory.
+  
 
 ### Enhancement
 
@@ -37,7 +44,8 @@
   sequences in reverse direction.
 - In `obimultiplex` correct a bug when not enough space exist between the extremities of the sequence
   and the primer matches to fit the sample identification tag 
-   
+- In `obipcr` correction of bug leading to miss some amplicons when several amplicons are present on the
+  same large sequence. 
   
 ## March 7th, 2023. Release 4.0.1
 
