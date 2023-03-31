@@ -18,7 +18,7 @@ import (
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiutils"
 )
 
-var _FileChunkSize = 1 << 26
+var _FileChunkSize = 1 << 28
 
 type _FileChunk struct {
 	raw   io.Reader
@@ -197,7 +197,7 @@ func _ReadFlatFileChunk(reader io.Reader, readers chan _FileChunk) {
 		}
 
 		// Create an extended buffer to read from if the end of the last entry is not found in the current buffer
-		extbuff := make([]byte, 1<<20)
+		extbuff := make([]byte, 1<<22)
 		buff = buff[:l]
 		end := 0
 		ic := 0
@@ -260,7 +260,7 @@ func ReadEMBL(reader io.Reader, options ...WithOption) obiiter.IBioSequence {
 
 	// for j := 0; j < opt.ParallelWorkers(); j++ {
 	for j := 0; j < nworkers; j++ {
-		go _ParseEmblFile(opt.Source(),entry_channel, newIter)
+		go _ParseEmblFile(opt.Source(), entry_channel, newIter)
 	}
 
 	go _ReadFlatFileChunk(reader, entry_channel)

@@ -188,7 +188,6 @@ func MakeApatSequence(sequence *obiseq.BioSequence, circular bool, recycle ...Ap
 
 	// copy the data into the buffer, by converting it to a Go array
 	p := unsafe.Pointer(unsafe.SliceData(sequence.Sequence()))
-	
 	pseqc := C.new_apatseq((*C.char)(p), C.int32_t(ic), C.int32_t(seqlen),
 		(*C.Seq)(out),
 		&errno, &errmsg)
@@ -200,6 +199,7 @@ func MakeApatSequence(sequence *obiseq.BioSequence, circular bool, recycle ...Ap
 			C.free(p)
 			// atomic.AddInt64(&_AllocatedApaSequences, -1)
 		}
+
 		return NilApatSequence, errors.New(message)
 	}
 

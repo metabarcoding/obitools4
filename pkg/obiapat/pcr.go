@@ -201,7 +201,6 @@ func OptionBatchSize(size int) WithOption {
 }
 
 func _Pcr(seq ApatSequence,
-	sequence *obiseq.BioSequence,
 	opt Options) obiseq.BioSequenceSlice {
 	results := make(obiseq.BioSequenceSlice, 0, 10)
 
@@ -218,7 +217,7 @@ func _Pcr(seq ApatSequence,
 		length := seq.Len() - begin
 
 		if opt.pointer.maxLength > 0 {
-			length = forwardMatches[len(forwardMatches)-1][2] - begin + opt.MaxLength() + reverse.Len()
+			length = forwardMatches[len(forwardMatches)-1][1] - begin + opt.MaxLength() + reverse.Len()
 		}
 
 		if opt.Circular() {
@@ -254,26 +253,27 @@ func _Pcr(seq ApatSequence,
 							if length > 0 && // For when primers touch or overlap
 								(opt.MinLength() == 0 || length >= opt.MinLength()) &&
 								(opt.MaxLength() == 0 || length <= opt.MaxLength()) {
-								amplicon, _ := sequence.Subsequence(fm[1], rm[0], opt.pointer.circular)
+								amplicon, _ := seq.pointer.reference.Subsequence(fm[1], rm[0], opt.pointer.circular)
 								log.Debugf("seq length : %d capacity : %d",amplicon.Len(),cap(amplicon.Sequence()))
 								annot := amplicon.Annotations()
-								obiutils.MustFillMap(annot, sequence.Annotations())
+								obiutils.MustFillMap(annot, seq.pointer.reference.Annotations())
 
 								annot["forward_primer"] = forward.String()
 
-								match, _ := sequence.Subsequence(fm[0], fm[1], opt.pointer.circular)
+								match, _ := seq.pointer.reference.Subsequence(fm[0], fm[1], opt.pointer.circular)
 								annot["forward_match"] = match.String()
 								match.Recycle()
 
 								annot["forward_error"] = erri
 
 								annot["reverse_primer"] = reverse.String()
-								match, _ = sequence.Subsequence(rm[0], rm[1], opt.pointer.circular)
+								match, _ = seq.pointer.reference.Subsequence(rm[0], rm[1], opt.pointer.circular)
 								match = match.ReverseComplement(true)
 								annot["reverse_match"] = match.String()
 								match.Recycle()
 
 								annot["reverse_error"] = errj
+								annot["direction"] = "forward"
 
 								// log.Debugf("amplicon sequence capacity : %d", cap(amplicon.Sequence()))
 
@@ -287,13 +287,14 @@ func _Pcr(seq ApatSequence,
 	}
 
 	forwardMatches = reverse.FindAllIndex(seq, 0, -1)
+	
 	if forwardMatches != nil {
 
 		begin := forwardMatches[0][0]
 		length := seq.Len() - begin
 
 		if opt.pointer.maxLength > 0 {
-			length = forwardMatches[len(forwardMatches)-1][2] - begin + opt.MaxLength() + reverse.Len()
+			length = forwardMatches[len(forwardMatches)-1][1] - begin + opt.MaxLength() + reverse.Len()
 		}
 
 		if opt.Circular() {
@@ -302,6 +303,7 @@ func _Pcr(seq ApatSequence,
 		}
 
 		reverseMatches := cfwd.FindAllIndex(seq, begin, length)
+		
 
 		if reverseMatches != nil {
 			for _, fm := range forwardMatches {
@@ -329,14 +331,14 @@ func _Pcr(seq ApatSequence,
 							if length > 0 && // For when primers touch or overlap
 								(opt.MinLength() == 0 || length >= opt.MinLength()) &&
 								(opt.MaxLength() == 0 || length <= opt.MaxLength()) {
-								amplicon, _ := sequence.Subsequence(fm[1], rm[0], opt.pointer.circular)
+								amplicon, _ := seq.pointer.reference.Subsequence(fm[1], rm[0], opt.pointer.circular)
 								amplicon = amplicon.ReverseComplement(true)
 
 								annot := amplicon.Annotations()
-								obiutils.MustFillMap(annot, sequence.Annotations())
+								obiutils.MustFillMap(annot, seq.pointer.reference.Annotations())
 								annot["forward_primer"] = forward.String()
 
-								match, _ := sequence.Subsequence(rm[0], rm[1], opt.pointer.circular)
+								match, _ := seq.pointer.reference.Subsequence(rm[0], rm[1], opt.pointer.circular)
 								match.ReverseComplement(true)
 								annot["forward_match"] = match.String()
 								match.Recycle()
@@ -344,11 +346,13 @@ func _Pcr(seq ApatSequence,
 								annot["forward_error"] = errj
 
 								annot["reverse_primer"] = reverse.String()
-								match, _ = sequence.Subsequence(fm[0], fm[1], opt.pointer.circular)
+								match, _ = seq.pointer.reference.Subsequence(fm[0], fm[1], opt.pointer.circular)
 								annot["reverse_match"] = match.String()
 								match.Recycle()
 
 								annot["reverse_error"] = erri
+								annot["direction"] = "reverse"
+
 								results = append(results, amplicon)
 								// log.Debugf("amplicon sequence capacity : %d", cap(amplicon.Sequence()))
 							}
@@ -372,7 +376,7 @@ func PCRSim(sequence *obiseq.BioSequence, options ...WithOption) obiseq.BioSeque
 	seq, _ := MakeApatSequence(sequence, opt.Circular())
 	defer seq.Free()
 
-	results := _Pcr(seq, sequence, opt)
+	results := _Pcr(seq, opt)
 
 	return results
 }
@@ -388,16 +392,16 @@ func _PCRSlice(sequences obiseq.BioSequenceSlice,
 		// if AllocatedApaSequences() == 0 {
 		// 	log.Panicln("Bizarre....")
 		// }
-		amplicons := _Pcr(seq, sequences[0], options)
+		amplicons := _Pcr(seq, options)
 
 		if len(amplicons) > 0 {
 			results = append(results, amplicons...)
 		}
 
-		log.Debugf("Number of sequences in the slice : %d",len(sequences))
 		for _, sequence := range sequences[1:] {
 			seq, _ = MakeApatSequence(sequence, options.Circular(), seq)
-			amplicons = _Pcr(seq, sequence, options)
+			amplicons = _Pcr(seq, options)
+			
 			if len(amplicons) > 0 {
 				results = append(results, amplicons...)
 			}
