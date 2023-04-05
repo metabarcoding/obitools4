@@ -25,8 +25,9 @@ func main() {
 	// trace.Start(ftrace)
 	// defer trace.Stop()
 
-	obioptions.SetWorkerPerCore(1)
-	
+	obioptions.SetWorkerPerCore(2)
+	obioptions.SetReadWorkerPerCore(0.5)
+
 	optionParser := obioptions.GenerateOptionParser(obipcr.OptionSet)
 
 	_, args := optionParser(os.Args)

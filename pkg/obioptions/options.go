@@ -14,7 +14,8 @@ import (
 )
 
 var _Debug = false
-var _WorkerPerCore = 2
+var _WorkerPerCore = 2.0
+var _ReadWorkerPerCore = 1.0
 var _MaxAllowedCPU = runtime.NumCPU()
 var _BatchSize = 5000
 var _Pprof = false
@@ -92,8 +93,13 @@ func CLIIsDebugMode() bool {
 // CLIParallelWorkers returns the number of parallel workers requested by
 // the command line option --workers|-w.
 func CLIParallelWorkers() int {
-	return _MaxAllowedCPU * _WorkerPerCore
+	return int(float64(_MaxAllowedCPU) * float64(_WorkerPerCore))
 }
+
+func CLIReadParallelWorkers() int {
+	return int(float64(_MaxAllowedCPU) * float64(_ReadWorkerPerCore))
+}
+
 
 // CLIParallelWorkers returns the number of parallel workers requested by
 // the command line option --workers|-w.
@@ -116,12 +122,20 @@ func DebugOff() {
 	_Debug = false
 }
 
-func SetWorkerPerCore(n int) {
+func SetWorkerPerCore(n float64) {
 	_WorkerPerCore = n
 }
 
-func WorkerPerCore() int {
+func SetReadWorkerPerCore(n float64) {
+	_ReadWorkerPerCore = n
+}
+
+func WorkerPerCore() float64 {
 	return _WorkerPerCore
+}
+
+func ReadWorkerPerCore() float64 {
+	return _ReadWorkerPerCore
 }
 
 func SetBatchSize(n int) {

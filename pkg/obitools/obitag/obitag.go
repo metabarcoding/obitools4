@@ -1,10 +1,11 @@
 package obitag
 
 import (
-	"log"
 	"math"
 	"strconv"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obialign"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
