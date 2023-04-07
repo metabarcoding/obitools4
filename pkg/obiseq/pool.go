@@ -36,21 +36,20 @@ func GetSlice(capacity int) []byte {
 	}
 
 	if p == nil || *p == nil || cap(*p) < capacity {
-		s := make([]byte, 0, capacity)
-		p = &s
+		return make([]byte, 0, capacity)
 	}
+	
 	s := *p
+
+	if cap(s) < capacity {
+		log.Panicln("Bizarre... j'aurai pourtant cru")
+	}
 
 	return s
 }
 
 func CopySlice(src []byte) []byte {
 	sl := GetSlice(len(src))
-
-	if cap(sl) < len(src) {
-		log.Panicln("Bizarre... j'aurai pourtant cru")
-	}
-	
 	sl = sl[0:len(src)]
 
 	copy(sl, src)
