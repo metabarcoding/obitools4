@@ -2,6 +2,40 @@
 
 ## Ongoing changes
 
+### New features
+
+- Adding of the function `contains` to the expression language for testing if a map contains a key.
+  It can be used from `obibrep` to select only sequences occurring in a given sample :
+
+  ```{bash}
+  obigrep -p 'contains(annotations.merged_sample,"15a_F730814")' wolf_new_tag.fasta
+  ```   
+- Adding of a new command `obipcrtag`. It tags raw Illumina reads with the identifier of their corresponding
+  sample. The tags added are the same as those added by `obimultiplex`. The produced forward and reverse files
+  can then be split into different files using the `obidistribute` command.
+
+  ```{bash}
+  obitagpcr -F library_R1.fastq \
+            -R library_R2.fastq \
+            -t sample_ngsfilter.txt \
+            --out tagged_library.fastq \
+            --unidentified not_assigned.fastq
+  ```
+
+  the command produced four files : `tagged_library_R1.fastq` and `tagged_library_R2.fastq` containing the assigned reads and `not_assigned_R1.fastq` and `not_assigned_R2.fastq` containing the unassignable reads.
+
+  the tagged library files can then be split using `obidistribute`: 
+
+  ```{bash}
+  mkdir pcr_reads
+  obidistribute --pattern "pcr_reads/sample_%s_R1.fastq" -c sample tagged_library_R1.fastq
+  obidistribute --pattern "pcr_reads/sample_%s_R2.fastq" -c sample tagged_library_R2.fastq
+  ```
+### Corrected bugs
+
+- Correction of a bug in memory management and Slice recycling.
+- Correction of the **--fragmented** option help and logging information
+
 ## March 31th, 2023. Release 4.0.2
 
 ### Compiler change

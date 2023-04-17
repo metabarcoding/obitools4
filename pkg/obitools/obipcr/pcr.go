@@ -49,7 +49,7 @@ func CLIPCR(iterator obiiter.IBioSequence) (obiiter.IBioSequence, error) {
 			obioptions.CLIParallelWorkers(),
 		)
 		log.Infof("Fragmenting sequence longer than %dbp into chuncks of %dbp",
-			CLIMaxLength()*100000000,
+			CLIMaxLength()*1000,
 			CLIMaxLength()*100,
 		)
 		iterator = iterator.Pipe(frags)

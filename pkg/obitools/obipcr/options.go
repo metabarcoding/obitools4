@@ -33,7 +33,7 @@ func PCROptionSet(options *getoptions.GetOpt) {
 		options.Description("Considers that sequences are [c]ircular."))
 
 	options.BoolVar(&_Fragmented, "fragmented", false,
-		options.Description("Fragaments long sequences in overlaping fragments to speedup computations"))
+		options.Description("Fragments long sequences in overlaping fragments to speedup computations"))
 
 	options.StringVar(&_ForwardPrimer, "forward", "",
 		options.Required("You must provide a forward primer"),
