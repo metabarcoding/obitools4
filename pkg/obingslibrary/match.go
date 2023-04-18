@@ -269,13 +269,13 @@ func (match *DemultiplexMatch) ExtractBarcode(sequence *obiseq.BioSequence, inpl
 
 	if match.ForwardMatch != "" {
 		annot["forward_match"] = match.ForwardMatch
-		annot["forward_mismatches"] = match.ForwardMismatches
+		annot["forward_error"] = match.ForwardMismatches
 		annot["forward_tag"] = match.ForwardTag
 	}
 
 	if match.ReverseMatch != "" {
 		annot["reverse_match"] = match.ReverseMatch
-		annot["reverse_mismatches"] = match.ReverseMismatches
+		annot["reverse_error"] = match.ReverseMismatches
 		annot["reverse_tag"] = match.ReverseTag
 	}
 

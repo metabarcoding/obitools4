@@ -31,6 +31,11 @@
   obidistribute --pattern "pcr_reads/sample_%s_R1.fastq" -c sample tagged_library_R1.fastq
   obidistribute --pattern "pcr_reads/sample_%s_R2.fastq" -c sample tagged_library_R2.fastq
   ```
+### Enhancement
+
+- Rename the `forward_mismatches` and `reverse_mismatches` from instanced by `obimutiplex` into
+  `forward_error` and `reverse_error` to be coherent with the tags instanced by `obipcr`
+  
 ### Corrected bugs
 
 - Correction of a bug in memory management and Slice recycling.
