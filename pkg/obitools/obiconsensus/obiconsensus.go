@@ -83,7 +83,7 @@ func BuildConsensus(seqs obiseq.BioSequenceSlice,
 	}
 
 	graph.FilterMin(threshold)
-
+	
 	log.Printf("Graph size : %d\n", graph.Len())
 
 	if save_graph {

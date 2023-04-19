@@ -35,11 +35,13 @@
 
 - Rename the `forward_mismatches` and `reverse_mismatches` from instanced by `obimutiplex` into
   `forward_error` and `reverse_error` to be coherent with the tags instanced by `obipcr`
-  
+
 ### Corrected bugs
 
 - Correction of a bug in memory management and Slice recycling.
 - Correction of the **--fragmented** option help and logging information
+- Correction of a bug in `obiconsensus` leading into the deletion of a base close to the
+  beginning of the consensus sequence.
 
 ## March 31th, 2023. Release 4.0.2
 

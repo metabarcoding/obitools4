@@ -3,10 +3,12 @@ package obikmer
 import (
 	"bytes"
 	"fmt"
-	"log"
 	"math"
+	"math/bits"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
+	"github.com/daichi-m/go18ds/sets/linkedhashset"
+	"github.com/daichi-m/go18ds/stacks/arraystack"
 )
 
 type KmerIdx32 uint32
@@ -134,7 +136,7 @@ func (g *DeBruijnGraph) Previouses(index uint64) []uint64 {
 
 func (g *DeBruijnGraph) Nexts(index uint64) []uint64 {
 	rep := make([]uint64, 0, 4)
-	index = index << 2 & g.kmermask
+	index = (index << 2) & g.kmermask
 
 	if _, ok := g.graph[index]; ok {
 		rep = append(rep, index)
@@ -199,7 +201,6 @@ func (g *DeBruijnGraph) LongestPath() []uint64 {
 	ok := true
 
 	starts := g.Heads()
-	log.Println(starts)
 	for _, idx := range starts {
 		lp := make([]uint64, 0, 1000)
 		ok = true
@@ -211,7 +212,6 @@ func (g *DeBruijnGraph) LongestPath() []uint64 {
 			idx, ok = g.MaxNext(idx)
 		}
 
-		log.Printf("max : %d  current %d", wmax, w)
 		if w > wmax {
 			path = lp
 			wmax = w
@@ -282,7 +282,7 @@ func (g *DeBruijnGraph) DecodePath(path []uint64) string {
 	if len(path) > 0 {
 		buf.WriteString(g.DecodeNode(path[0]))
 
-		for _, idx := range path[1:] {
+		for _, idx := range path {
 			buf.WriteByte(decode[idx&3])
 		}
 	}
@@ -323,22 +323,13 @@ func (graph *DeBruijnGraph) append(sequence []byte, current uint64) {
 		b := iupac[sequence[i]]
 		if len(b) == 1 {
 			current |= b[0]
-
-			weight, ok := graph.graph[current]
-			if !ok {
-				weight = 0
-			}
-			graph.graph[current] = weight + 1
+			graph.graph[current] = uint(graph.Weight(current) + 1)
 		} else {
 			for j := 0; j < len(b); j++ {
 				current &= ^uint64(3)
 				current |= b[j]
 
-				weight, ok := graph.graph[current]
-				if !ok {
-					weight = 0
-				}
-				graph.graph[current] = weight + 1
+				graph.graph[current] = uint(graph.Weight(current) + 1)
 				graph.append(sequence[(i+1):], current)
 			}
 			return
@@ -429,4 +420,53 @@ func (graph *DeBruijnGraph) Gml() string {
 	buffer.WriteString("]\n")
 	return buffer.String()
 
+}
+
+// fonction tri_topologique(G, V):
+//     T <- une liste vide pour stocker l'ordre topologique
+//     S <- une pile vide pour stocker les nœuds sans prédécesseurs
+//     pour chaque nœud v dans V:
+//         si Pred(v) est vide:
+//             empiler S avec v
+//     tant que S n'est pas vide:
+//         nœud <- dépiler S
+//         ajouter nœud à T
+//         pour chaque successeur s de nœud:
+//             supprimer l'arc (nœud, s) de G
+//             si Pred(s) est vide:
+//                 empiler S avec s
+//     si G contient encore des arcs:
+//         renvoyer une erreur (le graphe contient au moins un cycle)
+//     sinon:
+//         renvoyer T (l'ordre topologique)
+
+// A topological sort of the graph.
+func (g *DeBruijnGraph) PartialOrder() *linkedhashset.Set[uint64] {
+	S := arraystack.New[uint64]()
+	T := linkedhashset.New[uint64]()
+
+	for v := range g.graph {
+		if len(g.Previouses(v)) == 0 {
+			S.Push(v)
+		}
+	}
+
+	for !S.Empty() {
+		v, _ := S.Pop()
+		T.Add(v)
+		for _, w := range g.Nexts(v) {
+			if T.Contains(g.Previouses(w)...) {
+				S.Push(w)
+			}
+		}
+	}
+	return T
+}
+
+// Calculating the hamming distance between two k-mers.
+func (g *DeBruijnGraph) HammingDistance(kmer1, kmer2 uint64) int {
+	ident := ^((kmer1 & kmer2) | (^kmer1 & ^kmer2))
+	ident |= (ident >> 1)
+	ident &= 0x5555555555555555 & g.kmermask
+	return bits.OnesCount64(ident)
 }
