@@ -45,6 +45,17 @@ func LoadTaxonomyOptionSet(options *getoptions.GetOpt, required, alternatiive bo
 		options.Description("Restrict output to some subclades."))
 }
 
+func FilterTaxonomyOptionSet(options *getoptions.GetOpt) {
+	options.BoolVar(&__rank_list__, "rank-list", false,
+		options.Alias("l"),
+		options.Description("List every taxonomic rank available in the taxonomy."))
+
+	options.IntSliceVar(&__taxonomical_restriction__, "restrict-to-taxon", 1, 1,
+		options.Alias("r"),
+		options.Description("Restrict output to some subclades."))
+}
+
+
 func CLISelectedNCBITaxDump() string {
 	return __taxdump__
 }
@@ -92,6 +103,7 @@ func CLILoadSelectedTaxonomy() (*obitax.Taxonomy, error) {
 
 func OptionSet(options *getoptions.GetOpt) {
 	LoadTaxonomyOptionSet(options, true, true)
+	FilterTaxonomyOptionSet(options)
 	options.BoolVar(&__fixed_pattern__, "fixed", false,
 		options.Alias("F"),
 		options.Description("Match taxon names using a fixed pattern, not a regular expression"))

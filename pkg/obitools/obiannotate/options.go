@@ -22,6 +22,8 @@ var _clearAll = false
 var _setSeqLength = false
 var _uniqueID = false
 var _ahoCorazick = ""
+var _lcaSlot = ""
+var _lcaError = 0.0
 
 func SequenceAnnotationOptionSet(options *getoptions.GetOpt) {
 	// options.BoolVar(&_addRank, "seq-rank", _addRank,
@@ -38,6 +40,20 @@ func SequenceAnnotationOptionSet(options *getoptions.GetOpt) {
 
 	options.StringVar(&_ahoCorazick, "aho-corasick", _ahoCorazick,
 		options.Description("Adds an aho-corasick attribut with the count of matches of the provided patterns."))
+
+	options.StringVar(&_lcaSlot, "add-lca", _lcaSlot,
+		options.ArgName("SLOT_NAME"),
+		options.Description("From the taxonomic annotation of the sequence (taxid slot or merged_taxid slot), "+
+			"a new slot named <SLOT_NAME> is added with the taxid of the lowest common ancester corresponding "+
+			"to the current annotation."))
+
+	options.Float64Var(&_lcaError, "lca-error", _lcaError,
+		options.ArgName("#.###"),
+		options.Description("Error rate tolerated on the taxonomical discription during the lowest common "+
+			"ancestor. At most a fraction of lca-error of the taxonomic information can disagree with the "+
+			"estimated LCA."),
+	)
+
 	// options.BoolVar(&_uniqueID, "uniq-id", _uniqueID,
 	// 	options.Description("Forces sequence record ids to be unique."),
 	// )
@@ -155,9 +171,6 @@ func CLISetAttributeExpression() map[string]string {
 	return _evalAttribute
 }
 
-
-
-
 func CLIHasAhoCorasick() bool {
 	_, err := os.Stat(_ahoCorazick)
 	return err == nil
@@ -181,4 +194,16 @@ func CLIAhoCorazick() []string {
 	lines = lines[0:j]
 
 	return lines
+}
+
+func CLILCASlotName() string {
+	return _lcaSlot
+}
+
+func CLIHasAddLCA() bool {
+	return _lcaSlot != ""
+}
+
+func CLILCAThreshold() float64 {
+	return 1 - _lcaError
 }

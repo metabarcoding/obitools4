@@ -70,11 +70,11 @@ func EvalAttributeWorker(expression map[string]string) obiseq.SeqWorker {
 	var w obiseq.SeqWorker
 	w = nil
 
-	for a,e := range expression {
+	for a, e := range expression {
 		if w == nil {
-			w = obiseq.EditAttributeWorker(a,e)
+			w = obiseq.EditAttributeWorker(a, e)
 		} else {
-			w.ChainWorkers(obiseq.EditAttributeWorker(a,e))
+			w.ChainWorkers(obiseq.EditAttributeWorker(a, e))
 		}
 	}
 
@@ -129,6 +129,12 @@ func CLIAnnotationWorker() obiseq.SeqWorker {
 	if CLIHasTaxonAtRank() {
 		taxo := obigrep.CLILoadSelectedTaxonomy()
 		w := AddTaxonAtRankWorker(taxo, CLITaxonAtRank()...)
+		annotator = annotator.ChainWorkers(w)
+	}
+
+	if CLIHasAddLCA() {
+		taxo := obigrep.CLILoadSelectedTaxonomy()
+		w := obitax.AddLCAWorker(taxo, CLILCASlotName(), CLILCAThreshold())
 		annotator = annotator.ChainWorkers(w)
 	}
 
