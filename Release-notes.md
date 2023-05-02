@@ -1,6 +1,6 @@
 # OBITools release notes
 
-## Ongoing changes
+## May 2nd, 2023. Release 4.0.3
 
 ### New features
 
