@@ -31,6 +31,20 @@
   obidistribute --pattern "pcr_reads/sample_%s_R1.fastq" -c sample tagged_library_R1.fastq
   obidistribute --pattern "pcr_reads/sample_%s_R2.fastq" -c sample tagged_library_R2.fastq
   ```
+
+- Adding of two options **--add-lca-in** and **--lca-error** to `obiannotate`. These options aim to help during
+  construction of reference database using `obipcr`. On obipcr output, it is commonly run obiuniq. To merge
+  identical sequences annotated with different taxids, it is now possible to use the following strategie :
+
+  ```{bash}
+  obiuniq -m taxid myrefdb.obipcr.fasta \
+  | obiannotate -t taxdump --lca-error 0.05 --add-lca-in taxid \
+  > myrefdb.obipcr.unique.fasta
+  ```
+
+  The `obiuniq` call merge identical sequences keeping track of the diversity of the taxonomic annotations in the
+  `merged_taxid` slot, while `obiannotate` loads a NCBI taxdump and computes the lowest common ancestor of the taxids represented in `merged_taxid`. By specifying **--lca-error** 0.05, we indicate that we allow for at most 5% of the taxids disagreeing with the computed LCA. The computed LCA is stored in the slot specified as a parameter of the option **--add-lca-in**. Scientific name and actual error rate corresponding to the estimated LCA are also stored in the sequence annotation.
+
 ### Enhancement
 
 - Rename the `forward_mismatches` and `reverse_mismatches` from instanced by `obimutiplex` into

@@ -41,7 +41,7 @@ func SequenceAnnotationOptionSet(options *getoptions.GetOpt) {
 	options.StringVar(&_ahoCorazick, "aho-corasick", _ahoCorazick,
 		options.Description("Adds an aho-corasick attribut with the count of matches of the provided patterns."))
 
-	options.StringVar(&_lcaSlot, "add-lca", _lcaSlot,
+	options.StringVar(&_lcaSlot, "add-lca-in", _lcaSlot,
 		options.ArgName("SLOT_NAME"),
 		options.Description("From the taxonomic annotation of the sequence (taxid slot or merged_taxid slot), "+
 			"a new slot named <SLOT_NAME> is added with the taxid of the lowest common ancester corresponding "+
