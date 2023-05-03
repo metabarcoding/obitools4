@@ -111,6 +111,7 @@ func FindClosests(sequence *obiseq.BioSequence,
 func Identify(sequence *obiseq.BioSequence,
 	references obiseq.BioSequenceSlice,
 	refcounts []*obikmer.Table4mer,
+	taxa obitax.TaxonSet,
 	taxo *obitax.Taxonomy,
 	runExact bool) *obiseq.BioSequence {
 	bests, differences, identity, bestmatch, seqidxs := FindClosests(sequence, references, refcounts, runExact)
@@ -121,7 +122,7 @@ func Identify(sequence *obiseq.BioSequence,
 		idx := best.OBITagRefIndex()
 		if idx == nil {
 			// log.Fatalln("Need of indexing")
-			idx = obirefidx.IndexSequence(seqidxs[i], references, taxo)
+			idx = obirefidx.IndexSequence(seqidxs[i], references, &refcounts, &taxa, taxo)
 		}
 
 		d := differences
@@ -165,25 +166,15 @@ func Identify(sequence *obiseq.BioSequence,
 
 func IdentifySeqWorker(references obiseq.BioSequenceSlice,
 	refcounts []*obikmer.Table4mer,
+	taxa obitax.TaxonSet,
 	taxo *obitax.Taxonomy,
 	runExact bool) obiseq.SeqWorker {
 	return func(sequence *obiseq.BioSequence) *obiseq.BioSequence {
-		return Identify(sequence, references, refcounts, taxo, runExact)
+		return Identify(sequence, references, refcounts, taxa,taxo, runExact)
 	}
 }
 
 func AssignTaxonomy(iterator obiiter.IBioSequence) obiiter.IBioSequence {
-
-	references := CLIRefDB()
-	refcounts := make(
-		[]*obikmer.Table4mer,
-		len(references))
-
-	buffer := make([]byte, 0, 1000)
-
-	for i, seq := range references {
-		refcounts[i] = obikmer.Count4Mer(seq, &buffer, nil)
-	}
 
 	taxo, error := obifind.CLILoadSelectedTaxonomy()
 
@@ -191,7 +182,23 @@ func AssignTaxonomy(iterator obiiter.IBioSequence) obiiter.IBioSequence {
 		log.Panicln(error)
 	}
 
-	worker := IdentifySeqWorker(references, refcounts, taxo, CLIRunExact())
+	references := CLIRefDB()
+	refcounts := make(
+		[]*obikmer.Table4mer,
+		len(references))
+
+	taxa := make(obitax.TaxonSet,
+		len(references))
+
+	buffer := make([]byte, 0, 1000)
+
+	for i, seq := range references {
+		refcounts[i] = obikmer.Count4Mer(seq, &buffer, nil)
+		taxa[i],_= taxo.Taxon(seq.Taxid())
+	}
+
+
+	worker := IdentifySeqWorker(references, refcounts, taxa, taxo, CLIRunExact())
 
 	return iterator.Rebatch(17).MakeIWorker(worker, obioptions.CLIParallelWorkers(), 0).Rebatch(1000)
 }
