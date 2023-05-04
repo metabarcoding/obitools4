@@ -31,118 +31,73 @@ func IndexSequence(seqidx int,
 	var matrix []uint64
 
 	lca := make(obitax.TaxonSet, len(references))
-	tref := (*taxa)[seqidx]
+	tseq := (*taxa)[seqidx]
 
-	for i, taxon := range (*taxa) {
-		lca[i],_ = tref.LCA(taxon)
+	for i, taxon := range *taxa {
+		lca[i], _ = tseq.LCA(taxon)
 	}
 
 	cw := make([]int, len(references))
 	sw := (*kmers)[seqidx]
 	for i, ref := range *kmers {
-		cw[i] = obikmer.Common4Mer(sw,ref)
+		cw[i] = obikmer.Common4Mer(sw, ref)
 	}
 
-	ow := obiutils.Reverse(obiutils.IntOrder(cw),true)
-	pref,_ := tref.Path()
-	obiutils.Reverse(*pref,true)
+	ow := obiutils.Reverse(obiutils.IntOrder(cw), true)
+	pseq, _ := tseq.Path()
+	obiutils.Reverse(*pseq, true)
 	// score := make([]int, len(references))
-	mindiff := make([]int, len(*pref))
+	mindiff := make([]int, len(*pseq))
+	nseq := make([]int, len(*pseq))
+	nali := make([]int, len(*pseq))
+	nok := make([]int, len(*pseq))
+	lseq := sequence.Len()
 
-
-	for i,ancestor := range *pref {
-		mini := -1
-		for _,order := range ow {
+	mini := -1
+	for i, ancestor := range *pseq {
+		for _, order := range ow {
 			if lca[order] == ancestor {
-				lcs, alilength := obialign.FastLCSScore(sequence, references[order], mini, &matrix)
-				if lcs >= 0 {
-					errs := alilength - lcs
-					if mini== -1 || errs < mini {
-						mini = errs
-					}	
+				nseq[i]++
+				wordmin := 0
+				if mini != -1 {
+					wordmin = obiutils.MaxInt(lseq-3-mini*4, 0)
+				}
+				lcs, alilength := -1, -1
+				if cw[order] >= wordmin {
+					nali[i]++
+					lcs, alilength = obialign.FastLCSScore(sequence, references[order], mini, &matrix)
+					if lcs >= 0 {
+						nok[i]++
+						errs := alilength - lcs
+						if mini == -1 || errs < mini {
+							mini = errs
+						}
+					}
 				}
 			}
 		}
-		if mini != -1 {
-			mindiff[i] = mini
-		} else {
-			mindiff[i] = 1e6
-		}
-	} 
+		mindiff[i] = mini
+	}
 
-	obitag_index := make(map[int]string, len(*pref)) 
+	obitag_index := make(map[int]string, len(*pseq))
 
-	old := sequence.Len()
-	for i,d := range mindiff {
-		if d < old {
-			current_taxid :=(*pref)[i]
+	old := lseq
+	for i, d := range mindiff {
+		if d != -1 && d < old {
+			current_taxid := (*pseq)[i]
 			obitag_index[d] = fmt.Sprintf(
 				"%d@%s@%s",
 				current_taxid.Taxid(),
 				current_taxid.ScientificName(),
 				current_taxid.Rank())
-				old = d
+			old = d
 		}
 	}
 
-	/* // t := 0
-	// r := 0
-	// w := 0
-	for i, ref := range references {
-		lcs, alilength := obialign.FastLCSScore(sequence, ref, -1, &matrix)
-		score[i] = alilength - lcs
-	}
-
-	// log.Println("Redone : ",r,"/",t,"(",w,")")
-
-	o := obiutils.IntOrder(score)
-
-	current_taxid, err := taxo.Taxon(references[o[0]].Taxid())
-	current_score := score[o[0]]
-	current_idx := o[0]
-
-	if err != nil {
-		log.Panicln(err)
-	}
-
-	obitag_index := make(map[int]string)
-
-	for _, idx := range o {
-		new_taxid, err := taxo.Taxon(references[idx].Taxid())
-		if err != nil {
-			log.Panicln(err)
-		}
-
-		new_taxid, err = current_taxid.LCA(new_taxid)
-		if err != nil {
-			log.Panicln(err)
-		}
-
-		new_score := score[idx]
-
-		if current_taxid.Taxid() != new_taxid.Taxid() {
-
-			if new_score > current_score {
-				obitag_index[score[current_idx]] = fmt.Sprintf(
-					"%d@%s@%s",
-					current_taxid.Taxid(),
-					current_taxid.ScientificName(),
-					current_taxid.Rank())
-				current_score = new_score
-			}
-
-			current_taxid = new_taxid
-			current_idx = idx
-		}
-	}
-
-	obitag_index[score[current_idx]] = fmt.Sprintf(
-		"%d@%s@%s",
-		current_taxid.Taxid(),
-		current_taxid.ScientificName(),
-		current_taxid.Rank())
- */
-	//log.Println(obitag_index)
+	// log.Println(sequence.Id(), tseq.Taxid(), tseq.ScientificName(), tseq.Rank(), obitag_index)
+	// log.Println(sequence.Id(), tseq.Taxid(), tseq.ScientificName(), tseq.Rank(), nseq)
+	// log.Println(sequence.Id(), tseq.Taxid(), tseq.ScientificName(), tseq.Rank(), nali)
+	// log.Println(sequence.Id(), tseq.Taxid(), tseq.ScientificName(), tseq.Rank(), nok)
 	return obitag_index
 }
 
