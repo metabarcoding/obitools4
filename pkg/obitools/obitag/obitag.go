@@ -34,9 +34,9 @@ func FindClosests(sequence *obiseq.BioSequence,
 	o := obiutils.Reverse(obiutils.IntOrder(cw), true)
 
 	bests := obiseq.MakeBioSequenceSlice()
-//	bests = append(bests, references[o[0]])
+	//	bests = append(bests, references[o[0]])
 	bestidxs := make([]int, 0)
-//	bestidxs = append(bestidxs, o[0])
+	//	bestidxs = append(bestidxs, o[0])
 	bestId := 0.0
 	bestmatch := references[o[0]].Id()
 
@@ -45,26 +45,28 @@ func FindClosests(sequence *obiseq.BioSequence,
 
 	for _, order := range o {
 		ref := references[order]
+		score := int(1e9)
 
 		if maxe != -1 {
-			wordmin = obiutils.MaxInt(sequence.Len(), ref.Len()) - 4*maxe
+			wordmin = obiutils.MaxInt(sequence.Len(), ref.Len()) - 3 - 4*maxe
+		}
+
+		if cw[order] < wordmin {
+			break
 		}
 
 		lcs, alilength := -1, -1
-		score := int(1e9)
 		if maxe == 0 || maxe == 1 {
 			d, _, _, _ := obialign.D1Or0(sequence, references[order])
 			if d >= 0 {
 				score = d
-				alilength = obiutils.MaxInt(sequence.Len(), ref.Len()) 
+				alilength = obiutils.MaxInt(sequence.Len(), ref.Len())
 				lcs = alilength - score
 			}
 		} else {
-			if cw[order] >= wordmin {
-				lcs, alilength = obialign.FastLCSScore(sequence, references[order], maxe, &matrix)
-				if lcs >= 0 {
-					score = alilength - lcs
-				}
+			lcs, alilength = obialign.FastLCSScore(sequence, references[order], maxe, &matrix)
+			if lcs >= 0 {
+				score = alilength - lcs
 			}
 		}
 
@@ -73,7 +75,7 @@ func FindClosests(sequence *obiseq.BioSequence,
 			bestidxs = bestidxs[:0]
 			maxe = score
 			bestId = float64(lcs) / float64(alilength)
-		    // log.Println(ref.Id(), maxe, bestId,bestidxs)
+			// log.Println(ref.Id(), maxe, bestId,bestidxs)
 		}
 
 		if score == maxe {
@@ -84,12 +86,12 @@ func FindClosests(sequence *obiseq.BioSequence,
 				bestId = id
 				bestmatch = ref.Id()
 			}
-		    // log.Println(ref.Id(), maxe, bestId,bestidxs)
+			// log.Println(ref.Id(), maxe, bestId,bestidxs)
 		}
 
 	}
 
-    //log.Println("that's all falks",  maxe, bestId, bestidxs)
+	//log.Println("that's all falks",  maxe, bestId, bestidxs)
 	return bests, maxe, bestId, bestmatch, bestidxs
 }
 

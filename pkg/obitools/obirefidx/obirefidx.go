@@ -48,22 +48,29 @@ func IndexSequence(seqidx int,
 	obiutils.Reverse(*pseq, true)
 	// score := make([]int, len(references))
 	mindiff := make([]int, len(*pseq))
-/* 	nseq := make([]int, len(*pseq))
-	nali := make([]int, len(*pseq))
-	nok := make([]int, len(*pseq))
-	nfast := make([]int, len(*pseq))
-	nfastok := make([]int, len(*pseq))
- */	lseq := sequence.Len()
+	/*
+		 	nseq := make([]int, len(*pseq))
+			nali := make([]int, len(*pseq))
+			nok := make([]int, len(*pseq))
+			nfast := make([]int, len(*pseq))
+			nfastok := make([]int, len(*pseq))
+	*/lseq := sequence.Len()
 
 	mini := -1
+	wordmin := 0
+
 	for i, ancestor := range *pseq {
 		for _, order := range ow {
 			if lca[order] == ancestor {
 				// nseq[i]++
-				wordmin := 0
 				if mini != -1 {
-					wordmin = obiutils.MaxInt(lseq-3-mini*4, 0)
+					wordmin = obiutils.MaxInt(sequence.Len(), references[order].Len()) - 3 - 4*mini
 				}
+
+				if cw[order] < wordmin {
+					break
+				}
+
 				lcs, alilength := -1, -1
 				errs := int(1e9)
 				if mini != -1 && mini <= 1 {
@@ -74,14 +81,13 @@ func IndexSequence(seqidx int,
 						// nfastok[i]++
 					}
 				} else {
-					if cw[order] >= wordmin {
-						// nali[i]++
-						lcs, alilength = obialign.FastLCSScore(sequence, references[order], mini, &matrix)
-						if lcs >= 0 {
-							// nok[i]++
-							errs = alilength - lcs
-						}
+					// nali[i]++
+					lcs, alilength = obialign.FastLCSScore(sequence, references[order], mini, &matrix)
+					if lcs >= 0 {
+						// nok[i]++
+						errs = alilength - lcs
 					}
+
 				}
 				if mini == -1 || errs < mini {
 					mini = errs
@@ -106,13 +112,14 @@ func IndexSequence(seqidx int,
 		}
 	}
 
-/* 	log.Println(sequence.Id(), tseq.Taxid(), tseq.ScientificName(), tseq.Rank(), obitag_index)
-	log.Println(sequence.Id(), tseq.Taxid(), tseq.ScientificName(), tseq.Rank(), nseq)
-	log.Println(sequence.Id(), tseq.Taxid(), tseq.ScientificName(), tseq.Rank(), nfast)
-	log.Println(sequence.Id(), tseq.Taxid(), tseq.ScientificName(), tseq.Rank(), nfastok)
-	log.Println(sequence.Id(), tseq.Taxid(), tseq.ScientificName(), tseq.Rank(), nali)
-	log.Println(sequence.Id(), tseq.Taxid(), tseq.ScientificName(), tseq.Rank(), nok)
- */	return obitag_index
+	/*
+		 	log.Println(sequence.Id(), tseq.Taxid(), tseq.ScientificName(), tseq.Rank(), obitag_index)
+			log.Println(sequence.Id(), tseq.Taxid(), tseq.ScientificName(), tseq.Rank(), nseq)
+			log.Println(sequence.Id(), tseq.Taxid(), tseq.ScientificName(), tseq.Rank(), nfast)
+			log.Println(sequence.Id(), tseq.Taxid(), tseq.ScientificName(), tseq.Rank(), nfastok)
+			log.Println(sequence.Id(), tseq.Taxid(), tseq.ScientificName(), tseq.Rank(), nali)
+			log.Println(sequence.Id(), tseq.Taxid(), tseq.ScientificName(), tseq.Rank(), nok)
+	*/return obitag_index
 }
 
 func IndexReferenceDB(iterator obiiter.IBioSequence) obiiter.IBioSequence {
