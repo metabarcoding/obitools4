@@ -1,5 +1,12 @@
 # OBITools release notes
 
+## Latest changes
+
+### Enhancement
+
+- Comparison algorithms in `obitag` and `obirefidx` take more advantage of the data structure to limit the number of alignments
+  actually computed. This increase a bit the speed of both the software. `obirefidx` is nevertheless still too slow
+  compared to my expectation.
 ## May 2nd, 2023. Release 4.0.3
 
 ### New features
