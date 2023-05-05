@@ -80,7 +80,7 @@ func Order[T sort.Interface](data T) []int {
 		rk.r[i] = i
 	}
 
-	sort.Sort(rk)
+	sort.Stable(rk)
 
 	return r
 }

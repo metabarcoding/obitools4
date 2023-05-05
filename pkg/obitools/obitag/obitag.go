@@ -1,7 +1,6 @@
 package obitag
 
 import (
-	"math"
 	"strconv"
 	"strings"
 
@@ -32,79 +31,65 @@ func FindClosests(sequence *obiseq.BioSequence,
 		cw[i] = obikmer.Common4Mer(seqwords, ref)
 	}
 
-	o := obiutils.ReverseIntOrder(cw)
-
-	// mcw := 100000
-	// for _, i := range o {
-	// 	if cw[i] < mcw {
-	// 		mcw = cw[i]
-	// 	}
-	// 	if cw[i] > mcw {
-	// 		log.Panicln("wrong order")
-	// 	}
-	// }
+	o := obiutils.Reverse(obiutils.IntOrder(cw), true)
 
 	bests := obiseq.MakeBioSequenceSlice()
-	bests = append(bests, references[o[0]])
+//	bests = append(bests, references[o[0]])
 	bestidxs := make([]int, 0)
-	bestidxs = append(bestidxs, o[0])
+//	bestidxs = append(bestidxs, o[0])
 	bestId := 0.0
 	bestmatch := references[o[0]].Id()
 
-	maxe := 0
-	n := 0
-	nf := 0
+	maxe := -1
+	wordmin := 0
 
-	for i, j := range o {
-		ref := references[j]
+	for _, order := range o {
+		ref := references[order]
 
-		lmin, lmax := obiutils.MinMaxInt(sequence.Len(), ref.Len())
-		atMost := lmax - lmin + int(math.Ceil(float64(lmin-3-cw[j])/4.0)) - 2
-
-		if i == 0 {
-			maxe = obiutils.MaxInt(sequence.Len(), ref.Len())
+		if maxe != -1 {
+			wordmin = obiutils.MaxInt(sequence.Len(), ref.Len()) - 4*maxe
 		}
 
-		// log.Println(sequence.Id(),cw[j], maxe)
-		if runExact || (atMost <= (maxe + 1)) {
-			// if true {
-			lcs, alilength := obialign.FastLCSScore(sequence, ref, maxe+1, &matrix)
-			// fmt.Println(j, cw[j], lcs, alilength, alilength-lcs)
-			// lcs, alilength := obialign.LCSScore(sequence, ref, maxe+1, matrix)
-			n++
-			if lcs == -1 {
-				nf++
-				// That aligment is worst than maxe, go to the next sequence
-				continue
+		lcs, alilength := -1, -1
+		score := int(1e9)
+		if maxe == 0 || maxe == 1 {
+			d, _, _, _ := obialign.D1Or0(sequence, references[order])
+			if d >= 0 {
+				score = d
+				alilength = obiutils.MaxInt(sequence.Len(), ref.Len()) 
+				lcs = alilength - score
 			}
-
-			score := alilength - lcs
-			if score < maxe {
-				bests = bests[:0]
-				bestidxs = bestidxs[:0]
-				maxe = score
-				bestId = float64(lcs) / float64(alilength)
-				// log.Println(best.Id(), maxe, bestId)
-			}
-
-			if score == maxe {
-				bests = append(bests, ref)
-				bestidxs = append(bestidxs, j)
-				id := float64(lcs) / float64(alilength)
-				if id > bestId {
-					bestId = id
-					bestmatch = ref.Id()
+		} else {
+			if cw[order] >= wordmin {
+				lcs, alilength = obialign.FastLCSScore(sequence, references[order], maxe, &matrix)
+				if lcs >= 0 {
+					score = alilength - lcs
 				}
 			}
-
 		}
 
-		if maxe == 0 {
-			// We have found identity no need to continue to search
-			break
+		if maxe == -1 || score < maxe {
+			bests = bests[:0]
+			bestidxs = bestidxs[:0]
+			maxe = score
+			bestId = float64(lcs) / float64(alilength)
+		    // log.Println(ref.Id(), maxe, bestId,bestidxs)
 		}
+
+		if score == maxe {
+			bests = append(bests, ref)
+			bestidxs = append(bestidxs, order)
+			id := float64(lcs) / float64(alilength)
+			if id > bestId {
+				bestId = id
+				bestmatch = ref.Id()
+			}
+		    // log.Println(ref.Id(), maxe, bestId,bestidxs)
+		}
+
 	}
-	// log.Println("that's all falks", n, nf, maxe, bestId, bestidx)
+
+    //log.Println("that's all falks",  maxe, bestId, bestidxs)
 	return bests, maxe, bestId, bestmatch, bestidxs
 }
 
@@ -170,7 +155,7 @@ func IdentifySeqWorker(references obiseq.BioSequenceSlice,
 	taxo *obitax.Taxonomy,
 	runExact bool) obiseq.SeqWorker {
 	return func(sequence *obiseq.BioSequence) *obiseq.BioSequence {
-		return Identify(sequence, references, refcounts, taxa,taxo, runExact)
+		return Identify(sequence, references, refcounts, taxa, taxo, runExact)
 	}
 }
 
@@ -194,9 +179,8 @@ func AssignTaxonomy(iterator obiiter.IBioSequence) obiiter.IBioSequence {
 
 	for i, seq := range references {
 		refcounts[i] = obikmer.Count4Mer(seq, &buffer, nil)
-		taxa[i],_= taxo.Taxon(seq.Taxid())
+		taxa[i], _ = taxo.Taxon(seq.Taxid())
 	}
-
 
 	worker := IdentifySeqWorker(references, refcounts, taxa, taxo, CLIRunExact())
 

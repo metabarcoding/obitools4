@@ -20,9 +20,9 @@ func TagOptionSet(options *getoptions.GetOpt) {
 		options.ArgName("FILENAME"),
 		options.Description("The name of the file containing the reference DB"))
 
-	options.BoolVar(&_RunExact, "exact", _RunExact,
-		options.Alias("E"),
-		options.Description("Unactivate the heuristic limatitating the sequence comparisons"))
+	// options.BoolVar(&_RunExact, "exact", _RunExact,
+	// 	options.Alias("E"),
+	// 	options.Description("Unactivate the heuristic limatitating the sequence comparisons"))
 
 }
 
