@@ -74,7 +74,7 @@ echo WORK_DIR=$WORK_DIR
 echo INSTALL_DIR=$INSTALL_DIR
 echo OBITOOLS_PREFIX=$OBITOOLS_PREFIX
 
-pushd $WORK_DIR
+pushd "$WORK_DIR"|| exit
 
 OS=$(uname -a | awk '{print $1}')
 ARCH=$(uname -m)
@@ -99,7 +99,7 @@ curl "$GOURL" \
 
 export PATH="$(pwd)/go/bin:$PATH"
 
-curl "$OBIURL4" \
+curl -L "$OBIURL4" \
     | tar zxf - 
 
 cd obitools4-master
