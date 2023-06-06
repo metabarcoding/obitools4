@@ -104,7 +104,7 @@ curl "$GOURL" \
     | tar zxf -
 
 PATH="$(pwd)/go/bin:$PATH"
-export $PATH
+export PATH
 
 curl -L "$OBIURL4" \
     | tar zxf - 
