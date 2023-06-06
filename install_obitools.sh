@@ -103,7 +103,8 @@ echo "Install GO from : $GOURL" 1>&2
 curl "$GOURL" \
     | tar zxf -
 
-export PATH="$(pwd)/go/bin:$PATH"
+PATH="$(pwd)/go/bin:$PATH"
+export $PATH
 
 curl -L "$OBIURL4" \
     | tar zxf - 
@@ -122,5 +123,5 @@ fi
 
 popd
 
-rm -rf "$WORK_DIR"
+# rm -rf "$WORK_DIR"
 
