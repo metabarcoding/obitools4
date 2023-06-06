@@ -33,11 +33,11 @@ while [ "$#" -gt 0 ]; do
       shift 2
       ;;
     -h|--help)
-      display_help
+      display_help  1>&2 
       exit 0
       ;;
     *)
-      echo "Error: Unsupported option $1"
+      echo "Error: Unsupported option $1"  1>&2
       exit 1
       ;;
   esac
@@ -55,24 +55,24 @@ WORK_DIR=$(mktemp -d "obitools4.XXXXXX")
 
 # check if tmp dir was created
 if [[ ! "$WORK_DIR" || ! -d "$WORK_DIR" ]]; then
-  echo "Could not create temp dir"
+  echo "Could not create temp dir"  1>&2
   exit 1
 fi
 
 mkdir -p "${INSTALL_DIR}/bin" 2> /dev/null \
-  || (echo "Please enter your password for installing obitools in ${INSTALL_DIR}"
+  || (echo "Please enter your password for installing obitools in ${INSTALL_DIR}"  1>&2
       sudo mkdir -p "${INSTALL_DIR}/bin")
 
 if [[ ! "${INSTALL_DIR}/bin" || ! -d "${INSTALL_DIR}/bin" ]]; then
-  echo "Could not create ${INSTALL_DIR}/bin directory for installing obitools"
+  echo "Could not create ${INSTALL_DIR}/bin directory for installing obitools"  1>&2
   exit 1
 fi
 
 INSTALL_DIR="$(cd $INSTALL_DIR && pwd)"
 
-echo WORK_DIR=$WORK_DIR
-echo INSTALL_DIR=$INSTALL_DIR
-echo OBITOOLS_PREFIX=$OBITOOLS_PREFIX
+echo WORK_DIR=$WORK_DIR  1>&2
+echo INSTALL_DIR=$INSTALL_DIR  1>&2
+echo OBITOOLS_PREFIX=$OBITOOLS_PREFIX  1>&2
 
 pushd "$WORK_DIR"|| exit
 
@@ -93,6 +93,8 @@ GOFILE=$(curl "$URL" \
 
 GOURL=$(curl "${URL}${GOFILE}" \
         | sed -E 's@^.*href="(.*\.tar\.gz)".*$@\1@')
+
+echo "Install GO from : $GOURL" 1>&2
         
 curl "$GOURL" \
     | tar zxf -
