@@ -3,10 +3,12 @@ package main
 import (
 	"fmt"
 	"os"
+
 	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obiconvert"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obifind"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obitag"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obioptions"
@@ -30,6 +32,9 @@ func main() {
 	// trace.Start(ftrace)
 	// defer trace.Stop()
 
+	obioptions.SetWorkerPerCore(2)
+	obioptions.SetReadWorkerPerCore(0.5)
+
 	optionParser := obioptions.GenerateOptionParser(obitag.OptionSet)
 
 	_, args := optionParser(os.Args)
@@ -37,14 +42,24 @@ func main() {
 	fs, err := obiconvert.CLIReadBioSequences(args...)
 
 	if err != nil {
-		log.Errorf("Cannot open file (%v)",err)
+		log.Errorf("Cannot open file (%v)", err)
 		os.Exit(1)
 	}
 
-	identified := obitag.AssignTaxonomy(fs)
+	taxo, error := obifind.CLILoadSelectedTaxonomy()
+	if error != nil {
+		log.Panicln(error)
+	}
+
+	references := obitag.CLIRefDB()
+
+
+	identified := obitag.CLIAssignTaxonomy(fs,references,taxo)
 
 	obiconvert.CLIWriteBioSequences(identified, true)
 	obiiter.WaitForLastPipe()
+
+	obitag.CLISaveRefetenceDB(references)
 
 	fmt.Println("")
 }
