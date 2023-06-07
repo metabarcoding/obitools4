@@ -2,11 +2,24 @@
 
 ## Latest changes
 
+### Bugs
+
+- Patch a bug in the install script for correctly follow download redirection.
+
 ### Enhancement
 
 - Comparison algorithms in `obitag` and `obirefidx` take more advantage of the data structure to limit the number of alignments
   actually computed. This increase a bit the speed of both the software. `obirefidx` is nevertheless still too slow
   compared to my expectation.
+
+### New feature
+
+- In `obiannotate` adds the **--set-identifier** option to edit the sequence identifier
+- In `obitag` adds the **--save-db** option allowing at the end of the run of `obitag` to save a
+  modified version of the reference database containing the computed index. This allows next
+  time using this partially indexed reference library to accelerate the taxonomic annotations. 
+- Adding of the function `gsub` to the expression language for substituting string pattern.
+
 ## May 2nd, 2023. Release 4.0.3
 
 ### New features

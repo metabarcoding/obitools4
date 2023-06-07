@@ -63,7 +63,7 @@ mkdir -p "${INSTALL_DIR}/bin" 2> /dev/null \
   || (echo "Please enter your password for installing obitools in ${INSTALL_DIR}"  1>&2
       sudo mkdir -p "${INSTALL_DIR}/bin")
 
-if [[ ! "${INSTALL_DIR}/bin" || ! -d "${INSTALL_DIR}/bin" ]]; then
+if [[ ! -d "${INSTALL_DIR}/bin" ]]; then
   echo "Could not create ${INSTALL_DIR}/bin directory for installing obitools"  1>&2
   exit 1
 fi
@@ -109,7 +109,7 @@ export PATH
 curl -L "$OBIURL4" \
     | tar zxf - 
 
-cd obitools4-master
+cd obitools4-master || exit
 
 if [[ -z "$OBITOOLS_PREFIX" ]] ; then
   make
@@ -121,7 +121,7 @@ fi
    || (echo "Please enter your password for installing obitools in ${INSTALL_DIR}" 
        sudo cp build/* "${INSTALL_DIR}/bin")
 
-popd
+popd || exit
 
-# rm -rf "$WORK_DIR"
+rm -rf "$WORK_DIR"
 
