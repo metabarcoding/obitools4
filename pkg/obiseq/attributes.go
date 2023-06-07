@@ -198,3 +198,7 @@ func (s *BioSequence) OBITagRefIndex() map[int]string {
 
 	return val
 }
+
+func (s *BioSequence) SetOBITagRefIndex(idx map[int]string) {
+	s.SetAttribute("obitag_ref_index", idx)
+}

@@ -155,6 +155,10 @@ var OBILang = gval.NewLanguage(
 		text := fmt.Sprintf(args[0].(string), args[1:]...)
 		return text, nil
 	}),
+	gval.Function("gsub", func(args ...interface{}) (interface{}, error) {
+		text := strings.ReplaceAll(args[0].(string), args[1].(string), args[2].(string))
+		return text, nil
+	}),
 	gval.Function("subspc", func(args ...interface{}) (interface{}, error) {
 		text := strings.ReplaceAll(args[0].(string), " ", "_")
 		return text, nil

@@ -39,6 +39,10 @@ func GenerateOptionParser(optionset ...func(*getoptions.GetOpt)) ArgumentParser 
 		options.GetEnv("OBIMAXCPU"),
 		options.Description("Number of parallele threads computing the result"))
 
+	options.IntVar(&_BatchSize, "batch-size", _BatchSize,
+		options.GetEnv("OBIBATCHSIZE"),
+		options.Description("Number of sequence per batch for paralelle processing"))
+
 	for _, o := range optionset {
 		o(options)
 	}
@@ -99,7 +103,6 @@ func CLIParallelWorkers() int {
 func CLIReadParallelWorkers() int {
 	return int(float64(_MaxAllowedCPU) * float64(_ReadWorkerPerCore))
 }
-
 
 // CLIParallelWorkers returns the number of parallel workers requested by
 // the command line option --workers|-w.

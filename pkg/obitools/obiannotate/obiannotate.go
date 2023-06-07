@@ -81,6 +81,7 @@ func EvalAttributeWorker(expression map[string]string) obiseq.SeqWorker {
 	return w
 }
 
+
 func AddTaxonAtRankWorker(taxonomy *obitax.Taxonomy, ranks ...string) obiseq.SeqWorker {
 	f := func(s *obiseq.BioSequence) *obiseq.BioSequence {
 		for _, r := range ranks {
@@ -108,6 +109,11 @@ func CLIAnnotationWorker() obiseq.SeqWorker {
 
 	if CLIHasClearAllFlag() {
 		w := ClearAllAttributesWorker()
+		annotator = annotator.ChainWorkers(w)
+	}
+
+	if CLIHasSetId() {
+		w := obiseq.EditIdWorker(CLSetIdExpression())
 		annotator = annotator.ChainWorkers(w)
 	}
 

@@ -24,6 +24,7 @@ var _uniqueID = false
 var _ahoCorazick = ""
 var _lcaSlot = ""
 var _lcaError = 0.0
+var _setId = ""
 
 func SequenceAnnotationOptionSet(options *getoptions.GetOpt) {
 	// options.BoolVar(&_addRank, "seq-rank", _addRank,
@@ -46,6 +47,10 @@ func SequenceAnnotationOptionSet(options *getoptions.GetOpt) {
 		options.Description("From the taxonomic annotation of the sequence (taxid slot or merged_taxid slot), "+
 			"a new slot named <SLOT_NAME> is added with the taxid of the lowest common ancester corresponding "+
 			"to the current annotation."))
+
+	options.StringVar(&_setId, "set-identifier", _setId,
+		options.ArgName("EXPRESSION"),
+		options.Description("An expression used to assigned the new id of the sequence"))
 
 	options.Float64Var(&_lcaError, "lca-error", _lcaError,
 		options.ArgName("#.###"),
@@ -122,6 +127,15 @@ func OptionSet(options *getoptions.GetOpt) {
 
 // --uniq-id
 // Forces sequence record ids to be unique.
+
+func CLIHasSetId() bool {
+	return _setId != ""
+}
+
+func CLSetIdExpression() string {
+	return _setId 
+}
+
 
 func CLIHasAttributeToBeRenamed() bool {
 	return len(_toBeRenamed) > 0
