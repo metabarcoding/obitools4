@@ -6,11 +6,11 @@ import (
 	"github.com/DavidGamba/go-getoptions"
 )
 
-var _outputIds = true
+var _outputIds = false
 var _outputCount = false
 var _outputTaxon = false
-var _outputSequence = true
-var _outputQuality = true
+var _outputSequence = false
+var _outputQuality = false
 var _outputDefinition = false
 var _obipairing = false
 var _autoColumns = false

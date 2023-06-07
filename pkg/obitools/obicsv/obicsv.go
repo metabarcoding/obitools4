@@ -36,6 +36,7 @@ func CLIWriteCSV(iterator obiiter.IBioSequence,
 		obiformats.CSVTaxon(CLIPrintTaxon()),
 		obiformats.CSVDefinition(CLIPrintDefinition()),
 		obiformats.CSVKeys(CLIToBeKeptAttributes()),
+		obiformats.CSVSequence(CLIPrintSequence()),
 	)
 
 	var err error
