@@ -200,7 +200,7 @@ func IndexReferenceDB(iterator obiiter.IBioSequence) obiiter.IBioSequence {
 			for i := l[0]; i < l[1]; i++ {
 				idx := IndexSequence(i, references, &refcounts, &taxa, taxo)
 				iref := references[i].Copy()
-				iref.SetAttribute("obitag_ref_index", idx)
+				iref.SetOBITagRefIndex(idx)
 				sl = append(sl, iref)
 				bar.Add(1)
 			}

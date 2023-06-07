@@ -12,7 +12,6 @@ import (
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obioptions"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitax"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obifind"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obirefidx"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiutils"
 )
@@ -91,7 +90,7 @@ func FindClosests(sequence *obiseq.BioSequence,
 
 	}
 
-	//log.Println("that's all falks",  maxe, bestId, bestidxs)
+	log.Debugln("Closest Match", sequence.Id(), maxe, bestId, bestidxs, len(bests))
 	return bests, maxe, bestId, bestmatch, bestidxs
 }
 
@@ -102,51 +101,93 @@ func Identify(sequence *obiseq.BioSequence,
 	taxo *obitax.Taxonomy,
 	runExact bool) *obiseq.BioSequence {
 	bests, differences, identity, bestmatch, seqidxs := FindClosests(sequence, references, refcounts, runExact)
-
 	taxon := (*obitax.TaxNode)(nil)
 
-	for i, best := range bests {
-		idx := best.OBITagRefIndex()
-		if idx == nil {
-			// log.Fatalln("Need of indexing")
-			idx = obirefidx.IndexSequence(seqidxs[i], references, &refcounts, &taxa, taxo)
+	if identity >= 0.5 && differences > 0 {
+		newidx := 0
+		for i, best := range bests {
+			idx := best.OBITagRefIndex()
+			if idx == nil {
+				// log.Debugln("Need of indexing")
+				newidx++
+				idx = obirefidx.IndexSequence(seqidxs[i], references, &refcounts, &taxa, taxo)
+				references[seqidxs[i]].SetOBITagRefIndex(idx)
+				log.Debugln(references[seqidxs[i]].Id(), idx)
+			}
+
+			d := differences
+			identification, ok := idx[d]
+			found := false
+			var parts []string
+
+			/*
+				Here is an horrible hack for xprize challence.
+				With Euka01 the part[0] was equal to "" for at
+				least a sequence consensus. Which is not normal.
+
+				TO BE CHECKED AND CORRECTED
+
+				The problem seems related to idx that doesn't have
+				a 0 distance
+			*/
+			for !found && d >= 0 {
+				for !ok && d >= 0 {
+					identification, ok = idx[d]
+					d--
+				}
+
+				parts = strings.Split(identification, "@")
+
+				found = parts[0] != ""
+				if !found {
+					log.Debugln("Problem in identification line : ", best.Id(), "idx:", idx, "distance:", d)
+					for !ok && d <= 1000 {
+						identification, ok = idx[d]
+						d++
+					}
+
+				}
+			}
+
+			match_taxid, err := strconv.Atoi(parts[0])
+
+			if err != nil {
+				log.Panicln("Cannot extract taxid from :", identification)
+			}
+
+			match_taxon, err := taxo.Taxon(match_taxid)
+
+			if err != nil {
+				log.Panicln("Cannot find taxon corresponding to taxid :", match_taxid)
+			}
+
+			if taxon != nil {
+				taxon, _ = taxon.LCA(match_taxon)
+			} else {
+				taxon = match_taxon
+			}
+
 		}
+		log.Debugln(sequence.Id(), "Best matches:", len(bests), "New index:", newidx)
 
-		d := differences
-		identification, ok := idx[d]
-		for !ok && d >= 0 {
-			identification, ok = idx[d]
-			d--
-		}
+		sequence.SetTaxid(taxon.Taxid())
+		sequence.SetAttribute("scientific_name", taxon.ScientificName())
+		sequence.SetAttribute("obitag_rank", taxon.Rank())
+		sequence.SetAttribute("obitag_bestid", identity)
+		sequence.SetAttribute("obitag_difference", differences)
+		sequence.SetAttribute("obitag_bestmatch", bestmatch)
+		sequence.SetAttribute("obitag_match_count", len(bests))
 
-		parts := strings.Split(identification, "@")
-		match_taxid, err := strconv.Atoi(parts[0])
-
-		if err != nil {
-			log.Panicln("Cannot extract taxid from :", identification)
-		}
-
-		match_taxon, err := taxo.Taxon(match_taxid)
-
-		if err != nil {
-			log.Panicln("Cannot find taxon corresponding to taxid :", match_taxid)
-		}
-
-		if taxon != nil {
-			taxon, _ = taxon.LCA(match_taxon)
-		} else {
-			taxon = match_taxon
-		}
-
+	} else {
+		taxon, _ = taxo.Taxon(1)
+		sequence.SetTaxid(1)
+		sequence.SetAttribute("scientific_name", taxon.ScientificName())
+		sequence.SetAttribute("obitag_rank", taxon.Rank())
+		sequence.SetAttribute("obitag_bestid", identity)
+		sequence.SetAttribute("obitag_difference", differences)
+		sequence.SetAttribute("obitag_bestmatch", bestmatch)
+		sequence.SetAttribute("obitag_match_count", len(bests))
 	}
-
-	sequence.SetTaxid(taxon.Taxid())
-	sequence.SetAttribute("scientific_name", taxon.ScientificName())
-	sequence.SetAttribute("obitag_rank", taxon.Rank())
-	sequence.SetAttribute("obitag_bestid", identity)
-	sequence.SetAttribute("obitag_difference", differences)
-	sequence.SetAttribute("obitag_bestmatch", bestmatch)
-	sequence.SetAttribute("obitag_match_count", len(bests))
 
 	return sequence
 }
@@ -161,15 +202,11 @@ func IdentifySeqWorker(references obiseq.BioSequenceSlice,
 	}
 }
 
-func AssignTaxonomy(iterator obiiter.IBioSequence) obiiter.IBioSequence {
+func CLIAssignTaxonomy(iterator obiiter.IBioSequence,
+	references obiseq.BioSequenceSlice,
+	taxo *obitax.Taxonomy,
+) obiiter.IBioSequence {
 
-	taxo, error := obifind.CLILoadSelectedTaxonomy()
-
-	if error != nil {
-		log.Panicln(error)
-	}
-
-	references := CLIRefDB()
 	refcounts := make(
 		[]*obikmer.Table4mer,
 		len(references))
@@ -186,5 +223,5 @@ func AssignTaxonomy(iterator obiiter.IBioSequence) obiiter.IBioSequence {
 
 	worker := IdentifySeqWorker(references, refcounts, taxa, taxo, CLIRunExact())
 
-	return iterator.Rebatch(17).MakeIWorker(worker, obioptions.CLIParallelWorkers(), 0).Rebatch(1000)
+	return iterator.MakeIWorker(worker, obioptions.CLIParallelWorkers(), 0)
 }
