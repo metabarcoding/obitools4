@@ -3,7 +3,6 @@ package obialign
 import (
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiutils"
-	log "github.com/sirupsen/logrus"
 )
 
 var _iupac = [26]byte{
@@ -103,7 +102,7 @@ func FastLCSEGFScoreByte(bA, bB []byte, maxError int, endgapfree bool, buffer *[
 
 	N := lB + ((delta) >> 1)
 
-	log.Debugln("N = ", N, " delta = ", delta, " extra = ", extra, " maxError = ", maxError)
+	// log.Debugln("N = ", N, " delta = ", delta, " extra = ", extra, " maxError = ", maxError)
 
 	for y := 1; y <= N; y++ {
 		// in_matrix := false
