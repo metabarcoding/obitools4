@@ -361,12 +361,13 @@ func (graph *DeBruijnGraph) Push(sequence *obiseq.BioSequence) {
 		init = append(init, key&graph.kmermask)
 	}
 
-	f(0, key)
+	if sequence.Len() > graph.kmersize {
+		f(0, key)
 
-	for _, idx := range init {
-		graph.append(s[graph.kmersize:], idx)
+		for _, idx := range init {
+			graph.append(s[graph.kmersize:], idx)
+		}	
 	}
-
 }
 
 func (graph *DeBruijnGraph) Gml() string {
