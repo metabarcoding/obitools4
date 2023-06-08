@@ -65,11 +65,11 @@ func IPCRTagPESequencesBatch(iterator obiiter.IBioSequence,
 					direction := annot["direction"].(string)
 
 					forward_match := annot["forward_match"].(string)
-					forward_mismatches := annot["forward_mismatches"].(int)
+					forward_mismatches := annot["forward_error"].(int)
 					forward_tag := annot["forward_tag"].(string)
 
 					reverse_match := annot["reverse_match"].(string)
-					reverse_mismatches := annot["reverse_mismatches"].(int)
+					reverse_mismatches := annot["reverse_error"].(int)
 					reverse_tag := annot["reverse_tag"].(string)
 
 					sample := annot["sample"].(string)
