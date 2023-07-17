@@ -39,11 +39,20 @@ func FormatFastq(seq *obiseq.BioSequence, quality_shift int, formater FormatHead
 }
 
 func FormatFastqBatch(batch obiiter.BioSequenceBatch, quality_shift int,
-	formater FormatHeader) []byte {
+	formater FormatHeader, skipEmpty bool) []byte {
 	var bs bytes.Buffer
 	for _, seq := range batch.Slice() {
-		bs.WriteString(FormatFastq(seq, quality_shift, formater))
-		bs.WriteString("\n")
+		if seq.Len() > 0 {
+			bs.WriteString(FormatFastq(seq, quality_shift, formater))
+			bs.WriteString("\n")
+		} else {
+			if skipEmpty {
+				log.Warnf("Sequence %s is empty and skiped in output", seq.Id())
+			} else {
+				log.Fatalf("Sequence %s is empty", seq.Id())
+			}
+		}
+
 	}
 	return bs.Bytes()
 }
@@ -90,7 +99,7 @@ func WriteFastq(iterator obiiter.IBioSequence,
 		for iterator.Next() {
 			batch := iterator.Get()
 			chunk := FileChunck{
-				FormatFastqBatch(batch, quality, header_format),
+				FormatFastqBatch(batch, quality, header_format, opt.SkipEmptySequence()),
 				batch.Order(),
 			}
 			chunkchan <- chunk

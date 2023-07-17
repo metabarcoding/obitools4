@@ -4,7 +4,9 @@
 
 ### Bugs
 
-- Patch a bug in the install script for correctly follow download redirection.
+- Patch a bug in the install-script for correctly follow download redirection.
+- Patch a bug in `obitagpcr` to consider the renaming of the `forward_mismatch` and `reverse_mismatch` tags
+  to `forward_error` and `reverse_error`.
 
 ### Enhancement
 
@@ -14,6 +16,10 @@
 
 ### New feature
 
+- In every *OBITools*, writing an empty sequence (sequence of length equal to zero) through an error and
+  stops the execution of the tool, except if the **--skip-empty** option is set. In that case, the empty
+  sequence is ignored and not printed to the output. When output involved paired sequence the **--skip-empty** 
+  option is ignored. 
 - In `obiannotate` adds the **--set-identifier** option to edit the sequence identifier
 - In `obitag` adds the **--save-db** option allowing at the end of the run of `obitag` to save a
   modified version of the reference database containing the computed index. This allows next

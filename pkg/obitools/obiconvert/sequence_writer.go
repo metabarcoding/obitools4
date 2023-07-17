@@ -80,6 +80,8 @@ func CLIWriteBioSequences(iterator obiiter.IBioSequence,
 			var reverse string
 			fn, reverse = BuildPairedFileNames(fn)
 			opts = append(opts, obiformats.WritePairedReadsTo(reverse))
+		} else {
+			opts = append(opts, obiformats.OptionsSkipEmptySequence(CLISkipEmpty()))
 		}
 
 		switch CLIOutputFormat() {
@@ -91,6 +93,7 @@ func CLIWriteBioSequences(iterator obiiter.IBioSequence,
 			newIter, err = obiformats.WriteSequencesToFile(iterator, fn, opts...)
 		}
 	} else {
+		opts = append(opts, obiformats.OptionsSkipEmptySequence(CLISkipEmpty()))
 		switch CLIOutputFormat() {
 		case "fastq":
 			newIter, err = obiformats.WriteFastqToStdout(iterator, opts...)
@@ -99,6 +102,7 @@ func CLIWriteBioSequences(iterator obiiter.IBioSequence,
 		default:
 			newIter, err = obiformats.WriteSequencesToStdout(iterator, opts...)
 		}
+
 	}
 
 	if err != nil {

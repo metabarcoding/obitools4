@@ -26,6 +26,7 @@ var __output_solexa_quality__ = false
 
 var __no_progress_bar__ = false
 var __compressed__ = false
+var __skip_empty__ = false
 
 var __output_file_name__ = "-"
 var __paired_file_name__ = ""
@@ -69,6 +70,9 @@ func OutputModeOptionSet(options *getoptions.GetOpt) {
 	options.BoolVar(&__compressed__, "compress", false,
 		options.Alias("Z"),
 		options.Description("Output is compressed"))
+
+		options.BoolVar(&__skip_empty__, "skip-empty", __skip_empty__,
+		options.Description("Sequences of length equal to zero are suppressed from the output"))
 
 	options.StringVar(&__output_file_name__, "out", __output_file_name__,
 		options.Alias("o"),
@@ -139,6 +143,10 @@ func CLIOutputFormat() string {
 
 func CLICompressed() bool {
 	return __compressed__
+}
+
+func CLISkipEmpty() bool {
+	return __skip_empty__ 
 }
 
 func CLIInputFastHeaderFormat() string {

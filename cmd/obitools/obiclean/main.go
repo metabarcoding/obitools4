@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+
 	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
@@ -19,11 +20,11 @@ func main() {
 	fs, err := obiconvert.CLIReadBioSequences(args...)
 
 	if err != nil {
-		log.Errorf("Cannot open file (%v)",err)
+		log.Errorf("Cannot open file (%v)", err)
 		os.Exit(1)
 	}
 
-	cleaned := obiclean.IOBIClean(fs)
+	cleaned := obiclean.CLIOBIClean(fs)
 
 	obiconvert.CLIWriteBioSequences(cleaned, true)
 

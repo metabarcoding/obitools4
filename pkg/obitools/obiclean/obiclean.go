@@ -285,7 +285,7 @@ func Weight(sequence *obiseq.BioSequence) map[string]int {
 	return weight
 }
 
-func IOBIClean(itertator obiiter.IBioSequence) obiiter.IBioSequence {
+func CLIOBIClean(itertator obiiter.IBioSequence) obiiter.IBioSequence {
 
 	db := itertator.Load()
 

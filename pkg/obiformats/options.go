@@ -16,6 +16,7 @@ type __options__ struct {
 	closefile             bool
 	appendfile            bool
 	compressed            bool
+	skip_empty            bool
 	csv_id                bool
 	csv_sequence          bool
 	csv_quality           bool
@@ -48,6 +49,7 @@ func MakeOptions(setters []WithOption) Options {
 		closefile:             false,
 		appendfile:            false,
 		compressed:            false,
+		skip_empty:            false,
 		csv_id:                true,
 		csv_definition:        false,
 		csv_count:             false,
@@ -108,6 +110,10 @@ func (opt Options) AppendFile() bool {
 
 func (opt Options) CompressedFile() bool {
 	return opt.pointer.compressed
+}
+
+func (opt Options) SkipEmptySequence() bool {
+	return opt.pointer.skip_empty
 }
 
 func (opt Options) CSVId() bool {
@@ -189,6 +195,14 @@ func OptionsAppendFile(append bool) WithOption {
 func OptionsCompressed(compressed bool) WithOption {
 	f := WithOption(func(opt Options) {
 		opt.pointer.compressed = compressed
+	})
+
+	return f
+}
+
+func OptionsSkipEmptySequence(skip bool) WithOption {
+	f := WithOption(func(opt Options) {
+		opt.pointer.skip_empty = skip
 	})
 
 	return f
