@@ -1,3 +1,4 @@
+// Package obiformats provides functions for formatting and writing biosequences in various formats.
 package obiformats
 
 import (
@@ -23,6 +24,7 @@ func min(x, y int) int {
 	return y
 }
 
+// FormatFasta formats a BioSequence as a FASTA-formatted string using the provided format header.
 func FormatFasta(seq *obiseq.BioSequence, formater FormatHeader) string {
 	var fragments strings.Builder
 
@@ -55,6 +57,7 @@ func FormatFasta(seq *obiseq.BioSequence, formater FormatHeader) string {
 		folded)
 }
 
+// FormatFastaBatch formats a batch of BioSequences as a single FASTA-formatted byte slice using the provided format header.
 func FormatFastaBatch(batch obiiter.BioSequenceBatch, formater FormatHeader, skipEmpty bool) []byte {
 	var bs bytes.Buffer
 	for _, seq := range batch.Slice() {
@@ -72,6 +75,7 @@ func FormatFastaBatch(batch obiiter.BioSequenceBatch, formater FormatHeader, ski
 	return bs.Bytes()
 }
 
+// The WriteFasta function writes a given iterator of biological sequences to a file in FASTA format.
 func WriteFasta(iterator obiiter.IBioSequence,
 	file io.WriteCloser,
 	options ...WithOption) (obiiter.IBioSequence, error) {
@@ -154,12 +158,15 @@ func WriteFasta(iterator obiiter.IBioSequence,
 	return newIter, nil
 }
 
+// The function WriteFastaToStdout writes a FASTA file to standard output.
 func WriteFastaToStdout(iterator obiiter.IBioSequence,
 	options ...WithOption) (obiiter.IBioSequence, error) {
 	options = append(options, OptionDontCloseFile())
 	return WriteFasta(iterator, os.Stdout, options...)
 }
 
+// The function `WriteFastaToFile` writes a given iterator of biosequences to a file in FASTA format,
+// with the option to append to an existing file and save paired sequences to a separate file.
 func WriteFastaToFile(iterator obiiter.IBioSequence,
 	filename string,
 	options ...WithOption) (obiiter.IBioSequence, error) {

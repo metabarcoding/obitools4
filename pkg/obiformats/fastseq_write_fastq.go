@@ -15,6 +15,8 @@ import (
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiutils"
 )
 
+// The function FormatFastq takes a BioSequence object, a quality shift value, and a header formatter
+// function as input, and returns a formatted string in FASTQ format.
 func FormatFastq(seq *obiseq.BioSequence, quality_shift int, formater FormatHeader) string {
 
 	l := seq.Len()
