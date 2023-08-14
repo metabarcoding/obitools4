@@ -19,11 +19,11 @@ for f in $(egrep "gb(${DIV})[0-9]+\.seq\.gz" index.html \
    fi
 
    while [[ ! -f $f ]] ; do
-        echo downloading
-        wget2 --progress bar -v -o - $URL$f 
-           if [[ -f $f ]] ; then
-              gzip -t $f && echo " ok" || rm -f $f
-           fi
+         echo downloading
+         wget2 --progress bar -v -o - $URL$f 
+         if [[ -f $f ]] ; then
+            gzip -t $f && echo " ok" || rm -f $f
+         fi
    done
 done
 

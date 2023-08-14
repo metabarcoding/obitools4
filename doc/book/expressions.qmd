@@ -17,6 +17,10 @@ Several OBITools (*e.g.* obigrep, obiannotate) allow the user to specify some si
   the length of a sequences, the number of element in a map like `annotations`, the number
   of elements in an array. The reurned value is an `int`.
 
+**`contains(map,key)`**
+
+: Tests if the `map` contains a value assciated to `key`
+
 ### Cast functions {.unnumbered}
 
 **`int(x)`**  

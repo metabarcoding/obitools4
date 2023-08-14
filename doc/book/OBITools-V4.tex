@@ -213,7 +213,7 @@
 
 \begin{document}
 \maketitle
-\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[sharp corners, borderline west={3pt}{0pt}{shadecolor}, enhanced, breakable, interior hidden, frame hidden, boxrule=0pt]}{\end{tcolorbox}}\fi
+\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[frame hidden, borderline west={3pt}{0pt}{shadecolor}, sharp corners, boxrule=0pt, enhanced, interior hidden, breakable]}{\end{tcolorbox}}\fi
 
 \renewcommand*\contentsname{Table of contents}
 {
@@ -1746,47 +1746,75 @@ language}\label{function-defined-in-the-language}}
 \subsection*{Instrospection functions}\label{instrospection-functions}}
 \addcontentsline{toc}{subsection}{Instrospection functions}
 
-\begin{itemize}
-\tightlist
-\item
-  \texttt{len(x)}is a generic function allowing to retreive the size of
-  a object. It returns the length of a sequences, the number of element
-  in a map like \texttt{annotations}, the number of elements in an
-  array. The reurned value is an \texttt{int}.
-\end{itemize}
+\begin{description}
+\item[\textbf{\texttt{len(x)}}]
+It is a generic function allowing to retreive the size of a object. It
+returns the length of a sequences, the number of element in a map like
+\texttt{annotations}, the number of elements in an array. The reurned
+value is an \texttt{int}.
+\item[\textbf{\texttt{contains(map,key)}}]
+Tests if the \texttt{map} contains a value assciated to \texttt{key}
+\end{description}
 
 \hypertarget{cast-functions}{%
 \subsection*{Cast functions}\label{cast-functions}}
 \addcontentsline{toc}{subsection}{Cast functions}
 
-\begin{itemize}
-\tightlist
-\item
-  \texttt{int(x)} converts if possible the \texttt{x} value to an
-  integer value. The function returns an \texttt{int}.
-\item
-  \texttt{numeric(x)} converts if possible the \texttt{x} value to a
-  float value. The function returns a \texttt{float}.
-\item
-  \texttt{bool(x)} converts if possible the \texttt{x} value to a
-  boolean value. The function returns a \texttt{bool}.
-\end{itemize}
+\begin{description}
+\item[\textbf{\texttt{int(x)}}]
+Converts if possible the \texttt{x} value to an integer value. The
+function returns an \texttt{int}.
+\item[\textbf{\texttt{numeric(x)}}]
+Converts if possible the \texttt{x} value to a float value. The function
+returns a \texttt{float}.
+\item[\textbf{\texttt{bool(x)}}]
+Converts if possible the \texttt{x} value to a boolean value. The
+function returns a \texttt{bool}.
+\end{description}
 
 \hypertarget{string-related-functions}{%
 \subsection*{String related functions}\label{string-related-functions}}
 \addcontentsline{toc}{subsection}{String related functions}
 
-\begin{itemize}
-\tightlist
-\item
-  \texttt{printf(format,...)} allows to combine several values to build
-  a string. \texttt{format} follows the classical C \texttt{printf}
-  syntax. The function returns a \texttt{string}.
-\item
-  \texttt{subspc(x)} substitutes every space in the \texttt{x} string by
-  the underscore (\texttt{\_}) character. The function returns a
-  \texttt{string}.
-\end{itemize}
+\begin{description}
+\item[\textbf{\texttt{printf(format,...)}}]
+Allows to combine several values to build a string. \texttt{format}
+follows the classical C \texttt{printf} syntax. The function returns a
+\texttt{string}.
+\item[\textbf{\texttt{subspc(x)}}]
+substitutes every space in the \texttt{x} string by the underscore
+(\texttt{\_}) character. The function returns a \texttt{string}.
+\end{description}
+
+\hypertarget{condition-function}{%
+\subsection*{Condition function}\label{condition-function}}
+\addcontentsline{toc}{subsection}{Condition function}
+
+\begin{description}
+\item[\textbf{\texttt{ifelse(condition,val1,val2)}}]
+The \texttt{condition} value has to be a \texttt{bool} value. If it is
+\texttt{true} the function returns \texttt{val1}, otherwise, it is
+returning \texttt{val2}.
+\end{description}
+
+\hypertarget{sequence-analysis-related-function}{%
+\subsection{Sequence analysis related
+function}\label{sequence-analysis-related-function}}
+
+\begin{description}
+\item[\textbf{\texttt{composition(sequence)}}]
+The nucleotide composition of the sequence is returned as as map indexed
+by \texttt{a}, \texttt{c}, \texttt{g}, or \texttt{t} and each value is
+the number of occurrences of that nucleotide. A fifth key
+\texttt{others} accounts for all others symboles.
+\item[\textbf{\texttt{gcskew(sequence)}}]
+Computes the excess of g compare to c of the sequence, known as the GC
+skew.
+
+\[
+Skew_{GC}=\frac{G-C}{G+C}
+\]
+\end{description}
 
 \hypertarget{accessing-to-the-sequence-annotations}{%
 \section{Accessing to the sequence
@@ -1825,6 +1853,12 @@ methods of the \texttt{sequence} object.
   THe sequence definition : \texttt{Definition()}
 \end{itemize}
 
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{sequence}\OperatorTok{.}\NormalTok{Id}\OperatorTok{()}
+\end{Highlighting}
+\end{Shaded}
+
 \hypertarget{metabarcode-design-and-quality-assessment}{%
 \chapter{Metabarcode design and quality
 assessment}\label{metabarcode-design-and-quality-assessment}}
@@ -1850,6 +1884,9 @@ Replace the \texttt{ecoPCR} original \emph{OBITools}
 
 \hypertarget{obitag}{%
 \section{\texorpdfstring{\texttt{obitag}}{obitag}}\label{obitag}}
+
+\hypertarget{obitagpcr}{%
+\section{\texorpdfstring{\texttt{obitagpcr}}{obitagpcr}}\label{obitagpcr}}
 
 \hypertarget{computations-on-sequences}{%
 \chapter{Computations on sequences}\label{computations-on-sequences}}
@@ -2061,6 +2098,50 @@ Sequences can be selected on several of their caracteristics, their
 length, their id, their sequence. Options allow for specifying the
 condition if selection.
 
+\textbf{Selection based on the sequence}
+
+Sequence records can be selected according if they match or not with a
+pattern. The simplest pattern is as short sequence (\emph{e.g}
+\texttt{AACCTT}). But the usage of regular patterns allows for looking
+for more complex pattern. As example, \texttt{A{[}TG{]}C+G} matches a
+\texttt{A}, followed by a \texttt{T} or a \texttt{G}, then one or
+several \texttt{C} and endly a \texttt{G}.
+
+\begin{description}
+\item[\textbf{-\/-sequence}\textbar{}\textbf{-s} \emph{PATTERN}]
+Regular expression pattern to be tested against the sequence itself. The
+pattern is case insensitive. A complete description of the regular
+pattern grammar is available
+\href{https://yourbasic.org/golang/regexp-cheat-sheet/\#cheat-sheet}{here}.
+\item[\emph{Examples:}]
+Selects only the sequence records that contain an \emph{EcoRI}
+restriction site.
+\end{description}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{obigrep} \AttributeTok{{-}s} \StringTok{\textquotesingle{}GAATTC\textquotesingle{}}\NormalTok{ seq1.fasta }\OperatorTok{\textgreater{}}\NormalTok{ seq2.fasta}
+\end{Highlighting}
+\end{Shaded}
+
+: Selects only the sequence records that contain a stretch of at least
+10 \texttt{A}.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{obigrep} \AttributeTok{{-}s} \StringTok{\textquotesingle{}A\{10,\}\textquotesingle{}}\NormalTok{ seq1.fasta }\OperatorTok{\textgreater{}}\NormalTok{ seq2.fasta}
+\end{Highlighting}
+\end{Shaded}
+
+: Selects only the sequence records that do not contain ambiguous
+nucleotides.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{obigrep} \AttributeTok{{-}s} \StringTok{\textquotesingle{}\^{}[ACGT]+$\textquotesingle{}}\NormalTok{ seq1.fasta }\OperatorTok{\textgreater{}}\NormalTok{ seq2.fasta}
+\end{Highlighting}
+\end{Shaded}
+
 \begin{description}
 \item[\textbf{-\/-min-count} \textbar{} \textbf{-c} \emph{COUNT}]
 only sequences reprensenting at least \emph{COUNT} reads will be
@@ -2072,7 +2153,7 @@ only sequences reprensenting no more than \emph{COUNT} reads will be
 selected. That option rely on the \texttt{count} attribute. If the
 \texttt{count} attribute is not defined for a sequence record, it is
 assumed equal to \(1\).
-\item[Example]
+\item[\emph{Examples}]
 Selecting sequence records representing at least five reads in the
 dataset.
 \end{description}
@@ -2495,25 +2576,18 @@ A function consuming a \texttt{obiiter.IBioSequence} and returning two
 \chapter{Annexes}\label{annexes}}
 
 \hypertarget{sequence-attributes}{%
-\subsection{Sequence attributes}\label{sequence-attributes}}
+\section{Sequence attributes}\label{sequence-attributes}}
 
-\hypertarget{reserved-sequence-attributes}{%
-\subsubsection{Reserved sequence
-attributes}\label{reserved-sequence-attributes}}
+\textbf{ali\_dir (\texttt{string})}
 
-\hypertarget{ali_dir}{%
-\paragraph{\texorpdfstring{\texttt{ali\_dir}}{ali\_dir}}\label{ali_dir}}
-
-\hypertarget{type-string}{%
-\subparagraph{\texorpdfstring{Type :
-\texttt{string}}{Type : string}}\label{type-string}}
-
-The attribute can contain 2 string values \texttt{"left"} or
-\texttt{"right".}
-
-\hypertarget{set-by-the-obipairing-tool}{%
-\subparagraph{\texorpdfstring{Set by the \emph{obipairing}
-tool}{Set by the obipairing tool}}\label{set-by-the-obipairing-tool}}
+\begin{itemize}
+\tightlist
+\item
+  Set by the \emph{obipairing} tool
+\item
+  The attribute can contain 2 string values \texttt{left} or
+  \texttt{right}.
+\end{itemize}
 
 The alignment generated by \emph{obipairing} is a 3'-end gap free
 algorithm. Two cases can occur when aligning the forward and reverse
@@ -2524,46 +2598,44 @@ the paired reads overlap by their 5' ends, and the complete barcode is
 sequenced by both the reads. In that later case, \texttt{ali\_dir} is
 set to \emph{right}.
 
-\hypertarget{ali_length}{%
-\paragraph{\texorpdfstring{\texttt{ali\_length}}{ali\_length}}\label{ali_length}}
+\textbf{ali\_length (\texttt{int})}
 
-\hypertarget{set-by-the-obipairing-tool-1}{%
-\subparagraph{\texorpdfstring{Set by the \emph{obipairing}
-tool}{Set by the obipairing tool}}\label{set-by-the-obipairing-tool-1}}
+\begin{itemize}
+\tightlist
+\item
+  Set by the \emph{obipairing} tool
+\end{itemize}
 
 Length of the aligned parts when merging forward and reverse reads
 
-\hypertarget{count-the-number-of-sequence-occurrences}{%
-\paragraph{\texorpdfstring{\texttt{count} : the number of sequence
-occurrences}{count : the number of sequence occurrences}}\label{count-the-number-of-sequence-occurrences}}
+\textbf{count (\texttt{int})}
 
-\hypertarget{set-by-the-obiuniq-tool}{%
-\subparagraph{\texorpdfstring{Set by the \emph{obiuniq}
-tool}{Set by the obiuniq tool}}\label{set-by-the-obiuniq-tool}}
+\begin{itemize}
+\tightlist
+\item
+  Set by the \emph{obiuniq} tool
+\item
+  Getter : method \texttt{Count()}
+\item
+  Setter : method \texttt{SetCount(int)}
+\end{itemize}
 
-The \texttt{count} attribute indicates how-many strictly identical
-sequences have been merged in a single record. It contains an integer
-value. If it is absent this means that the sequence record represents a
-single occurrence of the sequence.
-
-\hypertarget{getter-method-count}{%
-\subparagraph{\texorpdfstring{Getter : method
-\texttt{Count()}}{Getter : method Count()}}\label{getter-method-count}}
+The \texttt{count} attribute indicates how-many strictly identical reads
+have been merged in a single record. It contains an integer value. If it
+is absent this means that the sequence record represents a single
+occurrence of the sequence.
 
 The \texttt{Count()} method allows to access to the count attribute as
 an integer value. If the \texttt{count} attribute is not defined for the
 given sequence, the value \emph{1} is returned
 
-\hypertarget{merged_}{%
-\paragraph{\texorpdfstring{\texttt{merged\_*}}{merged\_*}}\label{merged_}}
+\textbf{merged\_* (\texttt{map{[}string{]}int})}
 
-\hypertarget{type-mapstringint}{%
-\subparagraph{\texorpdfstring{Type :
-\texttt{map{[}string{]}int}}{Type : map{[}string{]}int}}\label{type-mapstringint}}
-
-\hypertarget{set-by-the-obiuniq-tool-1}{%
-\subparagraph{\texorpdfstring{Set by the \emph{obiuniq}
-tool}{Set by the obiuniq tool}}\label{set-by-the-obiuniq-tool-1}}
+\begin{itemize}
+\tightlist
+\item
+  Set by the \emph{obiuniq} tool
+\end{itemize}
 
 The \texttt{-m} option of the \emph{obiuniq} tools allows for keeping
 track of the distribution of the values stored in given attribute of
@@ -2574,47 +2646,98 @@ the name of the monitored attribute. If \texttt{-m} option is used with
 the attribute \emph{sample}, then this attribute names
 \emph{merged\_sample}.
 
-\hypertarget{mode}{%
-\paragraph{\texorpdfstring{\texttt{mode}}{mode}}\label{mode}}
+\textbf{mode (\texttt{string})}
 
-\hypertarget{set-by-the-obipairing-tool-2}{%
-\subparagraph{\texorpdfstring{Set by the \emph{obipairing}
-tool}{Set by the obipairing tool}}\label{set-by-the-obipairing-tool-2}}
+\begin{itemize}
+\tightlist
+\item
+  Set by the \emph{obipairing} tool
+\item
+  The attribute can contain 2 string values \texttt{join} or
+  \texttt{alignment}.
+\end{itemize}
 
-\textbf{\texttt{obitag\_ref\_index}}
+\textbf{obitag\_ref\_index (\texttt{map{[}string{]}string})}
 
-\hypertarget{set-by-the-obirefidx-tool.}{%
-\subparagraph{\texorpdfstring{Set by the \emph{obirefidx}
-tool.}{Set by the obirefidx tool.}}\label{set-by-the-obirefidx-tool.}}
+\begin{itemize}
+\tightlist
+\item
+  Set by the \emph{obirefidx} tool.
+\end{itemize}
 
 It resumes to which taxonomic annotation a match to that sequence must
 lead according to the number of differences existing between the query
 sequence and the reference sequence having that tag.
 
-\hypertarget{getter-method-count-1}{%
-\subparagraph{\texorpdfstring{Getter : method
-\texttt{Count()}}{Getter : method Count()}}\label{getter-method-count-1}}
+\begin{Shaded}
+\begin{Highlighting}[]
+   \FunctionTok{\{}\DataTypeTok{"0"}\FunctionTok{:}\StringTok{"9606@Homo sapiens@species"}\FunctionTok{,}
+    \DataTypeTok{"2"}\FunctionTok{:}\StringTok{"207598@Homininae@subfamily"}\FunctionTok{,}
+    \DataTypeTok{"3"}\FunctionTok{:}\StringTok{"9604@Hominidae@family"}\FunctionTok{,}
+    \DataTypeTok{"8"}\FunctionTok{:}\StringTok{"314295@Hominoidea@superfamily"}\FunctionTok{,}
+    \DataTypeTok{"10"}\FunctionTok{:}\StringTok{"9526@Catarrhini@parvorder"}\FunctionTok{,}
+    \DataTypeTok{"12"}\FunctionTok{:}\StringTok{"1437010@Boreoeutheria@clade"}\FunctionTok{,}
+    \DataTypeTok{"16"}\FunctionTok{:}\StringTok{"9347@Eutheria@clade"}\FunctionTok{,}
+    \DataTypeTok{"17"}\FunctionTok{:}\StringTok{"40674@Mammalia@class"}\FunctionTok{,}
+    \DataTypeTok{"22"}\FunctionTok{:}\StringTok{"117571@Euteleostomi@clade"}\FunctionTok{,}
+    \DataTypeTok{"25"}\FunctionTok{:}\StringTok{"7776@Gnathostomata@clade"}\FunctionTok{,}
+    \DataTypeTok{"29"}\FunctionTok{:}\StringTok{"33213@Bilateria@clade"}\FunctionTok{,}
+    \DataTypeTok{"30"}\FunctionTok{:}\StringTok{"6072@Eumetazoa@clade"}\FunctionTok{\}}
+\end{Highlighting}
+\end{Shaded}
 
-\hypertarget{pairing_mismatches}{%
-\paragraph{\texorpdfstring{\texttt{pairing\_mismatches}}{pairing\_mismatches}}\label{pairing_mismatches}}
+\textbf{pairing\_mismatches (\texttt{map{[}string{]}string})}
 
-\hypertarget{set-by-the-obipairing-tool-3}{%
-\subparagraph{\texorpdfstring{Set by the \emph{obipairing}
-tool}{Set by the obipairing tool}}\label{set-by-the-obipairing-tool-3}}
+\begin{itemize}
+\tightlist
+\item
+  Set by the \emph{obipairing} tool
+\end{itemize}
 
-\hypertarget{score}{%
-\paragraph{\texorpdfstring{\texttt{score}}{score}}\label{score}}
+\textbf{seq\_a\_single (\texttt{int})}
 
-\hypertarget{set-by-the-obipairing-tool-4}{%
-\subparagraph{\texorpdfstring{Set by the \emph{obipairing}
-tool}{Set by the obipairing tool}}\label{set-by-the-obipairing-tool-4}}
+\begin{itemize}
+\tightlist
+\item
+  Set by the \emph{obipairing} tool
+\end{itemize}
 
-\hypertarget{score_norm}{%
-\paragraph{\texorpdfstring{\texttt{score\_norm}}{score\_norm}}\label{score_norm}}
+\textbf{seq\_ab\_match (\texttt{int})}
 
-\hypertarget{set-by-the-obipairing-tool-5}{%
-\subparagraph{\texorpdfstring{Set by the \emph{obipairing}
-tool}{Set by the obipairing tool}}\label{set-by-the-obipairing-tool-5}}
+\begin{itemize}
+\tightlist
+\item
+  Set by the \emph{obipairing} tool
+\end{itemize}
+
+\textbf{seq\_b\_single (\texttt{int})}
+
+\begin{itemize}
+\tightlist
+\item
+  Set by the \emph{obipairing} tool
+\end{itemize}
+
+\textbf{score (\texttt{int})}
+
+\begin{itemize}
+\tightlist
+\item
+  Set by the \emph{obipairing} tool
+\end{itemize}
+
+\textbf{score\_norm (\texttt{float})}
+
+\begin{itemize}
+\tightlist
+\item
+  Set by the \emph{obipairing} tool
+\item
+  The value ranges between 0 and 1.
+\end{itemize}
+
+Score of the alignment between forward and reverse reads expressed as a
+fraction of identity.
 
 \hypertarget{references}{%
 \chapter*{References}\label{references}}
