@@ -17,6 +17,14 @@ import (
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiutils"
 )
 
+// min returns the minimum of two integers.
+//
+// Parameters:
+// - x: an integer
+// - y: an integer
+//
+// Return:
+// - the minimum of x and y (an integer)
 func min(x, y int) int {
 	if x < y {
 		return x
@@ -24,7 +32,11 @@ func min(x, y int) int {
 	return y
 }
 
-// FormatFasta formats a BioSequence as a FASTA-formatted string using the provided format header.
+// FormatFasta formats a BioSequence into a FASTA formatted string.
+//
+// seq is a pointer to the BioSequence to be formatted.
+// formater is the FormatHeader function to be used for formatting the sequence header.
+// It returns a string containing the formatted FASTA sequence.
 func FormatFasta(seq *obiseq.BioSequence, formater FormatHeader) string {
 	var fragments strings.Builder
 
@@ -57,25 +69,48 @@ func FormatFasta(seq *obiseq.BioSequence, formater FormatHeader) string {
 		folded)
 }
 
-// FormatFastaBatch formats a batch of BioSequences as a single FASTA-formatted byte slice using the provided format header.
+// FormatFastaBatch formats a batch of biosequences in FASTA format.
+//
+// It takes the following parameters:
+// - batch: a BioSequenceBatch representing the batch of sequences to format.
+// - formater: a FormatHeader function that formats the header of each sequence.
+// - skipEmpty: a boolean indicating whether empty sequences should be skipped or not.
+//
+// It returns a byte array containing the formatted sequences.
 func FormatFastaBatch(batch obiiter.BioSequenceBatch, formater FormatHeader, skipEmpty bool) []byte {
+	// Create a buffer to store the formatted sequences
 	var bs bytes.Buffer
+
+	// Iterate over each sequence in the batch
 	for _, seq := range batch.Slice() {
+		// Check if the sequence is empty
 		if seq.Len() > 0 {
-			bs.WriteString(FormatFasta(seq, formater))
-			bs.WriteString("\n")	
+			// Format the sequence using the provided formater function
+			formattedSeq := FormatFasta(seq, formater)
+
+			// Append the formatted sequence to the buffer
+			bs.WriteString(formattedSeq)
+			bs.WriteByte('\n')
 		} else {
+			// Handle empty sequences
 			if skipEmpty {
-				log.Warnf("Sequence %s is empty and skiped in output",seq.Id())
+				// Skip empty sequences if skipEmpty is true
+				log.Warnf("Sequence %s is empty and skipped in output", seq.Id())
 			} else {
-				log.Fatalf("Sequence %s is empty",seq.Id())
+				// Terminate the program if skipEmpty is false
+				log.Fatalf("Sequence %s is empty", seq.Id())
 			}
 		}
 	}
+
+	// Return the byte array representation of the buffer
 	return bs.Bytes()
 }
 
-// The WriteFasta function writes a given iterator of biological sequences to a file in FASTA format.
+// WriteFasta writes a given iterator of bio sequences to a file in FASTA format.
+//
+// The function takes an iterator of bio sequences, a file to write to, and
+// optional options. It returns a new iterator of bio sequences and an error.
 func WriteFasta(iterator obiiter.IBioSequence,
 	file io.WriteCloser,
 	options ...WithOption) (obiiter.IBioSequence, error) {
@@ -158,15 +193,31 @@ func WriteFasta(iterator obiiter.IBioSequence,
 	return newIter, nil
 }
 
-// The function WriteFastaToStdout writes a FASTA file to standard output.
+// WriteFastaToStdout writes the given bio sequence iterator to standard output in FASTA format.
+//
+// The function takes an iterator of bio sequences as the first parameter and optional
+// configuration options as variadic arguments. It appends the option to not close the file
+// to the options slice and then calls the WriteFasta function passing the iterator,
+// os.Stdout as the output file, and the options slice.
+// 
+// The function returns the same bio sequence iterator and an error if any occurred.
 func WriteFastaToStdout(iterator obiiter.IBioSequence,
 	options ...WithOption) (obiiter.IBioSequence, error) {
 	options = append(options, OptionDontCloseFile())
 	return WriteFasta(iterator, os.Stdout, options...)
 }
 
-// The function `WriteFastaToFile` writes a given iterator of biosequences to a file in FASTA format,
-// with the option to append to an existing file and save paired sequences to a separate file.
+// WriteFastaToFile writes the given iterator of biosequences to a file with the specified filename,
+// using the provided options. It returns the updated iterator and any error that occurred.
+//
+// Parameters:
+// - iterator: The biosequence iterator to write to the file.
+// - filename: The name of the file to write to.
+// - options: Zero or more optional parameters to customize the writing process.
+//
+// Returns:
+// - obiiter.IBioSequence: The updated biosequence iterator.
+// - error: Any error that occurred during the writing process.
 func WriteFastaToFile(iterator obiiter.IBioSequence,
 	filename string,
 	options ...WithOption) (obiiter.IBioSequence, error) {
