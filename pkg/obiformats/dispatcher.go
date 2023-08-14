@@ -57,7 +57,7 @@ func WriterDispatcher(prototypename string,
 					info, err := os.Stat(directory)
 					switch {
 					case !os.IsNotExist(err) && !info.IsDir():
-						log.Fatalln("Cannot Create the directory %s", directory)
+						log.Fatalf("Cannot Create the directory %s", directory)
 					case os.IsNotExist(err):
 						os.Mkdir(directory, 0755)
 					}
