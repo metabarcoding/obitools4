@@ -22,6 +22,17 @@ func Make2DArray[T any](rows, cols int) Matrix[T] {
 	return matrix
 }
 
+// Init initializes the Matrix with the given value.
+//
+// value: the value to initialize the Matrix elements with.
+func (matrix *Matrix[T]) Init(value T) {
+	data := (*matrix)[0]
+	data = data[0:cap(data)]
+	for i := range data {
+		data[i] = value
+	}
+}
+
 // Row returns the i-th row of the matrix.
 //
 // Parameters:
@@ -37,4 +48,12 @@ func (matrix *Matrix[T]) Column(i int) []T {
 		r[j] = (*matrix)[j][i]
 	}
 	return r
+}
+
+// Dim returns the dimensions of the Matrix.
+//
+// It takes no parameters.
+// It returns two integers: the number of rows and the number of columns.
+func (matrix *Matrix[T]) Dim() (int, int) {
+	return len(*matrix), len((*matrix)[0])
 }
