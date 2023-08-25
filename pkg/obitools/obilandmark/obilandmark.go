@@ -1,7 +1,6 @@
 package obilandmark
 
 import (
-	"math"
 	"os"
 	"sort"
 	"sync"
@@ -16,6 +15,18 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// MapOnLandmarkSequences performs sequence mapping on a given library of bio sequences.
+//
+// Computes for each sequence in the library a descriptor vector containing describing the sequence
+// as the set of its distances to every landmark sequence.
+//
+// Parameters:
+// - library: A slice of bio sequences to be mapped.
+// - landmark_idx: A list of indices representing landmark sequences.
+// - sizes: Optional argument specifying the number of workers to use.
+//
+// Returns:
+// - seqworld: A matrix of float64 values representing the mapped coordinates.
 func MapOnLandmarkSequences(library obiseq.BioSequenceSlice, landmark_idx []int, sizes ...int) obiutils.Matrix[float64] {
 	nworkers := obioptions.CLIParallelWorkers()
 
@@ -73,6 +84,20 @@ func MapOnLandmarkSequences(library obiseq.BioSequenceSlice, landmark_idx []int,
 	return seqworld
 }
 
+// CLISelectLandmarkSequences selects landmark sequences from the given iterator and assigns attributes to the sequences.
+//
+// The fonction annotate the input set of sequences with two or three attributes:
+//   - 'landmark_id' indicating which sequence was selected and to which landmark it corresponds.
+//   - 'landmark_coord' indicates the coordinates of the sequence.
+//   - 'landmark_class' indicates to which landmark (landmark_id) the sequence is the closest.
+//
+// Parameters:
+// - iterator: an object of type obiiter.IBioSequence representing the iterator to select landmark sequences from.
+//
+// Returns:
+//   - an object of type obiiter.IBioSequence providing the input sequence annotated with their coordinates respectively to
+//     each selected landmark sequences and with an attribute 'landmark_id' indicating which sequence was selected and to
+//     which landmark it corresponds.
 func CLISelectLandmarkSequences(iterator obiiter.IBioSequence) obiiter.IBioSequence {
 
 	library := iterator.Load()
@@ -80,14 +105,14 @@ func CLISelectLandmarkSequences(iterator obiiter.IBioSequence) obiiter.IBioSeque
 	library_size := len(library)
 	n_landmark := NCenter()
 
-	landmark_idx := obistats.SampleIntWithoutReplacemant(n_landmark, library_size)
+	landmark_idx := obistats.SampleIntWithoutReplacement(n_landmark, library_size)
 	log.Infof("Library contains %d sequence", len(library))
 
 	var seqworld obiutils.Matrix[float64]
 
 	for loop := 0; loop < 5; loop++ {
 		sort.IntSlice(landmark_idx).Sort()
-		log.Infof("Selected indices : %v", landmark_idx)
+		log.Debugf("Selected indices : %v", landmark_idx)
 
 		seqworld = MapOnLandmarkSequences(library, landmark_idx)
 		initialCenters := obiutils.Make2DArray[float64](n_landmark, n_landmark)
@@ -100,8 +125,11 @@ func CLISelectLandmarkSequences(iterator obiiter.IBioSequence) obiiter.IBioSeque
 
 		dist_centers := 0.0
 		for i := 0; i < n_landmark; i++ {
+			center := (*centers)[i]
+			icenter := initialCenters[i]
 			for j := 0; j < n_landmark; j++ {
-				dist_centers += math.Pow((*centers)[i][j]-initialCenters[i][j], 2)
+				diff := center[j] - icenter[j]
+				dist_centers += diff * diff
 			}
 		}
 
@@ -112,7 +140,7 @@ func CLISelectLandmarkSequences(iterator obiiter.IBioSequence) obiiter.IBioSeque
 
 	sort.IntSlice(landmark_idx).Sort()
 
-	log.Infof("Selected indices : %v", landmark_idx)
+	log.Debugf("Selected indices : %v", landmark_idx)
 	seqworld = MapOnLandmarkSequences(library, landmark_idx)
 
 	seq_landmark := make(map[int]int, n_landmark)

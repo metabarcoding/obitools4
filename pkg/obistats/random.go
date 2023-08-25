@@ -2,7 +2,17 @@ package obistats
 
 import "math/rand"
 
-func SampleIntWithoutReplacemant(n, max int) []int {
+// SampleIntWithoutReplacement generates a random sample of unique integers without replacement.
+//
+// Generates a random sample of n unique integers without replacement included in the range [0, max).
+//
+// Parameters:
+//   - n: the number of integers to generate.
+//   - max: the maximum value for the generated integers.
+//
+// Returns:
+//   - []int: a slice of integers containing the generated sample.
+func SampleIntWithoutReplacement(n, max int) []int {
 
 	draw := make(map[int]int, n)
 
