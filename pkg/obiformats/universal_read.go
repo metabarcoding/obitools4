@@ -2,7 +2,7 @@ package obiformats
 
 import (
 	"bufio"
-	"compress/gzip"
+	gzip "github.com/klauspost/pgzip"
 	"io"
 	"os"
 	"path"
@@ -52,7 +52,7 @@ func ReadSequencesFromFile(filename string,
 	var err error
 
 	options = append(options, OptionsSource(obiutils.RemoveAllExt((path.Base(filename)))))
-	
+
 	file, err = os.Open(filename)
 
 	if err != nil {

@@ -3,6 +3,7 @@ package obiiter
 import (
 	log "github.com/sirupsen/logrus"
 
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obioptions"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
 
@@ -15,7 +16,7 @@ import (
 //   - First is allowing to indicates the number of workers running in parallele (default 4)
 //   - The second the size of the chanel buffer. By default set to the same value than the input buffer.
 func (iterator IBioSequence) MakeIWorker(worker obiseq.SeqWorker, sizes ...int) IBioSequence {
-	nworkers := 4
+	nworkers := obioptions.CLIParallelWorkers()
 
 	if len(sizes) > 0 {
 		nworkers = sizes[0]

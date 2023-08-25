@@ -29,20 +29,39 @@ var _NucPartMatch [32][32]float64
 var _NucScorePartMatchMatch [100][100]int
 var _NucScorePartMatchMismatch [100][100]int
 
+// _MatchRatio calculates the match ratio between two bytes.
+//
+// It takes two parameters, a and b, which are bytes to be compared.
+// The function returns a float64 value representing the match ratio.
 func _MatchRatio(a, b byte) float64 {
 	// count of common bits
 	cm := _FourBitsCount[a&b&15]
 
+	// count of bits in a
 	ca := _FourBitsCount[a&15]
+
+	// count of bits in b
 	cb := _FourBitsCount[b&15]
 
+	// check if any of the counts is zero
 	if cm == 0 || ca == 0 || cb == 0 {
 		return float64(0)
 	}
 
+	// calculate the match ratio
 	return float64(cm) / float64(ca) / float64(cb)
 }
 
+// _Logaddexp calculates the logarithm of the sum of exponentials of two given numbers.
+//
+// Parameters:
+//
+//	a - the first number (float64)
+//	b - the second number (float64)
+//
+// Returns:
+//
+//	float64 - the result of the calculation
 func _Logaddexp(a, b float64) float64 {
 	if a > b {
 		a, b = b, a
@@ -51,6 +70,15 @@ func _Logaddexp(a, b float64) float64 {
 	return b + math.Log1p(math.Exp(a-b))
 }
 
+// _MatchScoreRatio calculates the match score ratio between two bytes.
+//
+// Parameters:
+// - a: the first byte
+// - b: the second byte
+//
+// Returns:
+// - float64: the match score ratio when a match is observed
+// - float64: the match score ratio when a mismatch is observed
 func _MatchScoreRatio(a, b byte) (float64, float64) {
 
 	l2 := math.Log(2)

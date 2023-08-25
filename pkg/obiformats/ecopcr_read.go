@@ -1,9 +1,9 @@
 package obiformats
 
 import (
-	"compress/gzip"
 	"encoding/csv"
 	"fmt"
+	gzip "github.com/klauspost/pgzip"
 	"io"
 	"os"
 	"path"

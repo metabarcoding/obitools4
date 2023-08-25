@@ -2,7 +2,7 @@ package obiutils
 
 import (
 	"bufio"
-	"compress/gzip"
+	gzip "github.com/klauspost/pgzip"
 	"io"
 	"os"
 )
