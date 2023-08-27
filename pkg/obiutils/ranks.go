@@ -65,6 +65,10 @@ func (r Ranker[_]) Len() int           { return len(r.r) }
 func (r Ranker[T]) Less(i, j int) bool { return r.x.Less(r.r[i], r.r[j]) }
 func (r Ranker[_]) Swap(i, j int)      { r.r[i], r.r[j] = r.r[j], r.r[i] }
 
+// Order sorts the given data using the provided sort.Interface and returns the sorted indices.
+//
+// data: The data to be sorted.
+// Returns: A slice of integers representing the sorted indices.
 func Order[T sort.Interface](data T) []int {
 	ldata := data.Len()
 	if ldata == 0 {

@@ -48,9 +48,12 @@ func FilterTaxonomyOptionSet(options *getoptions.GetOpt) {
 		options.Description("Restrict output to some subclades."))
 }
 
-
 func CLISelectedNCBITaxDump() string {
 	return __taxdump__
+}
+
+func CLIHasSelectedTaxonomy() bool {
+	return __taxdump__ != ""
 }
 
 func CLIAreAlternativeNamesSelected() bool {

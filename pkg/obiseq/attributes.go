@@ -8,35 +8,67 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// HasAttribute checks if the BioSequence has the specified attribute.
+//
+// Parameters:
+// - key: a string representing the attribute key to check.
+//
+// Returns:
+// - a boolean indicating whether the BioSequence has the attribute.
 func (s *BioSequence) HasAttribute(key string) bool {
 	ok := s.annotations != nil
 
 	if ok {
+		defer s.AnnotationsUnlock()
+		s.AnnotationsLock()
 		_, ok = s.annotations[key]
 	}
 
 	return ok
 }
 
-// A method that returns the value of the key in the annotation map.
+// GetAttribute returns the value associated with the given key in the BioSequence's annotations map and a boolean indicating whether the key exists.
+//
+// Parameters:
+// - key: The key to look up in the annotations map.
+//
+// Returns:
+// - val: The value associated with the given key.
+// - ok: A boolean indicating whether the key exists in the annotations map.
 func (s *BioSequence) GetAttribute(key string) (interface{}, bool) {
 	var val interface{}
 	ok := s.annotations != nil
 
 	if ok {
+		defer s.AnnotationsUnlock()
+		s.AnnotationsLock()
 		val, ok = s.annotations[key]
 	}
 
 	return val, ok
 }
 
-// A method that sets the value of the key in the annotation map.
+// SetAttribute sets the value of a given key in the BioSequence annotations.
+//
+// Parameters:
+// - key: the key to set the value for.
+// - value: the value to set for the given key.
 func (s *BioSequence) SetAttribute(key string, value interface{}) {
 	annot := s.Annotations()
+
+	defer s.AnnotationsUnlock()
+	s.AnnotationsLock()
 	annot[key] = value
 }
 
-// A method that returns the value of the key in the annotation map.
+// GetIntAttribute returns an integer attribute value based on the provided key.
+//
+// It takes a key as a parameter and returns the corresponding integer value along
+// with a boolean value indicating whether the key exists in the BioSequence, and if it can be converted to an integer.
+//
+// If the stored values is convertible to an integer, but was not stored as an integer, then the value will be stored as an integer.
+//
+// The returned boolean value will be true if the key exists, and false otherwise.
 func (s *BioSequence) GetIntAttribute(key string) (int, bool) {
 	var val int
 	var err error
@@ -44,19 +76,39 @@ func (s *BioSequence) GetIntAttribute(key string) (int, bool) {
 	v, ok := s.GetAttribute(key)
 
 	if ok {
-		val, err = obiutils.InterfaceToInt(v)
-		ok = err == nil
+		val, ok = v.(int)
+		if !ok {
+			val, err = obiutils.InterfaceToInt(v)
+			ok = err == nil
+			if ok {
+				s.SetAttribute(key, val)
+			}
+		}
 	}
 
 	return val, ok
 }
 
-// Deleting the key from the annotation map.
+// DeleteAttribute deletes the attribute with the given key from the BioSequence.
+//
+// Parameters:
+// - key: the key of the attribute to be deleted.
+//
+// No return value.
 func (s *BioSequence) DeleteAttribute(key string) {
-	delete(s.Annotations(), key)
+	if s.annotations != nil {
+		defer s.AnnotationsUnlock()
+		s.AnnotationsLock()
+		delete(s.annotations, key)
+	}
 }
 
-// Renaming the key in the annotation map.
+// RenameAttribute renames an attribute in the BioSequence.
+//
+// It takes two string parameters:
+// - newName: the new name for the attribute.
+// - oldName: the old name of the attribute to be renamed.
+// It does not return anything.
 func (s *BioSequence) RenameAttribute(newName, oldName string) {
 	val, ok := s.GetAttribute(oldName)
 
@@ -66,7 +118,15 @@ func (s *BioSequence) RenameAttribute(newName, oldName string) {
 	}
 }
 
-// A method that returns the value of the key in the annotation map.
+// GetNumericAttribute returns the numeric value of the specified attribute key
+// in the BioSequence object.
+//
+// Parameters:
+//   - key: the attribute key to retrieve the numeric value for.
+//
+// Returns:
+//   - float64: the numeric value of the attribute key.
+//   - bool: indicates whether the attribute key exists and can be converted to a float64.
 func (s *BioSequence) GetNumericAttribute(key string) (float64, bool) {
 	var val float64
 	var err error
@@ -81,7 +141,14 @@ func (s *BioSequence) GetNumericAttribute(key string) (float64, bool) {
 	return val, ok
 }
 
-// A method that returns the value of the key in the annotation map.
+// GetStringAttribute retrieves the string value of a specific attribute from the BioSequence.
+//
+// Parameters:
+// - key: the key of the attribute to retrieve.
+//
+// Returns:
+// - string: the value of the attribute as a string.
+// - bool: a boolean indicating whether the attribute was found or not.
 func (s *BioSequence) GetStringAttribute(key string) (string, bool) {
 	var val string
 	v, ok := s.GetAttribute(key)
@@ -93,7 +160,14 @@ func (s *BioSequence) GetStringAttribute(key string) (string, bool) {
 	return val, ok
 }
 
-// A method that returns the value of the key in the annotation map.
+// GetBoolAttribute returns the boolean attribute value associated with the given key in the BioSequence object.
+//
+// Parameters:
+// - key: The key to retrieve the boolean attribute value.
+//
+// Return:
+// - val: The boolean attribute value associated with the given key and can be converted to a boolean.
+// - ok: A boolean value indicating whether the attribute value was successfully retrieved.
 func (s *BioSequence) GetBoolAttribute(key string) (bool, bool) {
 	var val bool
 	var err error
@@ -108,6 +182,14 @@ func (s *BioSequence) GetBoolAttribute(key string) (bool, bool) {
 	return val, ok
 }
 
+// GetIntMap returns a map[string]int and a boolean value indicating whether the key exists in the BioSequence.
+//
+// Parameters:
+// - key: The key to retrieve the value from the BioSequence.
+//
+// Returns:
+// - val: A map[string]int representing the value associated with the key and can be converted to a map[string]int.
+// - ok: A boolean value indicating whether the key exists in the BioSequence.
 func (s *BioSequence) GetIntMap(key string) (map[string]int, bool) {
 	var val map[string]int
 	var err error
@@ -122,7 +204,41 @@ func (s *BioSequence) GetIntMap(key string) (map[string]int, bool) {
 	return val, ok
 }
 
-// Returning the number of times the sequence has been observed.
+// GetIntSlice returns the integer slice value associated with the given key in the BioSequence object.
+//
+// Parameters:
+// - key: The key used to retrieve the integer slice value.
+//
+// Returns:
+// - []int: The integer slice value associated with the given key.
+// - bool: A boolean indicating whether the key exists in the BioSequence object.
+func (s *BioSequence) GetIntSlice(key string) ([]int, bool) {
+	var val []int
+	var err error
+
+	v, ok := s.GetAttribute(key)
+
+	if ok {
+		val, ok = v.([]int)
+		if !ok {
+			val, err = obiutils.InterfaceToIntSlice(v)
+			ok = err == nil
+			if ok {
+				s.SetAttribute(key, val)
+			}
+		}
+	}
+
+	return val, ok
+}
+
+// Count returns the value of the "count" attribute of the BioSequence.
+//
+// The count of a sequence is the number of times it has been observed in the dataset.
+// It is represented in the sequence header as the "count" attribute.
+// If the attribute is not found, the function returns 1 as the default count.
+//
+// It returns an integer representing the count value.
 func (s *BioSequence) Count() int {
 	count, ok := s.GetIntAttribute("count")
 
@@ -133,13 +249,27 @@ func (s *BioSequence) Count() int {
 	return count
 }
 
-// Setting the number of times the sequence has been observed.
+// SetCount sets the count of the BioSequence.
+//
+// The count of a sequence is the number of times it has been observed in the dataset.
+// The value of the "count" attribute is set to the new count, event if the new count is 1.
+// If the count is less than 1, the count is set to 1.
+//
+// count - the new count to set.
 func (s *BioSequence) SetCount(count int) {
-	annot := s.Annotations()
-	annot["count"] = count
+	if count < 1 {
+		count = 1
+	}
+	s.SetAttribute("count", count)
 }
 
-// Returning the taxid of the sequence.
+// Taxid returns the taxonomic ID associated with the BioSequence.
+//
+// It retrieves the "taxid" attribute from the BioSequence's attributes map.
+// If the attribute is not found, the function returns 1 as the default taxonomic ID.
+// The taxid 1 corresponds to the root taxonomic level.
+//
+// The function returns an integer representing the taxonomic ID.
 func (s *BioSequence) Taxid() int {
 	taxid, ok := s.GetIntAttribute("taxid")
 
@@ -150,10 +280,16 @@ func (s *BioSequence) Taxid() int {
 	return taxid
 }
 
-// Setting the taxid of the sequence.
+// SetTaxid sets the taxid for the BioSequence.
+//
+// Parameters:
+//
+//	taxid - the taxid to set.
 func (s *BioSequence) SetTaxid(taxid int) {
-	annot := s.Annotations()
-	annot["taxid"] = taxid
+	if taxid < 1 {
+		taxid = 1
+	}
+	s.SetAttribute("taxid", taxid)
 }
 
 func (s *BioSequence) OBITagRefIndex() map[int]string {
@@ -201,4 +337,115 @@ func (s *BioSequence) OBITagRefIndex() map[int]string {
 
 func (s *BioSequence) SetOBITagRefIndex(idx map[int]string) {
 	s.SetAttribute("obitag_ref_index", idx)
+}
+
+func (s *BioSequence) SetOBITagGeomRefIndex(idx map[int]string) {
+	s.SetAttribute("obitag_geomref_index", idx)
+}
+
+func (s *BioSequence) OBITagGeomRefIndex() map[int]string {
+	var val map[int]string
+
+	i, ok := s.GetAttribute("obitag_geomref_index")
+
+	if !ok {
+		return nil
+	}
+
+	switch i := i.(type) {
+	case map[int]string:
+		val = i
+	case map[string]interface{}:
+		val = make(map[int]string, len(i))
+		for k, v := range i {
+			score, err := strconv.Atoi(k)
+			if err != nil {
+				log.Panicln(err)
+			}
+
+			val[score], err = obiutils.InterfaceToString(v)
+			if err != nil {
+				log.Panicln(err)
+			}
+		}
+	case map[string]string:
+		val = make(map[int]string, len(i))
+		for k, v := range i {
+			score, err := strconv.Atoi(k)
+			if err != nil {
+				log.Panicln(err)
+			}
+			val[score] = v
+
+		}
+	default:
+		log.Panicln("value of attribute obitag_geomref_index cannot be casted to a map[int]string")
+	}
+
+	return val
+}
+
+// GetCoordinate returns the coordinate of the BioSequence.
+//
+// Returns the coordinate of the BioSequence in the space of its reference database landmark sequences.
+// if no coordinate is found, it returns nil.
+//
+// This function does not take any parameters.
+//
+// It returns a slice of integers ([]int).
+func (s *BioSequence) GetCoordinate() []int {
+	coord, ok := s.GetIntSlice("landmark_coord")
+	if !ok {
+		return nil
+	}
+
+	return coord
+}
+
+// SetCoordinate sets the coordinate of the BioSequence.
+//
+// coord: An array of integers representing the coordinate.
+// This function does not return anything.
+func (s *BioSequence) SetCoordinate(coord []int) {
+	s.SetAttribute("landmark_coord", coord)
+}
+
+// SetLandmarkID sets the landmark ID of the BioSequence.
+//
+// Trying to set a negative landmark ID leads to a no operation.
+//
+// Parameters:
+// id: The ID of the landmark.
+func (s *BioSequence) SetLandmarkID(id int) {
+	if id < 0 {
+		return
+	}
+	s.SetAttribute("landmark_id", id)
+}
+
+// GetLandmarkID returns the landmark ID associated with the BioSequence.
+//
+// It retrieves the "landmark_id" attribute from the BioSequence's attributes map.
+// If the attribute is not found, the function returns -1 as the default landmark ID.
+// The landmark ID is an integer representing the number of the axis in the landmark space.
+//
+// It does not take any parameters.
+// It returns an integer representing the landmark ID.
+func (s *BioSequence) GetLandmarkID() int {
+	val, ok := s.GetIntAttribute("landmark_id")
+
+	if !ok {
+		return -1
+	}
+
+	return val
+}
+
+// IsALandmark checks if the BioSequence is a landmark.
+//
+// A sequence is a landmark if its landmark ID is set (attribute "landmark_id").
+//
+// It returns a boolean indicating whether the BioSequence is a landmark or not.
+func (s *BioSequence) IsALandmark() bool {
+	return s.GetLandmarkID() != -1
 }

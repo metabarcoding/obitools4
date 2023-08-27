@@ -24,9 +24,6 @@ func IndexSequence(seqidx int,
 	taxo *obitax.Taxonomy) map[int]string {
 
 	sequence := references[seqidx]
-	// matrix := obialign.NewFullLCSMatrix(nil,
-	// 	sequence.Length(),
-	// 	sequence.Length())
 
 	var matrix []uint64
 
@@ -54,7 +51,9 @@ func IndexSequence(seqidx int,
 			nok := make([]int, len(*pseq))
 			nfast := make([]int, len(*pseq))
 			nfastok := make([]int, len(*pseq))
-	*/lseq := sequence.Len()
+	*/
+
+	lseq := sequence.Len()
 
 	mini := -1
 	wordmin := 0

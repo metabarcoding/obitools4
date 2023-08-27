@@ -15,6 +15,7 @@ import (
 var _RefDB = ""
 var _SaveRefDB = ""
 var _RunExact = false
+var _GeomSim = false
 
 func TagOptionSet(options *getoptions.GetOpt) {
 	options.StringVar(&_RefDB, "reference-db", _RefDB,
@@ -26,6 +27,10 @@ func TagOptionSet(options *getoptions.GetOpt) {
 	options.StringVar(&_SaveRefDB, "save-db", _SaveRefDB,
 		options.ArgName("FILENAME"),
 		options.Description("The name of a file where to save the reference DB with its indices"))
+
+	options.BoolVar(&_GeomSim, "geometric", _GeomSim,
+		options.Alias("G"),
+		options.Description("Activate the experimental geometric similarity heuristic"))
 
 	// options.BoolVar(&_RunExact, "exact", _RunExact,
 	// 	options.Alias("E"),
@@ -53,6 +58,10 @@ func CLIRefDB() obiseq.BioSequenceSlice {
 	}
 
 	return refdb.Load()
+}
+
+func CLIGeometricMode() bool {
+	return _GeomSim
 }
 
 func CLIShouldISaveRefDB() bool {

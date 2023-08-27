@@ -1,6 +1,7 @@
 package obitag
 
 import (
+	"sort"
 	"strconv"
 	"strings"
 
@@ -16,6 +17,61 @@ import (
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiutils"
 )
 
+// MatchDistanceIndex returns the taxid, rank, and scientificName based on the given distance and distanceIdx.
+//
+// Parameters:
+// - distance: The distance to match against the keys in distanceIdx.
+// - distanceIdx: A map containing distances as keys and corresponding values in the format "taxid@rank@scientificName".
+//
+// Returns:
+// - taxid: The taxid associated with the matched distance.
+// - rank: The rank associated with the matched distance.
+// - scientificName: The scientific name associated with the matched distance.
+func MatchDistanceIndex(distance int, distanceIdx map[int]string) (int, string, string) {
+	keys := make([]int, 0, len(distanceIdx))
+	for k := range distanceIdx {
+		keys = append(keys, k)
+	}
+	sort.Ints(keys)
+
+	i := sort.Search(len(keys), func(i int) bool {
+		return distance <= keys[i]
+	})
+
+	var taxid int
+	var rank string
+	var scientificName string
+
+	if i == len(keys) || distance > keys[len(keys)-1] {
+		taxid = 1
+		rank = "no rank"
+		scientificName = "root"
+	} else {
+		parts := strings.Split(distanceIdx[keys[i]], "@")
+		taxid, _ = strconv.Atoi(parts[0])
+		rank = parts[1]
+		scientificName = parts[2]
+	}
+
+	// log.Info("taxid:", taxid, " rank:", rank, " scientificName:", scientificName)
+
+	return taxid, rank, scientificName
+}
+
+// FindClosests finds the closest bio sequence from a given sequence and a slice of reference sequences.
+//
+// Parameters:
+// - sequence: the bio sequence to find the closest matches for.
+// - references: a slice of reference sequences to compare against.
+// - refcounts: a slice of reference sequence counts.
+// - runExact: a boolean flag indicating whether to run an exact match.
+//
+// Returns:
+// - bests: a slice of the closest bio sequences.
+// - maxe: the maximum score.
+// - bestId: the best ID.
+// - bestmatch: the best match.
+// - bestidxs: a slice of the best indexes.
 func FindClosests(sequence *obiseq.BioSequence,
 	references obiseq.BioSequenceSlice,
 	refcounts []*obikmer.Table4mer,
@@ -94,6 +150,18 @@ func FindClosests(sequence *obiseq.BioSequence,
 	return bests, maxe, bestId, bestmatch, bestidxs
 }
 
+// Identify makes the taxonomic identification of a BioSequence.
+//
+// Parameters:
+// - sequence: A pointer to a BioSequence to identify.
+// - references: A BioSequenceSlice.
+// - refcounts: A slice of pointers to Table4mer.
+// - taxa: A TaxonSet.
+// - taxo: A pointer to a Taxonomy.
+// - runExact: A boolean value indicating whether to run exact matching.
+//
+// Returns:
+// - A pointer to a BioSequence.
 func Identify(sequence *obiseq.BioSequence,
 	references obiseq.BioSequenceSlice,
 	refcounts []*obikmer.Table4mer,
@@ -171,23 +239,18 @@ func Identify(sequence *obiseq.BioSequence,
 		log.Debugln(sequence.Id(), "Best matches:", len(bests), "New index:", newidx)
 
 		sequence.SetTaxid(taxon.Taxid())
-		sequence.SetAttribute("scientific_name", taxon.ScientificName())
-		sequence.SetAttribute("obitag_rank", taxon.Rank())
-		sequence.SetAttribute("obitag_bestid", identity)
-		sequence.SetAttribute("obitag_difference", differences)
-		sequence.SetAttribute("obitag_bestmatch", bestmatch)
-		sequence.SetAttribute("obitag_match_count", len(bests))
 
 	} else {
 		taxon, _ = taxo.Taxon(1)
 		sequence.SetTaxid(1)
-		sequence.SetAttribute("scientific_name", taxon.ScientificName())
-		sequence.SetAttribute("obitag_rank", taxon.Rank())
-		sequence.SetAttribute("obitag_bestid", identity)
-		sequence.SetAttribute("obitag_difference", differences)
-		sequence.SetAttribute("obitag_bestmatch", bestmatch)
-		sequence.SetAttribute("obitag_match_count", len(bests))
 	}
+
+	sequence.SetAttribute("scientific_name", taxon.ScientificName())
+	sequence.SetAttribute("obitag_rank", taxon.Rank())
+	sequence.SetAttribute("obitag_bestid", identity)
+	sequence.SetAttribute("obitag_bestmatch", bestmatch)
+	sequence.SetAttribute("obitag_match_count", len(bests))
+	sequence.SetAttribute("obitag_similarity_method", "lcs")
 
 	return sequence
 }

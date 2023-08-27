@@ -10,6 +10,9 @@ import (
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obioptions"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obistats"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitax"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obifind"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obirefidx"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiutils"
 	"github.com/schollz/progressbar/v3"
 	log "github.com/sirupsen/logrus"
@@ -103,14 +106,14 @@ func CLISelectLandmarkSequences(iterator obiiter.IBioSequence) obiiter.IBioSeque
 	library := iterator.Load()
 
 	library_size := len(library)
-	n_landmark := NCenter()
+	n_landmark := CLINCenter()
 
 	landmark_idx := obistats.SampleIntWithoutReplacement(n_landmark, library_size)
 	log.Infof("Library contains %d sequence", len(library))
 
 	var seqworld obiutils.Matrix[float64]
 
-	for loop := 0; loop < 5; loop++ {
+	for loop := 0; loop < 2; loop++ {
 		sort.IntSlice(landmark_idx).Sort()
 		log.Debugf("Selected indices : %v", landmark_idx)
 
@@ -154,11 +157,49 @@ func CLISelectLandmarkSequences(iterator obiiter.IBioSequence) obiiter.IBioSeque
 	}
 
 	classes := obistats.AssignToClass(&seqworld, &initialCenters)
+
 	for i, seq := range library {
-		seq.SetAttribute("landmark_coord", seqworld[i])
+		ic, _ := obiutils.InterfaceToIntSlice(seqworld[i])
+		seq.SetCoordinate(ic)
 		seq.SetAttribute("landmark_class", classes[i])
 		if i, ok := seq_landmark[i]; ok {
 			seq.SetAttribute("landmark_id", i)
+		}
+	}
+
+	if obifind.CLIHasSelectedTaxonomy() {
+		taxo, err := obifind.CLILoadSelectedTaxonomy()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		taxa := make(obitax.TaxonSet, len(library))
+
+		for i, seq := range library {
+			taxa[i], err = taxo.Taxon(seq.Taxid())
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+
+		pbopt := make([]progressbar.Option, 0, 5)
+		pbopt = append(pbopt,
+			progressbar.OptionSetWriter(os.Stderr),
+			progressbar.OptionSetWidth(15),
+			progressbar.OptionShowCount(),
+			progressbar.OptionShowIts(),
+			progressbar.OptionSetDescription("[Sequence Indexing]"),
+		)
+
+		bar := progressbar.NewOptions(len(library), pbopt...)
+
+		for i, seq := range library {
+			idx := obirefidx.GeomIndexSesquence(i, library, &taxa, taxo)
+			seq.SetOBITagGeomRefIndex(idx)
+
+			if i%10 == 0 {
+				bar.Add(10)
+			}
 		}
 	}
 

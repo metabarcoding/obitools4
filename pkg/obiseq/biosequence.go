@@ -12,6 +12,7 @@ package obiseq
 
 import (
 	"crypto/md5"
+	"sync"
 	"sync/atomic"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiutils"
@@ -58,6 +59,7 @@ type BioSequence struct {
 	feature     []byte
 	paired      *BioSequence // A pointer to the paired sequence
 	annotations Annotation
+	annot_lock  sync.Mutex
 }
 
 // MakeEmptyBioSequence() creates a new BioSequence object with no data
@@ -79,6 +81,7 @@ func MakeEmptyBioSequence(preallocate int) BioSequence {
 		feature:     nil,
 		paired:      nil,
 		annotations: nil,
+		annot_lock:  sync.Mutex{},
 	}
 }
 
@@ -142,6 +145,8 @@ func (s *BioSequence) Copy() *BioSequence {
 	newSeq.feature = CopySlice(s.feature)
 
 	if len(s.annotations) > 0 {
+		defer s.annot_lock.Unlock()
+		s.annot_lock.Lock()
 		newSeq.annotations = GetAnnotation(s.annotations)
 	}
 
@@ -204,6 +209,14 @@ func (s *BioSequence) Annotations() Annotation {
 	}
 
 	return s.annotations
+}
+
+func (s *BioSequence) AnnotationsLock() {
+	s.annot_lock.Lock()
+}
+
+func (s *BioSequence) AnnotationsUnlock() {
+	s.annot_lock.Unlock()
 }
 
 // Checking if the BioSequence has a source.

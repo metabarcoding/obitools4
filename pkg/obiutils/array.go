@@ -1,7 +1,18 @@
 package obiutils
 
-// Matrix is a generic type representing a matrix.
-type Matrix[T any] [][]T
+type Integer interface {
+	~int | ~int8 | ~int16 | ~int32 | ~int64
+}
+
+type Float interface {
+	~float32 | ~float64
+}
+type Numeric interface {
+	Integer | Float
+}
+
+type Vector[T any] []T
+type Matrix[T any] []Vector[T]
 
 // Make2DArray generates a 2D array of type T with the specified number of rows and columns.
 //
@@ -22,15 +33,20 @@ func Make2DArray[T any](rows, cols int) Matrix[T] {
 	return matrix
 }
 
-// Init initializes the Matrix with the given value.
-//
-// value: the value to initialize the Matrix elements with.
-func (matrix *Matrix[T]) Init(value T) {
-	data := (*matrix)[0]
-	data = data[0:cap(data)]
-	for i := range data {
-		data[i] = value
+func Make2DNumericArray[T Numeric](rows, cols int, zeroed bool) Matrix[T] {
+	matrix := make(Matrix[T], rows)
+	data := make([]T, cols*rows)
+
+	if zeroed {
+		for i := range data {
+			data[i] = 0
+		}
 	}
+
+	for i := 0; i < rows; i++ {
+		matrix[i] = data[i*cols : (i+1)*cols]
+	}
+	return matrix
 }
 
 // Row returns the i-th row of the matrix.
@@ -48,6 +64,19 @@ func (matrix *Matrix[T]) Column(i int) []T {
 		r[j] = (*matrix)[j][i]
 	}
 	return r
+}
+
+// Rows returns the specified rows of the matrix.
+//
+// The function takes one or more integer arguments representing the indices of the rows to be returned.
+// It returns a new matrix containing the specified rows.
+func (matrix *Matrix[T]) Rows(i ...int) Matrix[T] {
+	res := make([]Vector[T], len(i))
+
+	for j, idx := range i {
+		res[j] = (*matrix)[idx]
+	}
+	return res
 }
 
 // Dim returns the dimensions of the Matrix.

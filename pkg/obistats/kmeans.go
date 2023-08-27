@@ -74,8 +74,7 @@ func AssignToClass(data, centers *obiutils.Matrix[float64]) []int {
 // Returns:
 // - centers: a pointer to a matrix of float64 values representing the centers of the clusters.
 func ComputeCenters(data *obiutils.Matrix[float64], k int, classes []int) *obiutils.Matrix[float64] {
-	centers := obiutils.Make2DArray[float64](k, len((*data)[0]))
-	centers.Init(0.0)
+	centers := obiutils.Make2DNumericArray[float64](k, len((*data)[0]), true)
 	ns := make([]int, k)
 
 	var wg sync.WaitGroup

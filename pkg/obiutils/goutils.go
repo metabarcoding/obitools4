@@ -196,6 +196,69 @@ func InterfaceToFloat64Map(i interface{}) (val map[string]float64, err error) {
 	return
 }
 
+// InterfaceToFloat64Slice converts an interface{} to a []float64 slice.
+//
+// It takes an interface{} parameter and returns a slice of float64 values and an error.
+func InterfaceToFloat64Slice(i interface{}) ([]float64, error) {
+	switch i := i.(type) {
+	case []float64:
+		return i, nil
+	case []interface{}:
+		val := make([]float64, len(i))
+		for k, v := range i {
+			if x, err := InterfaceToFloat64(v); err != nil {
+				return nil, err
+			} else {
+				val[k] = x
+			}
+		}
+		return val, nil
+	case []int:
+		val := make([]float64, len(i))
+		for k, v := range i {
+			val[k] = float64(v)
+		}
+		return val, nil
+	default:
+		return nil, &NotAMapFloat64{"value attribute cannot be casted to a []float64"}
+	}
+}
+
+// InterfaceToIntSlice converts an interface{} to a []int slice.
+//
+// It takes an interface{} parameter and returns a slice of int values and an error.
+func InterfaceToIntSlice(i interface{}) ([]int, error) {
+
+	switch i := i.(type) {
+	case []int:
+		return i, nil
+	case []interface{}:
+		val := make([]int, len(i))
+		for k, v := range i {
+			if x, err := InterfaceToInt(v); err != nil {
+				return nil, err
+			} else {
+				val[k] = x
+			}
+		}
+		return val, nil
+	case []float64:
+		val := make([]int, len(i))
+		for k, v := range i {
+			val[k] = int(v + 0.5)
+		}
+		return val, nil
+	case Vector[float64]:
+		val := make([]int, len(i))
+		for k, v := range i {
+			val[k] = int(v + 0.5)
+		}
+		return val, nil
+	default:
+		return nil, &NotAMapInt{"value attribute cannot be casted to a []int"}
+	}
+}
+
 // NotABoolean defines a new type of Error : "NotABoolean"
 type NotABoolean struct {
 	message string
@@ -206,56 +269,6 @@ type NotABoolean struct {
 // complying with the error interface
 func (m *NotABoolean) Error() string {
 	return m.message
-}
-
-// It converts an interface{} to a bool, and returns an error if the interface{} cannot be converted
-// to a bool
-func InterfaceToBool(i interface{}) (val bool, err error) {
-
-	err = nil
-	val = false
-
-	switch t := i.(type) {
-	case int:
-		val = t != 0
-	case int8:
-		val = t != 0 // standardizes across systems
-	case int16:
-		val = t != 0 // standardizes across systems
-	case int32:
-		val = t != 0 // standardizes across systems
-	case int64:
-		val = t != 0 // standardizes across systems
-	case float32:
-		val = t != 0 // standardizes across systems
-	case float64:
-		val = t != 0 // standardizes across systems
-	case uint8:
-		val = t != 0 // standardizes across systems
-	case uint16:
-		val = t != 0 // standardizes across systems
-	case uint32:
-		val = t != 0 // standardizes across systems
-	case uint64:
-		val = t != 0 // standardizes across systems
-	default:
-		err = &NotABoolean{"value attribute cannot be casted to a boolean"}
-	}
-	return
-}
-
-// If the interface{} can be cast to an int, return true.
-func CastableToInt(i interface{}) bool {
-
-	switch i.(type) {
-	case int,
-		int8, int16, int32, int64,
-		float32, float64,
-		uint8, uint16, uint32, uint64:
-		return true
-	default:
-		return false
-	}
 }
 
 // > It copies the contents of the `src` map into the `dest` map, but if the value is a map, slice, or
@@ -270,8 +283,15 @@ func MustFillMap(dest, src map[string]interface{}) {
 	}
 }
 
+// ReadLines reads the lines from a file specified by the given path.
+//
 // Read a whole file into the memory and store it as array of lines
 // It reads a file line by line, and returns a slice of strings, one for each line
+//
+// It takes a single parameter:
+// - path: a string representing the path of the file to read.
+//
+// It returns a slice of strings containing the lines read from the file, and an error if any occurred.
 func ReadLines(path string) (lines []string, err error) {
 	var (
 		file   *os.File
@@ -301,6 +321,14 @@ func ReadLines(path string) (lines []string, err error) {
 	return
 }
 
+// AtomicCounter creates and returns a function that generates a unique integer value each time it is called.
+//
+// The function takes an optional initial value as a parameter. If an initial value is provided, the generated
+// integers will start from that value. If no initial value is provided, the generated integers will start from 0.
+//
+// The function is thread safe.
+//
+// The function returns a closure that can be called to retrieve the next integer in the sequence.
 func AtomicCounter(initial ...int) func() int {
 	counterMutex := sync.Mutex{}
 	counter := 0
@@ -320,12 +348,16 @@ func AtomicCounter(initial ...int) func() int {
 	return nextCounter
 }
 
-// Marshal is a UTF-8 friendly marshaler.  Go's json.Marshal is not UTF-8
+// JsonMarshal marshals an interface into JSON format.
+//
+// JsonMarshal is a UTF-8 friendly marshaler.  Go's json.Marshal is not UTF-8
 // friendly because it replaces the valid UTF-8 and JSON characters "&". "<",
 // ">" with the "slash u" unicode escaped forms (e.g. \u0026).  It preemptively
 // escapes for HTML friendliness.  Where text may include any of these
 // characters, json.Marshal should not be used. Playground of Go breaking a
 // title: https://play.golang.org/p/o2hiX0c62oN
+//
+// It takes an interface as a parameter and returns a byte slice and an error.
 func JsonMarshal(i interface{}) ([]byte, error) {
 	buffer := &bytes.Buffer{}
 	encoder := json.NewEncoder(buffer)
@@ -334,22 +366,45 @@ func JsonMarshal(i interface{}) ([]byte, error) {
 	return bytes.TrimRight(buffer.Bytes(), "\n"), err
 }
 
+// IsAMap checks if the given value is a map.
+//
+// value: the value to be checked.
+// returns: a boolean indicating if the value is a map.
 func IsAMap(value interface{}) bool {
 	return reflect.TypeOf(value).Kind() == reflect.Map
 }
 
+// IsAnArray checks if the given value is an array.
+//
+// value: The value to be checked.
+// Returns: true if the value is an array, false otherwise.
 func IsAnArray(value interface{}) bool {
 	return reflect.TypeOf(value).Kind() == reflect.Array
 }
 
+// IsASlice determines if the given value is a slice.
+//
+// value: the value to check.
+// bool: true if the value is a slice, false otherwise.
 func IsASlice(value interface{}) bool {
 	return reflect.TypeOf(value).Kind() == reflect.Slice
 }
 
+// HasLength checks if the given value has a length.
+//
+// value: The value to be checked.
+// bool: Returns true if the value has a length, false otherwise.
 func HasLength(value interface{}) bool {
 	_, ok := value.(interface{ Len() int })
 	return IsAMap(value) || IsAnArray(value) || IsASlice(value) || ok
 }
+
+// Len returns the length of the given value.
+//
+// It accepts a single parameter:
+// - value: an interface{} that represents the value whose length is to be determined.
+//
+// It returns an int, which represents the length of the value.
 func Len(value interface{}) int {
 	l := 1
 
