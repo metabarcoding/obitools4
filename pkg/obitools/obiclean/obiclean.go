@@ -106,7 +106,7 @@ func IsHead(sequence *obiseq.BioSequence) bool {
 		case bool:
 			ishead = iishead
 		default:
-			log.Panic("obiclean_head attribute of sequence %s must be a boolean not : %v", sequence.Id(), iishead)
+			log.Panicf("obiclean_head attribute of sequence %s must be a boolean not : %v", sequence.Id(), iishead)
 		}
 	}
 
@@ -122,7 +122,7 @@ func HeadCount(sequence *obiseq.BioSequence) int {
 	if ok {
 		value, err = obiutils.InterfaceToInt(value)
 		if err != nil {
-			log.Panic("obiclean_headcount attribute of sequence %s must be an integer value not : %v", sequence.Id(), ivalue)
+			log.Panicf("obiclean_headcount attribute of sequence %s must be an integer value not : %v", sequence.Id(), ivalue)
 		}
 	}
 
@@ -138,7 +138,7 @@ func InternalCount(sequence *obiseq.BioSequence) int {
 	if ok {
 		value, err = obiutils.InterfaceToInt(value)
 		if err != nil {
-			log.Panic("obiclean_internalcount attribute of sequence %s must be an integer value not : %v", sequence.Id(), ivalue)
+			log.Panicf("obiclean_internalcount attribute of sequence %s must be an integer value not : %v", sequence.Id(), ivalue)
 		}
 	}
 
@@ -154,7 +154,7 @@ func SingletonCount(sequence *obiseq.BioSequence) int {
 	if ok {
 		value, err = obiutils.InterfaceToInt(value)
 		if err != nil {
-			log.Panic("obiclean_samplecount attribute of sequence %s must be an integer value not : %v", sequence.Id(), ivalue)
+			log.Panicf("obiclean_samplecount attribute of sequence %s must be an integer value not : %v", sequence.Id(), ivalue)
 		}
 	}
 

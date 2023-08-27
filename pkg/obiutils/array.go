@@ -33,6 +33,15 @@ func Make2DArray[T any](rows, cols int) Matrix[T] {
 	return matrix
 }
 
+// Make2DNumericArray generates a 2D numeric array with the specified number of rows and columns.
+//
+// Parameters:
+//   - rows: the number of rows in the array.
+//   - cols: the number of columns in the array.
+//   - zeroed: a boolean indicating whether the array should be initialized with zeros.
+//
+// Returns:
+//   - matrix: a 2D numeric array with the specified dimensions.
 func Make2DNumericArray[T Numeric](rows, cols int, zeroed bool) Matrix[T] {
 	matrix := make(Matrix[T], rows)
 	data := make([]T, cols*rows)

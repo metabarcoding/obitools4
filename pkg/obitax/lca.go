@@ -43,7 +43,7 @@ func (taxonomy *Taxonomy) TaxonomicDistribution(sequence *obiseq.BioSequence) ma
 
 		t, et := taxonomy.Taxon(taxid)
 		if et != nil {
-			log.Panic("Taxid %d not defined in taxonomy : %v", k, et)
+			log.Panicf("Taxid %d not defined in taxonomy : %v", k, et)
 		}
 		taxons[t] = v
 	}
@@ -60,7 +60,7 @@ func (taxonomy *Taxonomy) LCA(sequence *obiseq.BioSequence, threshold float64) (
 	for t, w := range taxons {
 		p, ep := t.Path()
 		if ep != nil {
-			log.Panic("Taxonomic path cannot be retreived from Taxid %d : %v", t.Taxid(), ep)
+			log.Panicf("Taxonomic path cannot be retreived from Taxid %d : %v", t.Taxid(), ep)
 		}
 
 		obiutils.Reverse(*p, true)

@@ -71,7 +71,7 @@ func AnnotationClassifier(key string, na string) *BioSequenceClassifier {
 		locke.RLock()
 		defer locke.RUnlock()
 		if k >= maxcode {
-			log.Fatalf("value %d not register")
+			log.Fatalf("value %d not register", k)
 		}
 		return decode[k]
 	}
@@ -154,7 +154,7 @@ func DualAnnotationClassifier(key1, key2 string, na string) *BioSequenceClassifi
 		locke.RLock()
 		defer locke.RUnlock()
 		if k >= maxcode {
-			log.Fatalf("value %d not register")
+			log.Fatalf("value %d not register", k)
 		}
 		return decode[k]
 	}
