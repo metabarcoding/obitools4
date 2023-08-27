@@ -43,7 +43,7 @@ func (taxonomy *Taxonomy) TaxonomicDistribution(sequence *obiseq.BioSequence) ma
 
 		t, et := taxonomy.Taxon(taxid)
 		if et != nil {
-			log.Panicf("Taxid %d not defined in taxonomy : %v", k, et)
+			log.Panicf("Taxid %d not defined in taxonomy : %v", taxid, et)
 		}
 		taxons[t] = v
 	}

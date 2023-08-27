@@ -10,117 +10,117 @@ import (
 	"github.com/PaesslerAG/gval"
 )
 
-func maxIntVector(values []int) float64 {
-	m := values[0]
-	for _, v := range values {
-		if v > m {
-			m = v
-		}
-	}
+// func maxIntVector(values []int) float64 {
+// 	m := values[0]
+// 	for _, v := range values {
+// 		if v > m {
+// 			m = v
+// 		}
+// 	}
 
-	return float64(m)
-}
+// 	return float64(m)
+// }
 
-func maxIntMap(values map[string]int) float64 {
-	var m int
-	first := true
-	for _, v := range values {
-		if first {
-			first = false
-			m = v
-		} else {
-			if v > m {
-				m = v
-			}
-		}
-	}
+// func maxIntMap(values map[string]int) float64 {
+// 	var m int
+// 	first := true
+// 	for _, v := range values {
+// 		if first {
+// 			first = false
+// 			m = v
+// 		} else {
+// 			if v > m {
+// 				m = v
+// 			}
+// 		}
+// 	}
 
-	return float64(m)
-}
+// 	return float64(m)
+// }
 
-func minIntVector(values []int) float64 {
-	m := values[0]
-	for _, v := range values {
-		if v < m {
-			m = v
-		}
-	}
+// func minIntVector(values []int) float64 {
+// 	m := values[0]
+// 	for _, v := range values {
+// 		if v < m {
+// 			m = v
+// 		}
+// 	}
 
-	return float64(m)
-}
+// 	return float64(m)
+// }
 
-func minIntMap(values map[string]int) float64 {
-	var m int
-	first := true
-	for _, v := range values {
-		if first {
-			first = false
-			m = v
-		} else {
-			if v < m {
-				m = v
-			}
-		}
-	}
+// func minIntMap(values map[string]int) float64 {
+// 	var m int
+// 	first := true
+// 	for _, v := range values {
+// 		if first {
+// 			first = false
+// 			m = v
+// 		} else {
+// 			if v < m {
+// 				m = v
+// 			}
+// 		}
+// 	}
 
-	return float64(m)
-}
+// 	return float64(m)
+// }
 
-func maxFloatVector(values []float64) float64 {
-	m := values[0]
-	for _, v := range values {
-		if v > m {
-			m = v
-		}
-	}
+// func maxFloatVector(values []float64) float64 {
+// 	m := values[0]
+// 	for _, v := range values {
+// 		if v > m {
+// 			m = v
+// 		}
+// 	}
 
-	return m
-}
+// 	return m
+// }
 
-func maxFloatMap(values map[string]float64) float64 {
-	var m float64
-	first := true
-	for _, v := range values {
-		if first {
-			first = false
-			m = v
-		} else {
-			if v > m {
-				m = v
-			}
-		}
-	}
+// func maxFloatMap(values map[string]float64) float64 {
+// 	var m float64
+// 	first := true
+// 	for _, v := range values {
+// 		if first {
+// 			first = false
+// 			m = v
+// 		} else {
+// 			if v > m {
+// 				m = v
+// 			}
+// 		}
+// 	}
 
-	return m
-}
+// 	return m
+// }
 
-func minFloatVector(values []float64) float64 {
-	m := values[0]
-	for _, v := range values {
-		if v < m {
-			m = v
-		}
-	}
+// func minFloatVector(values []float64) float64 {
+// 	m := values[0]
+// 	for _, v := range values {
+// 		if v < m {
+// 			m = v
+// 		}
+// 	}
 
-	return m
-}
+// 	return m
+// }
 
-func minFloatMap(values map[string]float64) float64 {
-	var m float64
-	first := true
-	for _, v := range values {
-		if first {
-			first = false
-			m = v
-		} else {
-			if v < m {
-				m = v
-			}
-		}
-	}
+// func minFloatMap(values map[string]float64) float64 {
+// 	var m float64
+// 	first := true
+// 	for _, v := range values {
+// 		if first {
+// 			first = false
+// 			m = v
+// 		} else {
+// 			if v < m {
+// 				m = v
+// 			}
+// 		}
+// 	}
 
-	return m
-}
+// 	return m
+// }
 
 // func maxNumeric(args ...interface{}) (interface{}, error) {
 // 	var m float64

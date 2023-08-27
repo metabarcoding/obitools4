@@ -262,7 +262,7 @@ func SequenceClassifier() *BioSequenceClassifier {
 		defer locke.RUnlock()
 
 		if k >= maxcode {
-			log.Fatalf("value %d not register")
+			log.Fatalf("value %d not register", k)
 		}
 		return decode[k]
 	}
