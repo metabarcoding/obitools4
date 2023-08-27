@@ -45,6 +45,9 @@ obitools: $(patsubst %,$(OBITOOLS_PREFIX)%,$(OBITOOLS))
 update-deps:
 	go get -u ./...
 
+test:
+	$(GOTEST) ./...
+	
 man: 
 	make -C doc man
 obibook: 

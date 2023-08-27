@@ -2,6 +2,15 @@
 
 ## Latest changes
 
+### Becareful
+
+GO 1.21.0 is out, and it includes new functionalities which are used in the OBITools4 code.
+If you use the recommanded method for compiling OBITools on your computer, their is no problem,
+as the script always load the latest GO version. If you rely on you personnal GO install, please
+think to update.
+
+## August 27th, 2023. Release 4.0.4
+
 ### Bugs
 
 - Patch a bug in the install-script for correctly follow download redirection.
@@ -13,6 +22,8 @@
 - Comparison algorithms in `obitag` and `obirefidx` take more advantage of the data structure to limit the number of alignments
   actually computed. This increase a bit the speed of both the software. `obirefidx` is nevertheless still too slow
   compared to my expectation.
+- Switch to a parallel version of the gzip library, allowing for high speed compress and
+  decompress operation on files.
 
 ### New feature
 

@@ -53,8 +53,13 @@ func main() {
 
 	references := obitag.CLIRefDB()
 
+	var identified obiiter.IBioSequence
 
-	identified := obitag.CLIAssignTaxonomy(fs,references,taxo)
+	if obitag.CLIGeometricMode() {
+		identified = obitag.CLIGeomAssignTaxonomy(fs, references, taxo)
+	} else {
+		identified = obitag.CLIAssignTaxonomy(fs, references, taxo)
+	}
 
 	obiconvert.CLIWriteBioSequences(identified, true)
 	obiiter.WaitForLastPipe()
