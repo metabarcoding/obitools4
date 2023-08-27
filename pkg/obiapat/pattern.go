@@ -37,7 +37,7 @@ type ApatPattern struct {
 // ApatSequence stores sequence in structure usable by the
 // Apat algorithm functions and methods
 type _ApatSequence struct {
-	pointer *C.Seq
+	pointer   *C.Seq
 	reference *obiseq.BioSequence
 }
 
@@ -53,11 +53,8 @@ var NilApatPattern = ApatPattern{nil}
 // type.
 var NilApatSequence = ApatSequence{nil}
 
-// MakeApatPattern builds a new ApatPattern.
-// The created object wrap a C allocated structure.
-// Do not forget to free it when it is no more needed
-// to forbid memory leaks using the Free methode of the
-// ApatPattern.
+// MakeApatPattern creates an ApatPattern object based on the given pattern, error maximum and allowsIndel flag.
+//
 // The pattern is a short DNA sequence (up to 64 symboles).
 // Ambiguities can be represented or using UIPAC symboles,
 // or using the [...] classical in regular pattern grammar.
@@ -69,6 +66,13 @@ var NilApatSequence = ApatSequence{nil}
 // the errormax parameter. Some positions can be marked as not
 // allowed for mismatches. They have to be signaled using a '#'
 // sign after the corresponding nucleotide.
+//
+// Parameters:
+// pattern: The input pattern string.
+// errormax: The maximum number of errors allowed.
+// allowsIndel: A flag indicating whether indels are allowed or not.
+//
+// Returns an ApatPattern object and an error.
 func MakeApatPattern(pattern string, errormax int, allowsIndel bool) (ApatPattern, error) {
 	cpattern := C.CString(pattern)
 	defer C.free(unsafe.Pointer(cpattern))
@@ -90,8 +94,7 @@ func MakeApatPattern(pattern string, errormax int, allowsIndel bool) (ApatPatter
 		return NilApatPattern, errors.New(message)
 	}
 
-
-	ap := _ApatPattern{apc,pattern}
+	ap := _ApatPattern{apc, pattern}
 
 	runtime.SetFinalizer(&ap, func(p *_ApatPattern) {
 		// log.Printf("Finaliser called on %s\n", C.GoString(p.pointer.cpat))
@@ -115,7 +118,7 @@ func (pattern ApatPattern) ReverseComplement() (ApatPattern, error) {
 		return ApatPattern{nil}, errors.New(message)
 	}
 	spat := C.GoString(apc.cpat)
-	ap := _ApatPattern{apc,spat}
+	ap := _ApatPattern{apc, spat}
 
 	runtime.SetFinalizer(&ap, func(p *_ApatPattern) {
 		// log.Printf("Finaliser called on %s\n", C.GoString(p.pointer.cpat))
@@ -185,7 +188,6 @@ func MakeApatSequence(sequence *obiseq.BioSequence, circular bool, recycle ...Ap
 		out = nil
 	}
 
-
 	// copy the data into the buffer, by converting it to a Go array
 	p := unsafe.Pointer(unsafe.SliceData(sequence.Sequence()))
 	pseqc := C.new_apatseq((*C.char)(p), C.int32_t(ic), C.int32_t(seqlen),
@@ -205,14 +207,14 @@ func MakeApatSequence(sequence *obiseq.BioSequence, circular bool, recycle ...Ap
 
 	if out == nil {
 		// log.Printf("Make ApatSeq called on %p -> %p\n", out, pseqc)
-		seq := _ApatSequence{pointer: pseqc,reference: sequence}
+		seq := _ApatSequence{pointer: pseqc, reference: sequence}
 
 		runtime.SetFinalizer(&seq, func(apat_p *_ApatSequence) {
 			var errno C.int32_t
 			var errmsg *C.char
-			log.Debugf("Finaliser called on %p\n", apat_p.pointer)
 
 			if apat_p != nil && apat_p.pointer != nil {
+				log.Debugf("Finaliser called on %p\n", apat_p.pointer)
 				C.delete_apatseq(apat_p.pointer, &errno, &errmsg)
 			}
 		})
@@ -332,8 +334,7 @@ func (pattern ApatPattern) BestMatch(sequence ApatSequence, begin, length int) (
 	end = obiutils.MinInt(end, sequence.Len())
 
 	cpattern := (*[1 << 30]byte)(unsafe.Pointer(pattern.pointer.pointer.cpat))
-    frg := sequence.pointer.reference.Sequence()[start:end]
-
+	frg := sequence.pointer.reference.Sequence()[start:end]
 
 	log.Debugln(
 		string(frg),
