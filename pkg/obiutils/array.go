@@ -94,6 +94,8 @@ func (matrix *Matrix[T]) Rows(i ...int) Matrix[T] {
 // It returns two integers: the number of rows and the number of columns.
 func (matrix *Matrix[T]) Dim() (int, int) {
 	switch {
+	case matrix == nil:
+		return 0, 0
 	case *matrix == nil:
 		return 0, 0
 	case len(*matrix) == 0:
