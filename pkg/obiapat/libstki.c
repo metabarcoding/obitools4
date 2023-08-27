@@ -251,8 +251,7 @@ void CursiToTop(StackiPtr stki)
 
 } /* end of CursiToTop */
 
-void CursiToBottom(stki)
-        StackiPtr stki;
+void CursiToBottom(StackiPtr stki)
 {
         stki->cursor = 0;
 

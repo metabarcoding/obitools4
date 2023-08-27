@@ -76,6 +76,7 @@ bool            SearchDownStacki   (StackiPtr  stki  , int32_t sval     );
 bool            BinSearchStacki    (StackiPtr  stki  , int32_t sval     );
 bool            SameStacki         (StackiPtr  stki1 , StackiPtr stki2  );
 bool            ReverseStacki      (StackiPtr  stki                     );
-bool            EmptyStacki        (StackiPtr stki                      );
+bool            EmptyStacki        (StackiPtr  stki                     );
+void            CursiToBottom      (StackiPtr  stki                     );
 
 #endif /* _H_libstki */
