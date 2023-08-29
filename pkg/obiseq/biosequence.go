@@ -99,7 +99,6 @@ func MakeBioSequence(id string,
 	bs.SetId(id)
 	bs.SetSequence(sequence)
 	bs.SetDefinition(definition)
-	bs.AnnotationsUnlock()
 	return bs
 }
 
