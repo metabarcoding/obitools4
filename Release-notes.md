@@ -9,6 +9,15 @@ If you use the recommanded method for compiling OBITools on your computer, their
 as the script always load the latest GO version. If you rely on you personnal GO install, please
 think to update.
 
+## August 29th, 2023. Release 4.0.5
+
+### Bugs
+
+- Patch a bug in the `obiseq.BioSequence` constructor leading to a error on almost every obitools.
+  The error message indicates : `fatal error: sync: unlock of unlocked mutex` 
+  This bug was introduced in the release 4.0.4
+
+
 ## August 27th, 2023. Release 4.0.4
 
 ### Bugs

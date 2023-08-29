@@ -6,6 +6,9 @@ vendor
 *.fastq
 *.fasta
 .DS_Store
+*.gml
+*.log
+/argaly
 
 /obiconvert
 /obicount
@@ -73,3 +76,7 @@ getoptions.adoc
 Archive.zip
 .DS_Store
 sample/.DS_Store
+sample/consensus_graphs/specimen_hac_plants_Vern_disicolor_.gml
+93954
+Bact03.e5.gb_R254.obipcr.idx.fasta.save
+sample/test.obipcr.log
