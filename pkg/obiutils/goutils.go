@@ -271,10 +271,14 @@ func (m *NotABoolean) Error() string {
 	return m.message
 }
 
-// > It copies the contents of the `src` map into the `dest` map, but if the value is a map, slice, or
-// array, it makes a deep copy of it
+// MustFillMap fills the destination map with the values from the source map.
+//
+// The function takes in two parameters:
+// - dest: a map[string]interface{} representing the destination map.
+// - src: a map[string]interface{} representing the source map.
+//
+// There is no return value.
 func MustFillMap(dest, src map[string]interface{}) {
-
 	for k, v := range src {
 		if IsAMap(v) || IsASlice(v) || IsAnArray(v) {
 			v = deepcopy.MustAnything(v)

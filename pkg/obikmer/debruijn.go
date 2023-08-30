@@ -226,13 +226,13 @@ func (g *DeBruijnGraph) LongestConsensus(id string) (*obiseq.BioSequence, error)
 	s := g.DecodePath(path)
 
 	if len(s) > 0 {
-		seq := obiseq.MakeBioSequence(
+		seq := obiseq.NewBioSequence(
 			id,
 			[]byte(s),
 			"",
 		)
 
-		return &seq, nil
+		return seq, nil
 	}
 
 	return nil, fmt.Errorf("cannot identify optimum path")
@@ -295,13 +295,13 @@ func (g *DeBruijnGraph) BestConsensus(id string) (*obiseq.BioSequence, error) {
 	s := g.DecodePath(path)
 
 	if len(s) > 0 {
-		seq := obiseq.MakeBioSequence(
+		seq := obiseq.NewBioSequence(
 			id,
 			[]byte(s),
 			"",
 		)
 
-		return &seq, nil
+		return seq, nil
 	}
 
 	return nil, fmt.Errorf("cannot identify optimum path")
@@ -366,7 +366,7 @@ func (graph *DeBruijnGraph) Push(sequence *obiseq.BioSequence) {
 
 		for _, idx := range init {
 			graph.append(s[graph.kmersize:], idx)
-		}	
+		}
 	}
 }
 

@@ -8,21 +8,30 @@ import (
 	"fmt"
 	"math"
 	"strings"
-	"sync"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
 
-// A pool of byte slices.
-var _BuildAlignArenaPool = sync.Pool{
-	New: func() interface{} {
-		bs := make([]byte, 0, 300)
-		return &bs
-	},
-}
+// // A pool of byte slices.
+// var _BuildAlignArenaPool = sync.Pool{
+// 	New: func() interface{} {
+// 		bs := make([]byte, 0, 300)
+// 		return &bs
+// 	},
+// }
 
+// _BuildAlignment builds the alignment between two sequences.
+//
 // It takes two sequences, a path, a gap character, and two buffers, and it builds the alignment by
-// walking the path and copying the sequences into the buffers
+// walking the path and copying the sequences into the buffers.
+//
+// Parameters:
+// - seqA: a byte slice representing the first sequence.
+// - seqB: a byte slice representing the second sequence.
+// - path: a slice of integers representing the alignment path.
+// - gap: a byte representing the gap character.
+// - bufferA: a pointer to a byte slice for storing the aligned sequence A.
+// - bufferB: a pointer to a byte slice for storing the aligned sequence B.
 func _BuildAlignment(seqA, seqB []byte, path []int, gap byte, bufferA, bufferB *[]byte) {
 
 	*bufferA = (*bufferA)[:0]

@@ -2,11 +2,14 @@ package obiformats
 
 import (
 	"bufio"
-	gzip "github.com/klauspost/pgzip"
+	"bytes"
 	"io"
 	"os"
 	"path"
-	"strings"
+	"regexp"
+
+	"github.com/gabriel-vasile/mimetype"
+	gzip "github.com/klauspost/pgzip"
 
 	log "github.com/sirupsen/logrus"
 
@@ -14,36 +17,89 @@ import (
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiutils"
 )
 
-func GuessSeqFileType(firstline string) string {
-	switch {
-	case strings.HasPrefix(firstline, "#@ecopcr-v2"):
-		return "ecopcr"
-
-	case strings.HasPrefix(firstline, "#"):
-		return "ecopcr"
-
-	case strings.HasPrefix(firstline, ">"):
-		return "fasta"
-
-	case strings.HasPrefix(firstline, "@"):
-		return "fastq"
-
-	case strings.HasPrefix(firstline, "ID   "):
-		return "embl"
-
-	case strings.HasPrefix(firstline, "LOCUS       "):
-		return "genbank"
-
-	// Special case for genbank release files
-	// I hope it is enougth stringeant
-	case strings.HasSuffix(firstline, " Genetic Se"):
-		return "genbank"
-
-	default:
-		return "unknown"
+// OBIMimeTypeGuesser is a function that takes an io.Reader as input and guesses the MIME type of the data.
+// It uses several detectors to identify specific file formats, such as FASTA, FASTQ, ecoPCR2, GenBank, and EMBL.
+// The function reads data from the input stream and analyzes it using the mimetype library.
+// It then returns the detected MIME type, a modified reader with the read data, and any error encountered during the process.
+//
+// The following file types are recognized:
+// - "text/ecopcr": if the first line starts with "#@ecopcr-v2".
+// - "text/fasta": if the first line starts with ">".
+// - "text/fastq": if the first line starts with "@".
+// - "text/embl": if the first line starts with "ID   ".
+// - "text/genbank": if the first line starts with "LOCUS       ".
+// - "text/genbank" (special case): if the first line "Genetic Sequence Data Bank" (for genbank release files).
+// - "text/csv"
+//
+// Parameters:
+// - stream: An io.Reader representing the input stream to read data from.
+//
+// Returns:
+// - *mimetype.MIME: The detected MIME type of the data.
+// - io.Reader: A modified reader with the read data.
+// - error: Any error encountered during the process.
+func OBIMimeTypeGuesser(stream io.Reader) (*mimetype.MIME, io.Reader, error) {
+	fastaDetector := func(raw []byte, limit uint32) bool {
+		ok, err := regexp.Match("^>[^ ]", raw)
+		return ok && err == nil
 	}
+
+	fastqDetector := func(raw []byte, limit uint32) bool {
+		ok, err := regexp.Match("^@[^ ]", raw)
+		return ok && err == nil
+	}
+
+	ecoPCR2Detector := func(raw []byte, limit uint32) bool {
+		ok := bytes.HasPrefix(raw, []byte("#@ecopcr-v2"))
+		return ok
+	}
+
+	genbankDetector := func(raw []byte, limit uint32) bool {
+		ok2 := bytes.HasPrefix(raw, []byte("LOCUS       "))
+		ok1, err := regexp.Match("^[^ ]* +Genetic Sequence Data Bank *\n", raw)
+		return ok2 || (ok1 && err == nil)
+	}
+
+	emblDetector := func(raw []byte, limit uint32) bool {
+		ok := bytes.HasPrefix(raw, []byte("ID   "))
+		return ok
+	}
+
+	mimetype.Lookup("text/plain").Extend(fastaDetector, "text/fasta", ".fasta")
+	mimetype.Lookup("text/plain").Extend(fastqDetector, "text/fastq", ".fastq")
+	mimetype.Lookup("text/plain").Extend(ecoPCR2Detector, "text/ecopcr2", ".ecopcr")
+	mimetype.Lookup("text/plain").Extend(genbankDetector, "text/genbank", ".seq")
+	mimetype.Lookup("text/plain").Extend(emblDetector, "text/embl", ".dat")
+
+	// Create a buffer to store the read data
+	buf := make([]byte, 1024*128)
+	n, err := stream.Read(buf)
+
+	if err != nil && err != io.EOF {
+		return nil, nil, err
+	}
+
+	// Detect the MIME type using the mimetype library
+	mimeType := mimetype.Detect(buf)
+	if mimeType == nil {
+		return nil, nil, err
+	}
+
+	// Create a new reader based on the read data
+	newReader := io.MultiReader(bytes.NewReader(buf[:n]), stream)
+
+	return mimeType, newReader, nil
 }
 
+// ReadSequencesFromFile reads sequences from a file and returns an iterator of bio sequences and an error.
+//
+// Parameters:
+// - filename: The name of the file to read the sequences from.
+// - options: Optional parameters to customize the reading process.
+//
+// Returns:
+// - obiiter.IBioSequence: An iterator of bio sequences.
+// - error: An error if any occurred during the reading process.
 func ReadSequencesFromFile(filename string,
 	options ...WithOption) (obiiter.IBioSequence, error) {
 	var file *os.File
@@ -71,35 +127,28 @@ func ReadSequencesFromFile(filename string,
 		reader = greader
 	}
 
-	breader := bufio.NewReader(reader)
+	mime, reader, err := OBIMimeTypeGuesser(reader)
 
-	tag, _ := breader.Peek(30)
-
-	if len(tag) < 30 {
-		newIter := obiiter.MakeIBioSequence()
-		newIter.Close()
-		return newIter, nil
+	if err != nil {
+		return obiiter.NilIBioSequence, err
 	}
 
-	filetype := GuessSeqFileType(string(tag))
-	log.Debugf("File guessed format : %s (tag: %s)",
-		filetype, (strings.Split(string(tag), "\n"))[0])
-	reader = breader
+	reader = bufio.NewReader(reader)
 
-	switch filetype {
-	case "fastq", "fasta":
+	switch mime.String() {
+	case "text/fasta", "text/fastq":
 		file.Close()
 		is, err := ReadFastSeqFromFile(filename, options...)
 		return is, err
-	case "ecopcr":
+	case "text/ecopcr2":
 		return ReadEcoPCR(reader, options...), nil
-	case "embl":
+	case "text/embl":
 		return ReadEMBL(reader, options...), nil
-	case "genbank":
+	case "text/genbank":
 		return ReadGenbank(reader, options...), nil
 	default:
 		log.Fatalf("File %s has guessed format %s which is not yet implemented",
-			filename, filetype)
+			filename, mime.String())
 	}
 
 	return obiiter.NilIBioSequence, nil

@@ -38,7 +38,7 @@ func GetSlice(capacity int) []byte {
 	if p == nil || *p == nil || cap(*p) < capacity {
 		return make([]byte, 0, capacity)
 	}
-	
+
 	s := *p
 
 	if cap(s) < capacity {
@@ -73,7 +73,12 @@ func RecycleAnnotation(a *Annotation) {
 	}
 }
 
-// It returns a new Annotation object, initialized with the values from the first argument
+// GetAnnotation returns an Annotation from the BioSequenceAnnotationPool.
+//
+// It takes as argument O or 1 Annotation annotation object.
+// If an annotation object is passed, it is copied into the new Annotation.
+//
+// It returns an Annotation.
 func GetAnnotation(values ...Annotation) Annotation {
 	a := Annotation(nil)
 
