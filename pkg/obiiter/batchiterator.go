@@ -461,7 +461,7 @@ func (iterator IBioSequence) Recycle() {
 		// iterator.Get()
 		batch := iterator.Get()
 		log.Debugln("Recycling batch #", batch.Order())
-		recycled+=batch.Len()
+		recycled += batch.Len()
 		batch.Recycle(true)
 	}
 	log.Debugf("End of the recycling of %d Bioseq objects", recycled)
@@ -679,7 +679,7 @@ func (iterator IBioSequence) Load() obiseq.BioSequenceSlice {
 	chunck := obiseq.MakeBioSequenceSlice()
 	for iterator.Next() {
 		b := iterator.Get()
-		log.Debugf("append %d sequences",b.Len())
+		log.Debugf("append %d sequences", b.Len())
 		chunck = append(chunck, b.Slice()...)
 		b.Recycle(false)
 	}
@@ -687,7 +687,14 @@ func (iterator IBioSequence) Load() obiseq.BioSequenceSlice {
 	return chunck
 }
 
-func (iterator IBioSequence) FullFileIterator() IBioSequence {
+// CompleteFileIterator generates a new iterator for reading a complete file.
+//
+// This iterator reads all the remaining sequences in the file, and returns them as a
+// single obiseq.BioSequenceSlice.
+//
+// The function takes no parameters.
+// It returns an IBioSequence object.
+func (iterator IBioSequence) CompleteFileIterator() IBioSequence {
 
 	newIter := MakeIBioSequence()
 	log.Debug("Stream is read in full file mode")
@@ -700,7 +707,7 @@ func (iterator IBioSequence) FullFileIterator() IBioSequence {
 
 	go func() {
 		slice := iterator.Load()
-		log.Printf("A batch of  %d sequence is read",len(slice))
+		log.Printf("A batch of  %d sequence is read", len(slice))
 		if len(slice) > 0 {
 			newIter.Push(MakeBioSequenceBatch(0, slice))
 		}
@@ -716,7 +723,6 @@ func (iterator IBioSequence) FullFileIterator() IBioSequence {
 
 // It takes a slice of BioSequence objects, and returns an iterator that will return batches of
 // BioSequence objects
-
 func IBatchOver(data obiseq.BioSequenceSlice,
 	size int, sizes ...int) IBioSequence {
 

@@ -34,14 +34,14 @@ var _seqlenght_rx = regexp.MustCompile(" +([0-9]+) bp")
 func _ParseGenbankFile(source string,
 	input <-chan _FileChunk, out obiiter.IBioSequence,
 	chunck_order func() int) {
-    var err error
+	var err error
 	state := inHeader
 
 	for chunks := range input {
 		// log.Debugln("Chunk size", (chunks.raw.(*bytes.Buffer)).Len())
 		scanner := bufio.NewScanner(chunks.raw)
 		sequences := make(obiseq.BioSequenceSlice, 0, 100)
-		sumlength:=0
+		sumlength := 0
 		id := ""
 		lseq := -1
 		scientificName := ""
@@ -61,12 +61,12 @@ func _ParseGenbankFile(source string,
 			case strings.HasPrefix(line, "LOCUS       "):
 				state = inEntry
 				id = strings.SplitN(line[12:], " ", 2)[0]
-				match_length := _seqlenght_rx.FindStringSubmatch(line) 
+				match_length := _seqlenght_rx.FindStringSubmatch(line)
 				if len(match_length) > 0 {
-					lseq,err = strconv.Atoi(match_length[1])
+					lseq, err = strconv.Atoi(match_length[1])
 					if err != nil {
 						lseq = -1
-					}					
+					}
 				}
 				if lseq > 0 {
 					seqBytes = bytes.NewBuffer(obiseq.GetSlice(lseq + 20))
@@ -101,7 +101,7 @@ func _ParseGenbankFile(source string,
 				//	sequence.Len(), seqBytes.Len())
 
 				sequences = append(sequences, sequence)
-				sumlength+=sequence.Len()
+				sumlength += sequence.Len()
 
 				if len(sequences) == 100 || sumlength > 1e7 {
 					out.Push(obiiter.MakeBioSequenceBatch(chunck_order(), sequences))
@@ -137,7 +137,7 @@ func _ParseGenbankFile(source string,
 		if len(sequences) > 0 {
 			out.Push(obiiter.MakeBioSequenceBatch(chunck_order(), sequences))
 		}
-}
+	}
 
 	out.Done()
 
@@ -159,13 +159,13 @@ func ReadGenbank(reader io.Reader, options ...WithOption) obiiter.IBioSequence {
 
 	// for j := 0; j < opt.ParallelWorkers(); j++ {
 	for j := 0; j < nworkers; j++ {
-		go _ParseGenbankFile(opt.Source(), entry_channel, newIter,chunck_order)
+		go _ParseGenbankFile(opt.Source(), entry_channel, newIter, chunck_order)
 	}
 
 	go _ReadFlatFileChunk(reader, entry_channel)
 
 	if opt.pointer.full_file_batch {
-		newIter = newIter.FullFileIterator()
+		newIter = newIter.CompleteFileIterator()
 	}
 
 	return newIter

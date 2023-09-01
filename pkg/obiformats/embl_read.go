@@ -266,7 +266,7 @@ func ReadEMBL(reader io.Reader, options ...WithOption) obiiter.IBioSequence {
 	go _ReadFlatFileChunk(reader, entry_channel)
 
 	if opt.pointer.full_file_batch {
-		newIter = newIter.FullFileIterator()
+		newIter = newIter.CompleteFileIterator()
 	}
 
 	return newIter

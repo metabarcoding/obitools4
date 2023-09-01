@@ -1,6 +1,7 @@
 package obiformats
 
 import (
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obioptions"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
 
@@ -43,8 +44,8 @@ func MakeOptions(setters []WithOption) Options {
 		with_progress_bar:     false,
 		buffer_size:           2,
 		quality_shift:         33,
-		parallel_workers:      4,
-		batch_size:            5000,
+		parallel_workers:      obioptions.CLIReadParallelWorkers(),
+		batch_size:            obioptions.CLIBatchSize(),
 		full_file_batch:       false,
 		closefile:             false,
 		appendfile:            false,

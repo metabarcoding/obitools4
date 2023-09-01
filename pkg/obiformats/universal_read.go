@@ -4,12 +4,10 @@ import (
 	"bufio"
 	"bytes"
 	"io"
-	"os"
 	"path"
 	"regexp"
 
 	"github.com/gabriel-vasile/mimetype"
-	gzip "github.com/klauspost/pgzip"
 
 	log "github.com/sirupsen/logrus"
 
@@ -91,6 +89,36 @@ func OBIMimeTypeGuesser(stream io.Reader) (*mimetype.MIME, io.Reader, error) {
 	return mimeType, newReader, nil
 }
 
+// func ReadSequences(reader io.Reader,
+// 	options ...WithOption) (obiiter.IBioSequence, error) {
+
+// 	mime, reader, err := OBIMimeTypeGuesser(reader)
+
+// 	if err != nil {
+// 		return obiiter.NilIBioSequence, err
+// 	}
+
+// 	reader = bufio.NewReader(reader)
+
+// 	switch mime.String() {
+// 	case "text/fasta", "text/fastq":
+// 		file.Close()
+// 		is, err := ReadFastSeqFromFile(filename, options...)
+// 		return is, err
+// 	case "text/ecopcr2":
+// 		return ReadEcoPCR(reader, options...), nil
+// 	case "text/embl":
+// 		return ReadEMBL(reader, options...), nil
+// 	case "text/genbank":
+// 		return ReadGenbank(reader, options...), nil
+// 	default:
+// 		log.Fatalf("File %s has guessed format %s which is not yet implemented",
+// 			filename, mime.String())
+// 	}
+
+// 	return obiiter.NilIBioSequence, nil
+// }
+
 // ReadSequencesFromFile reads sequences from a file and returns an iterator of bio sequences and an error.
 //
 // Parameters:
@@ -102,32 +130,20 @@ func OBIMimeTypeGuesser(stream io.Reader) (*mimetype.MIME, io.Reader, error) {
 // - error: An error if any occurred during the reading process.
 func ReadSequencesFromFile(filename string,
 	options ...WithOption) (obiiter.IBioSequence, error) {
-	var file *os.File
+	var file *Reader
 	var reader io.Reader
-	var greader io.Reader
 	var err error
 
 	options = append(options, OptionsSource(obiutils.RemoveAllExt((path.Base(filename)))))
 
-	file, err = os.Open(filename)
+	file, err = Ropen(filename)
 
 	if err != nil {
 		log.Fatalf("open file error: %v", err)
 		return obiiter.NilIBioSequence, err
 	}
 
-	reader = file
-
-	// Test if the flux is compressed by gzip
-	greader, err = gzip.NewReader(reader)
-	if err != nil {
-		file.Seek(0, 0)
-	} else {
-		log.Debugf("File %s is gz compressed ", filename)
-		reader = greader
-	}
-
-	mime, reader, err := OBIMimeTypeGuesser(reader)
+	mime, reader, err := OBIMimeTypeGuesser(file)
 
 	if err != nil {
 		return obiiter.NilIBioSequence, err
@@ -136,10 +152,12 @@ func ReadSequencesFromFile(filename string,
 	reader = bufio.NewReader(reader)
 
 	switch mime.String() {
-	case "text/fasta", "text/fastq":
+	case "text/fastq":
 		file.Close()
 		is, err := ReadFastSeqFromFile(filename, options...)
 		return is, err
+	case "text/fasta":
+		return ReadFasta(reader, options...)
 	case "text/ecopcr2":
 		return ReadEcoPCR(reader, options...), nil
 	case "text/embl":
@@ -153,3 +171,9 @@ func ReadSequencesFromFile(filename string,
 
 	return obiiter.NilIBioSequence, nil
 }
+
+// func ReadSequencesFromStdin(options ...WithOption) obiiter.IBioSequence {
+
+// 	options = append(options, OptionsSource("stdin"))
+
+// }

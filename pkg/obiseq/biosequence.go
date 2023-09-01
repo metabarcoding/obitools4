@@ -203,77 +203,135 @@ func (s *BioSequence) Len() int {
 	return len(s.sequence)
 }
 
-// Checking if the BioSequence has quality scores.
+// HasQualities checks if the BioSequence has sequence qualitiy scores.
+//
+// This function does not have any parameters.
+// It returns a boolean value indicating whether the BioSequence has qualities.
 func (s *BioSequence) HasQualities() bool {
 	return len(s.qualities) > 0
 }
 
-// Returning the qualities of the sequence.
+// Qualities returns the sequence quality scores of the BioSequence.
+//
+// It checks if the BioSequence has qualities. If it does, it returns the qualities
+// stored in the BioSequence struct. Otherwise, it creates and returns default
+// qualities based on the length of the sequence.
+//
+// Returns:
+//   - Quality: The quality of the BioSequence.
 func (s *BioSequence) Qualities() Quality {
 	if s.HasQualities() {
 		return s.qualities
-	} else {
-		return __make_default_qualities__(len(s.sequence))
 	}
+	return __make_default_qualities__(len(s.sequence))
 }
 
+// Features returns the feature string of the BioSequence.
+//
+//	The feature string contains the EMBL/GenBank not parsed feature table
+//
+// as extracted from the flat file.
+//
+// No parameters.
+// Returns a string.
 func (s *BioSequence) Features() string {
 	return string(s.feature)
 }
 
-// Checking if the BioSequence has annotations.
+// HasAnnotation checks if the BioSequence has any annotations.
+//
+// It does not take any parameters.
+// It returns a boolean value indicating whether the BioSequence has any annotations.
 func (s *BioSequence) HasAnnotation() bool {
 	return len(s.annotations) > 0
 }
 
-// Returning the annotations of the BioSequence.
+// Annotations returns the Annotation object associated with the BioSequence.
+//
+// This function does not take any parameters.
+// It returns an Annotation object.
 func (s *BioSequence) Annotations() Annotation {
-
 	if s.annotations == nil {
 		s.annotations = GetAnnotation()
 	}
-
 	return s.annotations
 }
 
+// AnnotationsLock locks the annotation of the BioSequence.
+//
+// This function acquires a lock on the annotation of the BioSequence,
+// preventing concurrent access to it.
 func (s *BioSequence) AnnotationsLock() {
 	s.annot_lock.Lock()
 }
 
+// AnnotationsUnlock unlocks the annotations mutex in the BioSequence struct.
+//
+// No parameters.
+// No return types.
 func (s *BioSequence) AnnotationsUnlock() {
 	s.annot_lock.Unlock()
 }
 
-// Checking if the BioSequence has a source.
+// HasSource checks if the BioSequence has a source.
+//
+// The source is the filename without directory name and extension from where the sequence was read.
+//
+// No parameters.
+// Returns a boolean value indicating whether the BioSequence has a source or not.
 func (s *BioSequence) HasSource() bool {
 	return len(s.source) > 0
 }
 
+// Source returns the source of the BioSequence.
+//
+// The source is the filename without directory name and extension from where the sequence was read.
+//
+// This function does not take any parameters.
+// It returns a string.
 func (s *BioSequence) Source() string {
 	return s.source
 }
 
-// Returning the MD5 hash of the sequence.
+// MD5 calculates the MD5 hash of the BioSequence.
+//
+// No parameters.
+// Returns [16]byte, the MD5 hash of the BioSequence.
 func (s *BioSequence) MD5() [16]byte {
 	return md5.Sum(s.sequence)
 }
 
-// Setting the id of the BioSequence.
+// SetId sets the id of the BioSequence.
+//
+// Parameters:
+// - id: the new id for the BioSequence.
+//
+// No return value.
 func (s *BioSequence) SetId(id string) {
 	s.id = id
 }
 
-// Setting the definition of the sequence.
+// SetDefinition sets the definition of the BioSequence.
+//
+// It takes a string parameter 'definition' and assigns it to the 'definition' field of the BioSequence struct.
 func (s *BioSequence) SetDefinition(definition string) {
 	s.definition = definition
 }
 
-// Setting the source of the sequence.
+// SetSource sets the source of the BioSequence.
+//
+// Parameter:
+// - source: a string representing the filename without directory name and extension from where the sequence was read.
 func (s *BioSequence) SetSource(source string) {
 	s.source = source
 }
 
-// Setting the features of the BioSequence.
+// SetFeatures sets the feature of the BioSequence.
+//
+// Parameters:
+// - feature: a byte slice representing the feature to be set.
+//
+// No return value.
 func (s *BioSequence) SetFeatures(feature []byte) {
 	if cap(s.feature) >= 300 {
 		RecycleSlice(&s.feature)

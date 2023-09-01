@@ -328,6 +328,225 @@ func TestBioSequence_Len(t *testing.T) {
 	}
 }
 
+// TestHasQualities tests the HasQualities method of the BioSequence struct.
+//
+// It includes two test cases:
+//
+//  1. Test case 1: BioSequence with empty qualities slice
+//     - Creates a BioSequence instance with an empty qualities slice.
+//     - Expects false as the result of calling the HasQualities method on the BioSequence instance.
+//
+//  2. Test case 2: BioSequence with non-empty qualities slice
+//     - Creates a BioSequence instance with a non-empty qualities slice.
+//     - Expects true as the result of calling the HasQualities method on the BioSequence instance.
+//
+// No parameters are required.
+// No return types are specified.
+func TestHasQualities(t *testing.T) {
+	// Test case 1: BioSequence with empty qualities slice
+	seq1 := NewBioSequence("", []byte(""), "")
+	seq1.qualities = []byte{}
+	if seq1.HasQualities() != false {
+		t.Errorf("Test case 1 failed: expected false, got true")
+	}
+
+	// Test case 2: BioSequence with non-empty qualities slice
+	seq2 := NewBioSequence("", []byte(""), "")
+	seq2.qualities = []byte{20, 30, 40}
+	if seq2.HasQualities() != true {
+		t.Errorf("Test case 2 failed: expected true, got false")
+	}
+}
+
+// TestQualities tests the Qualities method of the BioSequence struct.
+//
+// It creates a BioSequence with a given sequence and qualities and sets them.
+// Then it compares the returned qualities with the expected ones.
+// If the qualities are not equal, it fails the test case.
+//
+// Test case 1: BioSequence has qualities
+// - sequence: []byte("ATCG")
+// - qualities: Quality{10, 20, 30, 40}
+// - expected: Quality{10, 20, 30, 40}
+//
+// Test case 2: BioSequence does not have qualities
+// - sequence: []byte("ATCG")
+// - qualities: nil
+// - expected: defaultQualities
+//
+// Parameters:
+// - t: *testing.T - the testing struct for running test cases and reporting failures.
+//
+// Return type:
+// None
+func TestQualities(t *testing.T) {
+	// Test case: BioSequence has qualities
+	sequence := []byte("ATCG")
+	qualities := Quality{10, 20, 30, 40}
+	bioSeq := NewBioSequence("ABC123", sequence, "Test Sequence")
+	bioSeq.SetQualities(qualities)
+
+	result := bioSeq.Qualities()
+	expected := qualities
+
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("Test case failed: BioSequence has qualities")
+	}
+
+	// Test case: BioSequence does not have qualities
+	defaultQualities := __make_default_qualities__(len(sequence))
+	bioSeq = NewBioSequence("ABC123", sequence, "Test Sequence")
+	bioSeq.SetQualities(nil)
+
+	result = bioSeq.Qualities()
+	expected = defaultQualities
+
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("Test case failed: BioSequence does not have qualities")
+	}
+}
+
+// TestBioSequence_Features tests the Features function of the BioSequence struct.
+//
+// It first tests the case when the feature string is empty. It creates a new BioSequence
+// with an empty feature string and an empty byte slice. It expects an empty string as
+// the result of calling the Features function on this BioSequence. If the result does
+// not match the expected value, it prints an error message.
+//
+// It then tests the case when the feature string is non-empty. It creates a new BioSequence
+// with an empty feature string and an empty byte slice. It sets the feature string to
+// "test sequence" and expects "test sequence" as the result of calling the Features function
+// on this BioSequence. If the result does not match the expected value, it prints an error message.
+func TestBioSequence_Features(t *testing.T) {
+	// Testing empty feature string
+	seq := NewBioSequence("", []byte(""), "")
+	expected := ""
+	if got := seq.Features(); got != expected {
+		t.Errorf("Expected %q, but got %q", expected, got)
+	}
+
+	// Testing non-empty feature string
+	seq = NewBioSequence("", []byte(""), "")
+	seq.feature = []byte("test sequence")
+	expected = "test sequence"
+	if got := seq.Features(); got != expected {
+		t.Errorf("Expected %q, but got %q", expected, got)
+	}
+}
+
+// TestHasAnnotation is a unit test function that tests the HasAnnotation method of the BioSequence struct.
+//
+// This function tests the behavior of the HasAnnotation method in different scenarios:
+// - Test case: BioSequence with no annotations.
+// - Test case: BioSequence with one annotation.
+// - Test case: BioSequence with multiple annotations.
+//
+// The function verifies that the HasAnnotation method returns the expected boolean value for each test case.
+// It uses the *testing.T parameter to report any test failures.
+//
+// No parameters.
+// No return values.
+func TestHasAnnotation(t *testing.T) {
+	// Test case: BioSequence with no annotations
+	seq := BioSequence{}
+	expected := false
+	if got := seq.HasAnnotation(); got != expected {
+		t.Errorf("Expected %v, but got %v", expected, got)
+	}
+
+	// Test case: BioSequence with one annotation
+	seq = BioSequence{annotations: map[string]interface{}{"annotation1": "value1"}}
+	expected = true
+	if got := seq.HasAnnotation(); got != expected {
+		t.Errorf("Expected %v, but got %v", expected, got)
+	}
+
+	// Test case: BioSequence with multiple annotations
+	seq = BioSequence{
+		annotations: map[string]interface{}{
+			"annotation1": "value1",
+			"annotation2": "value2",
+		},
+	}
+	expected = true
+	if got := seq.HasAnnotation(); got != expected {
+		t.Errorf("Expected %v, but got %v", expected, got)
+	}
+}
+
+// TestBioSequenceAnnotations tests the Annotations method of the BioSequence struct.
+//
+// It verifies the behavior of the method when the `annotations` field of the BioSequence struct is nil and when it is not nil.
+// The method should return the expected annotation values and fail the test if the returned annotations do not match the expected ones.
+// The test cases cover both scenarios to ensure the correctness of the method.
+func TestBioSequenceAnnotations(t *testing.T) {
+	s := &BioSequence{}
+
+	// Test case 1: Annotations is nil
+	s.annotations = nil
+	expected := GetAnnotation()
+	actual := s.Annotations()
+	if !reflect.DeepEqual(expected, actual) {
+		t.Errorf("Test case 1 failed: Expected %v, but got %v", expected, actual)
+	}
+
+	// Test case 2: Annotations is not nil
+	s.annotations = Annotation{}
+	expected = s.annotations
+	actual = s.Annotations()
+	if !reflect.DeepEqual(expected, actual) {
+		t.Errorf("Test case 2 failed: Expected %v, but got %v", expected, actual)
+	}
+}
+
+func TestAnnotationsLock(t *testing.T) {
+	// Test case 1: Lock the annotation of an empty BioSequence
+	seq := NewEmptyBioSequence(0)
+	seq.AnnotationsLock()
+
+	// Test case 2: Lock the annotation of a BioSequence with existing annotations
+	seq2 := NewEmptyBioSequence(0)
+	seq2.annotations = map[string]interface{}{
+		"key1": "value1",
+		"key2": "value2",
+	}
+	seq2.AnnotationsLock()
+}
+
+// TestBioSequence_MD5 tests the MD5 function of the BioSequence struct.
+//
+// It includes two test cases: one for an empty sequence and one for a non-empty sequence.
+// Each test case creates a BioSequence instance with a specific sequence and compares the MD5 result with the expected value.
+// If the result does not match the expected value, an error is reported using the t.Errorf function.
+// The expected MD5 values are hardcoded in the test cases.
+func TestBioSequence_MD5(t *testing.T) {
+	// Test case 1: Empty sequence
+	{
+		s := &BioSequence{sequence: []byte("")}
+		expected := [16]byte{
+			0xd4, 0x1d, 0x8c, 0xd9, 0x8f, 0x00, 0xb2, 0x04,
+			0xe9, 0x80, 0x09, 0x98, 0xec, 0xf8, 0x42, 0x7e,
+		}
+		result := s.MD5()
+		if result != expected {
+			t.Errorf("Test case 1 failed. Expected: %v, got: %v", expected, result)
+		}
+	}
+
+	// Test case 2: Non-empty sequence
+	{
+		s := &BioSequence{sequence: []byte("ACGT")}
+		expected := [16]byte{
+			0xf1, 0xf8, 0xf4, 0xbf, 0x41, 0x3b, 0x16, 0xad,
+			0x13, 0x57, 0x22, 0xaa, 0x45, 0x91, 0x04, 0x3e,
+		}
+		result := s.MD5()
+		if result != expected {
+			t.Errorf("Test case 2 failed. Expected: %v, got: %v", expected, result)
+		}
+	}
+}
+
 // TestBioSequence_Composition tests the Composition method of the BioSequence struct.
 //
 // It tests the method with three different test cases:

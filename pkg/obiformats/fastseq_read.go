@@ -124,7 +124,7 @@ func ReadFastSeqFromFile(filename string, options ...WithOption) (obiiter.IBioSe
 
 	log.Debugln("Full file batch mode : ", opt.FullFileBatch())
 	if opt.FullFileBatch() {
-		newIter = newIter.FullFileIterator()
+		newIter = newIter.CompleteFileIterator()
 	}
 
 	parser := opt.ParseFastSeqHeader()
@@ -155,7 +155,7 @@ func ReadFastSeqFromStdin(options ...WithOption) obiiter.IBioSequence {
 
 	log.Debugln("Full file batch mode : ", opt.FullFileBatch())
 	if opt.FullFileBatch() {
-		newIter = newIter.FullFileIterator()
+		newIter = newIter.CompleteFileIterator()
 	}
 
 	parser := opt.ParseFastSeqHeader()

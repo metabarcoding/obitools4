@@ -3,12 +3,13 @@ package obiformats
 import (
 	"encoding/csv"
 	"fmt"
-	gzip "github.com/klauspost/pgzip"
 	"io"
 	"os"
 	"path"
 	"strconv"
 	"strings"
+
+	gzip "github.com/klauspost/pgzip"
 
 	log "github.com/sirupsen/logrus"
 
@@ -209,7 +210,7 @@ func ReadEcoPCR(reader io.Reader, options ...WithOption) obiiter.IBioSequence {
 	}()
 
 	if opt.pointer.full_file_batch {
-		newIter = newIter.FullFileIterator()
+		newIter = newIter.CompleteFileIterator()
 	}
 
 	return newIter
