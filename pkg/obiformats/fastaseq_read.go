@@ -219,6 +219,9 @@ func ParseFastaChunk(source string, ch FastxChunk) *obiiter.BioSequenceBatch {
 			if !is_end_of_line {
 				// Beginning of sequence
 				start = i
+				if C >= 'A' && C <= 'Z' {
+					ch.Bytes[current] = C + 'a' - 'A'
+				}
 				current = i + 1
 				state = 6
 			}
