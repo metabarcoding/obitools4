@@ -148,14 +148,15 @@ func ReadSequencesFromFile(filename string,
 	if err != nil {
 		return obiiter.NilIBioSequence, err
 	}
-
+	log.Infof("%s mime type: %s", filename, mime.String())
 	reader = bufio.NewReader(reader)
 
 	switch mime.String() {
 	case "text/fastq":
-		file.Close()
-		is, err := ReadFastSeqFromFile(filename, options...)
-		return is, err
+		return ReadFastq(reader, options...)
+		// file.Close()
+		// is, err := ReadFastSeqFromFile(filename, options...)
+		// return is, err
 	case "text/fasta":
 		return ReadFasta(reader, options...)
 	case "text/ecopcr2":
