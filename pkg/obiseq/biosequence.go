@@ -324,7 +324,21 @@ func (s *BioSequence) SetId(id string) {
 //
 // It takes a string parameter 'definition' and assigns it to the 'definition' field of the BioSequence struct.
 func (s *BioSequence) SetDefinition(definition string) {
-	s.SetAttribute("definition", definition)
+	if definition != "" {
+		s.SetAttribute("definition", definition)
+	} else {
+		s.RemoveAttribute("definition")
+	}
+}
+
+func (s *BioSequence) RemoveAttribute(key string) {
+	if s.HasAnnotation() {
+		if s.HasAttribute(key) {
+			defer s.AnnotationsUnlock()
+			s.AnnotationsLock()
+			delete(s.annotations, key)
+		}
+	}
 }
 
 // SetSource sets the source of the BioSequence.
