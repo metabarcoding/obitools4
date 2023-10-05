@@ -32,9 +32,8 @@ func FormatFastq(seq *obiseq.BioSequence, quality_shift int, formater FormatHead
 		info = formater(seq)
 	}
 
-	return fmt.Sprintf("@%s %s %s\n%s\n+\n%s",
+	return fmt.Sprintf("@%s %s\n%s\n+\n%s",
 		seq.Id(), info,
-		seq.Definition(),
 		string(seq.Sequence()),
 		string(ascii),
 	)

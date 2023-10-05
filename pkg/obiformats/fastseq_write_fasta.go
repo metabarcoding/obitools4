@@ -63,9 +63,8 @@ func FormatFasta(seq *obiseq.BioSequence, formater FormatHeader) string {
 	}
 
 	info := formater(seq)
-	return fmt.Sprintf(">%s %s %s\n%s",
+	return fmt.Sprintf(">%s %s\n%s",
 		seq.Id(), info,
-		seq.Definition(),
 		folded)
 }
 
@@ -199,7 +198,7 @@ func WriteFasta(iterator obiiter.IBioSequence,
 // configuration options as variadic arguments. It appends the option to not close the file
 // to the options slice and then calls the WriteFasta function passing the iterator,
 // os.Stdout as the output file, and the options slice.
-// 
+//
 // The function returns the same bio sequence iterator and an error if any occurred.
 func WriteFastaToStdout(iterator obiiter.IBioSequence,
 	options ...WithOption) (obiiter.IBioSequence, error) {

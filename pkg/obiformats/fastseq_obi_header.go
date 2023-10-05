@@ -298,27 +298,29 @@ func FormatFastSeqOBIHeader(sequence *obiseq.BioSequence) string {
 		var text strings.Builder
 
 		for key, value := range annotations {
-			switch t := value.(type) {
-			case string:
-				text.WriteString(fmt.Sprintf("%s=%s; ", key, t))
-			case map[string]int,
-				map[string]string,
-				map[string]interface{},
-				obiseq.StatsOnValues:
-				tv, err := obiutils.JsonMarshal(t)
-				if err != nil {
-					log.Fatalf("Cannot convert %v value", value)
+			if key != "definition" {
+				switch t := value.(type) {
+				case string:
+					text.WriteString(fmt.Sprintf("%s=%s; ", key, t))
+				case map[string]int,
+					map[string]string,
+					map[string]interface{},
+					obiseq.StatsOnValues:
+					tv, err := obiutils.JsonMarshal(t)
+					if err != nil {
+						log.Fatalf("Cannot convert %v value", value)
+					}
+					tv = bytes.ReplaceAll(tv, []byte(`"`), []byte("'"))
+					text.WriteString(fmt.Sprintf("%s=", key))
+					text.Write(tv)
+					text.WriteString("; ")
+				default:
+					text.WriteString(fmt.Sprintf("%s=%v; ", key, value))
 				}
-				tv = bytes.ReplaceAll(tv, []byte(`"`), []byte("'"))
-				text.WriteString(fmt.Sprintf("%s=", key))
-				text.Write(tv)
-				text.WriteString("; ")
-			default:
-				text.WriteString(fmt.Sprintf("%s=%v; ", key, value))
 			}
 		}
 
-		return text.String()
+		return text.String() + " " + sequence.Definition()
 	}
 
 	return ""

@@ -403,7 +403,7 @@ func WopenFile(f string, flag int, perm os.FileMode) (*Writer, error) {
 	if strings.HasSuffix(f2, ".gz") {
 		gz, err := gzip.NewWriterLevel(wtr, Level)
 		if err != nil {
-			err = errors.New(fmt.Sprintf("xopen: %s", err))
+			err = fmt.Errorf("xopen: %s", err)
 		}
 		return &Writer{bufio.NewWriterSize(gz, bufSize), wtr, gz, nil, nil, nil}, err
 	}
@@ -418,7 +418,7 @@ func WopenFile(f string, flag int, perm os.FileMode) (*Writer, error) {
 		}
 		zw, err := zstd.NewWriter(wtr, zstd.WithEncoderLevel(zstd.EncoderLevel(level)))
 		if err != nil {
-			err = errors.New(fmt.Sprintf("xopen: zstd: %s", err))
+			err = fmt.Errorf("xopen: zstd: %s", err)
 		}
 		return &Writer{bufio.NewWriterSize(zw, bufSize), wtr, nil, nil, zw, nil}, err
 	}
@@ -429,7 +429,7 @@ func WopenFile(f string, flag int, perm os.FileMode) (*Writer, error) {
 		}
 		bz2, err := bzip2.NewWriter(wtr, &bzip2.WriterConfig{Level: level})
 		if err != nil {
-			err = errors.New(fmt.Sprintf("xopen: %s", err))
+			err = fmt.Errorf("xopen: %s", err)
 		}
 		return &Writer{bufio.NewWriterSize(bz2, bufSize), wtr, nil, nil, nil, bz2}, err
 	}

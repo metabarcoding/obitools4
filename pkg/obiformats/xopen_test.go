@@ -61,7 +61,7 @@ func (s *XopenTest) TestWopen(c *C) {
 		_, err = os.Stat(f)
 		c.Assert(err, IsNil)
 		c.Assert(wtr.wtr, NotNil)
-		fmt.Fprintf(wtr, testString)
+		fmt.Fprint(wtr, testString)
 		wtr.Close()
 
 		rdr, err := Ropen(f)
@@ -70,7 +70,7 @@ func (s *XopenTest) TestWopen(c *C) {
 		str, err := rdr.ReadString(99)
 		c.Assert(str, Equals, testString)
 		c.Assert(err, Equals, io.EOF)
-		str, err = rdr.ReadString(99)
+		str, _ = rdr.ReadString(99)
 		c.Assert(str, Equals, "")
 
 		rdr.Close()
