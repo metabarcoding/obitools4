@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io"
 	"os"
 	"reflect"
@@ -12,15 +11,6 @@ import (
 
 	"github.com/barkimedes/go-deepcopy"
 )
-
-// InterfaceToInt converts a interface{} to an integer value if possible.
-// If not a "NotAnInteger" error is returned via the err
-// return value and val is set to 0.
-func InterfaceToString(i interface{}) (val string, err error) {
-	err = nil
-	val = fmt.Sprintf("%v", i)
-	return
-}
 
 // NotAnInteger defines a new type of Error : "NotAnInteger"
 type NotAnInteger struct {

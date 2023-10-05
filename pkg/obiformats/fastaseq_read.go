@@ -294,6 +294,11 @@ func ReadFastaFromFile(filename string, options ...WithOption) (obiiter.IBioSequ
 
 	file, err := Ropen(filename)
 
+	if err == ErrNoContent {
+		log.Infof("file %s is empty", filename)
+		return ReadEmptyFile(options...)
+	}
+
 	if err != nil {
 		return obiiter.NilIBioSequence, err
 	}
@@ -304,6 +309,11 @@ func ReadFastaFromFile(filename string, options ...WithOption) (obiiter.IBioSequ
 func ReadFastaFromStdin(reader io.Reader, options ...WithOption) (obiiter.IBioSequence, error) {
 	options = append(options, OptionsSource(obiutils.RemoveAllExt("stdin")))
 	input, err := Buf(os.Stdin)
+
+	if err == ErrNoContent {
+		log.Infof("stdin is empty")
+		return ReadEmptyFile(options...)
+	}
 
 	if err != nil {
 		log.Fatalf("open file error: %v", err)

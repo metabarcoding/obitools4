@@ -55,8 +55,8 @@ type Annotation map[string]interface{}
 // A BioSequence is a sequence of bytes with an identifier, a definition, a sequence, qualities,
 // features and annotations. It aims to represent a biological sequence
 type BioSequence struct {
-	id          string // The identidier of the sequence (private accessible through the method Id)
-	definition  string // The documentation of the sequence (private accessible through the method Definition)
+	id string // The identidier of the sequence (private accessible through the method Id)
+	//definition  string // The documentation of the sequence (private accessible through the method Definition)
 	source      string // The filename without directory name and extension from where the sequence was read.
 	sequence    []byte // The sequence itself, it is accessible by the methode Sequence
 	qualities   []byte // The quality scores of the sequence.
@@ -80,8 +80,8 @@ func NewEmptyBioSequence(preallocate int) *BioSequence {
 	}
 
 	return &BioSequence{
-		id:          "",
-		definition:  "",
+		id: "",
+		//definition:  "",
 		source:      "",
 		sequence:    seq,
 		qualities:   nil,
@@ -148,7 +148,7 @@ func (s *BioSequence) Copy() *BioSequence {
 	newSeq := NewEmptyBioSequence(0)
 
 	newSeq.id = s.id
-	newSeq.definition = s.definition
+	//newSeq.definition = s.definition
 
 	newSeq.sequence = CopySlice(s.sequence)
 	newSeq.qualities = CopySlice(s.qualities)
@@ -176,7 +176,16 @@ func (s *BioSequence) Id() string {
 // No parameters.
 // Returns a string.
 func (s *BioSequence) Definition() string {
-	return s.definition
+	definition := ""
+	var err error
+	def, ok := s.GetAttribute("definition")
+	if ok {
+		definition, err = obiutils.InterfaceToString(def)
+		if err != nil {
+			definition = ""
+		}
+	}
+	return definition
 }
 
 // Sequence returns the sequence of the BioSequence.
@@ -315,7 +324,7 @@ func (s *BioSequence) SetId(id string) {
 //
 // It takes a string parameter 'definition' and assigns it to the 'definition' field of the BioSequence struct.
 func (s *BioSequence) SetDefinition(definition string) {
-	s.definition = definition
+	s.SetAttribute("definition", definition)
 }
 
 // SetSource sets the source of the BioSequence.

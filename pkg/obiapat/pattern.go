@@ -298,6 +298,24 @@ func (pattern ApatPattern) FindAllIndex(sequence ApatSequence, begin, length int
 	return loc
 }
 
+// BestMatch finds the best match of a given pattern in a sequence.
+//
+// THe function identify the first occurrence of the pattern in the sequence.
+// The search can be limited to a portion of the sequence using the begin and
+// length parameters to find the next occurrences.
+//
+// The BestMatch methood ins
+// It takes the following parameters:
+// - pattern: the pattern to search for (ApatPattern).
+// - sequence: the sequence to search in (ApatSequence).
+// - begin: the starting index of the search (int).
+// - length: the length of the search (int).
+//
+// It returns the following values:
+// - start: the starting index of the best match (int).
+// - end: the ending index of the best match (int).
+// - nerr: the number of errors in the best match (int).
+// - matched: a boolean indicating whether a match was found (bool).
 func (pattern ApatPattern) BestMatch(sequence ApatSequence, begin, length int) (start int, end int, nerr int, matched bool) {
 	res := pattern.FindAllIndex(sequence, begin, length)
 

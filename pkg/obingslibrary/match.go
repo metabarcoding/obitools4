@@ -104,6 +104,16 @@ func (marker *Marker) Compile(forward, reverse string, maxError int, allowsIndel
 	return nil
 }
 
+// Match finds the best matching demultiplex for a given sequence.
+//
+// Parameters:
+//
+//	marker - a pointer to a Marker struct that contains the forward and reverse primers.
+//	sequence - a pointer to a BioSequence struct that represents the input sequence.
+//
+// Returns:
+//
+//	A pointer to a DemultiplexMatch struct that contains the best matching demultiplex.
 func (marker *Marker) Match(sequence *obiseq.BioSequence) *DemultiplexMatch {
 	aseq, _ := obiapat.MakeApatSequence(sequence, false)
 
@@ -223,6 +233,15 @@ func (marker *Marker) Match(sequence *obiseq.BioSequence) *DemultiplexMatch {
 	return nil
 }
 
+// ExtractBarcode extracts the barcode from the given biosequence.
+//
+// Parameters:
+// - sequence: The biosequence from which to extract the barcode.
+// - inplace: A boolean indicating whether the barcode should be extracted in-place or not.
+//
+// Returns:
+// - The biosequence with the extracted barcode.
+// - An error indicating any issues encountered during the extraction process.
 func (match *DemultiplexMatch) ExtractBarcode(sequence *obiseq.BioSequence, inplace bool) (*obiseq.BioSequence, error) {
 	if !inplace {
 		sequence = sequence.Copy()

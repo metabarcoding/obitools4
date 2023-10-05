@@ -1,5 +1,17 @@
 package obiutils
 
+import "fmt"
+
+// InterfaceToString converts an interface value to a string.
+//
+// The function takes an interface{} value as a parameter and returns a string representation of that value.
+// It returns the string representation and an error if any occurred during the conversion process.
+func InterfaceToString(i interface{}) (val string, err error) {
+	err = nil
+	val = fmt.Sprintf("%v", i)
+	return
+}
+
 // CastableToInt checks if the given input can be casted to an integer.
 //
 // i: the value to check for castability.

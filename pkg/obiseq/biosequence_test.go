@@ -143,11 +143,10 @@ func TestBioSequence_Recycle(t *testing.T) {
 // Returns: None.
 func TestCopy(t *testing.T) {
 	seq := &BioSequence{
-		id:         "test",
-		definition: "test sequence",
-		sequence:   []byte("ATCG"),
-		qualities:  []byte("1234"),
-		feature:    []byte("feature1...feature2"),
+		id:        "test",
+		sequence:  []byte("ATCG"),
+		qualities: []byte("1234"),
+		feature:   []byte("feature1...feature2"),
 		annotations: Annotation{
 			"annotation1": "value1",
 			"annotation2": "value2",
@@ -161,10 +160,6 @@ func TestCopy(t *testing.T) {
 	if newSeq.id != seq.id {
 		t.Errorf("Expected id to be %v, got %v", seq.id, newSeq.id)
 	}
-	if newSeq.definition != seq.definition {
-		t.Errorf("Expected definition to be %v, got %v", seq.definition, newSeq.definition)
-	}
-
 	// Test if the sequence, qualities, and feature fields are copied correctly
 	if !reflect.DeepEqual(newSeq.sequence, seq.sequence) {
 		t.Errorf("Expected sequence to be %v, got %v", seq.sequence, newSeq.sequence)

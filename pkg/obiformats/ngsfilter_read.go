@@ -59,8 +59,12 @@ func _parseMainNGSFilterTags(text string) obingslibrary.TagPair {
 	}
 }
 
-func _parseMainNGSFilter(text string) (obingslibrary.PrimerPair, obingslibrary.TagPair, string, string, bool) {
+func _parseMainNGSFilter(text string) (obingslibrary.PrimerPair, obingslibrary.TagPair, string, string, bool, bool) {
 	fields := strings.Fields(text)
+
+	if len(fields) < 6 {
+		return obingslibrary.PrimerPair{}, obingslibrary.TagPair{}, "", "", false, false
+	}
 
 	tags := _parseMainNGSFilterTags(fields[2])
 	partial := fields[5] == "T" || fields[5] == "t"
@@ -72,7 +76,8 @@ func _parseMainNGSFilter(text string) (obingslibrary.PrimerPair, obingslibrary.T
 		tags,
 		fields[0],
 		fields[1],
-		partial
+		partial,
+		true
 }
 
 func ReadNGSFilter(reader io.Reader) (obingslibrary.NGSLibrary, error) {
@@ -89,7 +94,15 @@ func ReadNGSFilter(reader io.Reader) (obingslibrary.NGSLibrary, error) {
 
 		split := strings.SplitN(line, "@", 2)
 
-		primers, tags, experiment, sample, partial := _parseMainNGSFilter(split[0])
+		if len(split) < 1 {
+			return nil, fmt.Errorf("line %d : invalid format", i+1)
+		}
+
+		primers, tags, experiment, sample, partial, ok := _parseMainNGSFilter(split[0])
+
+		if !ok {
+			return nil, fmt.Errorf("line %d : invalid format", i+1)
+		}
 
 		marker, _ := ngsfilter.GetMarker(primers.Forward, primers.Reverse)
 		pcr, ok := marker.GetPCR(tags.Forward, tags.Reverse)

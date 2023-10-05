@@ -32,7 +32,7 @@ func (sequence *BioSequence) Subsequence(from, to int, circular bool) (*BioSeque
 		}
 
 		newSeq.id = fmt.Sprintf("%s_sub[%d..%d]", sequence.Id(), from+1, to)
-		newSeq.definition = sequence.definition
+		//	newSeq.definition = sequence.definition
 	} else {
 		newSeq, _ = sequence.Subsequence(from, sequence.Len(), false)
 		newSeq.Write(sequence.Sequence()[0:to])
