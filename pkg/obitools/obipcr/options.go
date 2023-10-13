@@ -17,6 +17,7 @@ var _AllowedMismatch = 0
 var _MinimumLength = 0
 var _MaximumLength = -1
 var _Fragmented = false
+var _Delta = -1
 
 // PCROptionSet defines every options related to a simulated PCR.
 //
@@ -54,6 +55,9 @@ func PCROptionSet(options *getoptions.GetOpt) {
 		options.Alias("L"),
 		options.Required("You must indicate the maximum size of the amplicon (excluded primer length)"),
 		options.Description("Maximum length of the barcode (primers excluded)."))
+	options.IntVar(&_Delta, "delta", -1,
+		options.Alias("D"),
+		options.Description("Lenght of the sequence fragment to be added to the barcode extremities."))
 }
 
 // OptionSet adds to the basic option set every options declared for
@@ -118,4 +122,12 @@ func CLIMaxLength() int {
 
 func CLIFragmented() bool {
 	return _Fragmented
+}
+
+func CLIWithExtension() bool {
+	return _Delta >= 0
+}
+
+func CLIExtension() int {
+	return _Delta
 }

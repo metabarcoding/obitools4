@@ -13,6 +13,7 @@ type _Options struct {
 	circular        bool
 	forwardError    int
 	reverseError    int
+	extension       int
 	batchSize       int
 	parallelWorkers int
 	forward         ApatPattern
@@ -30,6 +31,15 @@ type Options struct {
 // WithOption is the standard type for function
 // declaring options.
 type WithOption func(Options)
+
+func (options Options) HasExtension() bool {
+	return options.pointer.extension > -1
+
+}
+
+func (options Options) Extension() int {
+	return options.pointer.extension
+}
 
 // MinLength method returns minimum length of
 // the searched amplicon (length of the primers
@@ -85,6 +95,7 @@ func MakeOptions(setters []WithOption) Options {
 		maxLength:       0,
 		forwardError:    0,
 		reverseError:    0,
+		extension:       -1,
 		circular:        false,
 		parallelWorkers: 4,
 		batchSize:       100,
@@ -143,6 +154,19 @@ func OptionForwardPrimer(primer string, max int) WithOption {
 			log.Fatalf("error : %v\n", err)
 		}
 		opt.pointer.forwardError = max
+	})
+
+	return f
+}
+
+// OptionWithExtension sets the length of the extension to be added to the sequence.
+//
+// An negative value indicates that no extension is added
+// The extension parameter is an integer that represents the extension value to be set.
+// The returned function is of type WithOption.
+func OptionWithExtension(extension int) WithOption {
+	f := WithOption(func(opt Options) {
+		opt.pointer.extension = extension
 	})
 
 	return f
@@ -253,8 +277,16 @@ func _Pcr(seq ApatSequence,
 							if length > 0 && // For when primers touch or overlap
 								(opt.MinLength() == 0 || length >= opt.MinLength()) &&
 								(opt.MaxLength() == 0 || length <= opt.MaxLength()) {
-								amplicon, _ := seq.pointer.reference.Subsequence(fm[1], rm[0], opt.pointer.circular)
-								log.Debugf("seq length : %d capacity : %d",amplicon.Len(),cap(amplicon.Sequence()))
+								var from, to int
+								if opt.HasExtension() {
+									from = fm[0] - opt.Extension()
+									to = rm[1] + opt.Extension()
+								} else {
+									from = fm[1]
+									to = rm[0]
+								}
+								amplicon, _ := seq.pointer.reference.Subsequence(from, to, opt.pointer.circular)
+								log.Debugf("seq length : %d capacity : %d", amplicon.Len(), cap(amplicon.Sequence()))
 								annot := amplicon.Annotations()
 								obiutils.MustFillMap(annot, seq.pointer.reference.Annotations())
 
@@ -287,7 +319,7 @@ func _Pcr(seq ApatSequence,
 	}
 
 	forwardMatches = reverse.FindAllIndex(seq, 0, -1)
-	
+
 	if forwardMatches != nil {
 
 		begin := forwardMatches[0][0]
@@ -303,7 +335,6 @@ func _Pcr(seq ApatSequence,
 		}
 
 		reverseMatches := cfwd.FindAllIndex(seq, begin, length)
-		
 
 		if reverseMatches != nil {
 			for _, fm := range forwardMatches {
@@ -331,7 +362,15 @@ func _Pcr(seq ApatSequence,
 							if length > 0 && // For when primers touch or overlap
 								(opt.MinLength() == 0 || length >= opt.MinLength()) &&
 								(opt.MaxLength() == 0 || length <= opt.MaxLength()) {
-								amplicon, _ := seq.pointer.reference.Subsequence(fm[1], rm[0], opt.pointer.circular)
+								var from, to int
+								if opt.HasExtension() {
+									from = fm[0] - opt.Extension()
+									to = rm[1] + opt.Extension()
+								} else {
+									from = fm[1]
+									to = rm[0]
+								}
+								amplicon, _ := seq.pointer.reference.Subsequence(from, to, opt.pointer.circular)
 								amplicon = amplicon.ReverseComplement(true)
 
 								annot := amplicon.Annotations()
@@ -401,13 +440,13 @@ func _PCRSlice(sequences obiseq.BioSequenceSlice,
 		for _, sequence := range sequences[1:] {
 			seq, _ = MakeApatSequence(sequence, options.Circular(), seq)
 			amplicons = _Pcr(seq, options)
-			
+
 			if len(amplicons) > 0 {
 				results = append(results, amplicons...)
 			}
 		}
 
-	    //log.Debugln(AllocatedApaSequences())
+		//log.Debugln(AllocatedApaSequences())
 
 		// seq.Free()
 	}
@@ -433,7 +472,7 @@ func PCRSliceWorker(options ...WithOption) obiseq.SeqSliceWorker {
 
 	opt := MakeOptions(options)
 	worker := func(sequences obiseq.BioSequenceSlice) obiseq.BioSequenceSlice {
-		result :=  _PCRSlice(sequences, opt)
+		result := _PCRSlice(sequences, opt)
 		sequences.Recycle(true)
 		return result
 	}

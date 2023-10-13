@@ -30,6 +30,10 @@ func CLIPCR(iterator obiiter.IBioSequence) (obiiter.IBioSequence, error) {
 		opts = append(opts, obiapat.OptionMinLength(CLIMinLength()))
 	}
 
+	if CLIWithExtension() {
+		opts = append(opts, obiapat.OptionWithExtension(CLIExtension()))
+	}
+
 	opts = append(opts, obiapat.OptionMaxLength(CLIMaxLength()))
 
 	if CLICircular() {

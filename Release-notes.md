@@ -2,6 +2,17 @@
 
 ## Latest changes
 
+### Enhancement
+
+- A new completely rewritten GO version of the fastq and fasta parser is now used instead of the original C version. 
+- A new file format guesser is now implemented. This is a first step towards allowing new formats to be managed by obitools.
+- New way of handling header definitions of fasta and fastq formats with JSON headers.
+  The sequence definition is now printed in new files as an attribute of the json header named "definition".
+- The -D (--delta) option has been added to `obipcr`. It allows to extract flanking sequences of the barcode.
+    + If -D is not set, the output sequence is the barcode itself without the priming sites. 
+    + If -D is set to 0, the output sequence is the barcode with the priming sites.
+    + When -D is set to ### (where ### is an integer), the output sequence is the barcode with the priming sites.  
+      and ### base pairs of flanking sequences.
 ### Becareful
 
 GO 1.21.0 is out, and it includes new functionalities which are used in the OBITools4 code.
