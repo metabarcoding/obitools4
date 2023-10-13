@@ -24,6 +24,7 @@ func CLIPCR(iterator obiiter.IBioSequence) (obiiter.IBioSequence, error) {
 			CLIReversePrimer(),
 			CLIAllowedMismatch(),
 		),
+		obiapat.OptionOnlyFullExtension(CLIOnlyFull()),
 	)
 
 	if CLIMinLength() > 0 {

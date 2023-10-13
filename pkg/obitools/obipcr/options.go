@@ -18,6 +18,7 @@ var _MinimumLength = 0
 var _MaximumLength = -1
 var _Fragmented = false
 var _Delta = -1
+var _OnlyFull = false
 
 // PCROptionSet defines every options related to a simulated PCR.
 //
@@ -58,6 +59,9 @@ func PCROptionSet(options *getoptions.GetOpt) {
 	options.IntVar(&_Delta, "delta", -1,
 		options.Alias("D"),
 		options.Description("Lenght of the sequence fragment to be added to the barcode extremities."))
+	options.BoolVar(&_OnlyFull, "only-complete-flanking", false,
+		options.Description("Only fragments with complete flanking sequences are printed."))
+
 }
 
 // OptionSet adds to the basic option set every options declared for
@@ -130,4 +134,8 @@ func CLIWithExtension() bool {
 
 func CLIExtension() int {
 	return _Delta
+}
+
+func CLIOnlyFull() bool {
+	return _OnlyFull
 }

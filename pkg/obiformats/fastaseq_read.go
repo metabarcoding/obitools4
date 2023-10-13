@@ -92,7 +92,12 @@ func FastaChunkReader(r io.Reader, size int, cutHead bool) (chan FastxChunk, err
 	out := make(chan FastxChunk)
 	buff := make([]byte, size)
 
-	n, err := r.Read(buff)
+	n, err := io.ReadFull(r, buff)
+
+	if err == io.ErrUnexpectedEOF {
+		err = nil
+	}
+
 	if n > 0 && err == nil {
 		if n < size {
 			buff = buff[:n]
@@ -128,13 +133,20 @@ func FastaChunkReader(r io.Reader, size int, cutHead bool) (chan FastxChunk, err
 						index: idx,
 					}
 					idx++
+				} else {
+					size = size * 2
 				}
 
 				buff = slices.Grow(buff[:0], size)[0:size]
-				n, err = r.Read(buff)
+				n, err = io.ReadFull(r, buff)
 				if n < size {
 					buff = buff[:n]
 				}
+
+				if err == io.ErrUnexpectedEOF {
+					err = nil
+				}
+
 				// fmt.Printf("n = %d, err = %v\n", n, err)
 			}
 

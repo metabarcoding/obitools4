@@ -69,11 +69,17 @@ func OBIMimeTypeGuesser(stream io.Reader) (*mimetype.MIME, io.Reader, error) {
 	mimetype.Lookup("text/plain").Extend(genbankDetector, "text/genbank", ".seq")
 	mimetype.Lookup("text/plain").Extend(emblDetector, "text/embl", ".dat")
 
+	mimetype.Lookup("application/octet-stream").Extend(fastaDetector, "text/fasta", ".fasta")
+	mimetype.Lookup("application/octet-stream").Extend(fastqDetector, "text/fastq", ".fastq")
+	mimetype.Lookup("application/octet-stream").Extend(ecoPCR2Detector, "text/ecopcr2", ".ecopcr")
+	mimetype.Lookup("application/octet-stream").Extend(genbankDetector, "text/genbank", ".seq")
+	mimetype.Lookup("application/octet-stream").Extend(emblDetector, "text/embl", ".dat")
+
 	// Create a buffer to store the read data
 	buf := make([]byte, 1024*128)
-	n, err := stream.Read(buf)
+	n, err := io.ReadFull(stream, buf)
 
-	if err != nil && err != io.EOF {
+	if err != nil && err != io.ErrUnexpectedEOF {
 		return nil, nil, err
 	}
 
@@ -84,7 +90,11 @@ func OBIMimeTypeGuesser(stream io.Reader) (*mimetype.MIME, io.Reader, error) {
 	}
 
 	// Create a new reader based on the read data
-	newReader := io.MultiReader(bytes.NewReader(buf[:n]), stream)
+	newReader := io.Reader(bytes.NewReader(buf[:n]))
+
+	if err == nil {
+		newReader = io.MultiReader(newReader, stream)
+	}
 
 	return mimeType, newReader, nil
 }

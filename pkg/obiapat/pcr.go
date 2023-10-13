@@ -14,6 +14,7 @@ type _Options struct {
 	forwardError    int
 	reverseError    int
 	extension       int
+	fullExtension   bool
 	batchSize       int
 	parallelWorkers int
 	forward         ApatPattern
@@ -39,6 +40,10 @@ func (options Options) HasExtension() bool {
 
 func (options Options) Extension() int {
 	return options.pointer.extension
+}
+
+func (options Options) OnlyFullExtension() bool {
+	return options.pointer.fullExtension
 }
 
 // MinLength method returns minimum length of
@@ -96,6 +101,7 @@ func MakeOptions(setters []WithOption) Options {
 		forwardError:    0,
 		reverseError:    0,
 		extension:       -1,
+		fullExtension:   false,
 		circular:        false,
 		parallelWorkers: 4,
 		batchSize:       100,
@@ -167,6 +173,14 @@ func OptionForwardPrimer(primer string, max int) WithOption {
 func OptionWithExtension(extension int) WithOption {
 	f := WithOption(func(opt Options) {
 		opt.pointer.extension = extension
+	})
+
+	return f
+}
+
+func OptionOnlyFullExtension(full bool) WithOption {
+	f := WithOption(func(opt Options) {
+		opt.pointer.fullExtension = full
 	})
 
 	return f
@@ -285,31 +299,51 @@ func _Pcr(seq ApatSequence,
 									from = fm[1]
 									to = rm[0]
 								}
-								amplicon, _ := seq.pointer.reference.Subsequence(from, to, opt.pointer.circular)
-								log.Debugf("seq length : %d capacity : %d", amplicon.Len(), cap(amplicon.Sequence()))
-								annot := amplicon.Annotations()
-								obiutils.MustFillMap(annot, seq.pointer.reference.Annotations())
 
-								annot["forward_primer"] = forward.String()
+								if opt.HasExtension() && !opt.OnlyFullExtension() && !opt.Circular() {
+									if from < 0 {
+										from = 0
+									}
+									if to > seq.Len() {
+										to = seq.Len()
+									}
+								}
 
-								match, _ := seq.pointer.reference.Subsequence(fm[0], fm[1], opt.pointer.circular)
-								annot["forward_match"] = match.String()
-								match.Recycle()
+								if (opt.HasExtension() && ((from >= 0 && to <= seq.Len()) || opt.Circular())) ||
+									!opt.HasExtension() {
 
-								annot["forward_error"] = erri
+									amplicon, error := seq.pointer.reference.Subsequence(from, to, opt.Circular())
 
-								annot["reverse_primer"] = reverse.String()
-								match, _ = seq.pointer.reference.Subsequence(rm[0], rm[1], opt.pointer.circular)
-								match = match.ReverseComplement(true)
-								annot["reverse_match"] = match.String()
-								match.Recycle()
+									if error != nil {
+										log.Fatalf("error : %v\n", error)
+									}
 
-								annot["reverse_error"] = errj
-								annot["direction"] = "forward"
+									log.Debugf("seq length : %d capacity : %d", amplicon.Len(), cap(amplicon.Sequence()))
+									annot := amplicon.Annotations()
+									obiutils.MustFillMap(annot, seq.pointer.reference.Annotations())
 
-								// log.Debugf("amplicon sequence capacity : %d", cap(amplicon.Sequence()))
+									annot["forward_primer"] = forward.String()
 
-								results = append(results, amplicon)
+									match, _ := seq.pointer.reference.Subsequence(fm[0], fm[1], opt.pointer.circular)
+									annot["forward_match"] = match.String()
+									match.Recycle()
+
+									annot["forward_error"] = erri
+
+									annot["reverse_primer"] = reverse.String()
+									match, _ = seq.pointer.reference.Subsequence(rm[0], rm[1], opt.pointer.circular)
+									match = match.ReverseComplement(true)
+									annot["reverse_match"] = match.String()
+									match.Recycle()
+
+									annot["reverse_error"] = errj
+									annot["direction"] = "forward"
+
+									// log.Debugf("amplicon sequence capacity : %d", cap(amplicon.Sequence()))
+
+									results = append(results, amplicon)
+
+								}
 							}
 						}
 					}
@@ -370,30 +404,48 @@ func _Pcr(seq ApatSequence,
 									from = fm[1]
 									to = rm[0]
 								}
-								amplicon, _ := seq.pointer.reference.Subsequence(from, to, opt.pointer.circular)
-								amplicon = amplicon.ReverseComplement(true)
 
-								annot := amplicon.Annotations()
-								obiutils.MustFillMap(annot, seq.pointer.reference.Annotations())
-								annot["forward_primer"] = forward.String()
+								if opt.HasExtension() && !opt.OnlyFullExtension() && !opt.Circular() {
+									if from < 0 {
+										from = 0
+									}
+									if to > seq.Len() {
+										to = seq.Len()
+									}
+								}
 
-								match, _ := seq.pointer.reference.Subsequence(rm[0], rm[1], opt.pointer.circular)
-								match.ReverseComplement(true)
-								annot["forward_match"] = match.String()
-								match.Recycle()
+								if (opt.HasExtension() && ((from >= 0 && to <= seq.Len()) || opt.Circular())) ||
+									!opt.HasExtension() {
+									amplicon, error := seq.pointer.reference.Subsequence(from, to, opt.pointer.circular)
 
-								annot["forward_error"] = errj
+									if error != nil {
+										log.Fatalf("error : %v\n", error)
+									}
 
-								annot["reverse_primer"] = reverse.String()
-								match, _ = seq.pointer.reference.Subsequence(fm[0], fm[1], opt.pointer.circular)
-								annot["reverse_match"] = match.String()
-								match.Recycle()
+									amplicon = amplicon.ReverseComplement(true)
 
-								annot["reverse_error"] = erri
-								annot["direction"] = "reverse"
+									annot := amplicon.Annotations()
+									obiutils.MustFillMap(annot, seq.pointer.reference.Annotations())
+									annot["forward_primer"] = forward.String()
 
-								results = append(results, amplicon)
-								// log.Debugf("amplicon sequence capacity : %d", cap(amplicon.Sequence()))
+									match, _ := seq.pointer.reference.Subsequence(rm[0], rm[1], opt.pointer.circular)
+									match.ReverseComplement(true)
+									annot["forward_match"] = match.String()
+									match.Recycle()
+
+									annot["forward_error"] = errj
+
+									annot["reverse_primer"] = reverse.String()
+									match, _ = seq.pointer.reference.Subsequence(fm[0], fm[1], opt.pointer.circular)
+									annot["reverse_match"] = match.String()
+									match.Recycle()
+
+									annot["reverse_error"] = erri
+									annot["direction"] = "reverse"
+
+									results = append(results, amplicon)
+									// log.Debugf("amplicon sequence capacity : %d", cap(amplicon.Sequence()))
+								}
 							}
 						}
 					}

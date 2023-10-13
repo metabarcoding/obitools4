@@ -192,8 +192,10 @@ func _ReadFlatFileChunk(reader io.Reader, readers chan _FileChunk) {
 	for err == nil {
 
 		// Read from the reader until the buffer is full or the end of the file is reached
-		for ; err == nil && l < len(buff); l += size {
-			size, err = reader.Read(buff[l:])
+		l, err = io.ReadFull(reader, buff)
+
+		if err == io.ErrUnexpectedEOF {
+			err = nil
 		}
 
 		// Create an extended buffer to read from if the end of the last entry is not found in the current buffer
@@ -205,7 +207,7 @@ func _ReadFlatFileChunk(reader io.Reader, readers chan _FileChunk) {
 		// Read from the reader in 1 MB increments until the end of the last entry is found
 		for end = _EndOfLastEntry(buff); err == nil && end < 0; end = _EndOfLastEntry(extbuff[:size]) {
 			ic++
-			size, err = reader.Read(extbuff)
+			size, err = io.ReadFull(reader, extbuff)
 			buff = append(buff, extbuff[:size]...)
 		}
 
