@@ -169,13 +169,19 @@ func ParseFastqChunk(source string, ch FastxChunk, quality_shift byte) *obiiter.
 		is_space := C == ' ' || C == '\t'
 		is_sep := is_space || is_end_of_line
 
+		// log.Infof("%s : state = %d pos = %d character = %c (%d)", source, state, i, C, C)
+
 		switch state {
-		case 0:
+		case 0: // Beginning of sequence chunk must start with @
+
 			if C == '@' {
 				// Beginning of sequence
 				state = 1
+			} else {
+				log.Errorf("%s : sequence entry is not starting with @", source)
+				return nil
 			}
-		case 1:
+		case 1: // Beginning of identifier (Mandatory)
 			if is_sep {
 				// No identifier -> ERROR
 				log.Errorf("%s : sequence identifier is empty", source)
@@ -185,13 +191,18 @@ func ParseFastqChunk(source string, ch FastxChunk, quality_shift byte) *obiiter.
 				state = 2
 				start = i
 			}
-		case 2:
+		case 2: // Following of the identifier
 			if is_sep {
 				// End of identifier
 				identifier = string(ch.Bytes[start:i])
 				state = 3
 			}
-		case 3:
+			if is_end_of_line {
+				// Definition empty
+				definition = ""
+				state = 5
+			}
+		case 3: // Beginning of definition
 			if is_end_of_line {
 				// Definition empty
 				definition = ""
@@ -201,13 +212,12 @@ func ParseFastqChunk(source string, ch FastxChunk, quality_shift byte) *obiiter.
 				start = i
 				state = 4
 			}
-		case 4:
+		case 4: // Following of the definition
 			if is_end_of_line {
 				definition = string(ch.Bytes[start:i])
 				state = 5
-
 			}
-		case 5:
+		case 5: // Beginning of sequence
 			if !is_end_of_line {
 				// Beginning of sequence
 				start = i
@@ -236,7 +246,11 @@ func ParseFastqChunk(source string, ch FastxChunk, quality_shift byte) *obiiter.
 			} else if C == '+' {
 				state = 8
 			} else {
-				log.Errorf("%s[%s] : sequence data not followed by a line starting with +", identifier, source)
+				log.Info(ch.Bytes[0:i])
+				log.Info(string(ch.Bytes[0:i]))
+				log.Info(C)
+				log.Errorf("@%s[%s] : sequence data not followed by a line starting with +", identifier, source)
+
 				return nil // Error
 			}
 		case 8:

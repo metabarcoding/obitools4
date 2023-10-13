@@ -176,6 +176,7 @@ func ParseFastaChunk(source string, ch FastxChunk) *obiiter.BioSequenceBatch {
 		case 1:
 			if is_sep {
 				// No identifier -> ERROR
+				log.Errorf("%s : sequence entry does not have an identifier", source)
 				return nil
 			} else {
 				// Beginning of identifier
@@ -187,6 +188,11 @@ func ParseFastaChunk(source string, ch FastxChunk) *obiiter.BioSequenceBatch {
 				// End of identifier
 				identifier = string(ch.Bytes[start:i])
 				state = 3
+			}
+			if is_end_of_line {
+				// Definition empty
+				definition = ""
+				state = 5
 			}
 		case 3:
 			if is_end_of_line {
