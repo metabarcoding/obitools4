@@ -148,6 +148,11 @@ func ReadSequencesFromFile(filename string,
 
 	file, err = Ropen(filename)
 
+	if err == ErrNoContent {
+		log.Infof("file %s is empty", filename)
+		return ReadEmptyFile(options...)
+	}
+
 	if err != nil {
 		log.Fatalf("open file error: %v", err)
 		return obiiter.NilIBioSequence, err

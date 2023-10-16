@@ -4,12 +4,9 @@ import (
 	"bufio"
 	"bytes"
 	"io"
-	"os"
 	"path"
 	"strconv"
 	"strings"
-
-	gzip "github.com/klauspost/pgzip"
 
 	log "github.com/sirupsen/logrus"
 
@@ -276,22 +273,20 @@ func ReadEMBL(reader io.Reader, options ...WithOption) obiiter.IBioSequence {
 
 func ReadEMBLFromFile(filename string, options ...WithOption) (obiiter.IBioSequence, error) {
 	var reader io.Reader
-	var greader io.Reader
 	var err error
 
 	options = append(options, OptionsSource(obiutils.RemoveAllExt((path.Base(filename)))))
 
-	reader, err = os.Open(filename)
+	reader, err = Ropen(filename)
+
+	if err == ErrNoContent {
+		log.Infof("file %s is empty", filename)
+		return ReadEmptyFile(options...)
+	}
+
 	if err != nil {
 		log.Printf("open file error: %+v", err)
 		return obiiter.NilIBioSequence, err
-	}
-
-	// Test if the flux is compressed by gzip
-	//greader, err = gzip.NewReader(reader)
-	greader, err = gzip.NewReaderN(reader, 1<<24, 2)
-	if err == nil {
-		reader = greader
 	}
 
 	return ReadEMBL(reader, options...), nil

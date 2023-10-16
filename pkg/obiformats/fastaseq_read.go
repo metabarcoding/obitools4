@@ -114,19 +114,8 @@ func FastaChunkReader(r io.Reader, size int, cutHead bool) (chan FastxChunk, err
 			end := []byte{}
 
 			for err == nil && n > 0 {
-				// fmt.Println("============end=========================")
-				// fmt.Println(string(end))
-				// fmt.Println("------------buff------------------------")
-				// fmt.Println(string(buff))
 				buff = Concatenate(end, buff)
-				// fmt.Println("------------buff--pasted----------------")
-				// fmt.Println(string(buff))
 				buff, end = lastFastaCut(buff)
-				// fmt.Println("----------------buff--cutted------------")
-				// fmt.Println(string(buff))
-				// fmt.Println("------------------end-------------------")
-				// fmt.Println(string(end))
-				// fmt.Println("========================================")
 				if len(buff) > 0 {
 					out <- FastxChunk{
 						Bytes: bytes.Clone(buff),
