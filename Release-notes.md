@@ -18,7 +18,7 @@
     + When -D is set to ### (where ### is an integer), the output sequence is the barcode with the priming sites.  
       and ### base pairs of flanking sequences.
 - A new output format in JSON is proposed using the **--json-output**. The sequence file is printed as a JSON vector,
-  where each element is a map corresponding to a sequence. The map has at most for elements:
+  where each element is a map corresponding to a sequence. The map has at most four elements:
     + *"id"* : which is the only mandatory element (string)
     + *"sequence"* : if sequence data is present in the record (string)
     + *"qualities"* : if quality data is associated to the record (string)
