@@ -18,6 +18,7 @@ var __input_genbank_format__ = false
 
 var __output_in_fasta__ = false
 var __output_in_fastq__ = false
+var __output_in_json__ = false
 var __output_fastjson_format__ = false
 var __output_fastobi_format__ = false
 
@@ -77,10 +78,13 @@ func OutputModeOptionSet(options *getoptions.GetOpt) {
 
 func OutputOptionSet(options *getoptions.GetOpt) {
 	options.BoolVar(&__output_in_fasta__, "fasta-output", false,
-		options.Description("Read data following the ecoPCR output format."))
+		options.Description("Write sequence in fasta format (default if no quality data available)."))
 
 	options.BoolVar(&__output_in_fastq__, "fastq-output", false,
-		options.Description("Read data following the EMBL flatfile format."))
+		options.Description("Write sequence in fastq format (default if quality data available)."))
+
+	options.BoolVar(&__output_in_json__, "json-output", false,
+		options.Description("Write sequence in json format."))
 
 	options.BoolVar(&__output_fastjson_format__, "output-json-header", false,
 		options.Description("output FASTA/FASTQ title line annotations follow json format."))
@@ -130,6 +134,8 @@ func CLIOutputFormat() string {
 		return "fastq"
 	case __output_in_fasta__:
 		return "fasta"
+	case __output_in_json__:
+		return "json"
 	default:
 		return "guessed"
 	}

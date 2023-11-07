@@ -87,6 +87,8 @@ func CLIWriteBioSequences(iterator obiiter.IBioSequence,
 			newIter, err = obiformats.WriteFastqToFile(iterator, fn, opts...)
 		case "fasta":
 			newIter, err = obiformats.WriteFastaToFile(iterator, fn, opts...)
+		case "json":
+			newIter, err = obiformats.WriteJSONToFile(iterator, fn, opts...)
 		default:
 			newIter, err = obiformats.WriteSequencesToFile(iterator, fn, opts...)
 		}
@@ -97,6 +99,8 @@ func CLIWriteBioSequences(iterator obiiter.IBioSequence,
 			newIter, err = obiformats.WriteFastqToStdout(iterator, opts...)
 		case "fasta":
 			newIter, err = obiformats.WriteFastaToStdout(iterator, opts...)
+		case "json":
+			newIter, err = obiformats.WriteJSONToStdout(iterator, opts...)
 		default:
 			newIter, err = obiformats.WriteSequencesToStdout(iterator, opts...)
 		}

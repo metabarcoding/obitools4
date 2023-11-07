@@ -12,17 +12,24 @@
 - A new file format guesser is now implemented. This is a first step towards allowing new formats to be managed by obitools.
 - New way of handling header definitions of fasta and fastq formats with JSON headers.
   The sequence definition is now printed in new files as an attribute of the json header named "definition".
-- The -D (--delta) option has been added to `obipcr`. It allows to extract flanking sequences of the barcode.
+- The -D (--delta) option has been added to `obipcr`. It allows extracting flanking sequences of the barcode.
     + If -D is not set, the output sequence is the barcode itself without the priming sites. 
     + If -D is set to 0, the output sequence is the barcode with the priming sites.
     + When -D is set to ### (where ### is an integer), the output sequence is the barcode with the priming sites.  
       and ### base pairs of flanking sequences.
+- A new output format in JSON is proposed using the **--json-output**. The sequence file is printed as a JSON vector,
+  where each element is a map corresponding to a sequence. The map has at most for elements:
+    + *"id"* : which is the only mandatory element (string)
+    + *"sequence"* : if sequence data is present in the record (string)
+    + *"qualities"* : if quality data is associated to the record (string)
+    + *"annotations"* : annotations is associated to the record (a map of annotations).
+
 
 ### Bugs
 
-- in the obitools language, the `composition` function now returns a map indexded by lowercase string "a", "c", "g", "t" and "o" for other instead of being indexed by the ascii codes of the corresponding letters.
+- in the obitools language, the `composition` function now returns a map indexed by lowercase string "a", "c", "g", "t" and "o" for other instead of being indexed by the ASCII codes of the corresponding letters.
 - Correction of the reverse-complement operation. Every reverse complement of the DNA sequence follow now the following rules :
-    + Nucleotides code are complemented to their lower complementary base
+    + Nucleotide codes are complemented to their lower complementary base
     + `.` and `-` characters are returned without change
     + `[` is complemented to `]` and oppositely
     + all other characters are complemented as `n`
