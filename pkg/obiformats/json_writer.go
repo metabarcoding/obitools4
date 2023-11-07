@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"io"
 	"os"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -14,6 +16,14 @@ import (
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiutils"
 	log "github.com/sirupsen/logrus"
 )
+
+func _UnescapeUnicodeCharactersInJSON(_jsonRaw []byte) ([]byte, error) {
+	str, err := strconv.Unquote(strings.Replace(strconv.Quote(string(_jsonRaw)), `\\u`, `\u`, -1))
+	if err != nil {
+		return nil, err
+	}
+	return []byte(str), nil
+}
 
 func JSONRecord(sequence *obiseq.BioSequence) []byte {
 	record := make(map[string]interface{}, 4)
@@ -33,6 +43,12 @@ func JSONRecord(sequence *obiseq.BioSequence) []byte {
 	}
 
 	text, error := json.MarshalIndent(record, "  ", "  ")
+
+	if error != nil {
+		log.Panicf("conversion to JSON error on sequence id %s", sequence.Id())
+	}
+
+	text, error = _UnescapeUnicodeCharactersInJSON(text)
 
 	if error != nil {
 		log.Panicf("conversion to JSON error on sequence id %s", sequence.Id())
