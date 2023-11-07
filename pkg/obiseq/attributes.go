@@ -8,6 +8,48 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// AttributeKeys returns the keys of the attributes in the BioSequence.
+//
+// It does not take any parameters.
+//
+// Returns:
+//
+//	[]string: The keys of the BioSequence.
+func (s *BioSequence) AttributeKeys(skip_map bool) obiutils.Set[string] {
+	keys := obiutils.MakeSet[string]()
+
+	for k, v := range s.Annotations() {
+		if !skip_map || !obiutils.IsAMap(v) {
+			keys.Add(k)
+		}
+	}
+
+	return keys
+}
+
+// Keys returns the keys of the BioSequence.
+//
+// It returns a slice of strings containing the keys of the BioSequence.
+// The keys include "id", "sequence", "qualities", and the attribute keys
+// of the BioSequence.
+//
+// Returns:
+//
+//	[]string: The keys of the BioSequence.
+func (s *BioSequence) Keys(skip_map bool) obiutils.Set[string] {
+	keys := s.AttributeKeys(skip_map)
+	keys.Add("id")
+
+	if s.HasSequence() {
+		keys.Add("sequence")
+	}
+	if s.HasQualities() {
+		keys.Add("qualities")
+	}
+
+	return keys
+}
+
 // HasAttribute checks if the BioSequence has the specified attribute.
 //
 // Parameters:
@@ -16,6 +58,17 @@ import (
 // Returns:
 // - a boolean indicating whether the BioSequence has the attribute.
 func (s *BioSequence) HasAttribute(key string) bool {
+	if key == "id" {
+		return true
+	}
+
+	if key == "sequence" && s.sequence != nil {
+		return true
+	}
+
+	if key == "qualities" && s.qualities != nil {
+		return true
+	}
 	ok := s.annotations != nil
 
 	if ok {
@@ -36,6 +89,25 @@ func (s *BioSequence) HasAttribute(key string) bool {
 // - val: The value associated with the given key.
 // - ok: A boolean indicating whether the key exists in the annotations map.
 func (s *BioSequence) GetAttribute(key string) (interface{}, bool) {
+
+	if key == "id" {
+		return s.id, true
+	}
+
+	if key == "sequence" {
+		if s.HasSequence() {
+			return s.String(), true
+		}
+		return nil, false
+	}
+
+	if key == "qualities" {
+		if s.HasQualities() {
+			return s.QualitiesString(), true
+		}
+		return nil, false
+	}
+
 	var val interface{}
 	ok := s.annotations != nil
 
@@ -54,6 +126,17 @@ func (s *BioSequence) GetAttribute(key string) (interface{}, bool) {
 // - key: the key to set the value for.
 // - value: the value to set for the given key.
 func (s *BioSequence) SetAttribute(key string, value interface{}) {
+
+	if key == "id" {
+		s.SetId(value.(string))
+		return
+	}
+
+	if key == "sequence" {
+		s.SetSequence(value.([]byte))
+		return
+	}
+
 	annot := s.Annotations()
 
 	defer s.AnnotationsUnlock()

@@ -1,7 +1,17 @@
 package obiseq
 
 // ".ABCDEFGHIJKLMNOPQRSTUVWXYZ#![]"
-var _revcmpDNA = []byte(".TVGHEFCDIJMLKNOPQYSAABWXRZ#!][")
+var _revcmpDNA = []byte(".TVGHNNCDNNMNKNNNNYSAABWNRN]N[NNN")
+
+func complement(n byte) byte {
+	switch {
+	case n == '.' || n == '-':
+		return n
+	case (n >= 'A' && n <= 'z'):
+		return _revcmpDNA[n&31] | (n & 0x20)
+	}
+	return 'n'
+}
 
 // Reverse complements a DNA sequence.
 // If the inplace parametter is true, that operation is done in place.
@@ -18,8 +28,7 @@ func (sequence *BioSequence) ReverseComplement(inplace bool) *BioSequence {
 		// ASCII code & 31 -> builds an index in witch (a|A) is 1
 		// ASCII code & 0x20 -> Foce lower case
 
-		s[j], s[i] = _revcmpDNA[s[i]&31]|(s[i]&0x20),
-			_revcmpDNA[s[j]&31]|(s[j]&0x20)
+		s[j], s[i] = complement(s[i]), complement(s[j])
 		j++
 	}
 
@@ -40,8 +49,7 @@ func (sequence *BioSequence) _revcmpMutation() *BioSequence {
 		b := []byte(m)
 
 		// Echange and reverse complement symboles
-		b[1], b[9] = _revcmpDNA[b[9]&31]|(b[9]&0x20),
-			_revcmpDNA[b[1]&31]|(b[1]&0x20)
+		b[1], b[9] = complement(b[9]), complement(b[1])
 
 		// Exchange sequencing scores
 		b[3], b[4], b[11], b[12] = b[11], b[12], b[3], b[4]
@@ -64,7 +72,6 @@ func (sequence *BioSequence) _revcmpMutation() *BioSequence {
 
 	return sequence
 }
-
 
 func ReverseComplementWorker(inplace bool) SeqWorker {
 	f := func(input *BioSequence) *BioSequence {

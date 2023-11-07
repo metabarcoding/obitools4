@@ -2,6 +2,10 @@
 
 ## Latest changes
 
+### New feature
+
+- In the obitools language a new `gc` computes the gc fraction of a sequence.
+
 ### Enhancement
 
 - A new completely rewritten GO version of the fastq and fasta parser is now used instead of the original C version. 
@@ -13,6 +17,17 @@
     + If -D is set to 0, the output sequence is the barcode with the priming sites.
     + When -D is set to ### (where ### is an integer), the output sequence is the barcode with the priming sites.  
       and ### base pairs of flanking sequences.
+
+### Bugs
+
+- in the obitools language, the `composition` function now returns a map indexded by lowercase string "a", "c", "g", "t" and "o" for other instead of being indexed by the ascii codes of the corresponding letters.
+- Correction of the reverse-complement operation. Every reverse complement of the DNA sequence follow now the following rules :
+    + Nucleotides code are complemented to their lower complementary base
+    + `.` and `-` characters are returned without change
+    + `[` is complemented to `]` and oppositely
+    + all other characters are complemented as `n`
+
+
 ### Becareful
 
 GO 1.21.0 is out, and it includes new functionalities which are used in the OBITools4 code.

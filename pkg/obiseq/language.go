@@ -198,6 +198,15 @@ var OBILang = gval.NewLanguage(
 		composition := (args[0].(*BioSequence)).Composition()
 		return float64(composition['g']-composition['c']) / float64(composition['g']+composition['c']), nil
 	}),
+	gval.Function("gc", func(args ...interface{}) (interface{}, error) {
+		composition := (args[0].(*BioSequence)).Composition()
+		return float64(composition['g']+composition['c']) / float64(args[0].(*BioSequence).Len()), nil
+	}),
 	gval.Function("composition", func(args ...interface{}) (interface{}, error) {
-		return (args[0].(*BioSequence)).Composition(), nil
+		comp := (args[0].(*BioSequence)).Composition()
+		scomp := make(map[string]float64)
+		for k, v := range comp {
+			scomp[string(k)] = float64(v)
+		}
+		return scomp, nil
 	}))

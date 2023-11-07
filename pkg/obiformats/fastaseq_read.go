@@ -234,7 +234,7 @@ func ParseFastaChunk(source string, ch FastxChunk) *obiiter.BioSequenceBatch {
 					C = C + 'a' - 'A'
 				}
 				// Removing white space from the sequence
-				if (C >= 'a' && C <= 'z') || C == '-' || C == '.' {
+				if (C >= 'a' && C <= 'z') || C == '-' || C == '.' || C == '[' || C == ']' {
 					ch.Bytes[current] = C
 					current++
 				}

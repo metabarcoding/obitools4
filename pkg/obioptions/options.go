@@ -19,6 +19,8 @@ var _ReadWorkerPerCore = 1.0
 var _MaxAllowedCPU = runtime.NumCPU()
 var _BatchSize = 5000
 var _Pprof = false
+var _Quality_Shift_Input = 33
+var _Quality_Shift_Output = 33
 
 type ArgumentParser func([]string) (*getoptions.GetOpt, []string)
 
@@ -42,6 +44,10 @@ func GenerateOptionParser(optionset ...func(*getoptions.GetOpt)) ArgumentParser 
 	options.IntVar(&_BatchSize, "batch-size", _BatchSize,
 		options.GetEnv("OBIBATCHSIZE"),
 		options.Description("Number of sequence per batch for paralelle processing"))
+
+	options.Bool("solexa", false,
+		options.GetEnv("OBISOLEXA"),
+		options.Description("Decodes quality string according to the Solexa specification."))
 
 	for _, o := range optionset {
 		o(options)
@@ -85,6 +91,15 @@ func GenerateOptionParser(optionset ...func(*getoptions.GetOpt)) ArgumentParser 
 		}
 
 		log.Printf("Number of workers set %d", CLIParallelWorkers())
+
+		if options.Called("workers") {
+
+		}
+
+		if options.Called("solexa") {
+			SetInputQualityShift(64)
+		}
+
 		return options, remaining
 	}
 }
@@ -143,4 +158,20 @@ func ReadWorkerPerCore() float64 {
 
 func SetBatchSize(n int) {
 	_BatchSize = n
+}
+
+func InputQualityShift() int {
+	return _Quality_Shift_Input
+}
+
+func OutputQualityShift() int {
+	return _Quality_Shift_Output
+}
+
+func SetInputQualityShift(n int) {
+	_Quality_Shift_Input = n
+}
+
+func SetOutputQualityShift(n int) {
+	_Quality_Shift_Output = n
 }

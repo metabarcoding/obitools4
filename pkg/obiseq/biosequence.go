@@ -15,6 +15,7 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obioptions"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiutils"
 	log "github.com/sirupsen/logrus"
 )
@@ -55,8 +56,7 @@ type Annotation map[string]interface{}
 // A BioSequence is a sequence of bytes with an identifier, a definition, a sequence, qualities,
 // features and annotations. It aims to represent a biological sequence
 type BioSequence struct {
-	id string // The identidier of the sequence (private accessible through the method Id)
-	//definition  string // The documentation of the sequence (private accessible through the method Definition)
+	id          string // The identidier of the sequence (private accessible through the method Id)
 	source      string // The filename without directory name and extension from where the sequence was read.
 	sequence    []byte // The sequence itself, it is accessible by the methode Sequence
 	qualities   []byte // The quality scores of the sequence.
@@ -188,6 +188,14 @@ func (s *BioSequence) Definition() string {
 	return definition
 }
 
+// HasSequence checks if the BioSequence has a sequence.
+//
+// No parameters.
+// Returns a boolean.
+func (s *BioSequence) HasSequence() bool {
+	return s.sequence != nil && len(s.sequence) > 0
+}
+
 // Sequence returns the sequence of the BioSequence.
 //
 // Returns:
@@ -217,7 +225,7 @@ func (s *BioSequence) Len() int {
 // This function does not have any parameters.
 // It returns a boolean value indicating whether the BioSequence has qualities.
 func (s *BioSequence) HasQualities() bool {
-	return len(s.qualities) > 0
+	return s.qualities != nil && len(s.qualities) > 0
 }
 
 // Qualities returns the sequence quality scores of the BioSequence.
@@ -233,6 +241,19 @@ func (s *BioSequence) Qualities() Quality {
 		return s.qualities
 	}
 	return __make_default_qualities__(len(s.sequence))
+}
+
+// QualitiesString returns the string representation of the qualities of the BioSequence.
+//
+// Returns a string representing the qualities of the BioSequence after applying the shift.
+func (s *BioSequence) QualitiesString() string {
+	quality_shift := obioptions.OutputQualityShift()
+	qual := s.Qualities()
+	qual_ascii := make([]byte, len(qual))
+	for i := 0; i < len(qual); i++ {
+		qual_ascii[i] = byte(qual[i] + byte(quality_shift))
+	}
+	return string(qual_ascii)
 }
 
 // Features returns the feature string of the BioSequence.

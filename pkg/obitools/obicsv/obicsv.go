@@ -27,8 +27,6 @@ func CLIWriteCSV(iterator obiiter.IBioSequence,
 
 	opts = append(opts, obiformats.OptionsParallelWorkers(nworkers))
 	opts = append(opts, obiformats.OptionsBatchSize(obioptions.CLIBatchSize()))
-
-	opts = append(opts, obiformats.OptionsQualityShift(obiconvert.CLIOutputQualityShift()))
 	opts = append(opts, obiformats.OptionsCompressed(obiconvert.CLICompressed()))
 
 	opts = append(opts, obiformats.CSVId(CLIPrintId()),
@@ -37,6 +35,7 @@ func CLIWriteCSV(iterator obiiter.IBioSequence,
 		obiformats.CSVDefinition(CLIPrintDefinition()),
 		obiformats.CSVKeys(CLIToBeKeptAttributes()),
 		obiformats.CSVSequence(CLIPrintSequence()),
+		obiformats.CSVAutoColumn(CLIAutoColumns()),
 	)
 
 	var err error

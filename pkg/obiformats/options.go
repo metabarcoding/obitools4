@@ -12,7 +12,6 @@ type __options__ struct {
 	buffer_size           int
 	batch_size            int
 	full_file_batch       bool
-	quality_shift         int
 	parallel_workers      int
 	closefile             bool
 	appendfile            bool
@@ -27,6 +26,7 @@ type __options__ struct {
 	csv_keys              []string
 	csv_separator         string
 	csv_navalue           string
+	csv_auto              bool
 	paired_filename       string
 	source                string
 }
@@ -43,7 +43,6 @@ func MakeOptions(setters []WithOption) Options {
 		fastseq_header_writer: FormatFastSeqJsonHeader,
 		with_progress_bar:     false,
 		buffer_size:           2,
-		quality_shift:         33,
 		parallel_workers:      obioptions.CLIReadParallelWorkers(),
 		batch_size:            obioptions.CLIBatchSize(),
 		full_file_batch:       false,
@@ -60,6 +59,7 @@ func MakeOptions(setters []WithOption) Options {
 		csv_separator:         ",",
 		csv_navalue:           "NA",
 		csv_keys:              make([]string, 0),
+		csv_auto:              false,
 		paired_filename:       "",
 		source:                "",
 	}
@@ -71,10 +71,6 @@ func MakeOptions(setters []WithOption) Options {
 	}
 
 	return opt
-}
-
-func (opt Options) QualityShift() int {
-	return opt.pointer.quality_shift
 }
 
 func (opt Options) BatchSize() int {
@@ -153,6 +149,10 @@ func (opt Options) CSVNAValue() string {
 	return opt.pointer.csv_navalue
 }
 
+func (opt Options) CSVAutoColumn() bool {
+	return opt.pointer.csv_auto
+}
+
 func (opt Options) HaveToSavePaired() bool {
 	return opt.pointer.paired_filename != ""
 }
@@ -215,31 +215,6 @@ func OptionsNewFile() WithOption {
 	})
 
 	return f
-}
-
-// Allows to specify the ascii code corresponding to
-// a quality of 0 in fastq encoded quality scores.
-func OptionsQualityShift(shift int) WithOption {
-	f := WithOption(func(opt Options) {
-		opt.pointer.quality_shift = shift
-	})
-
-	return f
-}
-
-// Allows to specify a quality shift of 33, corresponding
-// to a FastQ file qualities encoded following Sanger
-// convention. This corresponds to Illumina produced FastQ
-// files.
-func OptionsQualitySanger() WithOption {
-	return OptionsQualityShift(33)
-}
-
-// Allows to specify a quality shift of 64, corresponding
-// to a FastQ file qualities encoded following the Solexa
-// convention.
-func OptionsQualitySolexa() WithOption {
-	return OptionsQualityShift(64)
 }
 
 func OptionsFastSeqHeaderParser(parser obiseq.SeqAnnotator) WithOption {
@@ -399,6 +374,14 @@ func CSVSeparator(separator string) WithOption {
 func CSVNAValue(navalue string) WithOption {
 	f := WithOption(func(opt Options) {
 		opt.pointer.csv_navalue = navalue
+	})
+
+	return f
+}
+
+func CSVAutoColumn(auto bool) WithOption {
+	f := WithOption(func(opt Options) {
+		opt.pointer.csv_auto = auto
 	})
 
 	return f

@@ -11,21 +11,16 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obioptions"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiutils"
 )
 
 // The function FormatFastq takes a BioSequence object, a quality shift value, and a header formatter
 // function as input, and returns a formatted string in FASTQ format.
-func FormatFastq(seq *obiseq.BioSequence, quality_shift int, formater FormatHeader) string {
+func FormatFastq(seq *obiseq.BioSequence, formater FormatHeader) string {
 
-	l := seq.Len()
-	q := seq.Qualities()
-	ascii := make([]byte, seq.Len())
-
-	for j := 0; j < l; j++ {
-		ascii[j] = uint8(q[j]) + uint8(quality_shift)
-	}
+	q := seq.QualitiesString()
 
 	info := ""
 	if formater != nil {
@@ -34,8 +29,8 @@ func FormatFastq(seq *obiseq.BioSequence, quality_shift int, formater FormatHead
 
 	return fmt.Sprintf("@%s %s\n%s\n+\n%s",
 		seq.Id(), info,
-		string(seq.Sequence()),
-		string(ascii),
+		seq.String(),
+		q,
 	)
 }
 
@@ -44,7 +39,7 @@ func FormatFastqBatch(batch obiiter.BioSequenceBatch, quality_shift int,
 	var bs bytes.Buffer
 	for _, seq := range batch.Slice() {
 		if seq.Len() > 0 {
-			bs.WriteString(FormatFastq(seq, quality_shift, formater))
+			bs.WriteString(FormatFastq(seq, formater))
 			bs.WriteString("\n")
 		} else {
 			if skipEmpty {
@@ -81,7 +76,7 @@ func WriteFastq(iterator obiiter.IBioSequence,
 	chunkchan := make(chan FileChunck)
 
 	header_format := opt.FormatFastSeqHeader()
-	quality := opt.QualityShift()
+	quality := obioptions.OutputQualityShift()
 
 	newIter.Add(nwriters)
 

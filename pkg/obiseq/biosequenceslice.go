@@ -3,6 +3,7 @@ package obiseq
 import (
 	"sync"
 
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiutils"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/exp/slices"
 )
@@ -170,4 +171,14 @@ func (s BioSequenceSlice) Size() int {
 	}
 
 	return size
+}
+
+func (s BioSequenceSlice) AttributeKeys(skip_map bool) obiutils.Set[string] {
+	keys := obiutils.MakeSet[string]()
+
+	for _, k := range s {
+		keys = keys.Union(k.AttributeKeys(skip_map))
+	}
+
+	return keys
 }

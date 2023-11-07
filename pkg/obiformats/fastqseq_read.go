@@ -329,7 +329,7 @@ func ReadFastq(reader io.Reader, options ...WithOption) (obiiter.IBioSequence, e
 	parser := func() {
 		defer out.Done()
 		for chk := range chkchan {
-			seqs := ParseFastqChunk(source, chk, byte(opt.QualityShift()))
+			seqs := ParseFastqChunk(source, chk, byte(obioptions.InputQualityShift()))
 			if seqs != nil {
 				out.Push(*seqs)
 			} else {

@@ -93,8 +93,6 @@ func CLISaveRefetenceDB(db obiseq.BioSequenceSlice) {
 		opts = append(opts, obiformats.OptionsParallelWorkers(nworkers))
 		opts = append(opts, obiformats.OptionsBatchSize(obioptions.CLIBatchSize()))
 
-		opts = append(opts, obiformats.OptionsQualityShift(obiconvert.CLIOutputQualityShift()))
-
 		opts = append(opts, obiformats.OptionsCompressed(obiconvert.CLICompressed()))
 
 		var err error

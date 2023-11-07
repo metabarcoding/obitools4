@@ -16,13 +16,10 @@ var __input_ecopcr_format__ = false
 var __input_embl_format__ = false
 var __input_genbank_format__ = false
 
-var __input_solexa_quality__ = false
-
 var __output_in_fasta__ = false
 var __output_in_fastq__ = false
 var __output_fastjson_format__ = false
 var __output_fastobi_format__ = false
-var __output_solexa_quality__ = false
 
 var __no_progress_bar__ = false
 var __compressed__ = false
@@ -54,9 +51,6 @@ func InputOptionSet(options *getoptions.GetOpt) {
 	options.BoolVar(&__input_genbank_format__, "genbank", __input_genbank_format__,
 		options.Description("Read data following the Genbank flatfile format."))
 
-	options.BoolVar(&__input_solexa_quality__, "solexa", __input_solexa_quality__,
-		options.Description("Decodes quality string according to the Solexa specification."))
-
 	options.BoolVar(&__no_ordered_input__, "no-order", __no_ordered_input__,
 		options.Description("When several input files are provided, "+
 			"indicates that there is no order among them."))
@@ -71,7 +65,7 @@ func OutputModeOptionSet(options *getoptions.GetOpt) {
 		options.Alias("Z"),
 		options.Description("Output is compressed"))
 
-		options.BoolVar(&__skip_empty__, "skip-empty", __skip_empty__,
+	options.BoolVar(&__skip_empty__, "skip-empty", __skip_empty__,
 		options.Description("Sequences of length equal to zero are suppressed from the output"))
 
 	options.StringVar(&__output_file_name__, "out", __output_file_name__,
@@ -146,7 +140,7 @@ func CLICompressed() bool {
 }
 
 func CLISkipEmpty() bool {
-	return __skip_empty__ 
+	return __skip_empty__
 }
 
 func CLIInputFastHeaderFormat() string {
@@ -179,22 +173,6 @@ func CLISequencesToSkip() int {
 
 func CLIAnalyzeOnly() int {
 	return __read_only_entries__
-}
-
-func CLIInputQualityShift() int {
-	if __input_solexa_quality__ {
-		return 64
-	} else {
-		return 33
-	}
-}
-
-func CLIOutputQualityShift() int {
-	if __output_solexa_quality__ {
-		return 64
-	} else {
-		return 33
-	}
 }
 
 func CLIProgressBar() bool {

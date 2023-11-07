@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obioptions"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiutils"
 	log "github.com/sirupsen/logrus"
@@ -65,7 +66,7 @@ func CSVRecord(sequence *obiseq.BioSequence, opt Options) []string {
 			l := sequence.Len()
 			q := sequence.Qualities()
 			ascii := make([]byte, l)
-			quality_shift := opt.QualityShift()
+			quality_shift := obioptions.OutputQualityShift()
 			for j := 0; j < l; j++ {
 				ascii[j] = uint8(q[j]) + uint8(quality_shift)
 			}
@@ -130,6 +131,8 @@ func FormatCVSBatch(batch obiiter.BioSequenceBatch, opt Options) []byte {
 func WriteCSV(iterator obiiter.IBioSequence,
 	file io.WriteCloser,
 	options ...WithOption) (obiiter.IBioSequence, error) {
+
+	var auto_slot obiutils.Set[string]
 	opt := MakeOptions(options)
 
 	file, _ = obiutils.CompressStream(file, opt.CompressedFile(), opt.CloseFile())
@@ -167,12 +170,6 @@ func WriteCSV(iterator obiiter.IBioSequence,
 		newIter.Done()
 	}
 
-	log.Debugln("Start of the CSV file writing")
-	go ff(iterator)
-	for i := 0; i < nwriters-1; i++ {
-		go ff(iterator.Split())
-	}
-
 	next_to_send := 0
 	received := make(map[int]FileChunck, 100)
 
@@ -202,6 +199,25 @@ func WriteCSV(iterator obiiter.IBioSequence,
 		waitWriter.Done()
 
 	}()
+
+	if opt.pointer.csv_auto {
+		if iterator.Next() {
+			batch := iterator.Get()
+			auto_slot = batch.Slice().AttributeKeys(true)
+			CSVKeys(auto_slot.Members())(opt)
+			chunkchan <- FileChunck{
+				FormatCVSBatch(batch, opt),
+				batch.Order(),
+			}
+			newIter.Push(batch)
+		}
+	}
+
+	log.Debugln("Start of the CSV file writing")
+	go ff(iterator)
+	for i := 0; i < nwriters-1; i++ {
+		go ff(iterator.Split())
+	}
 
 	return newIter, nil
 }
