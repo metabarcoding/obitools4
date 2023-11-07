@@ -232,7 +232,7 @@ func _ReadFlatFileChunk(reader io.Reader, readers chan _FileChunk) {
 			// Set the buffer to the size of a chunk of data and copy any remaining data to the new buffer
 			buff = make([]byte, _FileChunkSize)
 			copy(buff, remains)
-			l = len(remains)
+			//l = len(remains)
 		}
 	}
 

@@ -4,18 +4,18 @@
 
 ### New feature
 
-- In the obitools language a new `gc` computes the gc fraction of a sequence.
+- In the OBITools language a new `gc` computes the GC fraction of a sequence.
 
 ### Enhancement
 
 - A new completely rewritten GO version of the fastq and fasta parser is now used instead of the original C version. 
-- A new file format guesser is now implemented. This is a first step towards allowing new formats to be managed by obitools.
+- A new file format guesser is now implemented. This is a first step towards allowing new formats to be managed by OBITools.
 - New way of handling header definitions of fasta and fastq formats with JSON headers.
-  The sequence definition is now printed in new files as an attribute of the json header named "definition".
+  The sequence definition is now printed in new files as an attribute of the JSON header named "definition".
 - The -D (--delta) option has been added to `obipcr`. It allows extracting flanking sequences of the barcode.
     + If -D is not set, the output sequence is the barcode itself without the priming sites. 
     + If -D is set to 0, the output sequence is the barcode with the priming sites.
-    + When -D is set to ### (where ### is an integer), the output sequence is the barcode with the priming sites.  
+    + When -D is set to ### (where ### is an integer), the output sequence is the barcode with the priming sites,  
       and ### base pairs of flanking sequences.
 - A new output format in JSON is proposed using the **--json-output**. The sequence file is printed as a JSON vector,
   where each element is a map corresponding to a sequence. The map has at most four elements:
@@ -245,7 +245,7 @@ to use the git ticket system to mention them. But they seems to produce now reli
 ### New features
 
 - Adding of a `--compress|-Z` option to every obitools allowing to produce `gz` compressed output. OBITools
-  were already able to deal with gziped input files transparently. They can now produce their résults in the same format.
+  were already able to deal with gziped input files transparently. They can now produce their results in the same format.
 - Adding of a `--append|-A` option to the `obidistribute` tool. It allows to append the result of an 
   `obidistribute` execution to preexisting files.
 - Adding of a `--directory|-d` option to the `obidistribute` tool. It allows to declare a secondary 
