@@ -5,8 +5,16 @@ import (
 	"fmt"
 )
 
-// Returns a sub sequence start from position 'from' included,
-// to position 'to' excluded. Coordinates start at position 0.
+// Subsequence returns a subsequence of the BioSequence.
+//
+// Parameters:
+// - from: starting position of the subsequence.
+// - to: ending position of the subsequence.
+// - circular: indicates whether the subsequence should be circular.
+//
+// Return:
+// - *BioSequence: the subsequence of the BioSequence.
+// - error: an error if the subsequence parameters are invalid.
 func (sequence *BioSequence) Subsequence(from, to int, circular bool) (*BioSequence, error) {
 	if from >= to && !circular {
 		return nil, errors.New("from greater than to")
