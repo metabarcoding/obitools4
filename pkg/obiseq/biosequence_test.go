@@ -94,6 +94,42 @@ func TestNewBioSequence(t *testing.T) {
 	}
 }
 
+// TestNewBioSequenceWithQualities tests the NewBioSequenceWithQualities function.
+//
+// It tests that the BioSequence object is created with the correct id, sequence,
+// definition, and qualities.
+// Parameters:
+// - t: A pointer to a testing.T object.
+// Return type: None.
+func TestNewBioSequenceWithQualities(t *testing.T) {
+	id := "123"
+	sequence := []byte("ATGC")
+	definition := "DNA sequence"
+	qualities := []byte("1234")
+
+	bs := NewBioSequenceWithQualities(id, sequence, definition, qualities)
+
+	// Test that the BioSequence object is created with the correct id
+	if bs.Id() != id {
+		t.Errorf("Expected id to be %s, but got %s", id, bs.Id())
+	}
+
+	// Test that the BioSequence object is created with the correct sequence
+	if string(bs.Sequence()) != string(sequence) {
+		t.Errorf("Expected sequence to be %s, but got %s", string(sequence), string(bs.Sequence()))
+	}
+
+	// Test that the BioSequence object is created with the correct definition
+	if bs.Definition() != definition {
+		t.Errorf("Expected definition to be %s, but got %s", definition, bs.Definition())
+	}
+
+	// Test that the BioSequence object is created with the correct qualities
+	if string(bs.Qualities()) != string(qualities) {
+		t.Errorf("Expected qualities to be %s, but got %s", string(qualities), string(bs.Qualities()))
+	}
+}
+
 // TestBioSequence_Recycle tests the Recycle method of the BioSequence struct.
 //
 // Test case 1: Recycle a BioSequence object with non-nil slices and annotations.

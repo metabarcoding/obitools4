@@ -13,7 +13,6 @@ require (
 	github.com/rrethy/ahocorasick v1.0.0
 	github.com/schollz/progressbar/v3 v3.13.1
 	github.com/sirupsen/logrus v1.9.3
-	github.com/stretchr/testify v1.7.0
 	github.com/tevino/abool/v2 v2.1.0
 	golang.org/x/exp v0.0.0-20231006140011-7918f672742d
 	gonum.org/v1/gonum v0.14.0
@@ -21,28 +20,21 @@ require (
 )
 
 require (
-	github.com/deckarep/golang-set/v2 v2.3.1 // indirect
 	github.com/kr/pretty v0.2.1 // indirect
 	github.com/kr/text v0.1.0 // indirect
 )
 
 require (
-	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dsnet/compress v0.0.1
 	github.com/gabriel-vasile/mimetype v1.4.3
-	github.com/klauspost/compress v1.17.2 // indirect
+	github.com/klauspost/compress v1.17.2
 	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db // indirect
-	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/ulikunitz/xz v0.5.11
-	github.com/yuin/goldmark v1.4.13 // indirect
-	golang.org/x/mod v0.13.0 // indirect
 	golang.org/x/net v0.17.0 // indirect
 	golang.org/x/sys v0.13.0 // indirect
 	golang.org/x/term v0.13.0 // indirect
-	golang.org/x/tools v0.14.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c
-	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c // indirect
 )

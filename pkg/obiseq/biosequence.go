@@ -111,6 +111,28 @@ func NewBioSequence(id string,
 	return bs
 }
 
+// NewBioSequenceWithQualities creates a new BioSequence object with the given id, sequence, definition, and qualities.
+//
+// Parameters:
+// - id: the id of the BioSequence.
+// - sequence: the sequence data of the BioSequence.
+// - definition: the definition of the BioSequence.
+// - qualities: the qualities data of the BioSequence.
+//
+// Returns:
+// - *BioSequence: a pointer to the newly created BioSequence object.
+func NewBioSequenceWithQualities(id string,
+	sequence []byte,
+	definition string,
+	qualities []byte) *BioSequence {
+	bs := NewEmptyBioSequence(0)
+	bs.SetId(id)
+	bs.SetSequence(sequence)
+	bs.SetDefinition(definition)
+	bs.SetQualities(qualities)
+	return bs
+}
+
 // Recycle recycles the BioSequence object.
 //
 // It decreases the count of in-memory sequences and increases the count of recycled sequences.

@@ -28,7 +28,6 @@ func (sequence *BioSequence) Subsequence(from, to int, circular bool) (*BioSeque
 
 		if sequence.HasQualities() {
 			newSeq.qualities = CopySlice(sequence.Qualities()[from:to])
-			newSeq.WriteQualities(sequence.Qualities()[from:to])
 		}
 
 		newSeq.id = fmt.Sprintf("%s_sub[%d..%d]", sequence.Id(), from+1, to)

@@ -33,7 +33,8 @@
     + `.` and `-` characters are returned without change
     + `[` is complemented to `]` and oppositely
     + all other characters are complemented as `n`
-
+- Correction of a bug is the `Subsequence` method of the `BioSequence` class, duplicating the quality values. 
+  This made `obimultiplex` to produce fastq files with sequences having quality values duplicated.
 
 ### Becareful
 
