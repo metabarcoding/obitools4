@@ -5,7 +5,11 @@
 ### New feature
 
 - In the OBITools language a new `gc` computes the GC fraction of a sequence.
-
+- First version of the `obisummary` command. It produces summary statistics of the
+  sequence file provided as input. The statistics includes, the number of reads, of variants,
+  the total length of the DNA sequences (equivalent to `obicount`), some summaries about tags
+  used in the sequence annotations and their frequencies of usage.
+  
 ### Enhancement
 
 - A new completely rewritten GO version of the fastq and fasta parser is now used instead of the original C version. 
