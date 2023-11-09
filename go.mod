@@ -17,6 +17,7 @@ require (
 	github.com/tevino/abool/v2 v2.1.0
 	golang.org/x/exp v0.0.0-20231006140011-7918f672742d
 	gonum.org/v1/gonum v0.14.0
+	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c
 	scientificgo.org/special v0.0.0
 )
 
@@ -25,7 +26,6 @@ require (
 	github.com/kr/pretty v0.2.1 // indirect
 	github.com/kr/text v0.1.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c // indirect
 )
 
 require (

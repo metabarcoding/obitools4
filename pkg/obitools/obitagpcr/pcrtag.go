@@ -115,7 +115,7 @@ func IPCRTagPESequencesBatch(iterator obiiter.IBioSequence,
 						A.Annotations()["demultiplex_error"] = demultiplex_error.(string)
 						B.Annotations()["demultiplex_error"] = demultiplex_error.(string)
 					} else {
-						log.Panicln("@@ ", wid, "Error : ", err, *consensus)
+						log.Panicln("@@ ", wid, "Error : ", err, consensus.Id())
 					}
 				}
 			}
