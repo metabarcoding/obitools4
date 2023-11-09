@@ -287,6 +287,21 @@ func (s *BioSequence) GetIntMap(key string) (map[string]int, bool) {
 	return val, ok
 }
 
+func (s *BioSequence) GetStringMap(key string) (map[string]string, bool) {
+	var val map[string]string
+
+	var err error
+
+	v, ok := s.GetAttribute(key)
+
+	if ok {
+		val, err = obiutils.InterfaceToStringMap(v)
+		ok = err == nil
+	}
+
+	return val, ok
+}
+
 // GetIntSlice returns the integer slice value associated with the given key in the BioSequence object.
 //
 // Parameters:

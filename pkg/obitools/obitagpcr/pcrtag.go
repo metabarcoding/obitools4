@@ -111,11 +111,11 @@ func IPCRTagPESequencesBatch(iterator obiiter.IBioSequence,
 					}
 				} else {
 					demultiplex_error := consensus.Annotations()["demultiplex_error"]
-					if demultiplex_error!=nil {
+					if demultiplex_error != nil {
 						A.Annotations()["demultiplex_error"] = demultiplex_error.(string)
 						B.Annotations()["demultiplex_error"] = demultiplex_error.(string)
 					} else {
-						log.Panicln("@@ ",wid,"Error : ",err,*consensus)
+						log.Panicln("@@ ", wid, "Error : ", err, *consensus)
 					}
 				}
 			}
@@ -160,31 +160,3 @@ func IPCRTagPESequencesBatch(iterator obiiter.IBioSequence,
 	return iout
 
 }
-
-// if match.IsDirect {
-// 	annot["direction"] = "direct"
-// } else {
-// 	annot["direction"] = "reverse"
-// }
-
-// if match.ForwardMatch != "" {
-// 	annot["forward_match"] = match.ForwardMatch
-// 	annot["forward_mismatches"] = match.ForwardMismatches
-// 	annot["forward_tag"] = match.ForwardTag
-// }
-
-// if match.ReverseMatch != "" {
-// 	annot["reverse_match"] = match.ReverseMatch
-// 	annot["reverse_mismatches"] = match.ReverseMismatches
-// 	annot["reverse_tag"] = match.ReverseTag
-// }
-
-// if match.Error == nil {
-// 	if match.Pcr != nil {
-// 		annot["sample"] = match.Pcr.Sample
-// 		annot["experiment"] = match.Pcr.Experiment
-// 		for k, val := range match.Pcr.Annotations {
-// 			annot[k] = val
-// 		}
-// 	} else {
-// 		annot["demultiplex_error"]

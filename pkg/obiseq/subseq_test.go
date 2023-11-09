@@ -6,6 +6,18 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// TestSubsequence tests the Subsequence function.
+//
+// The function tests various cases of the Subsequence method of a BioSequence object.
+// It checks different scenarios of subsequence slicing, including both valid and invalid parameters.
+// The function is designed for unit testing purposes and uses the Go testing package.
+// It asserts that the expected subsequence is returned for each test case and checks for any errors.
+// The function also verifies the correctness of the subsequence qualities, if applicable.
+// The test cases cover both non-circular and circular subsequence slicing.
+// It ensures that the function handles different scenarios such as when `from` is greater than `to`,
+// `from` or `to` is out of bounds, and normal subsequence slicing cases.
+//
+// TestSubsequence does not return any value.
 func TestSubsequence(t *testing.T) {
 	// Test case 1: Subsequence with valid parameters and non-circular
 	seq := NewBioSequence("ID1", []byte("ATCG"), "")

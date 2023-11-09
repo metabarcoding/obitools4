@@ -148,6 +148,27 @@ func InterfaceToIntMap(i interface{}) (val map[string]int, err error) {
 	return
 }
 
+func InterfaceToStringMap(i interface{}) (val map[string]string, err error) {
+	err = nil
+
+	switch i := i.(type) {
+	case map[string]string:
+		val = i
+	case map[string]interface{}:
+		val = make(map[string]string, len(i))
+		for k, v := range i {
+			val[k], err = InterfaceToString(v)
+			if err != nil {
+				return
+			}
+		}
+	default:
+		err = &NotAMapInt{"value attribute cannot be casted to a map[string]int"}
+	}
+
+	return
+}
+
 // NotABoolean defines a new type of Error : "NotAMapInt"
 type NotAMapFloat64 struct {
 	message string
