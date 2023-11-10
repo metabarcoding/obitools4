@@ -45,7 +45,7 @@ func lastFastqCut(buffer []byte) ([]byte, []byte) {
 			if is_sep {
 				// Potential start of quality part step 2 (stay in the same state)
 				state = 2
-			} else if (C >= 'a' && C <= 'z') || C == '-' || C == '.' {
+			} else if (C >= 'a' && C <= 'z') || (C >= 'A' && C <= 'Z') || C == '-' || C == '.' || C == '[' || C == ']' {
 				// End of the sequence
 				state = 3
 			} else {
@@ -57,7 +57,7 @@ func lastFastqCut(buffer []byte) ([]byte, []byte) {
 			if is_end_of_line {
 				// Entrering in the header line
 				state = 4
-			} else if (C >= 'a' && C <= 'z') || C == '-' || C == '.' {
+			} else if (C >= 'a' && C <= 'z') || (C >= 'A' && C <= 'Z') || C == '-' || C == '.' || C == '[' || C == ']' {
 				// progressing along of the sequence
 				state = 3
 			} else {
@@ -115,10 +115,6 @@ func FastqChunkReader(r io.Reader, size int) (chan FastxChunk, error) {
 			end := []byte{}
 
 			for err == nil && n > 0 {
-				// fmt.Println("============end=========================")
-				// fmt.Println(string(end))
-				// fmt.Println("------------buff------------------------")
-				// fmt.Println(string(buff))
 				buff = Concatenate(end, buff)
 				// fmt.Println("------------buff--pasted----------------")
 				// fmt.Println(string(buff))
