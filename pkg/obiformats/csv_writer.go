@@ -197,7 +197,6 @@ func WriteCSV(iterator obiiter.IBioSequence,
 		log.Debugln("End of the CSV file writing")
 		obiiter.UnregisterPipe()
 		waitWriter.Done()
-
 	}()
 
 	if opt.pointer.csv_auto {
@@ -205,11 +204,7 @@ func WriteCSV(iterator obiiter.IBioSequence,
 			batch := iterator.Get()
 			auto_slot = batch.Slice().AttributeKeys(true)
 			CSVKeys(auto_slot.Members())(opt)
-			chunkchan <- FileChunck{
-				FormatCVSBatch(batch, opt),
-				batch.Order(),
-			}
-			newIter.Push(batch)
+			iterator.PushBack()
 		}
 	}
 

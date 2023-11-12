@@ -1,17 +1,15 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 
 	log "github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v3"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obioptions"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obiconvert"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obisummary"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obimatrix"
 )
 
 func main() {
@@ -34,7 +32,9 @@ func main() {
 	// trace.Start(ftrace)
 	// defer trace.Stop()
 
-	optionParser := obioptions.GenerateOptionParser(obisummary.OptionSet)
+	optionParser := obioptions.GenerateOptionParser(
+		obimatrix.OptionSet,
+	)
 
 	_, args := optionParser(os.Args)
 
@@ -45,14 +45,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	summary := obisummary.ISummary(fs)
+	matrix := obimatrix.IMatrix(fs)
 
-	if obisummary.CLIOutFormat() == "json" {
-		output, _ := json.MarshalIndent(summary, "", "  ")
-		fmt.Print(string(output))
+	if obimatrix.CLIOutFormat() == "matrix" {
+		obimatrix.CLIWriteCSVToStdout(matrix)
 	} else {
-		output, _ := yaml.Marshal(summary)
-		fmt.Print(string(output))
+		obimatrix.CLIWriteThreeColumnsToStdout(matrix)
 	}
 	fmt.Printf("\n")
 }

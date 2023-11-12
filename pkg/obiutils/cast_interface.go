@@ -1,6 +1,10 @@
 package obiutils
 
-import "fmt"
+import (
+	"fmt"
+	"log"
+	"reflect"
+)
 
 // InterfaceToString converts an interface value to a string.
 //
@@ -63,4 +67,26 @@ func InterfaceToBool(i interface{}) (val bool, err error) {
 		err = &NotABoolean{"value attribute cannot be casted to a boolean"}
 	}
 	return
+}
+
+// MapToMapInterface converts a map to a map of type map[string]interface{}.
+//
+// It takes an interface{} parameter `m` which represents the map to be converted.
+//
+// It returns a map[string]interface{} which is the converted map. If the input map is not of type map[string]interface{},
+// it panics and logs an error message.
+func MapToMapInterface(m interface{}) map[string]interface{} {
+	if IsAMap(m) {
+		reflectMap := reflect.ValueOf(m)
+		keys := reflectMap.MapKeys()
+		val := make(map[string]interface{}, len(keys))
+		for k := range keys {
+			val[keys[k].String()] = reflectMap.MapIndex(keys[k]).Interface()
+		}
+
+		return val
+	}
+
+	log.Panic("Invalid map type")
+	return make(map[string]interface{})
 }

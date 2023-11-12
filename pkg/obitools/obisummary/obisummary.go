@@ -180,6 +180,7 @@ func ISummary(iterator obiiter.IBioSequence) map[string]interface{} {
 	}
 
 	waiter.Wait()
+	obiiter.WaitForLastPipe()
 
 	rep := summaries[0]
 
