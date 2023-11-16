@@ -2,6 +2,8 @@
 
 ## Latest changes
 
+## November 16th, 2023. Release 4.1.0
+
 ### New feature
 
 - In the OBITools language a new `gc` computes the GC fraction of a sequence.
@@ -9,13 +11,21 @@
   sequence file provided as input. The statistics includes, the number of reads, of variants,
   the total length of the DNA sequences (equivalent to `obicount`), some summaries about tags
   used in the sequence annotations and their frequencies of usage.
-  
+- First version of the `obimatrix` command. It allows producing OTU tables from sequence files in 
+  CSV format.
+- The `obicsv` command has now a **--auto** option, that extract automatically the attributes 
+  present in a file for inspecting the beginning of the sequence file. Only attributes that do not
+  correspond to map are reported. To extract information from map attributes, see the `obimatrix`
+  command.
+
 ### Enhancement
 
 - A new completely rewritten GO version of the fastq and fasta parser is now used instead of the original C version. 
-- A new file format guesser is now implemented. This is a first step towards allowing new formats to be managed by OBITools.
+- A new file format guesser is now implemented. This is a first step towards allowing new formats 
+  to be managed by OBITools.
 - New way of handling header definitions of fasta and fastq formats with JSON headers.
   The sequence definition is now printed in new files as an attribute of the JSON header named "definition".
+  That's facilitates the writing of parsers for the sequence headers.
 - The -D (--delta) option has been added to `obipcr`. It allows extracting flanking sequences of the barcode.
     + If -D is not set, the output sequence is the barcode itself without the priming sites. 
     + If -D is set to 0, the output sequence is the barcode with the priming sites.
