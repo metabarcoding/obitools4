@@ -77,9 +77,24 @@ func CLIPrintSequence() bool {
 }
 
 func CLIPrintCount() bool {
+	if i := obiutils.LookFor(_keepOnly, "count"); i >= 0 {
+		_keepOnly = obiutils.RemoveIndex(_keepOnly, i)
+		_outputCount = true
+	}
+
 	return _outputCount
 }
 func CLIPrintTaxon() bool {
+	if i := obiutils.LookFor(_keepOnly, "taxid"); i >= 0 {
+		_keepOnly = obiutils.RemoveIndex(_keepOnly, i)
+		_outputTaxon = true
+	}
+
+	if i := obiutils.LookFor(_keepOnly, "scientific_name"); i >= 0 {
+		_keepOnly = obiutils.RemoveIndex(_keepOnly, i)
+		_outputTaxon = true
+	}
+
 	return _outputTaxon
 }
 func CLIPrintQuality() bool {
