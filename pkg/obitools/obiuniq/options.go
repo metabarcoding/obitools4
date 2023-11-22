@@ -7,7 +7,7 @@ import (
 
 var _StatsOn = make([]string, 0, 10)
 var _Keys = make([]string, 0, 10)
-var _OnDisk = false
+var _InMemory = false
 var _chunks = 100
 var _NAValue = "NA"
 var _NoSingleton = false
@@ -32,8 +32,8 @@ func UniqueOptionSet(options *getoptions.GetOpt) {
 	options.BoolVar(&_NoSingleton, "no-singleton", _NoSingleton,
 		options.Description("If set, sequences occurring a single time in the data set are discarded."))
 
-	options.BoolVar(&_OnDisk, "on-disk", _OnDisk,
-		options.Description("Allows for using a disk cache during the dereplication process. "))
+	options.BoolVar(&_InMemory, "in-memory", _InMemory,
+		options.Description("Use memory instead of disk to store data chunks."))
 
 	options.IntVar(&_chunks, "chunk-count", _chunks,
 		options.Description("In how many chunk the dataset is pre-devided for speeding up the process."))
@@ -56,7 +56,7 @@ func CLIKeys() []string {
 }
 
 func CLIUniqueInMemory() bool {
-	return !_OnDisk
+	return _InMemory
 }
 
 func CLINumberOfChunks() int {
