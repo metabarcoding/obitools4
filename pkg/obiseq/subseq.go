@@ -1,7 +1,6 @@
 package obiseq
 
 import (
-	"errors"
 	"fmt"
 )
 
@@ -17,15 +16,21 @@ import (
 // - error: an error if the subsequence parameters are invalid.
 func (sequence *BioSequence) Subsequence(from, to int, circular bool) (*BioSequence, error) {
 	if from >= to && !circular {
-		return nil, errors.New("from greater than to")
+		return nil, fmt.Errorf("from: %d greater than to: %d", from, to)
 	}
 
-	if from < 0 || from >= sequence.Len() {
-		return nil, errors.New("from out of bounds")
+	if from < 0 {
+		return nil, fmt.Errorf("from out of bounds %d < 0", from)
 	}
 
-	if to <= 0 || to > sequence.Len() {
-		return nil, errors.New("to out of bounds")
+	if from >= sequence.Len() {
+		return nil,
+			fmt.Errorf("from out of bounds %d >= %d", from, sequence.Len())
+	}
+
+	if to > sequence.Len() {
+		return nil,
+			fmt.Errorf("to out of bounds %d > %d", to, sequence.Len())
 	}
 
 	var newSeq *BioSequence

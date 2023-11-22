@@ -239,6 +239,9 @@ func (s *BioSequence) String() string {
 // It does not take any parameters.
 // It returns an integer representing the length of the sequence.
 func (s *BioSequence) Len() int {
+	if s == nil {
+		return 0
+	}
 	return len(s.sequence)
 }
 

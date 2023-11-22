@@ -58,7 +58,7 @@ func (iterator IBioSequence) MakeIWorker(worker obiseq.SeqWorker, sizes ...int) 
 
 func (iterator IBioSequence) MakeIConditionalWorker(predicate obiseq.SequencePredicate,
 	worker obiseq.SeqWorker, sizes ...int) IBioSequence {
-	nworkers := 4
+	nworkers := obioptions.CLIReadParallelWorkers()
 
 	if len(sizes) > 0 {
 		nworkers = sizes[0]
@@ -101,7 +101,7 @@ func (iterator IBioSequence) MakeIConditionalWorker(predicate obiseq.SequencePre
 }
 
 func (iterator IBioSequence) MakeISliceWorker(worker obiseq.SeqSliceWorker, sizes ...int) IBioSequence {
-	nworkers := 4
+	nworkers := obioptions.CLIParallelWorkers()
 
 	if len(sizes) > 0 {
 		nworkers = sizes[0]
@@ -119,7 +119,11 @@ func (iterator IBioSequence) MakeISliceWorker(worker obiseq.SeqSliceWorker, size
 	f := func(iterator IBioSequence) {
 		for iterator.Next() {
 			batch := iterator.Get()
+			bs := len(batch.slice)
 			batch.slice = worker(batch.slice)
+			if bs != len(batch.slice) {
+				log.Warnf("Input size : %d output %d", bs, len(batch.slice))
+			}
 			newIter.Push(batch)
 		}
 		newIter.Done()

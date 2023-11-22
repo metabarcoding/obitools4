@@ -45,7 +45,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	summary := obisummary.ISummary(fs)
+	summary := obisummary.ISummary(fs, obisummary.CLIMapSummary())
 
 	if obisummary.CLIOutFormat() == "json" {
 		output, _ := json.MarshalIndent(summary, "", "  ")

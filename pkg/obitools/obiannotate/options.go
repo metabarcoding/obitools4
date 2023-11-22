@@ -1,10 +1,11 @@
 package obiannotate
 
 import (
-	"io/ioutil"
-	"log"
 	"os"
+	"strconv"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obiconvert"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obigrep"
@@ -22,9 +23,11 @@ var _clearAll = false
 var _setSeqLength = false
 var _uniqueID = false
 var _ahoCorazick = ""
+var _pattern = ""
 var _lcaSlot = ""
 var _lcaError = 0.0
 var _setId = ""
+var _cut = ""
 
 func SequenceAnnotationOptionSet(options *getoptions.GetOpt) {
 	// options.BoolVar(&_addRank, "seq-rank", _addRank,
@@ -42,6 +45,13 @@ func SequenceAnnotationOptionSet(options *getoptions.GetOpt) {
 	options.StringVar(&_ahoCorazick, "aho-corasick", _ahoCorazick,
 		options.Description("Adds an aho-corasick attribut with the count of matches of the provided patterns."))
 
+	options.StringVar(&_pattern, "pattern", _pattern,
+		options.Description("Adds a pattern attribut containing the pattern, a pattern_match slot "+
+			"indicating the matched sequence, "+
+			"and a pattern_error slot indicating the number difference between the pattern and the match "+
+			"to the sequence.",
+		))
+
 	options.StringVar(&_lcaSlot, "add-lca-in", _lcaSlot,
 		options.ArgName("SLOT_NAME"),
 		options.Description("From the taxonomic annotation of the sequence (taxid slot or merged_taxid slot), "+
@@ -58,6 +68,10 @@ func SequenceAnnotationOptionSet(options *getoptions.GetOpt) {
 			"ancestor. At most a fraction of lca-error of the taxonomic information can disagree with the "+
 			"estimated LCA."),
 	)
+
+	options.StringVar(&_cut, "cut", _cut,
+		options.ArgName("###:###"),
+		options.Description("A pattern decribing how to cut the sequence"))
 
 	// options.BoolVar(&_uniqueID, "uniq-id", _uniqueID,
 	// 	options.Description("Forces sequence record ids to be unique."),
@@ -133,9 +147,8 @@ func CLIHasSetId() bool {
 }
 
 func CLSetIdExpression() string {
-	return _setId 
+	return _setId
 }
-
 
 func CLIHasAttributeToBeRenamed() bool {
 	return len(_toBeRenamed) > 0
@@ -191,7 +204,7 @@ func CLIHasAhoCorasick() bool {
 }
 
 func CLIAhoCorazick() []string {
-	content, err := ioutil.ReadFile(_ahoCorazick)
+	content, err := os.ReadFile(_ahoCorazick)
 	if err != nil {
 		log.Fatalln("Cannot open file ", _ahoCorazick)
 	}
@@ -220,4 +233,34 @@ func CLIHasAddLCA() bool {
 
 func CLILCAThreshold() float64 {
 	return 1 - _lcaError
+}
+
+func CLICut() (int, int) {
+	if _cut == "" {
+		return 0, 0
+	}
+	values := strings.Split(_cut, ":")
+
+	if len(values) != 2 {
+		log.Fatalf("Invalid cut value %s. value should be of the form start:end", _cut)
+	}
+
+	start, err := strconv.Atoi(values[0])
+
+	if err != nil {
+		log.Fatalf("Invalid cut value %s. value %s should be an integer", _cut, values[0])
+	}
+	end, err := strconv.Atoi(values[1])
+
+	if err != nil {
+		log.Fatalf("Invalid cut value %s. value %s should be an integer", _cut, values[1])
+	}
+
+	return start, end
+}
+
+func CLIHasCut() bool {
+	f, t := CLICut()
+
+	return f != 0 && t != 0
 }

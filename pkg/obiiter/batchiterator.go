@@ -10,6 +10,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obioptions"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiutils"
 	"github.com/tevino/abool/v2"
@@ -566,7 +567,7 @@ func (iterator IBioSequence) DivideOn(predicate obiseq.SequencePredicate,
 // A function that takes a predicate and a batch of sequences and returns a filtered batch of sequences.
 func (iterator IBioSequence) FilterOn(predicate obiseq.SequencePredicate,
 	size int, sizes ...int) IBioSequence {
-	nworkers := 4
+	nworkers := obioptions.CLIReadParallelWorkers()
 
 	if len(sizes) > 0 {
 		nworkers = sizes[0]
@@ -618,7 +619,7 @@ func (iterator IBioSequence) FilterOn(predicate obiseq.SequencePredicate,
 
 func (iterator IBioSequence) FilterAnd(predicate obiseq.SequencePredicate,
 	size int, sizes ...int) IBioSequence {
-	nworkers := 4
+	nworkers := obioptions.CLIReadParallelWorkers()
 
 	if len(sizes) > 0 {
 		nworkers = sizes[0]

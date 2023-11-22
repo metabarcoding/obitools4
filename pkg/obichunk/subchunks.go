@@ -7,6 +7,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obioptions"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
 )
 
@@ -60,8 +61,8 @@ func ISequenceSubChunk(iterator obiiter.IBioSequence,
 	classifier *obiseq.BioSequenceClassifier,
 	nworkers int) (obiiter.IBioSequence, error) {
 
-	if nworkers <=0 {
-		nworkers = 4
+	if nworkers <= 0 {
+		nworkers = obioptions.CLIParallelWorkers()
 	}
 
 	newIter := obiiter.MakeIBioSequence()

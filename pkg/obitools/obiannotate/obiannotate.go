@@ -1,7 +1,7 @@
 package obiannotate
 
 import (
-	"log"
+	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obicorazick"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
@@ -22,6 +22,15 @@ func DeleteAttributesWorker(toBeDeleted []string) obiseq.SeqWorker {
 	return f
 }
 
+// func MatchPatternWorker(pattern string, errormax int, allowsIndel bool) obiseq.SeqWorker {
+// 	pat, err := obiapat.MakeApatPattern(pattern, errormax, allowsIndel)
+// 	f := func(s *obiseq.BioSequence) *obiseq.BioSequence {
+// 		apats := obiapat.MakeApatSequence(s, false)
+// 		pat.BestMatch(apats, 0)
+// 		return s
+// 	}
+// }
+
 func ToBeKeptAttributesWorker(toBeKept []string) obiseq.SeqWorker {
 
 	d := make(map[string]bool, len(_keepOnly))
@@ -38,6 +47,58 @@ func ToBeKeptAttributesWorker(toBeKept []string) obiseq.SeqWorker {
 			}
 		}
 		return s
+	}
+
+	return f
+}
+
+func CutSequenceWorker(from, to int, breakOnError bool) obiseq.SeqWorker {
+
+	f := func(s *obiseq.BioSequence) *obiseq.BioSequence {
+		var f, t int
+
+		switch {
+		case from < 0:
+			f = s.Len() + from + 1
+		case from > 0:
+			f = from
+		}
+
+		switch {
+		case to < 0:
+			t = s.Len() + to + 1
+		case to > 0:
+			t = to
+		}
+
+		if from < 0 {
+			from = 0
+		}
+
+		if to >= s.Len() {
+			to = s.Len()
+		}
+
+		rep, err := s.Subsequence(f, t, false)
+		if err != nil {
+			if breakOnError {
+				log.Fatalf("Cannot cut sequence %s (%v)", s.Id(), err)
+			} else {
+				log.Warnf("Cannot cut sequence %s (%v), sequence discarded", s.Id(), err)
+				return nil
+			}
+		}
+		return rep
+	}
+
+	if from == 0 && to == 0 {
+		f = func(s *obiseq.BioSequence) *obiseq.BioSequence {
+			return s
+		}
+	}
+
+	if from > 0 {
+		from--
 	}
 
 	return f
@@ -80,7 +141,6 @@ func EvalAttributeWorker(expression map[string]string) obiseq.SeqWorker {
 
 	return w
 }
-
 
 func AddTaxonAtRankWorker(taxonomy *obitax.Taxonomy, ranks ...string) obiseq.SeqWorker {
 	f := func(s *obiseq.BioSequence) *obiseq.BioSequence {
@@ -162,6 +222,13 @@ func CLIAnnotationWorker() obiseq.SeqWorker {
 		annotator = annotator.ChainWorkers(w)
 	}
 
+	if CLIHasCut() {
+		from, to := CLICut()
+		w := CutSequenceWorker(from, to, false)
+
+		annotator = annotator.ChainWorkers(w)
+	}
+
 	return annotator
 }
 
@@ -170,7 +237,7 @@ func CLIAnnotationPipeline() obiiter.Pipeable {
 	predicate := obigrep.CLISequenceSelectionPredicate()
 	worker := CLIAnnotationWorker()
 
-	annotator := obiseq.SeqToSliceConditionalWorker(worker, predicate, true)
+	annotator := obiseq.SeqToSliceConditionalWorker(worker, predicate, true, false)
 	f := obiiter.SliceWorkerPipe(annotator, obioptions.CLIParallelWorkers())
 
 	return f

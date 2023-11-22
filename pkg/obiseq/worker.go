@@ -1,5 +1,7 @@
 package obiseq
 
+import log "github.com/sirupsen/logrus"
+
 type SeqAnnotator func(*BioSequence)
 
 type SeqWorker func(*BioSequence) *BioSequence
@@ -17,7 +19,8 @@ func AnnotatorToSeqWorker(function SeqAnnotator) SeqWorker {
 	return f
 }
 
-func SeqToSliceWorker(worker SeqWorker, inplace bool) SeqSliceWorker {
+func SeqToSliceWorker(worker SeqWorker,
+	inplace, breakOnError bool) SeqSliceWorker {
 	var f SeqSliceWorker
 
 	if worker == nil {
@@ -25,12 +28,12 @@ func SeqToSliceWorker(worker SeqWorker, inplace bool) SeqSliceWorker {
 			f = func(input BioSequenceSlice) BioSequenceSlice {
 				return input
 			}
-		} else  {
+		} else {
 			f = func(input BioSequenceSlice) BioSequenceSlice {
 				output := MakeBioSequenceSlice(len(input))
-				copy(output,input)
+				copy(output, input)
 				return output
-			}		
+			}
 		}
 	} else {
 		f = func(input BioSequenceSlice) BioSequenceSlice {
@@ -38,12 +41,21 @@ func SeqToSliceWorker(worker SeqWorker, inplace bool) SeqSliceWorker {
 			if !inplace {
 				output = MakeBioSequenceSlice(len(input))
 			}
-			for i, s := range input {
-				output[i] = worker(s)
+			i := 0
+			for _, s := range input {
+				r := worker(s)
+				if r != nil {
+					output[i] = r
+					i++
+				} else if breakOnError {
+					log.Fatalf("got an error on sequence %s processing",
+						r.Id())
+				}
 			}
-	
-			return output
-		}	
+
+			return output[0:i]
+		}
+
 	}
 
 	return f
@@ -51,10 +63,10 @@ func SeqToSliceWorker(worker SeqWorker, inplace bool) SeqSliceWorker {
 
 func SeqToSliceConditionalWorker(worker SeqWorker,
 	condition SequencePredicate,
-	inplace bool) SeqSliceWorker {
+	inplace, breakOnError bool) SeqSliceWorker {
 
 	if condition == nil {
-		return SeqToSliceWorker(worker,inplace)
+		return SeqToSliceWorker(worker, inplace, breakOnError)
 	}
 
 	f := func(input BioSequenceSlice) BioSequenceSlice {
@@ -62,15 +74,23 @@ func SeqToSliceConditionalWorker(worker SeqWorker,
 		if !inplace {
 			output = MakeBioSequenceSlice(len(input))
 		}
-		for i, s := range input {
+
+		i := 0
+
+		for _, s := range input {
 			if condition(s) {
-				output[i] = worker(s)
-			} else {
-				output[i] = s
+				r := worker(s)
+				if r != nil {
+					output[i] = r
+					i++
+				} else if breakOnError {
+					log.Fatalf("got an error on sequence %s processing",
+						r.Id())
+				}
 			}
 		}
 
-		return output
+		return output[0:i]
 	}
 
 	return f
@@ -83,9 +103,12 @@ func (worker SeqWorker) ChainWorkers(next SeqWorker) SeqWorker {
 		if next == nil {
 			return worker
 		}
-	} 
+	}
 
 	f := func(seq *BioSequence) *BioSequence {
+		if seq == nil {
+			return nil
+		}
 		return next(worker(seq))
 	}
 

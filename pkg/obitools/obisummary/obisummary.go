@@ -23,6 +23,7 @@ type DataSummary struct {
 	sample_variants     map[string]int
 	sample_singletons   map[string]int
 	sample_obiclean_bad map[string]int
+	map_summaries       map[string]map[string]int
 }
 
 func NewDataSummary() *DataSummary {
@@ -40,6 +41,7 @@ func NewDataSummary() *DataSummary {
 		sample_variants:     make(map[string]int),
 		sample_singletons:   make(map[string]int),
 		sample_obiclean_bad: make(map[string]int),
+		map_summaries:       make(map[string]map[string]int),
 	}
 }
 
@@ -150,12 +152,18 @@ func (data *DataSummary) Update(s *obiseq.BioSequence) *DataSummary {
 	return data
 }
 
-func ISummary(iterator obiiter.IBioSequence) map[string]interface{} {
+func ISummary(iterator obiiter.IBioSequence, summarise []string) map[string]interface{} {
 
 	nproc := obioptions.CLIParallelWorkers()
 	waiter := sync.WaitGroup{}
 
 	summaries := make([]*DataSummary, nproc)
+
+	for n := 0; n < nproc; n++ {
+		for _, v := range summarise {
+			summaries[n].map_summaries[v] = make(map[string]int, 0)
+		}
+	}
 
 	ff := func(iseq obiiter.IBioSequence, summary *DataSummary) {
 
