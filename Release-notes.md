@@ -2,6 +2,19 @@
 
 ## Latest changes
 
+### Bug fixes
+
+- In `obicsv` the **--keep count** was not equivalent to **--count**.
+
+### New feature
+
+- In `obimatrix` a **--transpose** option allows to transpose the produced matrix table in CSV format.
+
+### Enhancement
+
+- For efficiency purposes, the `obiuniq` command run on disk by default. Consequently, the
+  **--on-disk** option has been replaced by **--in-memory** to ask explicitly to use memory.
+  
 ## November 16th, 2023. Release 4.1.0
 
 ### New feature
