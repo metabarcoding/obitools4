@@ -137,7 +137,9 @@ func CLIWriteCSVToStdout(matrix *MatrixData) {
 	navalue := CLINaValue()
 	csvwriter := csv.NewWriter(os.Stdout)
 
-	matrix = matrix.TransposeMatrixData()
+	if CLITranspose() {
+		matrix = matrix.TransposeMatrixData()
+	}
 
 	samples := obiutils.NewSet[string]()
 

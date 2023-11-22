@@ -10,6 +10,7 @@ import (
 )
 
 var __threeColumns__ = false
+var __transpose__ = true
 var __mapAttribute__ = "merged_sample"
 var __valueName__ = "count"
 var __sampleName__ = "sample"
@@ -18,6 +19,9 @@ var __NAValue__ = "0"
 func MatrixOptionSet(options *getoptions.GetOpt) {
 	options.BoolVar(&__threeColumns__, "three-columns", false,
 		options.Description("Printouts the matrix in tree column format."))
+
+	options.BoolVar(&__transpose__, "transpose", __transpose__,
+		options.Description("Printouts the transposed matrix."))
 
 	options.StringVar(&__mapAttribute__, "map", __mapAttribute__,
 		options.Description("Which attribute is usd to produce th matrix."))
@@ -59,4 +63,8 @@ func CLINaValue() string {
 
 func CLIMapAttribute() string {
 	return __mapAttribute__
+}
+
+func CLITranspose() bool {
+	return __transpose__
 }
