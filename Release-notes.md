@@ -5,10 +5,14 @@
 ### Bug fixes
 
 - In `obicsv` the **--keep count** was not equivalent to **--count**.
+- In `obipairing` and `obipcrtag` correct a bug in the alignment procedure leading to negative scores.
 
 ### New feature
 
 - In `obimatrix` a **--transpose** option allows to transpose the produced matrix table in CSV format.
+- In `obitpairing` and `obipcrtag` two new options **--exact-mode** and **--fast-absolute** to control the heuristic
+  used in the alignment procedure. **--exact-mode** allows for disconnecting the heuristic and run the exact 
+  algorithm at the cost of a speed. **--fast-absolute** change the scoring schema of the heuristic.
 
 ### Enhancement
 
