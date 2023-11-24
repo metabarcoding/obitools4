@@ -41,22 +41,74 @@ func MakePEAlignArena(lseqA, lseqB int) PEAlignArena {
 	return PEAlignArena{&a}
 }
 
+// _SetMatrices updates the values in matrixA and matrixB at the specified indices with the given values.
+//
+// The data in the matrix is stored in column-major order.
+// Positions in the matrix are numbered from -1
+//
+// Parameters:
+// - matrixA: a pointer to the slice of integers representing matrixA.
+// - matrixB: a pointer to the slice of integers representing matrixB.
+// - lenA: the length of matrixA.
+// - a: the row index a.
+// - b: the column index b .
+// - valueA: the value to be set in matrixA.
+// - valueB: the value to be set in matrixB.
 func _SetMatrices(matrixA, matrixB *[]int, lenA, a, b, valueA, valueB int) {
 	i := (b+1)*(lenA+1) + a + 1
 	(*matrixA)[i] = valueA
 	(*matrixB)[i] = valueB
 }
 
+// _GetMatrix returns the value at the specified position in the matrix.
+//
+// The data in the matrix is stored in column-major order.
+// Positions in the matrix are numbered from -1
+//
+// Parameters:
+// - matrix: a pointer to the matrix
+// - lenA: the length of the matrix
+// - a: the row index a.
+// - b: the column index b .
+//
+// Returns:
+// - int: the value at the specified position in the matrix
 func _GetMatrix(matrix *[]int, lenA, a, b int) int {
 	return (*matrix)[(b+1)*(lenA+1)+a+1]
 }
 
+// Returns left, diag, top compare to the position (a, b)
+//
+// with a the row index and b the column index.
+// Positions in the matrix are numbered from -1
+//
+// i = (b+1)*(lenA+1) + a + 1
+//
+// diag = M[a-1][b-1]  : i_diag = ((b-1)+1)*(lenA+1) + (a-1) + 1
+//
+//	: i_diag = b*(lenA+1) + a
+//
+// left = M[a][b-1]    : i_left = ((b-1)+1)*(lenA+1) + a + 1
+//
+//	: i_left = b*(lenA+1) + a + 1
+//
+// top = M[a-1][b]	   : i_top = (b+1)*(lenA+1) + (a-1) + 1
+//
+//	: i_top = (b+1)*(lenA+1) + a
+//
+// Parameters:
+//
+// - matrix: a pointer to the matrix
+// - lenA: the number of row -1 in the matrix
+// - a: the row index a.
+// - b: the column index b .
 func _GetMatrixFrom(matrix *[]int, lenA, a, b int) (int, int, int) {
-	// Formula rechecked on 01/25/2023
-	i := (b+1)*(lenA+1) + a
-	j := i - lenA
+	// Formula rechecked on 11/24/2023
+	i_top := (b+1)*(lenA+1) + a
+	i_left := i_top - lenA
+	i_diag := i_left - 1
 	m := *matrix
-	return m[j], m[j-1], m[i]
+	return m[i_left], m[i_diag], m[i_top]
 }
 
 func _PairingScorePeAlign(baseA, qualA, baseB, qualB byte) int {
@@ -74,10 +126,15 @@ func _PairingScorePeAlign(baseA, qualA, baseB, qualB byte) int {
 	}
 }
 
-// Gaps at the beginning of B and at the end of A are free
-// With A spanning over lines and B over columns
+// Gaps at the beginning of seqB and at the end of seqA are free
+// With seqA spanning over lines and seqB over columns
 //   - First column gap = 0
 //   - Last line gaps = 0
+//
+// Paths are encoded :
+//   - 0  :  for diagonal
+//   - -1 :  for top
+//   - +1 :  for left
 func _FillMatrixPeLeftAlign(seqA, qualA, seqB, qualB []byte, gap float64,
 	scoreMatrix, pathMatrix *[]int) int {
 
@@ -118,19 +175,21 @@ func _FillMatrixPeLeftAlign(seqA, qualA, seqB, qualB []byte, gap float64,
 
 		for i := 0; i < la1; i++ {
 			left, diag, top := _GetMatrixFrom(scoreMatrix, la, i, j)
+			// log.Infof("LA: i : %d j : %d left : %d diag : %d top : %d\n", i, j, left, diag, top)
 
 			diag += _PairingScorePeAlign(seqA[i], qualA[i], seqB[j], qualB[j])
 			left += gapPenalty
 			top += gapPenalty
 
 			switch {
-			case diag > left && diag > top:
+			case diag >= left && diag >= top:
 				_SetMatrices(scoreMatrix, pathMatrix, la, i, j, diag, 0)
-			case left > diag && left > top:
+			case left >= diag && left >= top:
 				_SetMatrices(scoreMatrix, pathMatrix, la, i, j, left, +1)
 			default:
 				_SetMatrices(scoreMatrix, pathMatrix, la, i, j, top, -1)
 			}
+			// log.Infof("LA: i : %d j : %d left : %d diag : %d top : %d [%d]\n", i, j, left, diag, top, _GetMatrix(scoreMatrix, la, i, j))
 		}
 
 		// Special case for the last line Left gap are free
@@ -140,14 +199,16 @@ func _FillMatrixPeLeftAlign(seqA, qualA, seqB, qualB []byte, gap float64,
 		top += gapPenalty
 
 		switch {
-		case diag > left && diag > top:
+		case diag >= left && diag >= top:
 			_SetMatrices(scoreMatrix, pathMatrix, la, la1, j, diag, 0)
-		case left > diag && left > top:
+		case left >= diag && left >= top:
 			_SetMatrices(scoreMatrix, pathMatrix, la, la1, j, left, +1)
 		default:
 			_SetMatrices(scoreMatrix, pathMatrix, la, la1, j, top, -1)
 
 		}
+
+		// log.Infof("LA: i : %d j : %d left : %d diag : %d top : %d [%d]\n", la1, j, left, diag, top, _GetMatrix(scoreMatrix, la, la1, j))
 	}
 
 	return _GetMatrix(scoreMatrix, la, la1, lb-1)
@@ -203,13 +264,15 @@ func _FillMatrixPeRightAlign(seqA, qualA, seqB, qualB []byte, gap float64,
 			top += gapPenalty
 
 			switch {
-			case diag > left && diag > top:
+			case diag >= left && diag >= top:
 				_SetMatrices(scoreMatrix, pathMatrix, la, i, j, diag, 0)
-			case left > diag && left > top:
+			case left >= diag && left >= top:
 				_SetMatrices(scoreMatrix, pathMatrix, la, i, j, left, +1)
 			default:
 				_SetMatrices(scoreMatrix, pathMatrix, la, i, j, top, -1)
 			}
+
+			// log.Infof("LR: i : %d j : %d left : %d diag : %d top : %d [%d]\n", i, j, left, diag, top, _GetMatrix(scoreMatrix, la, i, j))
 
 		}
 	}
@@ -223,10 +286,12 @@ func _FillMatrixPeRightAlign(seqA, qualA, seqB, qualB []byte, gap float64,
 		diag += _PairingScorePeAlign(seqA[i], qualA[i], seqB[lb1], qualB[lb1])
 		left += gapPenalty
 
+		// log.Infof("LR: i : %d j : %d left : %d diag : %d top : %d [%d]\n", i, lb1, left, diag, top, _GetMatrix(scoreMatrix, la, i, lb1))
+
 		switch {
-		case diag > left && diag > top:
+		case diag >= left && diag >= top:
 			_SetMatrices(scoreMatrix, pathMatrix, la, i, lb1, diag, 0)
-		case left > diag && left > top:
+		case left >= diag && left >= top:
 			_SetMatrices(scoreMatrix, pathMatrix, la, i, lb1, left, +1)
 		default:
 			_SetMatrices(scoreMatrix, pathMatrix, la, i, lb1, top, -1)

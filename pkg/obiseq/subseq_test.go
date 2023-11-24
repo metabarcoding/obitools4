@@ -46,15 +46,15 @@ func TestSubsequence(t *testing.T) {
 	// Test case 3: Subsequence with from greater than to and non-circular
 	seq3 := NewBioSequence("ID1", []byte("ATCG"), "")
 	_, err3 := seq3.Subsequence(3, 1, false)
-	assert.EqualError(t, err3, "from greater than to")
+	assert.EqualError(t, err3, "from: 3 greater than to: 1")
 
 	// Test case 4: Subsequence with from out of bounds
 	seq4 := NewBioSequence("ID1", []byte("ATCG"), "")
 	_, err4 := seq4.Subsequence(-1, 2, false)
-	assert.EqualError(t, err4, "from out of bounds")
+	assert.EqualError(t, err4, "from out of bounds -1 < 0")
 
 	// Test case 5: Subsequence with to out of bounds
 	seq5 := NewBioSequence("ID1", []byte("ATCG"), "")
 	_, err5 := seq5.Subsequence(2, 5, false)
-	assert.EqualError(t, err5, "to out of bounds")
+	assert.EqualError(t, err5, "to out of bounds 5 > 4")
 }
