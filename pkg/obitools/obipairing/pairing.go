@@ -108,7 +108,7 @@ func AssemblePESequences(seqA, seqB *obiseq.BioSequence,
 	inplace bool,
 	arenaAlign obialign.PEAlignArena) *obiseq.BioSequence {
 
-	score, path := obialign.PEAlign(seqA, seqB, gap, delta, arenaAlign)
+	score, path, fastscore, over := obialign.PEAlign(seqA, seqB, gap, delta, arenaAlign)
 	cons, match := obialign.BuildQualityConsensus(seqA, seqB, path, true)
 
 	left := path[0]
@@ -123,6 +123,8 @@ func AssemblePESequences(seqA, seqB *obiseq.BioSequence,
 		identity = 0
 	}
 	annot := cons.Annotations()
+	annot["paring_fast_score"] = fastscore
+	annot["paring_fast_overlap"] = over
 
 	if aliLength >= minOverlap && identity >= minIdentity {
 		annot["mode"] = "alignment"
@@ -215,7 +217,6 @@ func IAssemblePESequencesBatch(iterator obiiter.IBioSequence,
 	if len(sizes) > 0 {
 		nworkers = sizes[0]
 	}
-
 
 	newIter := obiiter.MakeIBioSequence()
 

@@ -352,7 +352,7 @@ func PERightAlign(seqA, seqB *obiseq.BioSequence, gap float64,
 
 func PEAlign(seqA, seqB *obiseq.BioSequence,
 	gap float64, delta int,
-	arena PEAlignArena) (int, []int) {
+	arena PEAlignArena) (int, []int, int, int) {
 	var score, shift int
 	var startA, startB int
 	var partLen, over int
@@ -467,5 +467,5 @@ func PEAlign(seqA, seqB *obiseq.BioSequence,
 		arena.pointer.path = append(arena.pointer.path, extra3, 0)
 	}
 
-	return score, arena.pointer.path
+	return score, arena.pointer.path, fastScore, over
 }
