@@ -1,6 +1,8 @@
 package obikmer
 
-import "git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
+import (
+	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
+)
 
 var __single_base_code__ = []byte{0,
 	//     A,  B,  C,  D,
@@ -97,7 +99,7 @@ func Index4mer(seq *obiseq.BioSequence, index *[][]int, buffer *[]byte) [][]int 
 // FastShiftFourMer runs a Fast algorithm (similar to the one used in FASTA) to compare two sequences.
 // The returned values are two integer values. The shift between both the sequences and the count of
 // matching 4mer when this shift is applied between both the sequences.
-func FastShiftFourMer(index [][]int, seq *obiseq.BioSequence, buffer *[]byte) (int, int) {
+func FastShiftFourMer(index [][]int, lindex int, seq *obiseq.BioSequence, relscore bool, buffer *[]byte) (int, int, float64) {
 
 	iternal_buffer := Encode4mer(seq, buffer)
 
@@ -116,18 +118,31 @@ func FastShiftFourMer(index [][]int, seq *obiseq.BioSequence, buffer *[]byte) (i
 	}
 
 	maxshift := 0
-	maxcount := -1
+	maxcount := 0
+	maxscore := -1.0
 
 	for shift, count := range shifts {
-		if count > maxcount {
+		score := float64(count)
+		if relscore {
+			over := -shift
+			if shift > 0 {
+				over += lindex
+			} else {
+				over = seq.Len() - over
+			}
+			score = score / float64(over)
+		}
+		if score > maxscore {
 			maxshift = shift
 			maxcount = count
+			maxscore = score
 		} else {
-			if count == maxcount && shift < maxshift {
+			if score == maxscore && shift < maxshift {
 				maxshift = shift
+				maxcount = count
 			}
 		}
 	}
 
-	return maxshift, maxcount
+	return maxshift, maxcount, maxscore
 }

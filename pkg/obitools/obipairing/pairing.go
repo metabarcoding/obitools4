@@ -99,16 +99,18 @@ func JoinPairedSequence(seqA, seqB *obiseq.BioSequence, inplace bool) *obiseq.Bi
 // destroyed during the assembling process and cannot be reuse later on.
 // the gap and delta parametters.
 //
+// - fastModeRel: if set to true, the FAST score mode is set to relative score
+//
 // # Returns
 //
 // An obiseq.BioSequence corresponding to the assembling of the both
 // input sequence.
 func AssemblePESequences(seqA, seqB *obiseq.BioSequence,
 	gap float64, delta, minOverlap int, minIdentity float64, withStats bool,
-	inplace bool,
+	inplace bool, fastAlign, fastModeRel bool,
 	arenaAlign obialign.PEAlignArena) *obiseq.BioSequence {
 
-	score, path, fastscore, over := obialign.PEAlign(seqA, seqB, gap, delta, arenaAlign)
+	score, path, fastcount, over, fastscore := obialign.PEAlign(seqA, seqB, gap, fastAlign, delta, fastModeRel, arenaAlign)
 	cons, match := obialign.BuildQualityConsensus(seqA, seqB, path, true)
 
 	left := path[0]
@@ -123,8 +125,12 @@ func AssemblePESequences(seqA, seqB *obiseq.BioSequence,
 		identity = 0
 	}
 	annot := cons.Annotations()
-	annot["paring_fast_score"] = fastscore
-	annot["paring_fast_overlap"] = over
+
+	if fastAlign {
+		annot["paring_fast_count"] = fastcount
+		annot["paring_fast_score"] = math.Round(fastscore*1000) / 1000
+		annot["paring_fast_overlap"] = over
+	}
 
 	if aliLength >= minOverlap && identity >= minIdentity {
 		annot["mode"] = "alignment"
@@ -205,7 +211,7 @@ func AssemblePESequences(seqA, seqB *obiseq.BioSequence,
 // each pair of processed sequences produces one sequence in the result iterator.
 func IAssemblePESequencesBatch(iterator obiiter.IBioSequence,
 	gap float64, delta, minOverlap int,
-	minIdentity float64,
+	minIdentity float64, fastAlign, fastModeRel,
 	withStats bool, sizes ...int) obiiter.IBioSequence {
 
 	if !iterator.IsPaired() {
@@ -235,7 +241,7 @@ func IAssemblePESequencesBatch(iterator obiiter.IBioSequence,
 			cons := make(obiseq.BioSequenceSlice, len(batch.Slice()))
 			for i, A := range batch.Slice() {
 				B := A.PairedWith()
-				cons[i] = AssemblePESequences(A, B.ReverseComplement(true), gap, delta, minOverlap, minIdentity, withStats, true, arena)
+				cons[i] = AssemblePESequences(A, B.ReverseComplement(true), gap, delta, minOverlap, minIdentity, withStats, true, fastAlign, fastModeRel, arena)
 			}
 			newIter.Push(obiiter.MakeBioSequenceBatch(
 				batch.Order(),

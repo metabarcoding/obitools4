@@ -14,7 +14,7 @@ import (
 
 func IPCRTagPESequencesBatch(iterator obiiter.IBioSequence,
 	gap float64, delta, minOverlap int,
-	minIdentity float64,
+	minIdentity float64, fastAlign, fastScoreRel,
 	withStats bool) obiiter.IBioSequence {
 
 	if !iterator.IsPaired() {
@@ -50,7 +50,8 @@ func IPCRTagPESequencesBatch(iterator obiiter.IBioSequence,
 				B := A.PairedWith()
 				consensus := obipairing.AssemblePESequences(
 					A.Copy(), B.ReverseComplement(false),
-					gap, delta, minOverlap, minIdentity, withStats, true, arena,
+					gap, delta, minOverlap, minIdentity, withStats, true,
+					fastAlign, fastScoreRel, arena,
 				)
 
 				consensus, err = ngsfilter.ExtractBarcode(consensus, true)

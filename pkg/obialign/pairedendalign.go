@@ -351,8 +351,8 @@ func PERightAlign(seqA, seqB *obiseq.BioSequence, gap float64,
 }
 
 func PEAlign(seqA, seqB *obiseq.BioSequence,
-	gap float64, delta int,
-	arena PEAlignArena) (int, []int, int, int) {
+	gap float64, fastAlign bool, delta int, fastScoreRel bool,
+	arena PEAlignArena) (int, []int, int, int, float64) {
 	var score, shift int
 	var startA, startB int
 	var partLen, over int
@@ -365,107 +365,143 @@ func PEAlign(seqA, seqB *obiseq.BioSequence,
 		_InitDNAScoreMatrix()
 	}
 
-	index := obikmer.Index4mer(seqA,
-		&arena.pointer.fastIndex,
-		&arena.pointer.fastBuffer)
+	fastCount := -1
+	fastScore := -1.0
 
-	shift, fastScore := obikmer.FastShiftFourMer(index, seqB, nil)
+	if fastAlign {
 
-	if shift > 0 {
-		over = seqA.Len() - shift
-	} else {
-		over = seqB.Len() + shift
-	}
+		index := obikmer.Index4mer(seqA,
+			&arena.pointer.fastIndex,
+			&arena.pointer.fastBuffer)
 
-	// At least one mismatch exists in the overlaping region
-	if fastScore+3 < over {
+		shift, fastCount, fastScore = obikmer.FastShiftFourMer(index, seqA.Len(), seqB, fastScoreRel, nil)
 
 		if shift > 0 {
-			startA = shift - delta
-			if startA < 0 {
-				startA = 0
-			}
-			extra5 = -startA
-			startB = 0
+			over = seqA.Len() - shift
+		} else {
+			over = seqB.Len() + shift
+		}
 
-			rawSeqA = seqA.Sequence()[startA:]
-			qualSeqA = seqA.Qualities()[startA:]
-			partLen = len(rawSeqA)
-			if partLen > seqB.Len() {
-				partLen = seqB.Len()
+		// At least one mismatch exists in the overlaping region
+		if fastCount+3 < over {
+
+			if shift > 0 {
+				startA = shift - delta
+				if startA < 0 {
+					startA = 0
+				}
+				extra5 = -startA
+				startB = 0
+
+				rawSeqA = seqA.Sequence()[startA:]
+				qualSeqA = seqA.Qualities()[startA:]
+				partLen = len(rawSeqA)
+				if partLen > seqB.Len() {
+					partLen = seqB.Len()
+				}
+				rawSeqB = seqB.Sequence()[0:partLen]
+				qualSeqB = seqB.Qualities()[0:partLen]
+				extra3 = seqB.Len() - partLen
+				score = _FillMatrixPeLeftAlign(
+					rawSeqA, qualSeqA, rawSeqB, qualSeqB, gap,
+					&arena.pointer.scoreMatrix,
+					&arena.pointer.pathMatrix)
+			} else {
+
+				startA = 0
+				startB = -shift - delta
+				if startB < 0 {
+					startB = 0
+				}
+				extra5 = startB
+				rawSeqB = seqB.Sequence()[startB:]
+				qualSeqB = seqB.Qualities()[startB:]
+				partLen = len(rawSeqB)
+				if partLen > seqA.Len() {
+					partLen = seqA.Len()
+				}
+				rawSeqA = seqA.Sequence()[:partLen]
+				qualSeqA = seqA.Qualities()[:partLen]
+				extra3 = partLen - seqA.Len()
+
+				score = _FillMatrixPeRightAlign(
+					rawSeqA, qualSeqA, rawSeqB, qualSeqB, gap,
+					&arena.pointer.scoreMatrix,
+					&arena.pointer.pathMatrix)
 			}
-			rawSeqB = seqB.Sequence()[0:partLen]
-			qualSeqB = seqB.Qualities()[0:partLen]
-			extra3 = seqB.Len() - partLen
-			score = _FillMatrixPeLeftAlign(
-				rawSeqA, qualSeqA, rawSeqB, qualSeqB, gap,
-				&arena.pointer.scoreMatrix,
-				&arena.pointer.pathMatrix)
+
+			arena.pointer.path = _Backtracking(arena.pointer.pathMatrix,
+				len(rawSeqA), len(rawSeqB),
+				&arena.pointer.path)
+
 		} else {
 
-			startA = 0
-			startB = -shift - delta
-			if startB < 0 {
-				startB = 0
-			}
-			extra5 = startB
-			rawSeqB = seqB.Sequence()[startB:]
-			qualSeqB = seqB.Qualities()[startB:]
-			partLen = len(rawSeqB)
-			if partLen > seqA.Len() {
-				partLen = seqA.Len()
-			}
-			rawSeqA = seqA.Sequence()[:partLen]
-			qualSeqA = seqA.Qualities()[:partLen]
-			extra3 = partLen - seqA.Len()
+			// Both overlaping regions are identicals
 
-			score = _FillMatrixPeRightAlign(
-				rawSeqA, qualSeqA, rawSeqB, qualSeqB, gap,
-				&arena.pointer.scoreMatrix,
-				&arena.pointer.pathMatrix)
+			if shift > 0 {
+				startA = shift
+				startB = 0
+				extra5 = -startA
+				qualSeqA = seqA.Qualities()[startA:]
+				partLen = len(qualSeqA)
+				qualSeqB = seqB.Qualities()[0:partLen]
+				extra3 = seqB.Len() - partLen
+				score = 0
+			} else {
+				startA = 0
+				startB = -shift
+				extra5 = startB
+				qualSeqB = seqB.Qualities()[startB:]
+				partLen = len(qualSeqB)
+				extra3 = partLen - seqA.Len()
+				qualSeqA = seqA.Qualities()[:partLen]
+			}
+			score = 0
+			for i, qualA := range qualSeqA {
+				qualB := qualSeqB[i]
+				score += _NucScorePartMatchMatch[qualA][qualB]
+			}
+			arena.pointer.path = arena.pointer.path[:0]
+			arena.pointer.path = append(arena.pointer.path, 0, partLen)
 		}
+
+		arena.pointer.path[0] += extra5
+		if arena.pointer.path[len(arena.pointer.path)-1] == 0 {
+			arena.pointer.path[len(arena.pointer.path)-2] += extra3
+		} else {
+			arena.pointer.path = append(arena.pointer.path, extra3, 0)
+		}
+	} else {
+		//
+		// No Fast Heuristic
+		//
+
+		rawSeqA = seqA.Sequence()
+		qualSeqA = seqA.Qualities()
+		rawSeqB = seqB.Sequence()
+		qualSeqB = seqB.Qualities()
+
+		scoreR := _FillMatrixPeRightAlign(
+			rawSeqA, qualSeqA, rawSeqB, qualSeqB, gap,
+			&arena.pointer.scoreMatrix,
+			&arena.pointer.pathMatrix)
 
 		arena.pointer.path = _Backtracking(arena.pointer.pathMatrix,
 			len(rawSeqA), len(rawSeqB),
 			&arena.pointer.path)
 
-	} else {
+		scoreL := _FillMatrixPeLeftAlign(
+			rawSeqA, qualSeqA, rawSeqB, qualSeqB, gap,
+			&arena.pointer.scoreMatrix,
+			&arena.pointer.pathMatrix)
 
-		// Both overlaping regions are identicals
+		if scoreL > scoreR {
+			arena.pointer.path = _Backtracking(arena.pointer.pathMatrix,
+				len(rawSeqA), len(rawSeqB),
+				&arena.pointer.path)
+		}
 
-		if shift > 0 {
-			startA = shift
-			startB = 0
-			extra5 = -startA
-			qualSeqA = seqA.Qualities()[startA:]
-			partLen = len(qualSeqA)
-			qualSeqB = seqB.Qualities()[0:partLen]
-			extra3 = seqB.Len() - partLen
-			score = 0
-		} else {
-			startA = 0
-			startB = -shift
-			extra5 = startB
-			qualSeqB = seqB.Qualities()[startB:]
-			partLen = len(qualSeqB)
-			extra3 = partLen - seqA.Len()
-			qualSeqA = seqA.Qualities()[:partLen]
-		}
-		score = 0
-		for i, qualA := range qualSeqA {
-			qualB := qualSeqB[i]
-			score += _NucScorePartMatchMatch[qualA][qualB]
-		}
-		arena.pointer.path = arena.pointer.path[:0]
-		arena.pointer.path = append(arena.pointer.path, 0, partLen)
 	}
 
-	arena.pointer.path[0] += extra5
-	if arena.pointer.path[len(arena.pointer.path)-1] == 0 {
-		arena.pointer.path[len(arena.pointer.path)-2] += extra3
-	} else {
-		arena.pointer.path = append(arena.pointer.path, extra3, 0)
-	}
-
-	return score, arena.pointer.path, fastScore, over
+	return score, arena.pointer.path, fastCount, over, fastScore
 }

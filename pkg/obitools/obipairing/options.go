@@ -13,6 +13,8 @@ var _MinOverlap = 20
 var _GapPenality = float64(2.0)
 var _WithoutStats = false
 var _MinIdentity = 0.9
+var _NoFastAlign = false
+var _FastScoreAbs = false
 
 func PairingOptionSet(options *getoptions.GetOpt) {
 	options.StringVar(&_ForwardFile, "forward-reads", "",
@@ -39,6 +41,10 @@ func PairingOptionSet(options *getoptions.GetOpt) {
 	options.BoolVar(&_WithoutStats, "without-stat", _WithoutStats,
 		options.Alias("S"),
 		options.Description("Remove alignment statistics from the produced consensus sequences."))
+	options.BoolVar(&_NoFastAlign, "exact-mode", _NoFastAlign,
+		options.Description("Do not run fast alignment heuristic."))
+	options.BoolVar(&_FastScoreAbs, "fast-absolute", _FastScoreAbs,
+		options.Description("Compute absolute fast score (no action in exact mode)."))
 }
 
 func OptionSet(options *getoptions.GetOpt) {
@@ -81,4 +87,12 @@ func CLIGapPenality() float64 {
 
 func CLIWithStats() bool {
 	return !_WithoutStats
+}
+
+func CLIFastMode() bool {
+	return !_NoFastAlign
+}
+
+func CLIFastRelativeScore() bool {
+	return !_FastScoreAbs
 }

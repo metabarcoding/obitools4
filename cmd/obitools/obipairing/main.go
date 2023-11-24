@@ -1,8 +1,8 @@
 package main
 
 import (
-	"os"
 	log "github.com/sirupsen/logrus"
+	"os"
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obioptions"
@@ -34,7 +34,7 @@ func main() {
 	pairs, err := obipairing.CLIPairedSequence()
 
 	if err != nil {
-		log.Errorf("Cannot open file (%v)",err)
+		log.Errorf("Cannot open file (%v)", err)
 		os.Exit(1)
 	}
 
@@ -43,10 +43,12 @@ func main() {
 		obipairing.CLIDelta(),
 		obipairing.CLIMinOverlap(),
 		obipairing.CLIMinIdentity(),
+		obipairing.CLIFastMode(),
+		obipairing.CLIFastRelativeScore(),
 		obipairing.CLIWithStats(),
 		obioptions.CLIParallelWorkers(),
 	)
-	
+
 	obiconvert.CLIWriteBioSequences(paired, true)
 
 	obiiter.WaitForLastPipe()

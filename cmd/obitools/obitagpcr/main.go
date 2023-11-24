@@ -47,6 +47,8 @@ func main() {
 		obipairing.CLIDelta(),
 		obipairing.CLIMinOverlap(),
 		obipairing.CLIMinIdentity(),
+		obipairing.CLIFastMode(),
+		obipairing.CLIFastRelativeScore(),
 		obipairing.CLIWithStats())
 
 	obiconvert.CLIWriteBioSequences(paired, true)
