@@ -6,6 +6,8 @@
 
 - In `obicsv` the **--keep count** was not equivalent to **--count**.
 - In `obipairing` and `obipcrtag` correct a bug in the alignment procedure leading to negative scores.
+- In `obimultiplex` correct a bug leading to a miss-read of the ngsfilter file when tags where written in
+  lower case.  
 
 ### New feature
 

@@ -8,6 +8,7 @@ import (
 
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obingslibrary"
 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
+	log "github.com/sirupsen/logrus"
 )
 
 func _readLines(reader io.Reader) []string {
@@ -38,10 +39,12 @@ func _parseMainNGSFilterTags(text string) obingslibrary.TagPair {
 
 	tags := strings.Split(text, ":")
 
+	log.Infof("text: %s, Tags: %v", text, tags)
+
 	if len(tags) == 1 {
 		return obingslibrary.TagPair{
-			Forward: tags[0],
-			Reverse: tags[0],
+			Forward: strings.ToLower(tags[0]),
+			Reverse: strings.ToLower(tags[0]),
 		}
 	}
 
