@@ -3,11 +3,11 @@ package obimultiplex
 import (
 	log "github.com/sirupsen/logrus"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obingslibrary"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obioptions"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obiconvert"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obingslibrary"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
 )
 
 func IExtractBarcode(iterator obiiter.IBioSequence) (obiiter.IBioSequence, error) {

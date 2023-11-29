@@ -1,8 +1,8 @@
 package obitagpcr
 
 import (
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obimultiplex"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obipairing"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obimultiplex"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obipairing"
 	"github.com/DavidGamba/go-getoptions"
 )
 

@@ -3,11 +3,11 @@ package obicleandb
 import (
 	log "github.com/sirupsen/logrus"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obichunk"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obioptions"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obigrep"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obichunk"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obigrep"
 )
 
 func ICleanDB(itertator obiiter.IBioSequence) obiiter.IBioSequence {

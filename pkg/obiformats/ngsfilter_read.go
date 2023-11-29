@@ -6,8 +6,8 @@ import (
 	"io"
 	"strings"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obingslibrary"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obingslibrary"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 )
 
 func _readLines(reader io.Reader) []string {

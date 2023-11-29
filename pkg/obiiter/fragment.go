@@ -3,8 +3,8 @@ package obiiter
 import (
 	log "github.com/sirupsen/logrus"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiutils"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 )
 
 func IFragments(minsize, length, overlap, size, nworkers int) Pipeable {
@@ -25,19 +25,19 @@ func IFragments(minsize, length, overlap, size, nworkers int) Pipeable {
 				news := obiseq.MakeBioSequenceSlice()
 				sl := iterator.Get()
 				for _, s := range sl.Slice() {
-				
+
 					if s.Len() <= minsize {
 						news = append(news, s)
 					} else {
 						for i := 0; i < s.Len(); i += step {
 							end := obiutils.MinInt(i+length, s.Len())
-							fusion:=false
+							fusion := false
 							if (s.Len() - end) < step {
 								end = s.Len()
 								fusion = true
 							}
 							frg, err := s.Subsequence(i, end, false)
-				
+
 							if err != nil {
 								log.Panicln(err)
 							}

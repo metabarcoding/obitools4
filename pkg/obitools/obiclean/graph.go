@@ -12,7 +12,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obialign"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obialign"
 	"github.com/schollz/progressbar/v3"
 )
 

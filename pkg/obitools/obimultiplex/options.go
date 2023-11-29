@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiformats"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obingslibrary"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obiconvert"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiformats"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obingslibrary"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
 	"github.com/DavidGamba/go-getoptions"
 )
 
@@ -21,7 +21,7 @@ var _ConservedError = false
 // The function adds to a CLI every options proposed to the user
 // to tune the parametters of the PCR simulation algorithm.
 //
-// Parameters
+// # Parameters
 //
 // - option : is a pointer to a getoptions.GetOpt instance normaly
 // produced by the
@@ -34,7 +34,7 @@ func MultiplexOptionSet(options *getoptions.GetOpt) {
 	options.BoolVar(&_ConservedError, "keep-errors", _ConservedError,
 		options.Description("Prints symbol counts."))
 
-		options.BoolVar(&_AllowsIndel, "with-indels", _AllowsIndel,
+	options.BoolVar(&_AllowsIndel, "with-indels", _AllowsIndel,
 		options.Description("Allows for indels during the primers matching."))
 
 	options.StringVar(&_UnidentifiedFile, "unidentified", _UnidentifiedFile,

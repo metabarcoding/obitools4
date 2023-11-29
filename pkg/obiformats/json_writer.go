@@ -11,9 +11,9 @@ import (
 	"sync"
 	"time"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiutils"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 	log "github.com/sirupsen/logrus"
 )
 

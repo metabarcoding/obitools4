@@ -1,8 +1,8 @@
 package obialign
 
 // import (
-// 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiutils"
-// 	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
+// 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
+// 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 // )
 
 const wsize = 16

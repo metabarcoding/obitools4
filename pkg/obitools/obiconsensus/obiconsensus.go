@@ -8,11 +8,11 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obikmer"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obisuffix"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiutils"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obikmer"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obisuffix"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 )
 
 func BuildConsensus(seqs obiseq.BioSequenceSlice,
@@ -83,20 +83,20 @@ func BuildConsensus(seqs obiseq.BioSequenceSlice,
 	}
 
 	graph.FilterMin(threshold)
-	
+
 	log.Printf("Graph size : %d\n", graph.Len())
 
 	if save_graph {
-	
+
 		file, err := os.Create(path.Join(dirname,
 			fmt.Sprintf("%s.gml", seqs[0].Source())))
-	
+
 		if err != nil {
 			fmt.Println(err)
 		} else {
 			file.WriteString(graph.Gml())
 			file.Close()
-		}	
+		}
 	}
 
 	seq, err := graph.LongestConsensus(seqs[0].Source())
@@ -122,11 +122,11 @@ func Consensus(iterator obiiter.IBioSequence) obiiter.IBioSequence {
 			// path does not exist or is not directory
 			os.RemoveAll(dirname)
 			err := os.Mkdir(dirname, 0755)
-	
+
 			if err != nil {
 				log.Panicf("Cannot create directory %s for saving graphs", dirname)
 			}
-		}	
+		}
 	}
 
 	newIter.Add(1)

@@ -8,9 +8,9 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiformats"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiformats"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 )
 
 func tempDir() (string, error) {
@@ -41,7 +41,6 @@ func ISequenceChunkOnDisk(iterator obiiter.IBioSequence,
 	if err != nil {
 		return obiiter.NilIBioSequence, err
 	}
-
 
 	newIter := obiiter.MakeIBioSequence()
 

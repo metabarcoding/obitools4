@@ -2,12 +2,13 @@ package main
 
 import (
 	"os"
+
 	log "github.com/sirupsen/logrus"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obioptions"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obiconvert"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obimultiplex"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obimultiplex"
 )
 
 func main() {
@@ -33,7 +34,7 @@ func main() {
 	sequences, err := obiconvert.CLIReadBioSequences(args...)
 
 	if err != nil {
-		log.Errorf("Cannot open file (%v)",err)
+		log.Errorf("Cannot open file (%v)", err)
 		os.Exit(1)
 	}
 	amplicons, _ := obimultiplex.IExtractBarcode(sequences)

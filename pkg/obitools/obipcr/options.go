@@ -5,8 +5,8 @@ package obipcr
 import (
 	log "github.com/sirupsen/logrus"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiapat"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obiconvert"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiapat"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
 	"github.com/DavidGamba/go-getoptions"
 )
 

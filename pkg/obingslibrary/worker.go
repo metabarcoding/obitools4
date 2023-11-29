@@ -1,7 +1,7 @@
 package obingslibrary
 
 import (
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 )
 
 type _Options struct {
@@ -159,7 +159,7 @@ func ExtractBarcodeSlice(ngslibrary NGSLibrary,
 
 	opt := MakeOptions(options)
 
-	ngslibrary.Compile(opt.AllowedMismatch(),opt.AllowsIndel())
+	ngslibrary.Compile(opt.AllowedMismatch(), opt.AllowsIndel())
 
 	return _ExtractBarcodeSlice(ngslibrary, sequences, opt)
 }
@@ -169,7 +169,7 @@ func ExtractBarcodeSliceWorker(ngslibrary NGSLibrary,
 
 	opt := MakeOptions(options)
 
-	ngslibrary.Compile(opt.AllowedMismatch(),opt.AllowsIndel())
+	ngslibrary.Compile(opt.AllowedMismatch(), opt.AllowsIndel())
 
 	worker := func(sequences obiseq.BioSequenceSlice) obiseq.BioSequenceSlice {
 		return _ExtractBarcodeSlice(ngslibrary, sequences, opt)

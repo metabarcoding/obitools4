@@ -12,7 +12,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitax"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
 )
 
 func loadNodeTable(reader io.Reader, taxonomy *obitax.Taxonomy) {

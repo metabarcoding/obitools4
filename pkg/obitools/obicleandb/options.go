@@ -1,11 +1,10 @@
 package obicleandb
 
 import (
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obiconvert"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obigrep"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obigrep"
 	"github.com/DavidGamba/go-getoptions"
 )
-
 
 var _UpdateTaxids = false
 

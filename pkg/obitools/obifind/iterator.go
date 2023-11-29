@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"fmt"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitax"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
 )
 
 func IFilterRankRestriction() func(*obitax.ITaxonSet) *obitax.ITaxonSet {

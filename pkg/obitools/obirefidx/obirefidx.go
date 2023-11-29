@@ -6,14 +6,14 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obialign"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obikmer"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obioptions"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitax"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obifind"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiutils"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obialign"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obikmer"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obifind"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 	"github.com/schollz/progressbar/v3"
 )
 

@@ -1,8 +1,8 @@
 package obirefidx
 
 import (
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obiconvert"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obifind"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obifind"
 	"github.com/DavidGamba/go-getoptions"
 )
 

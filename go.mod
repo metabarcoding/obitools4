@@ -1,4 +1,4 @@
-module git.metabarcoding.org/lecasofts/go/obitools
+module git.metabarcoding.org/obitools/obitools4/obitools4
 
 go 1.21
 

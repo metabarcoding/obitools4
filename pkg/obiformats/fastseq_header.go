@@ -3,8 +3,8 @@ package obiformats
 import (
 	"strings"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 )
 
 // ParseGuessedFastSeqHeader parses the guessed fast sequence header.

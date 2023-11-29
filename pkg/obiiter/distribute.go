@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sync"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 )
 
 type IDistribute struct {
@@ -45,8 +45,6 @@ func (iterator IBioSequence) Distribute(class *obiseq.BioSequenceClassifier, siz
 	if len(sizes) > 0 {
 		batchsize = sizes[0]
 	}
-
-
 
 	jobDone := sync.WaitGroup{}
 	lock := sync.Mutex{}

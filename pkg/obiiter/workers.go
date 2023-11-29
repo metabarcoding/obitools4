@@ -3,8 +3,8 @@ package obiiter
 import (
 	log "github.com/sirupsen/logrus"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obioptions"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 )
 
 // That method allows for applying a SeqWorker function on every sequences.
@@ -56,6 +56,16 @@ func (iterator IBioSequence) MakeIWorker(worker obiseq.SeqWorker, sizes ...int) 
 	return newIter
 }
 
+// MakeIConditionalWorker applies a given worker function to each sequence in the iterator that satisfies the given predicate.
+// It creates a new iterator with the modified sequences and returns it.
+//
+// Parameters:
+// - predicate: A function that takes a sequence and returns a boolean value indicating whether the sequence satisfies a certain condition.
+// - worker: A function that takes a sequence and returns a modified version of the sequence.
+// - sizes: Optional. One or more integers representing the number of workers to be used for parallel processing. If not provided, the number of workers will be determined by the obioptions.CLIReadParallelWorkers() function.
+//
+// Return:
+// - newIter: A new IBioSequence iterator with the modified sequences.
 func (iterator IBioSequence) MakeIConditionalWorker(predicate obiseq.SequencePredicate,
 	worker obiseq.SeqWorker, sizes ...int) IBioSequence {
 	nworkers := obioptions.CLIReadParallelWorkers()
@@ -100,6 +110,16 @@ func (iterator IBioSequence) MakeIConditionalWorker(predicate obiseq.SequencePre
 	return newIter
 }
 
+// MakeISliceWorker applies a SeqSliceWorker function to each slice in the IBioSequence iterator,
+// creating a new IBioSequence with the modified slices.
+//
+// The worker function takes a slice as input and returns a modified slice. It is applied to each
+// slice in the iterator.
+//
+// The sizes argument is optional and specifies the number of workers to use. If sizes is not
+// provided, the default number of workers is used.
+//
+// The function returns a new IBioSequence containing the modified slices.
 func (iterator IBioSequence) MakeISliceWorker(worker obiseq.SeqSliceWorker, sizes ...int) IBioSequence {
 	nworkers := obioptions.CLIParallelWorkers()
 
@@ -119,12 +139,12 @@ func (iterator IBioSequence) MakeISliceWorker(worker obiseq.SeqSliceWorker, size
 	f := func(iterator IBioSequence) {
 		for iterator.Next() {
 			batch := iterator.Get()
-			bs := len(batch.slice)
 			batch.slice = worker(batch.slice)
-			if bs != len(batch.slice) {
-				log.Warnf("Input size : %d output %d", bs, len(batch.slice))
+			if batch.slice.Len() > 0 {
+				newIter.Push(batch)
+			} else {
+				batch.Recycle(false)
 			}
-			newIter.Push(batch)
 		}
 		newIter.Done()
 	}
@@ -142,6 +162,17 @@ func (iterator IBioSequence) MakeISliceWorker(worker obiseq.SeqSliceWorker, size
 	return newIter
 }
 
+// WorkerPipe is a function that takes a SeqWorker and a variadic list of sizes as parameters and returns a Pipeable.
+//
+// The WorkerPipe function creates a closure that takes an IBioSequence iterator as a parameter and returns an IBioSequence.
+// Inside the closure, the MakeIWorker method of the iterator is called with the provided worker and sizes, and the result is returned.
+//
+// Parameters:
+// - worker: A SeqWorker object that represents the worker to be used in the closure.
+// - sizes: A variadic list of int values that represents the sizes to be used in the MakeIWorker method.
+//
+// Return:
+// - f: A Pipeable object that represents the closure created by the WorkerPipe function.
 func WorkerPipe(worker obiseq.SeqWorker, sizes ...int) Pipeable {
 	f := func(iterator IBioSequence) IBioSequence {
 		return iterator.MakeIWorker(worker, sizes...)
@@ -150,6 +181,11 @@ func WorkerPipe(worker obiseq.SeqWorker, sizes ...int) Pipeable {
 	return f
 }
 
+// SliceWorkerPipe creates a Pipeable function that applies a SeqSliceWorker to an iterator.
+//
+// The worker parameter is the SeqSliceWorker to be applied.
+// The sizes parameter is a variadic parameter representing the sizes of the slices.
+// The function returns a Pipeable function that applies the SeqSliceWorker to the iterator.
 func SliceWorkerPipe(worker obiseq.SeqSliceWorker, sizes ...int) Pipeable {
 	f := func(iterator IBioSequence) IBioSequence {
 		return iterator.MakeISliceWorker(worker, sizes...)

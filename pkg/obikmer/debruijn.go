@@ -6,7 +6,7 @@ import (
 	"math"
 	"math/bits"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	"github.com/daichi-m/go18ds/sets/linkedhashset"
 	"github.com/daichi-m/go18ds/stacks/arraystack"
 )

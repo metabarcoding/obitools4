@@ -1,10 +1,10 @@
 package obipcr
 
 import (
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiapat"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obioptions"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiutils"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiapat"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 	log "github.com/sirupsen/logrus"
 )
 

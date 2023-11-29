@@ -7,8 +7,8 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obiconvert"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obigrep"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obigrep"
 	"github.com/DavidGamba/go-getoptions"
 )
 
@@ -24,6 +24,9 @@ var _setSeqLength = false
 var _uniqueID = false
 var _ahoCorazick = ""
 var _pattern = ""
+var _pattern_error = 0
+var _pattern_indel = false
+var _pattern_name = "pattern"
 var _lcaSlot = ""
 var _lcaError = 0.0
 var _setId = ""
@@ -51,6 +54,18 @@ func SequenceAnnotationOptionSet(options *getoptions.GetOpt) {
 			"and a pattern_error slot indicating the number difference between the pattern and the match "+
 			"to the sequence.",
 		))
+
+	options.StringVar(&_pattern_name, "pattern-name", _pattern_name,
+		options.Description("specify the name to use as prefix for the slots reporting the match"),
+	)
+
+	options.IntVar(&_pattern_error, "pattern-error", _pattern_error,
+		options.Description("Maximum number of allowed error during pattern matching"),
+	)
+
+	options.BoolVar(&_pattern_indel, "allows-indels", _pattern_indel,
+		options.Description("Allows for indel during pattern matching"),
+	)
 
 	options.StringVar(&_lcaSlot, "add-lca-in", _lcaSlot,
 		options.ArgName("SLOT_NAME"),
@@ -263,4 +278,24 @@ func CLIHasCut() bool {
 	f, t := CLICut()
 
 	return f != 0 && t != 0
+}
+
+func CLIPattern() string {
+	return _pattern
+}
+
+func CLIHasPattern() bool {
+	return _pattern != ""
+}
+
+func CLIHasPatternName() string {
+	return _pattern_name
+}
+
+func CLIPatternError() int {
+	return _pattern_error
+}
+
+func CLIPatternInDels() bool {
+	return _pattern_indel
 }

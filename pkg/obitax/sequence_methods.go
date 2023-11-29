@@ -1,7 +1,7 @@
 package obitax
 
 import (
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 )
 
 // Setting the taxon at a given rank for a given sequence.

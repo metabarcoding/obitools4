@@ -1,7 +1,7 @@
 package obikmer
 
 import (
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 )
 
 var __single_base_code__ = []byte{0,

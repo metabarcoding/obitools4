@@ -2,15 +2,16 @@ package obimatrix
 
 import (
 	"encoding/csv"
-	log "github.com/sirupsen/logrus"
 	"os"
 	"sort"
 	"sync"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obioptions"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiutils"
+	log "github.com/sirupsen/logrus"
+
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 	"golang.org/x/exp/maps"
 )
 

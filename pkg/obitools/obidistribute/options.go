@@ -6,8 +6,8 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obiconvert"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
 	"github.com/DavidGamba/go-getoptions"
 )
 
@@ -37,7 +37,7 @@ func DistributeOptionSet(options *getoptions.GetOpt) {
 		options.Alias("d"),
 		options.Description("The name of a tag annotating the sequences. "+
 			"The name must corresponds to a string, a integer or a boolean value. "+
-			"That value will be used to dispatch sequences amoong the different directory " +
+			"That value will be used to dispatch sequences amoong the different directory "+
 			"in conjunction with the -c|--classifier options"))
 
 	options.StringVar(&_NAValue, "na-value", _NAValue,
@@ -66,11 +66,10 @@ func CLIAppendSequences() bool {
 	return _append
 }
 
-
 func CLISequenceClassifier() *obiseq.BioSequenceClassifier {
 	switch {
 	case _SequenceClassifierTag != "":
-		return obiseq.DualAnnotationClassifier(_SequenceClassifierTag,_DirectoryTag, _NAValue)
+		return obiseq.DualAnnotationClassifier(_SequenceClassifierTag, _DirectoryTag, _NAValue)
 	case _BatchCount > 0:
 		return obiseq.RotateClassifier(_BatchCount)
 	case _HashSize > 0:

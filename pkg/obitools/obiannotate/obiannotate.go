@@ -1,14 +1,17 @@
 package obiannotate
 
 import (
+	"fmt"
+
 	log "github.com/sirupsen/logrus"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obicorazick"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obioptions"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitax"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obigrep"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiapat"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obicorazick"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obigrep"
 )
 
 func DeleteAttributesWorker(toBeDeleted []string) obiseq.SeqWorker {
@@ -22,14 +25,69 @@ func DeleteAttributesWorker(toBeDeleted []string) obiseq.SeqWorker {
 	return f
 }
 
-// func MatchPatternWorker(pattern string, errormax int, allowsIndel bool) obiseq.SeqWorker {
-// 	pat, err := obiapat.MakeApatPattern(pattern, errormax, allowsIndel)
-// 	f := func(s *obiseq.BioSequence) *obiseq.BioSequence {
-// 		apats := obiapat.MakeApatSequence(s, false)
-// 		pat.BestMatch(apats, 0)
-// 		return s
-// 	}
-// }
+func MatchPatternWorker(pattern, name string, errormax int, allowsIndel bool) obiseq.SeqWorker {
+	pat, err := obiapat.MakeApatPattern(pattern, errormax, allowsIndel)
+	if err != nil {
+		log.Fatalf("error in compiling pattern (%s) : %v", pattern, err)
+	}
+
+	cpat, err := pat.ReverseComplement()
+
+	if err != nil {
+		log.Fatalf("error in reverse-complementing pattern (%s) : %v", pattern, err)
+	}
+
+	slot := "pattern"
+	if name != "pattern" && name != "" {
+		slot = fmt.Sprintf("%s_pattern", name)
+	} else {
+		name = "pattern"
+	}
+
+	slot_match := fmt.Sprintf("%s_match", name)
+	slot_error := fmt.Sprintf("%s_error", name)
+	slot_location := fmt.Sprintf("%s_location", name)
+
+	f := func(s *obiseq.BioSequence) *obiseq.BioSequence {
+		apats, err := obiapat.MakeApatSequence(s, false)
+		if err != nil {
+			log.Fatalf("error in preparing sequence %s : %v", s.Id(), err)
+		}
+
+		start, end, nerr, matched := pat.BestMatch(apats, 0, s.Len())
+
+		if matched {
+			annot := s.Annotations()
+			annot[slot] = pattern
+			match, err := s.Subsequence(start, end, false)
+			if err != nil {
+				log.Fatalf("Error in extracting pattern of sequence %s [%d;%d[ : %v",
+					s.Id(), start, end, err)
+			}
+			annot[slot_match] = match.String()
+			annot[slot_error] = nerr
+			annot[slot_location] = fmt.Sprintf("%d..%d", start+1, end)
+		} else {
+			start, end, nerr, matched := cpat.BestMatch(apats, 0, s.Len())
+
+			if matched {
+				annot := s.Annotations()
+				annot[slot] = pattern
+				match, err := s.Subsequence(start, end, false)
+				if err != nil {
+					log.Fatalf("Error in extracting pattern of sequence %s [%d;%d[ : %v",
+						s.Id(), start, end, err)
+				}
+				annot[slot_match] = match.ReverseComplement(true).String()
+				annot[slot_error] = nerr
+				annot[slot_location] = fmt.Sprintf("complement(%d..%d)", start+1, end)
+			}
+		}
+		return s
+	}
+
+	return f
+}
 
 func ToBeKeptAttributesWorker(toBeKept []string) obiseq.SeqWorker {
 
@@ -225,6 +283,14 @@ func CLIAnnotationWorker() obiseq.SeqWorker {
 	if CLIHasCut() {
 		from, to := CLICut()
 		w := CutSequenceWorker(from, to, false)
+
+		annotator = annotator.ChainWorkers(w)
+	}
+
+	if CLIHasPattern() {
+		log.Infof("Match pattern %s with %d error", CLIPattern(), CLIPatternError())
+		w := MatchPatternWorker(CLIPattern(), CLIHasPatternName(),
+			CLIPatternError(), CLIPatternInDels())
 
 		annotator = annotator.ChainWorkers(w)
 	}

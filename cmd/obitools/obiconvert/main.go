@@ -2,12 +2,13 @@ package main
 
 import (
 	"os"
+
 	log "github.com/sirupsen/logrus"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obiconvert"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obioptions"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 )
 
 func main() {
@@ -18,7 +19,7 @@ func main() {
 	fs, err := obiconvert.CLIReadBioSequences(args...)
 
 	if err != nil {
-		log.Errorf("Cannot open file (%v)",err)
+		log.Errorf("Cannot open file (%v)", err)
 		os.Exit(1)
 	}
 

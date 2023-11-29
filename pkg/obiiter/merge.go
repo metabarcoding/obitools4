@@ -1,6 +1,6 @@
 package obiiter
 
-import "git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
+import "git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 
 func (iterator IBioSequence) IMergeSequenceBatch(na string, statsOn []string, sizes ...int) IBioSequence {
 	batchsize := 100

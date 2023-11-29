@@ -1,7 +1,7 @@
 package obiclean
 
 import (
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitools/obiconvert"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
 	"github.com/DavidGamba/go-getoptions"
 )
 

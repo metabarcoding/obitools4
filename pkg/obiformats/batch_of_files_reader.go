@@ -3,8 +3,8 @@ package obiformats
 import (
 	"log"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiutils"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 )
 
 func ReadSequencesBatchFromFiles(filenames []string,
@@ -47,8 +47,6 @@ func ReadSequencesBatchFromFiles(filenames []string,
 				}
 
 				log.Printf("Start reading of file : %s", filename)
-
-				
 
 				for iter.Next() {
 					batch := iter.Get()

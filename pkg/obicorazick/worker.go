@@ -3,14 +3,14 @@ package obicorazick
 import (
 	log "github.com/sirupsen/logrus"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	"github.com/rrethy/ahocorasick"
 )
 
 func AhoCorazickWorker(slot string, patterns []string) obiseq.SeqWorker {
 
 	matcher := ahocorasick.CompileStrings(patterns)
-	
+
 	fslot := slot + "_Fwd"
 	rslot := slot + "_Rev"
 
@@ -18,7 +18,7 @@ func AhoCorazickWorker(slot string, patterns []string) obiseq.SeqWorker {
 		matchesF := len(matcher.FindAllByteSlice(s.Sequence()))
 		matchesR := len(matcher.FindAllByteSlice(s.ReverseComplement(false).Sequence()))
 
-		log.Debugln("Macthes = ",matchesF,matchesR)
+		log.Debugln("Macthes = ", matchesF, matchesR)
 		matches := matchesF + matchesR
 		if matches > 0 {
 			s.SetAttribute(slot, matches)

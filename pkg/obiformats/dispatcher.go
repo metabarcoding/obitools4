@@ -10,7 +10,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiiter"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
 )
 
 type SequenceBatchWriterToFile func(iterator obiiter.IBioSequence,

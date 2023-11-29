@@ -3,8 +3,8 @@ package obifind
 import (
 	"errors"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiformats/ncbitaxdump"
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obitax"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiformats/ncbitaxdump"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
 	"github.com/DavidGamba/go-getoptions"
 )
 

@@ -1,7 +1,7 @@
 package obialign
 
 import (
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 )
 
 var _FourBitsBaseCode = []byte{0b0000,

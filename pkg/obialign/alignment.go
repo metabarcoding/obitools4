@@ -9,7 +9,7 @@ import (
 	"math"
 	"strings"
 
-	"git.metabarcoding.org/lecasofts/go/obitools/pkg/obiseq"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 )
 
 // // A pool of byte slices.
