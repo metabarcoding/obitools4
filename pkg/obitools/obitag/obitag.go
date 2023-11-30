@@ -146,7 +146,7 @@ func FindClosests(sequence *obiseq.BioSequence,
 
 	}
 
-	log.Debugln("Closest Match", sequence.Id(), maxe, bestId, bestidxs, len(bests))
+	// log.Debugln("Closest Match", sequence.Id(), maxe, bestId, bestidxs, len(bests))
 	return bests, maxe, bestId, bestmatch, bestidxs
 }
 
@@ -171,7 +171,7 @@ func Identify(sequence *obiseq.BioSequence,
 	bests, differences, identity, bestmatch, seqidxs := FindClosests(sequence, references, refcounts, runExact)
 	taxon := (*obitax.TaxNode)(nil)
 
-	if identity >= 0.5 && differences > 0 {
+	if identity >= 0.5 && differences >= 0 {
 		newidx := 0
 		for i, best := range bests {
 			idx := best.OBITagRefIndex()
