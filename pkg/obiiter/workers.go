@@ -140,11 +140,7 @@ func (iterator IBioSequence) MakeISliceWorker(worker obiseq.SeqSliceWorker, size
 		for iterator.Next() {
 			batch := iterator.Get()
 			batch.slice = worker(batch.slice)
-			if batch.slice.Len() > 0 {
-				newIter.Push(batch)
-			} else {
-				batch.Recycle(false)
-			}
+			newIter.Push(batch)
 		}
 		newIter.Done()
 	}

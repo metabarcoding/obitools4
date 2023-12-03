@@ -427,14 +427,20 @@ func (iterator IBioSequence) Rebatch(size int) IBioSequence {
 
 		for iterator.Next() {
 			seqs := iterator.Get()
-			// log.Println("Got seq #", len(seqs.Slice()))
-			for _, s := range seqs.slice {
-				buffer = append(buffer, s)
+			lc := seqs.Len()
+			remains := lc
+			i := 0
+			for remains > 0 {
+				space := size - len(buffer)
+				to_push := min(lc-i, space)
+				remains = lc - to_push - i
+				buffer = append(buffer, seqs.Slice()[i:(i+to_push)]...)
 				if len(buffer) == size {
 					newIter.Push(MakeBioSequenceBatch(order, buffer))
 					order++
 					buffer = obiseq.MakeBioSequenceSlice()
 				}
+				i += to_push
 			}
 			seqs.Recycle(false)
 		}
