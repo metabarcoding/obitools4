@@ -2,20 +2,34 @@
 
 ## Latest changes
 
-### Bug fixes
-
--   In `obicsv` the **--keep count** was not equivalent to **--count**.
--   In `obipairing` and `obipcrtag` correct a bug in the alignment procedure leading to negative scores.
--   In `obimultiplex` correct a bug leading to a miss-read of the ngsfilter file when tags where written in lower case.
-
 ### New feature
 
 -   In `obimatrix` a **--transpose** option allows to transpose the produced matrix table in CSV format.
--   In `obitpairing` and `obipcrtag` two new options **--exact-mode** and **--fast-absolute** to control the heuristic used in the alignment procedure. **--exact-mode** allows for disconnecting the heuristic and run the exact algorithm at the cost of a speed. **--fast-absolute** change the scoring schema of the heuristic.
+-   In `obitpairing` and `obipcrtag` two new options **--exact-mode** and **--fast-absolute** to control 
+    the heuristic used in the alignment procedure. **--exact-mode** allows for disconnecting the heuristic 
+    and run the exact algorithm at the cost of a speed. **--fast-absolute** change the scoring schema of 
+    the heuristic.
+-   In `obiannotate` adds the possibility to annotate the first match of a pattern using the same algorithm
+    than the one used in `obipcr` and `obimultiplex`. For that four option were added :
+      - **--pattern** : to specify the pattern. It can use IUPAC codes and position with no error tolerated
+        has to be followed by a `#` character. 
+      - **--pattern-name** : To specify the names of the slot used to report the results. Default is *pattern*
+      - **--pattern-error** : To specify the maximum number of error tolerated during matching process.
+      - **--allows-indels** : By default considered errors are mismatched, this flag allows for indels.
+    Only the first match is reported if several occurrences exist. If no match is found on direct strand then
+    pattern is looked for on the reverse complemented strand of the sequence.
 
 ### Enhancement
 
 -   For efficiency purposes, now the `obiuniq` command run on disk by default. Consequently, the **--on-disk** option has been replaced by **--in-memory** to ask explicitly to use memory.
+
+### Bug fixes
+
+-   In `obicsv`, the **--keep count** was not equivalent to **--count**.
+-   In `obipairing` and `obipcrtag`, correct a bug in the alignment procedure leading to negative scores.
+-   In `obimultiplex`, correct a bug leading to a miss-read of the ngsfilter file when tags where written in lower case.
+-   In `obitag`, correct a bug leading to the annotation by taxid 1 (root) all the sequences having a 100% match
+    with one the reference sequence.
 
 ## November 16th, 2023. Release 4.1.0
 

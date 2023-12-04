@@ -1,6 +1,6 @@
-# Installation of the obitools
+# Installation of the *OBITools*
 
-## Availability of the OBITools
+## Availability of the *OBITools*
 
 The *OBITools* are open source and protected by the [CeCILL 2.1 license](http://www.cecill.info/licences/Licence_CeCILL_V2.1-en.html).
 
@@ -8,11 +8,44 @@ All the sources of the [*OBITools4*](http://metabarcoding.org/obitools4) can be 
 
 ## Prerequisites
 
-The *OBITools4* are developped using the [GO programming language](https://go.dev/), we stick to the latest version of the language, today the $1.19.5$. If you want to download and compile the sources yourself, you first need to install the corresponding compiler on your system. Some parts of the soft are also written in C, therefore a recent C compiler is also requested, GCC on Linux or Windows, the Developer Tools on Mac.
+The *OBITools4* are developped using the [GO programming language](https://go.dev/), we stick to the latest version of the language, today the $1.21.4$. If you want to download and compile the sources yourself, you first need to install the corresponding compiler on your system. Some parts of the soft are also written in C, therefore a recent C compiler is also requested, GCC on Linux or Windows, the Developer Tools on Mac.
 
 Whatever the installation you decide for, you will have to ensure that a C compiler is available on your system.
 
 ## Installation with the install script
+
+An installation script that compiles the new *OBITools* on your Unix-like system is available online.
+The easiest way to run it is to copy and paste the following command into your terminal
+
+```{bash}
+#| eval: false
+curl -L https://metabarcoding.org/obitools4/install.sh | bash
+```
+
+By default, the script installs the *OBITools* commands and other associated files into the `/usr/local` directory.
+The names of the commands in the new *OBITools4* are mostly identical to those in *OBITools2*.
+Therefore, installing the new *OBITools* may hide or delete the old ones. If you want both versions to be 
+available on your system, the installation script offers two options:
+
+
+>  -i, --install-dir       Directory where *OBITools* are installed 
+>                          (as example use `/usr/local` not `/usr/local/bin`).
+> 
+>  -p, --obitools-prefix   Prefix added to the *OBITools* command names if you
+>                          want to have several versions of obitools at the
+>                          same time on your system (as example `-p g` will produce 
+>                          `gobigrep` command instead of `obigrep`).
+
+You can use these options by following the installation command:
+
+```{bash}
+#| eval: false
+curl -L https://metabarcoding.org/obitools4/install.sh | \
+      bash -s -- --install-dir test_install --obitools-prefix k
+```
+
+In this case, the binaries will be installed in the `test_install` directory and all command names will be prefixed with the letter `k`. Thus `obigrep` will be named `kobigrep`.
+
 
 ## Compilation from sources
 

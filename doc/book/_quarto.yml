@@ -41,12 +41,14 @@ execute:
 format:
   html:
     theme: zephyr
+    embed-resources: true
   pdf:
     documentclass: scrreprt
     keep-tex: true
   epub: 
     html-math-method: mathml
-
+    code-overflow: scroll
+    css: epub.css
 
 
 
