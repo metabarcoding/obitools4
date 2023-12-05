@@ -124,6 +124,9 @@ func CLISelectLandmarkSequences(iterator obiiter.IBioSequence) obiiter.IBioSeque
 		}
 
 		// classes, centers := obistats.Kmeans(&seqworld, n_landmark, &initialCenters)
+		classifier := obistats.MakeKmeansClustering(&seqworld, n_landmark, obistats.DefaultRG())
+		_, centers, inertia, converged := classifier.Run(1000, 0.001)
+		intertia := classifier.Inertia()
 		_, centers, inertia, converged := obistats.Kmeans(&seqworld, n_landmark, 0.001, &initialCenters)
 
 		dist_centers := 0.0
