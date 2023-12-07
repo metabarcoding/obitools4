@@ -62,7 +62,7 @@ func _parseMainNGSFilterTags(text string) obingslibrary.TagPair {
 func _parseMainNGSFilter(text string) (obingslibrary.PrimerPair, obingslibrary.TagPair, string, string, bool, bool) {
 	fields := strings.Fields(text)
 
-	if len(fields) < 6 {
+	if len(fields) != 6 {
 		return obingslibrary.PrimerPair{}, obingslibrary.TagPair{}, "", "", false, false
 	}
 
@@ -101,7 +101,7 @@ func ReadNGSFilter(reader io.Reader) (obingslibrary.NGSLibrary, error) {
 		primers, tags, experiment, sample, partial, ok := _parseMainNGSFilter(split[0])
 
 		if !ok {
-			return nil, fmt.Errorf("line %d : invalid format", i+1)
+			return nil, fmt.Errorf("line %d : invalid format : \n%s", i+1, line)
 		}
 
 		marker, _ := ngsfilter.GetMarker(primers.Forward, primers.Reverse)
