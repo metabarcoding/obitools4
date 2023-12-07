@@ -44,6 +44,7 @@ func main() {
 
 	paired := obitagpcr.IPCRTagPESequencesBatch(pairs,
 		obipairing.CLIGapPenality(),
+		obipairing.CLIPenalityScale(),
 		obipairing.CLIDelta(),
 		obipairing.CLIMinOverlap(),
 		obipairing.CLIMinIdentity(),

@@ -111,17 +111,17 @@ func _GetMatrixFrom(matrix *[]int, lenA, a, b int) (int, int, int) {
 	return m[i_left], m[i_diag], m[i_top]
 }
 
-func _PairingScorePeAlign(baseA, qualA, baseB, qualB byte) int {
+func _PairingScorePeAlign(baseA, qualA, baseB, qualB byte, scale float64) int {
 	partMatch := _NucPartMatch[baseA&31][baseB&31]
 	// log.Printf("id : %f A : %s %d B : %s %d\n", part_match, string(baseA), qualA, string(baseB), qualB)
 	switch int(partMatch * 100) {
 	case 100:
 		return _NucScorePartMatchMatch[qualA][qualB]
 	case 0:
-		return _NucScorePartMatchMismatch[qualA][qualB]
+		return int(float64(_NucScorePartMatchMismatch[qualA][qualB])*scale + 0.5)
 	default:
 		return int(partMatch*float64(_NucScorePartMatchMatch[qualA][qualB]) +
-			(1-partMatch)*float64(_NucScorePartMatchMismatch[qualA][qualB]) +
+			(1-partMatch)*float64(_NucScorePartMatchMismatch[qualA][qualB])*scale +
 			0.5)
 	}
 }
@@ -135,7 +135,7 @@ func _PairingScorePeAlign(baseA, qualA, baseB, qualB byte) int {
 //   - 0  :  for diagonal
 //   - -1 :  for top
 //   - +1 :  for left
-func _FillMatrixPeLeftAlign(seqA, qualA, seqB, qualB []byte, gap float64,
+func _FillMatrixPeLeftAlign(seqA, qualA, seqB, qualB []byte, gap, scale float64,
 	scoreMatrix, pathMatrix *[]int) int {
 
 	la := len(seqA)
@@ -143,7 +143,7 @@ func _FillMatrixPeLeftAlign(seqA, qualA, seqB, qualB []byte, gap float64,
 
 	// The actual gap score is the gap score times the mismatch between
 	// two bases with a score of 40
-	gapPenalty := int(gap * float64(_NucScorePartMatchMismatch[40][40]))
+	gapPenalty := int(scale*gap*float64(_NucScorePartMatchMismatch[40][40]) + 0.5)
 
 	needed := (la + 1) * (lb + 1)
 
@@ -177,7 +177,7 @@ func _FillMatrixPeLeftAlign(seqA, qualA, seqB, qualB []byte, gap float64,
 			left, diag, top := _GetMatrixFrom(scoreMatrix, la, i, j)
 			// log.Infof("LA: i : %d j : %d left : %d diag : %d top : %d\n", i, j, left, diag, top)
 
-			diag += _PairingScorePeAlign(seqA[i], qualA[i], seqB[j], qualB[j])
+			diag += _PairingScorePeAlign(seqA[i], qualA[i], seqB[j], qualB[j], scale)
 			left += gapPenalty
 			top += gapPenalty
 
@@ -195,7 +195,7 @@ func _FillMatrixPeLeftAlign(seqA, qualA, seqB, qualB []byte, gap float64,
 		// Special case for the last line Left gap are free
 
 		left, diag, top := _GetMatrixFrom(scoreMatrix, la, la1, j)
-		diag += _PairingScorePeAlign(seqA[la1], qualA[la1], seqB[j], qualB[j])
+		diag += _PairingScorePeAlign(seqA[la1], qualA[la1], seqB[j], qualB[j], scale)
 		top += gapPenalty
 
 		switch {
@@ -218,7 +218,7 @@ func _FillMatrixPeLeftAlign(seqA, qualA, seqB, qualB []byte, gap float64,
 // With A spanning over lines and B over columns
 //   - First line gap = 0
 //   - Last column gaps = 0
-func _FillMatrixPeRightAlign(seqA, qualA, seqB, qualB []byte, gap float64,
+func _FillMatrixPeRightAlign(seqA, qualA, seqB, qualB []byte, gap, scale float64,
 	scoreMatrix, pathMatrix *[]int) int {
 
 	la := len(seqA)
@@ -226,7 +226,7 @@ func _FillMatrixPeRightAlign(seqA, qualA, seqB, qualB []byte, gap float64,
 
 	// The actual gap score is the gap score times the mismatch between
 	// two bases with a score of 40
-	gapPenalty := int(gap * float64(_NucScorePartMatchMismatch[40][40]))
+	gapPenalty := int(scale*gap*float64(_NucScorePartMatchMismatch[40][40]) + 0.5)
 
 	needed := (la + 1) * (lb + 1)
 
@@ -259,7 +259,7 @@ func _FillMatrixPeRightAlign(seqA, qualA, seqB, qualB []byte, gap float64,
 		for i := 0; i < la; i++ {
 			left, diag, top := _GetMatrixFrom(scoreMatrix, la, i, j)
 
-			diag += _PairingScorePeAlign(seqA[i], qualA[i], seqB[j], qualB[j])
+			diag += _PairingScorePeAlign(seqA[i], qualA[i], seqB[j], qualB[j], scale)
 			left += gapPenalty
 			top += gapPenalty
 
@@ -283,7 +283,7 @@ func _FillMatrixPeRightAlign(seqA, qualA, seqB, qualB []byte, gap float64,
 	for i := 0; i < la; i++ {
 
 		left, diag, top := _GetMatrixFrom(scoreMatrix, la, i, lb1)
-		diag += _PairingScorePeAlign(seqA[i], qualA[i], seqB[lb1], qualB[lb1])
+		diag += _PairingScorePeAlign(seqA[i], qualA[i], seqB[lb1], qualB[lb1], scale)
 		left += gapPenalty
 
 		// log.Infof("LR: i : %d j : %d left : %d diag : %d top : %d [%d]\n", i, lb1, left, diag, top, _GetMatrix(scoreMatrix, la, i, lb1))
@@ -302,7 +302,7 @@ func _FillMatrixPeRightAlign(seqA, qualA, seqB, qualB []byte, gap float64,
 
 }
 
-func PELeftAlign(seqA, seqB *obiseq.BioSequence, gap float64,
+func PELeftAlign(seqA, seqB *obiseq.BioSequence, gap, scale float64,
 	arena PEAlignArena) (int, []int) {
 
 	if !_InitializedDnaScore {
@@ -315,7 +315,7 @@ func PELeftAlign(seqA, seqB *obiseq.BioSequence, gap float64,
 	}
 
 	score := _FillMatrixPeLeftAlign(seqA.Sequence(), seqA.Qualities(),
-		seqB.Sequence(), seqB.Qualities(), gap,
+		seqB.Sequence(), seqB.Qualities(), gap, scale,
 		&arena.pointer.scoreMatrix,
 		&arena.pointer.pathMatrix)
 
@@ -326,7 +326,7 @@ func PELeftAlign(seqA, seqB *obiseq.BioSequence, gap float64,
 	return score, arena.pointer.path
 }
 
-func PERightAlign(seqA, seqB *obiseq.BioSequence, gap float64,
+func PERightAlign(seqA, seqB *obiseq.BioSequence, gap, scale float64,
 	arena PEAlignArena) (int, []int) {
 
 	if !_InitializedDnaScore {
@@ -339,7 +339,7 @@ func PERightAlign(seqA, seqB *obiseq.BioSequence, gap float64,
 	}
 
 	score := _FillMatrixPeRightAlign(seqA.Sequence(), seqA.Qualities(),
-		seqB.Sequence(), seqB.Qualities(), gap,
+		seqB.Sequence(), seqB.Qualities(), gap, scale,
 		&arena.pointer.scoreMatrix,
 		&arena.pointer.pathMatrix)
 
@@ -351,7 +351,7 @@ func PERightAlign(seqA, seqB *obiseq.BioSequence, gap float64,
 }
 
 func PEAlign(seqA, seqB *obiseq.BioSequence,
-	gap float64, fastAlign bool, delta int, fastScoreRel bool,
+	gap, scale float64, fastAlign bool, delta int, fastScoreRel bool,
 	arena PEAlignArena) (int, []int, int, int, float64) {
 	var score, shift int
 	var startA, startB int
@@ -403,7 +403,7 @@ func PEAlign(seqA, seqB *obiseq.BioSequence,
 				qualSeqB = seqB.Qualities()[0:partLen]
 				extra3 = seqB.Len() - partLen
 				score = _FillMatrixPeLeftAlign(
-					rawSeqA, qualSeqA, rawSeqB, qualSeqB, gap,
+					rawSeqA, qualSeqA, rawSeqB, qualSeqB, gap, scale,
 					&arena.pointer.scoreMatrix,
 					&arena.pointer.pathMatrix)
 			} else {
@@ -425,7 +425,7 @@ func PEAlign(seqA, seqB *obiseq.BioSequence,
 				extra3 = partLen - seqA.Len()
 
 				score = _FillMatrixPeRightAlign(
-					rawSeqA, qualSeqA, rawSeqB, qualSeqB, gap,
+					rawSeqA, qualSeqA, rawSeqB, qualSeqB, gap, scale,
 					&arena.pointer.scoreMatrix,
 					&arena.pointer.pathMatrix)
 			}
@@ -482,7 +482,7 @@ func PEAlign(seqA, seqB *obiseq.BioSequence,
 		qualSeqB = seqB.Qualities()
 
 		scoreR := _FillMatrixPeRightAlign(
-			rawSeqA, qualSeqA, rawSeqB, qualSeqB, gap,
+			rawSeqA, qualSeqA, rawSeqB, qualSeqB, gap, scale,
 			&arena.pointer.scoreMatrix,
 			&arena.pointer.pathMatrix)
 
@@ -491,7 +491,7 @@ func PEAlign(seqA, seqB *obiseq.BioSequence,
 			&arena.pointer.path)
 
 		scoreL := _FillMatrixPeLeftAlign(
-			rawSeqA, qualSeqA, rawSeqB, qualSeqB, gap,
+			rawSeqA, qualSeqA, rawSeqB, qualSeqB, gap, scale,
 			&arena.pointer.scoreMatrix,
 			&arena.pointer.pathMatrix)
 

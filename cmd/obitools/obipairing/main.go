@@ -41,6 +41,7 @@ func main() {
 
 	paired := obipairing.IAssemblePESequencesBatch(pairs,
 		obipairing.CLIGapPenality(),
+		obipairing.CLIPenalityScale(),
 		obipairing.CLIDelta(),
 		obipairing.CLIMinOverlap(),
 		obipairing.CLIMinIdentity(),

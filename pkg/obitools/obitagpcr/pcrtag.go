@@ -13,7 +13,7 @@ import (
 )
 
 func IPCRTagPESequencesBatch(iterator obiiter.IBioSequence,
-	gap float64, delta, minOverlap int,
+	gap, scale float64, delta, minOverlap int,
 	minIdentity float64, fastAlign, fastScoreRel,
 	withStats bool) obiiter.IBioSequence {
 
@@ -50,7 +50,8 @@ func IPCRTagPESequencesBatch(iterator obiiter.IBioSequence,
 				B := A.PairedWith()
 				consensus := obipairing.AssemblePESequences(
 					A.Copy(), B.ReverseComplement(false),
-					gap, delta, minOverlap, minIdentity, withStats, true,
+					gap, scale,
+					delta, minOverlap, minIdentity, withStats, true,
 					fastAlign, fastScoreRel, arena,
 				)
 

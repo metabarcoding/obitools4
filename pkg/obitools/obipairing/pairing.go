@@ -106,11 +106,14 @@ func JoinPairedSequence(seqA, seqB *obiseq.BioSequence, inplace bool) *obiseq.Bi
 // An obiseq.BioSequence corresponding to the assembling of the both
 // input sequence.
 func AssemblePESequences(seqA, seqB *obiseq.BioSequence,
-	gap float64, delta, minOverlap int, minIdentity float64, withStats bool,
+	gap, scale float64, delta, minOverlap int, minIdentity float64, withStats bool,
 	inplace bool, fastAlign, fastModeRel bool,
 	arenaAlign obialign.PEAlignArena) *obiseq.BioSequence {
 
-	score, path, fastcount, over, fastscore := obialign.PEAlign(seqA, seqB, gap, fastAlign, delta, fastModeRel, arenaAlign)
+	score, path, fastcount, over, fastscore := obialign.PEAlign(seqA, seqB,
+		gap, scale,
+		fastAlign, delta, fastModeRel,
+		arenaAlign)
 	cons, match := obialign.BuildQualityConsensus(seqA, seqB, path, true)
 
 	left := path[0]
@@ -210,7 +213,7 @@ func AssemblePESequences(seqA, seqB *obiseq.BioSequence,
 // The function returns an iterator over batches of obiseq.Biosequence object.
 // each pair of processed sequences produces one sequence in the result iterator.
 func IAssemblePESequencesBatch(iterator obiiter.IBioSequence,
-	gap float64, delta, minOverlap int,
+	gap, scale float64, delta, minOverlap int,
 	minIdentity float64, fastAlign, fastModeRel,
 	withStats bool, sizes ...int) obiiter.IBioSequence {
 
@@ -241,7 +244,9 @@ func IAssemblePESequencesBatch(iterator obiiter.IBioSequence,
 			cons := make(obiseq.BioSequenceSlice, len(batch.Slice()))
 			for i, A := range batch.Slice() {
 				B := A.PairedWith()
-				cons[i] = AssemblePESequences(A, B.ReverseComplement(true), gap, delta, minOverlap, minIdentity, withStats, true, fastAlign, fastModeRel, arena)
+				cons[i] = AssemblePESequences(A, B.ReverseComplement(true),
+					gap, scale,
+					delta, minOverlap, minIdentity, withStats, true, fastAlign, fastModeRel, arena)
 			}
 			newIter.Push(obiiter.MakeBioSequenceBatch(
 				batch.Order(),
