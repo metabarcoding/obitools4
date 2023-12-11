@@ -21,7 +21,11 @@
 
 ### Enhancement
 
--   For efficiency purposes, now the `obiuniq` command run on disk by default. Consequently, the **--on-disk** option has been replaced by **--in-memory** to ask explicitly to use memory.
+-   For efficiency purposes, now the `obiuniq` command run on disk by default. Consequently, the **--on-disk** 
+    option has been replaced by **--in-memory** to ask explicitly to use memory.
+-   Adds an option **--penalty-scale** to the `obipairing` and `obipcrtag` command to fine tune the pairing score 
+    in the system of the alignment procedure by applying a scaling factor to the mismatch score and the gap score
+    relatively to the match score.
 
 ### Bug fixes
 

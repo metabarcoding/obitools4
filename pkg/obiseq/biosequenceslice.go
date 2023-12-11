@@ -31,7 +31,7 @@ func NewBioSequenceSlice(size ...int) *BioSequenceSlice {
 	slice := _BioSequenceSlicePool.Get().(*BioSequenceSlice)
 	if len(size) > 0 {
 		s := size[0]
-		slice = slice.InsureCapacity(s)
+		slice = slice.EnsureCapacity(s)
 		(*slice) = (*slice)[0:s]
 	}
 	return slice
@@ -76,11 +76,11 @@ func (s *BioSequenceSlice) Recycle(including_seq bool) {
 	_BioSequenceSlicePool.Put(s)
 }
 
-// InsureCapacity ensures that the BioSequenceSlice has a minimum capacity
+// EnsureCapacity ensures that the BioSequenceSlice has a minimum capacity
 //
 // It takes an integer `capacity` as a parameter, which represents the desired minimum capacity of the BioSequenceSlice.
 // It returns a pointer to the BioSequenceSlice.
-func (s *BioSequenceSlice) InsureCapacity(capacity int) *BioSequenceSlice {
+func (s *BioSequenceSlice) EnsureCapacity(capacity int) *BioSequenceSlice {
 	var c int
 	if s != nil {
 		c = cap(*s)
@@ -88,7 +88,9 @@ func (s *BioSequenceSlice) InsureCapacity(capacity int) *BioSequenceSlice {
 		c = 0
 	}
 
-	*s = slices.Grow[BioSequenceSlice](*s, capacity-c)
+	if capacity > c {
+		*s = slices.Grow[BioSequenceSlice](*s, capacity-c)
+	}
 
 	return s
 }

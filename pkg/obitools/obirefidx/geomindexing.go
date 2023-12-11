@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obistats"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 )
@@ -35,12 +36,8 @@ func GeomIndexSesquence(seqidx int,
 			if reflocation == nil {
 				log.Fatalf("Sequence %s does not have a coordinate", ref.Id())
 			}
-			d := 0.0
-			for i, x := range location {
-				diff := float64(x - reflocation[i])
-				d += diff * diff
-			}
-			seq_dist[i] = d
+
+			seq_dist[i] = obistats.SquareDist(location, reflocation)
 		}(i, ref)
 	}
 
@@ -51,18 +48,16 @@ func GeomIndexSesquence(seqidx int,
 	lca := (*taxa)[seqidx]
 
 	index := make(map[int]string)
-	index[0.0] = fmt.Sprintf(
+	index[0] = fmt.Sprintf(
 		"%d@%s@%s",
 		lca.Taxid(),
 		lca.ScientificName(),
 		lca.Rank())
 
-	old_dist := 0.0
 	for _, o := range order {
 		new_lca, _ := lca.LCA((*taxa)[o])
-		if new_lca.Taxid() != lca.Taxid() || seq_dist[o] != old_dist {
+		if new_lca.Taxid() != lca.Taxid() {
 			lca = new_lca
-			old_dist = seq_dist[o]
 			index[int(seq_dist[o])] = fmt.Sprintf(
 				"%d@%s@%s",
 				lca.Taxid(),

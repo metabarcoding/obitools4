@@ -15,6 +15,12 @@ func (r intRanker) Len() int           { return len(r.x) }
 func (r intRanker) Less(i, j int) bool { return r.x[r.r[i]] < r.x[r.r[j]] }
 func (r intRanker) Swap(i, j int)      { r.r[i], r.r[j] = r.r[j], r.r[i] }
 
+// IntOrder sorts a slice of integers and returns a slice
+// of indices that represents the order of the sorted
+// elements.
+//
+// `data` is a slice of integers to be ordered.
+// Returns a slice of the ordered indices.
 func IntOrder(data []int) []int {
 	if len(data) == 0 {
 		return nil

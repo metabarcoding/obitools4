@@ -8,6 +8,7 @@ import (
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obistats"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
 )
 
@@ -74,7 +75,7 @@ func MapOnLandmarkSequences(sequence *obiseq.BioSequence, landmarks *obiseq.BioS
 	coords := make([]int, len(*landmarks))
 
 	for i, l := range *landmarks {
-		lcs, length := obialign.FastLCSEGFScore(sequence, l, -1, buffer)
+		lcs, length := obialign.FastLCSScore(sequence, l, -1, buffer)
 		coords[i] = length - lcs
 	}
 
@@ -98,9 +99,9 @@ func MapOnLandmarkSequences(sequence *obiseq.BioSequence, landmarks *obiseq.BioS
 func FindGeomClosest(sequence *obiseq.BioSequence,
 	landmarks *obiseq.BioSequenceSlice,
 	references *obiseq.BioSequenceSlice,
-	buffer *[]uint64) (*obiseq.BioSequence, int, float64, []int, *obiseq.BioSequenceSlice) {
+	buffer *[]uint64) (*obiseq.BioSequence, float64, float64, []int, *obiseq.BioSequenceSlice) {
 
-	min_dist := math.MaxInt64
+	min_dist := math.MaxFloat64
 	min_idx := make([]int, 0)
 
 	query_location := MapOnLandmarkSequences(sequence, landmarks, buffer)
@@ -110,11 +111,8 @@ func FindGeomClosest(sequence *obiseq.BioSequence,
 		if len(coord) == 0 {
 			log.Panicf("Empty coordinate for reference sequence %s", l.Id())
 		}
-		dist := 0
-		for j := 0; j < len(coord); j++ {
-			diff := query_location[j] - coord[j]
-			dist += diff * diff
-		}
+
+		dist := obistats.SquareDist(coord, query_location)
 
 		if dist == min_dist {
 			min_idx = append(min_idx, i)

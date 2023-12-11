@@ -109,42 +109,25 @@ func CLISelectLandmarkSequences(iterator obiiter.IBioSequence) obiiter.IBioSeque
 	n_landmark := CLINCenter()
 
 	landmark_idx := obistats.SampleIntWithoutReplacement(n_landmark, library_size)
+	sort.IntSlice(landmark_idx).Sort()
 	log.Infof("Library contains %d sequence", len(library))
 
 	var seqworld obiutils.Matrix[float64]
 
 	for loop := 0; loop < 2; loop++ {
-		sort.IntSlice(landmark_idx).Sort()
 		log.Debugf("Selected indices : %v", landmark_idx)
 
 		seqworld = MapOnLandmarkSequences(library, landmark_idx)
-		initialCenters := obiutils.Make2DArray[float64](n_landmark, n_landmark)
-		for i, seq_idx := range landmark_idx {
-			initialCenters[i] = seqworld[seq_idx]
-		}
 
-		// classes, centers := obistats.Kmeans(&seqworld, n_landmark, &initialCenters)
 		classifier := obistats.MakeKmeansClustering(&seqworld, n_landmark, obistats.DefaultRG())
-		_, centers, inertia, converged := classifier.Run(1000, 0.001)
-		intertia := classifier.Inertia()
-		_, centers, inertia, converged := obistats.Kmeans(&seqworld, n_landmark, 0.001, &initialCenters)
+		converged := classifier.Run(1000, 0.001)
+		inertia := classifier.Inertia()
 
-		dist_centers := 0.0
-		for i := 0; i < n_landmark; i++ {
-			center := (*centers)[i]
-			icenter := initialCenters[i]
-			for j := 0; j < n_landmark; j++ {
-				diff := center[j] - icenter[j]
-				dist_centers += diff * diff
-			}
-		}
+		log.Infof("Inertia: %f, converged: %t", inertia, converged)
 
-		landmark_idx = obistats.KmeansBestRepresentative(&seqworld, centers)
-		log.Infof("Inertia: %f, Dist centers: %f, converged: %t", inertia, dist_centers, converged)
-
+		landmark_idx = classifier.CentersIndices()
+		sort.IntSlice(landmark_idx).Sort()
 	}
-
-	sort.IntSlice(landmark_idx).Sort()
 
 	log.Debugf("Selected indices : %v", landmark_idx)
 	seqworld = MapOnLandmarkSequences(library, landmark_idx)
@@ -159,12 +142,14 @@ func CLISelectLandmarkSequences(iterator obiiter.IBioSequence) obiiter.IBioSeque
 		initialCenters[i] = seqworld[seq_idx]
 	}
 
-	classes := obistats.AssignToClass(&seqworld, &initialCenters)
+	// classes := obistats.AssignToClass(&seqworld, &initialCenters)
 
 	for i, seq := range library {
 		ic, _ := obiutils.InterfaceToIntSlice(seqworld[i])
 		seq.SetCoordinate(ic)
-		seq.SetAttribute("landmark_class", classes[i])
+		// seq.SetAttribute("landmark_class", classes[i])
+
+		// if the sequence is a landmark sequence
 		if i, ok := seq_landmark[i]; ok {
 			seq.SetAttribute("landmark_id", i)
 		}

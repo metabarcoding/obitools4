@@ -12,43 +12,75 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func squareDist(a, b []float64) float64 {
+// SquareDist calculates the squared Euclidean distance between
+// two vectors 'a' and 'b'.
+//
+// 'a' and 'b' are slices of float64 values representing
+// coordinate points in space. It is assumed that both slices
+// have the same length.
+// Returns the calculated squared distance as a float64.
+func SquareDist[T float64 | int](a, b []T) float64 {
 	sum := 0.0
-	for i := 0; i < len(a); i++ {
-		diff := a[i] - b[i]
+	for i, v := range a {
+		diff := float64(v - b[i])
 		sum += diff * diff
 	}
 	return sum
 }
 
+// EuclideanDist calculates the Euclidean distance between
+// two vectors represented as slices of float64.
+//
+// `a` and `b` are slices of float64 where each element of `a`
+// is paired with the corresponding element of `b`.
+// Returns the squared sum of the differences.
+func EuclideanDist[T float64 | int](a, b []T) float64 {
+	return math.Sqrt(SquareDist(a, b))
+}
+
+// DefaultRG creates and returns a new instance of *rand.Rand.
+//
+// No parameters.
+// Returns *rand.Rand which is a pointer to a new random number
+// generator, seeded with the current time in nanoseconds.
 func DefaultRG() *rand.Rand {
 	return rand.New(rand.NewSource(uint64(time.Now().UnixNano())))
 }
 
 type KmeansClustering struct {
-	data     *obiutils.Matrix[float64]
-	rg       *rand.Rand
-	centers  obiutils.Matrix[float64]
-	icenters []int
-	sizes    []int
-	distmin  []float64
-	classes  []int
+	data     *obiutils.Matrix[float64] // data matrix    						dimensions: n x p
+	distmin  []float64                 // distance to closest center			dimension: n
+	classes  []int                     // class of each data point				dimension: n
+	rg       *rand.Rand                // random number generator
+	centers  obiutils.Matrix[float64]  // centers coordinates 					dimensions: k x p
+	icenters []int                     // indices of centers					dimension: k
+	sizes    []int                     // number of elements in each cluster	dimension: k
 }
 
+// MakeKmeansClustering initializes a KmeansClustering with the
+// provided matrix data, number of clusters k, and random number
+// generator rg.
+//
+// data is a pointer to a Matrix of float64 representing the dataset,
+// k is the number of desired clusters, and rg is a pointer to a
+// random number generator used in the clustering process.
+// Returns a pointer to the initialized KmeansClustering structure.
 func MakeKmeansClustering(data *obiutils.Matrix[float64], k int, rg *rand.Rand) *KmeansClustering {
 	distmin := make([]float64, len(*data))
+	classes := make([]int, len(*data))
 	for i := 0; i < len(distmin); i++ {
 		distmin[i] = math.MaxFloat64
+		classes[i] = -1
 	}
 
 	clustering := &KmeansClustering{
 		data:     data,
+		distmin:  distmin,
+		classes:  classes,
+		rg:       rg,
+		centers:  make(obiutils.Matrix[float64], 0, k),
 		icenters: make([]int, 0, k),
 		sizes:    make([]int, 0, k),
-		centers:  make(obiutils.Matrix[float64], 0, k),
-		distmin:  distmin,
-		classes:  make([]int, len(*data)),
-		rg:       rg,
 	}
 
 	for i := 0; i < k; i++ {
@@ -81,62 +113,141 @@ func (clustering *KmeansClustering) N() int {
 func (clustering *KmeansClustering) Dimension() int {
 	return len((*clustering.data)[0])
 }
+
+// SetCenterTo sets the center of a specific cluster to a given data point index.
+//
+// Parameters:
+// - k: the index of the cluster, if k=-1, a new center is added
+// - i: the index of the data point
+// - reset: a boolean indicating whether to reset the distances to the nearest center
+//          for points previously assigned to this center
+//
+// No return value.
+
+func (clustering *KmeansClustering) SetCenterTo(k, i int, reset bool) {
+	N := clustering.N()
+	K := clustering.K()
+	center := (*clustering.data)[i]
+
+	if k >= 0 {
+		clustering.icenters[k] = i
+		clustering.sizes[k] = 0
+		clustering.centers[k] = center
+
+		if reset {
+			// Recompute distances to the nearest center for points
+			// previously assigned to this center
+			K := clustering.K()
+			for j := 0; j < N; j++ {
+				if clustering.classes[j] == k {
+					clustering.distmin[j] = math.MaxFloat64
+					for l := 1; l < K; l++ {
+						dist := EuclideanDist((*clustering.data)[j], clustering.centers[l])
+						if dist < clustering.distmin[j] {
+							clustering.distmin[j] = dist
+							clustering.classes[j] = l
+						}
+					}
+					clustering.sizes[clustering.classes[j]]++
+				}
+			}
+		}
+
+	} else {
+		clustering.icenters = append(clustering.icenters, i)
+		clustering.sizes = append(clustering.sizes, 0)
+		clustering.centers = append(clustering.centers, center)
+		k = K
+		K++
+	}
+
+	for j := 0; j < clustering.N(); j++ {
+		dist := EuclideanDist((*clustering.data)[j], center)
+		if dist < clustering.distmin[j] {
+			if C := clustering.classes[j]; C >= 0 {
+				clustering.sizes[C]--
+			}
+			clustering.distmin[j] = dist
+			clustering.classes[j] = k
+			clustering.sizes[k]++
+		}
+	}
+
+}
+
+// AddACenter adds a new center to the KmeansClustering.
+//
+// If there are no centers, it randomly selects a new center.
+// If there are existing centers, it selects a new center with
+// probability proportional to its distance from the nearest
+// center. The center is then added to the clustering.
 func (clustering *KmeansClustering) AddACenter() {
+	k := clustering.K()
 	C := 0
-	if clustering.K() == 0 {
+
+	if k == 0 {
+		// if there are no centers yet, draw a sample as the first center
 		C = rand.Intn(clustering.N())
 	} else {
+		// otherwise, draw a sample with a probability proportional
+		// to its closest distance to a center
 		w := sampleuv.NewWeighted(clustering.distmin, clustering.rg)
 		C, _ = w.Take()
 	}
-	clustering.icenters = append(clustering.icenters, C)
-	clustering.sizes = append(clustering.sizes, 0)
-	center := (*clustering.data)[C]
-	clustering.centers = append(clustering.centers, center)
 
-	n := clustering.N()
-
-	for i := 0; i < n; i++ {
-		d := squareDist((*clustering.data)[i], center)
-		if d < clustering.distmin[i] {
-			clustering.distmin[i] = d
-		}
-	}
+	clustering.SetCenterTo(-1, C, false)
 }
 
-// ResetEmptyCenters resets the empty centers in the KmeansClustering struct.
+// ResetEmptyCenters reinitializes any centers in a KmeansClustering
+// that have no assigned points.
 //
-// It iterates over the centers and checks if their corresponding sizes are zero.
-// If a center is empty, a new weighted sample is taken with the help of the distmin and rg variables.
-// The new center is then assigned to the empty center index, and the sizes and centers arrays are updated accordingly.
-// Finally, the function returns the number of empty centers that were reset.
+// This method iterates over the centers and uses a weighted sampling
+// to reset centers with a size of zero.
+// Returns the number of centers that were reset.
 func (clustering *KmeansClustering) ResetEmptyCenters() int {
 	nreset := 0
 	for i := 0; i < clustering.K(); i++ {
 		if clustering.sizes[i] == 0 {
 			w := sampleuv.NewWeighted(clustering.distmin, clustering.rg)
 			C, _ := w.Take()
-			clustering.icenters[i] = C
-			clustering.centers[i] = (*clustering.data)[C]
+			clustering.SetCenterTo(i, C, false)
 			nreset++
 		}
 	}
 	return nreset
 }
 
-// AssignToClass assigns each data point to a class based on the distance to the nearest center.
+// ClosestPoint finds the index of the closest point in the
+// clustering to the given coordinates.
 //
-// This function does not take any parameters.
-// It does not return anything.
+// coordinates is a slice of float64 representing the point.
+// Returns the index of the closest point as an int.
+func (clustering *KmeansClustering) ClosestPoint(coordinates []float64) int {
+	N := clustering.N()
+	distmin := math.MaxFloat64
+	C := -1
+	for i := 0; i < N; i++ {
+		dist := EuclideanDist((*clustering.data)[i], coordinates)
+		if dist < distmin {
+			distmin = dist
+			C = i
+		}
+	}
+	return C
+}
+
+// AssignToClass assigns each data point in the dataset to the nearest
+// center (class) in a K-means clustering algorithm.
+//
+// Handles the reinitialization of empty centers after the assignment.
+// No return values.
 func (clustering *KmeansClustering) AssignToClass() {
 	var wg sync.WaitGroup
 	var lock sync.Mutex
 
+	// initialize the number of points in each class
 	for i := 0; i < clustering.K(); i++ {
 		clustering.sizes[i] = 0
-	}
-	for i := 0; i < clustering.N(); i++ {
-		clustering.distmin[i] = math.MaxFloat64
 	}
 
 	goroutine := func(i int) {
@@ -144,16 +255,18 @@ func (clustering *KmeansClustering) AssignToClass() {
 		dmin := math.MaxFloat64
 		cmin := -1
 		for j, center := range clustering.centers {
-			dist := squareDist((*clustering.data)[i], center)
+			dist := EuclideanDist((*clustering.data)[i], center)
 			if dist < dmin {
 				dmin = dist
 				cmin = j
 			}
 		}
-		lock.Lock()
+
 		clustering.classes[i] = cmin
-		clustering.sizes[cmin]++
 		clustering.distmin[i] = dmin
+
+		lock.Lock()
+		clustering.sizes[cmin]++
 		lock.Unlock()
 	}
 
@@ -162,15 +275,44 @@ func (clustering *KmeansClustering) AssignToClass() {
 		go goroutine(i)
 	}
 
+	wg.Wait()
+
 	nreset := clustering.ResetEmptyCenters()
 
 	if nreset > 0 {
-		log.Warnf("Reset %d empty centers", nreset)
-		clustering.AssignToClass()
+		log.Warnf("Reseted %d empty centers", nreset)
 	}
 }
 
+// SetCentersTo assigns new centers in the KmeansClustering
+// structure given a slice of indices.
+//
+// The indices parameter is a slice of integers that
+// corresponds to the new indices of the cluster centers in
+// the dataset. It panics if any index is out of bounds.
+// This method does not return any value.
+func (clustering *KmeansClustering) SetCentersTo(indices []int) {
+	for _, v := range indices {
+		if v < 0 || v >= clustering.N() {
+			log.Fatalf("Invalid center index: %d", v)
+		}
+	}
+
+	clustering.icenters = indices
+	K := len(indices)
+
+	for i := 0; i < K; i++ {
+		clustering.centers[i] = (*clustering.data)[indices[i]]
+	}
+
+	clustering.AssignToClass()
+
+}
+
 // ComputeCenters calculates the centers of the K-means clustering algorithm.
+//
+// This method call AssignToClass() after computing the centers to ensure coherence
+// of the clustering data structure.
 //
 // It takes no parameters.
 // It does not return any values.
@@ -179,58 +321,46 @@ func (clustering *KmeansClustering) ComputeCenters() {
 	centers := clustering.centers
 	data := clustering.data
 	classes := clustering.classes
-	k := clustering.K()
+	K := clustering.K()
 
-	// Goroutine code
-	goroutine1 := func(centerIdx int) {
+	// compute the location of center of class centerIdx
+	// as the point in the data the closest to the
+	// center of class centerIdx
+	newCenter := func(centerIdx int) {
 		defer wg.Done()
-		for j, row := range *data {
-			class := classes[j]
-			if class == centerIdx {
-				for l, val := range row {
-					centers[centerIdx][l] += val
-				}
-			}
+
+		center := make([]float64, clustering.Dimension())
+
+		for j := range center {
+			center[j] = 0
 		}
-	}
 
-	for i := 0; i < k; i++ {
-		wg.Add(1)
-		go goroutine1(i)
-	}
-
-	wg.Wait()
-
-	for i := range centers {
-		for j := range centers[i] {
-			centers[i][j] /= float64(clustering.sizes[i])
-		}
-	}
-
-	goroutine2 := func(centerIdx int) {
-		defer wg.Done()
-		dkmin := math.MaxFloat64
-		dki := -1
-		center := centers[centerIdx]
 		for j, row := range *data {
 			if classes[j] == centerIdx {
-				dist := squareDist(row, center)
-				if dist < dkmin {
-					dkmin = dist
-					dki = j
+				for l, val := range row {
+					center[l] += val
 				}
 			}
 		}
-		clustering.icenters[centerIdx] = dki
-		clustering.centers[centerIdx] = (*data)[dki]
+
+		for j := range centers[centerIdx] {
+			center[j] /= float64(clustering.sizes[centerIdx])
+		}
+
+		C := clustering.ClosestPoint(center)
+
+		centers[centerIdx] = (*data)[C]
+		clustering.icenters[centerIdx] = C
 	}
 
-	for i := 0; i < k; i++ {
+	for i := 0; i < K; i++ {
 		wg.Add(1)
-		go goroutine2(i)
+		go newCenter(i)
 	}
 
 	wg.Wait()
+
+	clustering.AssignToClass()
 
 }
 
@@ -238,7 +368,7 @@ func (clustering *KmeansClustering) Inertia() float64 {
 	inertia := 0.0
 
 	for i := 0; i < clustering.N(); i++ {
-		inertia += clustering.distmin[i]
+		inertia += clustering.distmin[i] * clustering.distmin[i]
 	}
 	return inertia
 }
@@ -264,7 +394,6 @@ func (clustering *KmeansClustering) Run(max_cycle int, threshold float64) bool {
 	newI := clustering.Inertia()
 	for i := 0; i < max_cycle && (prev-newI) > threshold; i++ {
 		prev = newI
-		clustering.AssignToClass()
 		clustering.ComputeCenters()
 		newI = clustering.Inertia()
 	}

@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	log "github.com/sirupsen/logrus"
+	"golang.org/x/exp/maps"
+	"golang.org/x/exp/slices"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obialign"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
@@ -27,22 +29,20 @@ import (
 // - taxid: The taxid associated with the matched distance.
 // - rank: The rank associated with the matched distance.
 // - scientificName: The scientific name associated with the matched distance.
-func MatchDistanceIndex(distance int, distanceIdx map[int]string) (int, string, string) {
-	keys := make([]int, 0, len(distanceIdx))
-	for k := range distanceIdx {
-		keys = append(keys, k)
-	}
-	sort.Ints(keys)
+func MatchDistanceIndex(distance float64, distanceIdx map[int]string) (int, string, string) {
+	idist := int(distance)
+	keys := maps.Keys(distanceIdx)
+	slices.Sort(keys)
 
 	i := sort.Search(len(keys), func(i int) bool {
-		return distance <= keys[i]
+		return idist <= keys[i]
 	})
 
 	var taxid int
 	var rank string
 	var scientificName string
 
-	if i == len(keys) || distance > keys[len(keys)-1] {
+	if i == len(keys) || idist > keys[len(keys)-1] {
 		taxid = 1
 		rank = "no rank"
 		scientificName = "root"
