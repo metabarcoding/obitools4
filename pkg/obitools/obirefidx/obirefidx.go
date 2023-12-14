@@ -118,7 +118,8 @@ func IndexSequence(seqidx int,
 			log.Println(sequence.Id(), tseq.Taxid(), tseq.ScientificName(), tseq.Rank(), nfastok)
 			log.Println(sequence.Id(), tseq.Taxid(), tseq.ScientificName(), tseq.Rank(), nali)
 			log.Println(sequence.Id(), tseq.Taxid(), tseq.ScientificName(), tseq.Rank(), nok)
-	*/return obitag_index
+	*/
+	return obitag_index
 }
 
 func IndexReferenceDB(iterator obiiter.IBioSequence) obiiter.IBioSequence {

@@ -22,9 +22,22 @@ func loadNodeTable(reader io.Reader, taxonomy *obitax.Taxonomy) {
 	file.TrimLeadingSpace = true
 	file.ReuseRecord = true
 
+	n := 0
+
 	for record, err := file.Read(); err == nil; record, err = file.Read() {
-		taxid, _ := strconv.Atoi(strings.TrimSpace(record[0]))
-		parent, _ := strconv.Atoi(strings.TrimSpace(record[1]))
+		n++
+		taxid, err := strconv.Atoi(strings.TrimSpace(record[0]))
+
+		if err != nil {
+			log.Panicf("Cannot read taxid at line %d: %v", n, err)
+		}
+
+		parent, err := strconv.Atoi(strings.TrimSpace(record[1]))
+
+		if err != nil {
+			log.Panicf("Cannot read parent taxid at line %d: %v", n, err)
+		}
+
 		rank := strings.TrimSpace(record[2])
 
 		taxonomy.AddNewTaxa(taxid, parent, rank, true, true)
