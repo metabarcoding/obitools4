@@ -29,13 +29,13 @@ func loadNodeTable(reader io.Reader, taxonomy *obitax.Taxonomy) {
 		taxid, err := strconv.Atoi(strings.TrimSpace(record[0]))
 
 		if err != nil {
-			log.Panicf("Cannot read taxid at line %d: %v", n, err)
+			log.Panicf("Cannot read taxon taxid at line %d: %v", n, err)
 		}
 
 		parent, err := strconv.Atoi(strings.TrimSpace(record[1]))
 
 		if err != nil {
-			log.Panicf("Cannot read parent taxid at line %d: %v", n, err)
+			log.Panicf("Cannot read taxon parent taxid at line %d: %v", n, err)
 		}
 
 		rank := strings.TrimSpace(record[2])
@@ -56,15 +56,21 @@ func loadNameTable(reader io.Reader, taxonomy *obitax.Taxonomy, onlysn bool) int
 	file := bufio.NewReader(reader)
 
 	n := 0
+	l := 0
 
 	for line, prefix, err := file.ReadLine(); err == nil; line, prefix, err = file.ReadLine() {
-
+		l++
 		if prefix {
 			return -1
 		}
 
 		record := strings.Split(string(line), "|")
-		taxid, _ := strconv.Atoi(strings.TrimSpace(record[0]))
+		taxid, err := strconv.Atoi(strings.TrimSpace(record[0]))
+
+		if err != nil {
+			log.Panicf("Cannot read taxon name taxid at line %d: %v", l, err)
+		}
+
 		name := strings.TrimSpace(record[1])
 		classname := strings.TrimSpace(record[3])
 
@@ -87,9 +93,18 @@ func loadMergedTable(reader io.Reader, taxonomy *obitax.Taxonomy) int {
 	n := 0
 
 	for record, err := file.Read(); err == nil; record, err = file.Read() {
-		oldtaxid, _ := strconv.Atoi(strings.TrimSpace(record[0]))
-		newtaxid, _ := strconv.Atoi(strings.TrimSpace(record[1]))
 		n++
+		oldtaxid, err := strconv.Atoi(strings.TrimSpace(record[0]))
+
+		if err != nil {
+			log.Panicf("Cannot read alias taxid at line %d: %v", n, err)
+		}
+		newtaxid, err := strconv.Atoi(strings.TrimSpace(record[1]))
+
+		if err != nil {
+			log.Panicf("Cannot read alias new taxid at line %d: %v", n, err)
+		}
+
 		taxonomy.AddNewAlias(newtaxid, oldtaxid)
 	}
 
