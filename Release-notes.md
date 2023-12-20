@@ -2,6 +2,8 @@
 
 ## Latest changes
 
+## November 16th, 2023. Release 4.1.1
+
 ### New feature
 
 -   In `obimatrix` a **--transpose** option allows to transpose the produced matrix table in CSV format.
