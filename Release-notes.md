@@ -2,7 +2,7 @@
 
 ## Latest changes
 
-## November 16th, 2023. Release 4.1.1
+## December 20th, 2023. Release 4.1.1
 
 ### New feature
 
