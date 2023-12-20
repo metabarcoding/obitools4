@@ -221,7 +221,7 @@ func IAssemblePESequencesBatch(iterator obiiter.IBioSequence,
 		log.Fatalln("Sequence data must be paired")
 	}
 
-	nworkers := obioptions.CLIMaxCPU() * 3 / 2
+	nworkers := obioptions.CLIParallelWorkers()
 
 	if len(sizes) > 0 {
 		nworkers = sizes[0]

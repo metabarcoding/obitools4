@@ -1,5 +1,7 @@
 package obichunk
 
+import "git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
+
 type __options__ struct {
 	statsOn         []string
 	categories      []string
@@ -24,8 +26,8 @@ func MakeOptions(setters []WithOption) Options {
 		navalue:         "NA",
 		cacheOnDisk:     false,
 		batchCount:      100,
-		batchSize:       5000,
-		parallelWorkers: 4,
+		batchSize:       obioptions.CLIBatchSize(),
+		parallelWorkers: obioptions.CLIParallelWorkers(),
 		noSingleton:     false,
 	}
 

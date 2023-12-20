@@ -1,6 +1,7 @@
 package obingslibrary
 
 import (
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 )
 
@@ -125,8 +126,8 @@ func MakeOptions(setters []WithOption) Options {
 		allowedMismatch: 0,
 		allowsIndel:     false,
 		withProgressBar: false,
-		parallelWorkers: 4,
-		batchSize:       1000,
+		parallelWorkers: obioptions.CLIParallelWorkers(),
+		batchSize:       obioptions.CLIBatchSize(),
 	}
 
 	opt := Options{&o}
