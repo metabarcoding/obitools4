@@ -41,7 +41,7 @@ execute:
 format:
   html:
     theme: zephyr
-    embed-resources: true
+    html-math-method: mathml
   pdf:
     documentclass: scrreprt
     keep-tex: true

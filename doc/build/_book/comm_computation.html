@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.2.256">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>OBITools V4 - 11&nbsp; Computations on sequences</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1.6em;
+  vertical-align: middle;
+}
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="./comm_sampling.html" rel="next">
+<link href="./comm_annotation.html" rel="prev">
+<script src="site_libs/quarto-html/quarto.js"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 20,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit"
+  }
+}</script>
+
+
+</head>
+
+<body class="nav-sidebar floating">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+    <div class="container-fluid d-flex justify-content-between">
+      <h1 class="quarto-secondary-nav-title"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Computations on sequences</span></h1>
+      <button type="button" class="quarto-btn-toggle btn" aria-label="Show secondary navigation">
+        <i class="bi bi-chevron-right"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="./">OBITools V4</a> 
+    </div>
+      </div>
+      <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+      </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">Preface</a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a href="./intro.html" class="sidebar-item-text sidebar-link">The OBITools</a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" aria-expanded="true">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./installation.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Installation of the <em>OBITools</em></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./formats.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">File formats usable with <em>OBITools</em></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorial.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">OBITools V4 Tutorial</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a href="./commands.html" class="sidebar-item-text sidebar-link">The *OBITools V4* commands</a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" aria-expanded="true">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./inupt.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Specifying the data input to <em>OBITools</em> commands</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./output.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Controling OBITools outputs</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./common_options.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Options common to most of the <em>OBITools</em> commands</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./expressions.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">OBITools expression language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./comm_metabarcode_design.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Metabarcode design and quality assessment</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./comm_reformat.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">File format conversions</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./comm_annotation.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Sequence annotations</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./comm_computation.html" class="sidebar-item-text sidebar-link active"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Computations on sequences</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./comm_sampling.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Sequence sampling and filtering</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./comm_utilities.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Utilities</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <span class="sidebar-item-text sidebar-link text-start">The GO *OBITools* library</span>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" aria-expanded="true">Appendices</a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" aria-expanded="true">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./annexes.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Annexes</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./references.html" class="sidebar-item-text sidebar-link">References</a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#obipairing" id="toc-obipairing" class="nav-link active" data-scroll-target="#obipairing"><span class="toc-section-number">11.1</span>  <code>obipairing</code></a>
+  <ul class="collapse">
+  <li><a href="#alignment-procedure" id="toc-alignment-procedure" class="nav-link" data-scroll-target="#alignment-procedure">Alignment procedure</a></li>
+  <li><a href="#the-scoring-system" id="toc-the-scoring-system" class="nav-link" data-scroll-target="#the-scoring-system">The scoring system</a></li>
+  </ul></li>
+  <li><a href="#obimultiplex" id="toc-obimultiplex" class="nav-link" data-scroll-target="#obimultiplex"><span class="toc-section-number">11.2</span>  <code>obimultiplex</code></a></li>
+  <li><a href="#obicomplement" id="toc-obicomplement" class="nav-link" data-scroll-target="#obicomplement"><span class="toc-section-number">11.3</span>  <code>obicomplement</code></a></li>
+  <li><a href="#obiclean" id="toc-obiclean" class="nav-link" data-scroll-target="#obiclean"><span class="toc-section-number">11.4</span>  <code>obiclean</code></a></li>
+  <li><a href="#obiuniq" id="toc-obiuniq" class="nav-link" data-scroll-target="#obiuniq"><span class="toc-section-number">11.5</span>  <code>obiuniq</code></a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title d-none d-lg-block"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Computations on sequences</span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+</header>
+
+<section id="obipairing" class="level2" data-number="11.1">
+<h2 data-number="11.1" class="anchored" data-anchor-id="obipairing"><span class="header-section-number">11.1</span> <code>obipairing</code></h2>
+<blockquote class="blockquote">
+<p>Replace the <code>illuminapairedends</code> original <em>OBITools</em></p>
+</blockquote>
+<section id="alignment-procedure" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="alignment-procedure">Alignment procedure</h3>
+<p><code>obipairing</code> is introducing a new alignment algorithm compared to the <code>illuminapairedend</code> command of the <code>OBITools V2</code>. Nethertheless this new algorithm has been design to produce the same results than the previous, except in very few cases.</p>
+<p>The new algorithm is a two-step procedure. First, a FASTN-type algorithm <span class="citation" data-cites="Lipman1985-hw">(<a href="references.html#ref-Lipman1985-hw" role="doc-biblioref">Lipman and Pearson 1985</a>)</span> identifies the best offset between the two matched readings. This identifies the region of overlap.</p>
+<p>In the second step, the matching regions of the two reads are extracted along with a flanking sequence of <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>Δ</mi><annotation encoding="application/x-tex">\Delta</annotation></semantics></math> base pairs. The two subsequences are then aligned using a “one side free end-gap” dynamic programming algorithm. This latter step is only called if at least one mismatch is detected by the FASTP step.</p>
+<p>Unless the similarity between the two reads at their overlap region is very low, the addition of the flanking regions in the second step of the alignment ensures the same alignment as if the dynamic programming alignment was performed on the full reads.</p>
+</section>
+<section id="the-scoring-system" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="the-scoring-system">The scoring system</h3>
+<p>In the dynamic programming step, the match and mismatch scores take into account the quality scores of the two aligned nucleotides. By taking these into account, the probability of a true match can be calculated for each aligned base pair.</p>
+<p>If we consider a nucleotide read with a quality score <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>Q</mi><annotation encoding="application/x-tex">Q</annotation></semantics></math>, the probability of misreading this base (<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>P</mi><mi>E</mi></msub><annotation encoding="application/x-tex">P_E</annotation></semantics></math>) is : <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>P</mi><mi>E</mi></msub><mo>=</mo><msup><mn>10</mn><mrow><mo>−</mo><mfrac><mi>Q</mi><mn>10</mn></mfrac></mrow></msup></mrow><annotation encoding="application/x-tex">
+P_E = 10^{-\frac{Q}{10}}
+</annotation></semantics></math></p>
+<p>Thus, when a given nucleotide <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>X</mi><annotation encoding="application/x-tex">X</annotation></semantics></math> is observed with the quality score <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>Q</mi><annotation encoding="application/x-tex">Q</annotation></semantics></math>. The probability that <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>X</mi><annotation encoding="application/x-tex">X</annotation></semantics></math> is really an <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>X</mi><annotation encoding="application/x-tex">X</annotation></semantics></math> is :</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>X</mi><mo>=</mo><mi>X</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mn>1</mn><mo>−</mo><msub><mi>P</mi><mi>E</mi></msub></mrow><annotation encoding="application/x-tex">
+P(X=X) = 1 - P_E
+</annotation></semantics></math></p>
+<p>Otherwise, <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>X</mi><annotation encoding="application/x-tex">X</annotation></semantics></math> is actually one of the three other possible nucleotides (<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>X</mi><mrow><mi>E</mi><mn>1</mn></mrow></msub><annotation encoding="application/x-tex">X_{E1}</annotation></semantics></math>, <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>X</mi><mrow><mi>E</mi><mn>2</mn></mrow></msub><annotation encoding="application/x-tex">X_{E2}</annotation></semantics></math> or <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>X</mi><mrow><mi>E</mi><mn>3</mn></mrow></msub><annotation encoding="application/x-tex">X_{E3}</annotation></semantics></math>). If we suppose that the three reading error have the same probability :</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>X</mi><mo>=</mo><msub><mi>X</mi><mrow><mi>E</mi><mn>1</mn></mrow></msub><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mi>P</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>X</mi><mo>=</mo><msub><mi>X</mi><mrow><mi>E</mi><mn>3</mn></mrow></msub><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mi>P</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>X</mi><mo>=</mo><msub><mi>X</mi><mrow><mi>E</mi><mn>3</mn></mrow></msub><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mfrac><msub><mi>P</mi><mi>E</mi></msub><mn>3</mn></mfrac></mrow><annotation encoding="application/x-tex">
+P(X=X_{E1}) = P(X=X_{E3}) = P(X=X_{E3}) = \frac{P_E}{3}
+</annotation></semantics></math></p>
+<p>At each position in an alignment where the two nucleotides <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>X</mi><mn>1</mn></msub><annotation encoding="application/x-tex">X_1</annotation></semantics></math> and <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>X</mi><mn>2</mn></msub><annotation encoding="application/x-tex">X_2</annotation></semantics></math> face each other (not a gapped position), the probability of a true match varies depending on whether <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>X</mi><mn>1</mn></msub><mo>=</mo><msub><mi>X</mi><mn>2</mn></msub></mrow><annotation encoding="application/x-tex">X_1=X_2</annotation></semantics></math>, an observed match, or <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>X</mi><mn>1</mn></msub><mo>≠</mo><msub><mi>X</mi><mn>2</mn></msub></mrow><annotation encoding="application/x-tex">X_1 \neq X_2</annotation></semantics></math>, an observed mismatch.</p>
+<p><strong>Probability of a true match when <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>X</mi><mn>1</mn></msub><mo>=</mo><msub><mi>X</mi><mn>2</mn></msub></mrow><annotation encoding="application/x-tex">X_1=X_2</annotation></semantics></math></strong></p>
+<p>That probability can be divided in two parts. First <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>X</mi><mn>1</mn></msub><annotation encoding="application/x-tex">X_1</annotation></semantics></math> and <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>X</mi><mn>2</mn></msub><annotation encoding="application/x-tex">X_2</annotation></semantics></math> have been correctly read. The corresponding probability is :</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right"><msub><mi>P</mi><mrow><mi>T</mi><mi>M</mi></mrow></msub></mtd><mtd columnalign="left"><mo>=</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><mi>P</mi><msub><mi>E</mi><mn>1</mn></msub><mo stretchy="true" form="postfix">)</mo></mrow><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><mi>P</mi><msub><mi>E</mi><mn>2</mn></msub><mo stretchy="true" form="postfix">)</mo></mrow></mtd></mtr><mtr><mtd columnalign="right"></mtd><mtd columnalign="left"><mo>=</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><msup><mn>10</mn><mrow><mo>−</mo><mfrac><msub><mi>Q</mi><mn>1</mn></msub><mn>10</mn></mfrac></mrow></msup><mo stretchy="true" form="postfix">)</mo></mrow><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><msup><mn>10</mn><mrow><mo>−</mo><mfrac><msub><mi>Q</mi><mn>2</mn></msub><mn>10</mn></mfrac></mrow></msup><mo stretchy="true" form="postfix">)</mo></mrow></mtd></mtr></mtable><annotation encoding="application/x-tex">
+\begin{aligned}
+P_{TM} &amp;= (1- PE_1)(1-PE_2)\\ 
+       &amp;=(1 - 10^{-\frac{Q_1}{10} } )(1 - 10^{-\frac{Q_2}{10}} )
+\end{aligned}
+</annotation></semantics></math></p>
+<p>Secondly, a match can occure if the true nucleotides read as <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>X</mi><mn>1</mn></msub><annotation encoding="application/x-tex">X_1</annotation></semantics></math> and <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>X</mi><mn>2</mn></msub><annotation encoding="application/x-tex">X_2</annotation></semantics></math> are not <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>X</mi><mn>1</mn></msub><annotation encoding="application/x-tex">X_1</annotation></semantics></math> and <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>X</mi><mn>2</mn></msub><annotation encoding="application/x-tex">X_2</annotation></semantics></math> but identical.</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right"><mi>P</mi><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>X</mi><mn>1</mn></msub><mo>=</mo><mo>=</mo><msub><mi>X</mi><mrow><mi>E</mi><mn>1</mn></mrow></msub><mo stretchy="true" form="postfix">)</mo></mrow><mo>∩</mo><mi>P</mi><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>X</mi><mn>2</mn></msub><mo>=</mo><mo>=</mo><msub><mi>X</mi><mrow><mi>E</mi><mn>1</mn></mrow></msub><mo stretchy="true" form="postfix">)</mo></mrow></mtd><mtd columnalign="left"><mo>=</mo><mfrac><mrow><msub><mi>P</mi><mrow><mi>E</mi><mn>1</mn></mrow></msub><msub><mi>P</mi><mrow><mi>E</mi><mn>2</mn></mrow></msub></mrow><mn>9</mn></mfrac></mtd></mtr><mtr><mtd columnalign="right"><mi>P</mi><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>X</mi><mn>1</mn></msub><mo>=</mo><mo>=</mo><msub><mi>X</mi><mrow><mi>E</mi><mi>x</mi></mrow></msub><mo stretchy="true" form="postfix">)</mo></mrow><mo>∩</mo><mi>P</mi><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>X</mi><mn>2</mn></msub><mo>=</mo><mo>=</mo><msub><mi>X</mi><mrow><mi>E</mi><mi>x</mi></mrow></msub><mo stretchy="true" form="postfix">)</mo></mrow></mtd><mtd columnalign="left"><mo>=</mo><mfrac><mrow><msub><mi>P</mi><mrow><mi>E</mi><mn>1</mn></mrow></msub><msub><mi>P</mi><mrow><mi>E</mi><mn>2</mn></mrow></msub></mrow><mn>3</mn></mfrac></mtd></mtr></mtable><annotation encoding="application/x-tex">
+\begin{aligned}
+P(X_1==X_{E1}) \cap P(X_2==X_{E1}) &amp;= \frac{P_{E1} P_{E2}}{9} \\
+P(X_1==X_{Ex}) \cap P(X_2==X_{Ex}) &amp; = \frac{P_{E1} P_{E2}}{3}
+\end{aligned}
+</annotation></semantics></math></p>
+<p>The probability of a true match between <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>X</mi><mn>1</mn></msub><annotation encoding="application/x-tex">X_1</annotation></semantics></math> and <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>X</mi><mn>2</mn></msub><annotation encoding="application/x-tex">X_2</annotation></semantics></math> when <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>X</mi><mn>1</mn></msub><mo>=</mo><msub><mi>X</mi><mn>2</mn></msub></mrow><annotation encoding="application/x-tex">X_1 = X_2</annotation></semantics></math> an observed match :</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right"><mi>P</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>M</mi><mi>A</mi><mi>T</mi><mi>C</mi><mi>H</mi><mo stretchy="false" form="prefix">|</mo><msub><mi>X</mi><mn>1</mn></msub><mo>=</mo><msub><mi>X</mi><mn>2</mn></msub><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><mi>P</mi><msub><mi>E</mi><mn>1</mn></msub><mo stretchy="true" form="postfix">)</mo></mrow><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><mi>P</mi><msub><mi>E</mi><mn>2</mn></msub><mo stretchy="true" form="postfix">)</mo></mrow><mo>+</mo><mfrac><mrow><msub><mi>P</mi><mrow><mi>E</mi><mn>1</mn></mrow></msub><msub><mi>P</mi><mrow><mi>E</mi><mn>2</mn></mrow></msub></mrow><mn>3</mn></mfrac></mtd></mtr></mtable><annotation encoding="application/x-tex">
+\begin{aligned}
+P(MATCH | X_1 = X_2) = (1- PE_1)(1-PE_2) + \frac{P_{E1} P_{E2}}{3}
+\end{aligned}
+</annotation></semantics></math></p>
+<p><strong>Probability of a true match when <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>X</mi><mn>1</mn></msub><mo>≠</mo><msub><mi>X</mi><mn>2</mn></msub></mrow><annotation encoding="application/x-tex">X_1 \neq X_2</annotation></semantics></math></strong></p>
+<p>That probability can be divided in three parts.</p>
+<ol type="a">
+<li><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>X</mi><mn>1</mn></msub><annotation encoding="application/x-tex">X_1</annotation></semantics></math> has been correctly read and <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>X</mi><mn>2</mn></msub><annotation encoding="application/x-tex">X_2</annotation></semantics></math> is a sequencing error and is actually equal to <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>X</mi><mn>1</mn></msub><annotation encoding="application/x-tex">X_1</annotation></semantics></math>. <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>P</mi><mi>a</mi></msub><mo>=</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><msub><mi>P</mi><mrow><mi>E</mi><mn>1</mn></mrow></msub><mo stretchy="true" form="postfix">)</mo></mrow><mfrac><msub><mi>P</mi><mrow><mi>E</mi><mn>2</mn></mrow></msub><mn>3</mn></mfrac></mrow><annotation encoding="application/x-tex">
+P_a =  (1-P_{E1})\frac{P_{E2}}{3}
+</annotation></semantics></math></li>
+<li><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>X</mi><mn>2</mn></msub><annotation encoding="application/x-tex">X_2</annotation></semantics></math> has been correctly read and <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>X</mi><mn>1</mn></msub><annotation encoding="application/x-tex">X_1</annotation></semantics></math> is a sequencing error and is actually equal to <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>X</mi><mn>2</mn></msub><annotation encoding="application/x-tex">X_2</annotation></semantics></math>. <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>P</mi><mi>b</mi></msub><mo>=</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><msub><mi>P</mi><mrow><mi>E</mi><mn>2</mn></mrow></msub><mo stretchy="true" form="postfix">)</mo></mrow><mfrac><msub><mi>P</mi><mrow><mi>E</mi><mn>1</mn></mrow></msub><mn>3</mn></mfrac></mrow><annotation encoding="application/x-tex">
+P_b =  (1-P_{E2})\frac{P_{E1}}{3}
+</annotation></semantics></math></li>
+<li><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>X</mi><mn>1</mn></msub><annotation encoding="application/x-tex">X_1</annotation></semantics></math> and <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>X</mi><mn>2</mn></msub><annotation encoding="application/x-tex">X_2</annotation></semantics></math> corresponds to sequencing error but are actually the same base <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>X</mi><mrow><mi>E</mi><mi>x</mi></mrow></msub><annotation encoding="application/x-tex">X_{Ex}</annotation></semantics></math> <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>P</mi><mi>c</mi></msub><mo>=</mo><mn>2</mn><mfrac><mrow><msub><mi>P</mi><mrow><mi>E</mi><mn>1</mn></mrow></msub><msub><mi>P</mi><mrow><mi>E</mi><mn>2</mn></mrow></msub></mrow><mn>9</mn></mfrac></mrow><annotation encoding="application/x-tex">
+P_c = 2\frac{P_{E1} P_{E2}}{9}
+</annotation></semantics></math></li>
+</ol>
+<p>Consequently : <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right"><mi>P</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>M</mi><mi>A</mi><mi>T</mi><mi>C</mi><mi>H</mi><mo stretchy="false" form="prefix">|</mo><msub><mi>X</mi><mn>1</mn></msub><mo>≠</mo><msub><mi>X</mi><mn>2</mn></msub><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><msub><mi>P</mi><mrow><mi>E</mi><mn>1</mn></mrow></msub><mo stretchy="true" form="postfix">)</mo></mrow><mfrac><msub><mi>P</mi><mrow><mi>E</mi><mn>2</mn></mrow></msub><mn>3</mn></mfrac><mo>+</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><msub><mi>P</mi><mrow><mi>E</mi><mn>2</mn></mrow></msub><mo stretchy="true" form="postfix">)</mo></mrow><mfrac><msub><mi>P</mi><mrow><mi>E</mi><mn>1</mn></mrow></msub><mn>3</mn></mfrac><mo>+</mo><mn>2</mn><mfrac><mrow><msub><mi>P</mi><mrow><mi>E</mi><mn>1</mn></mrow></msub><msub><mi>P</mi><mrow><mi>E</mi><mn>2</mn></mrow></msub></mrow><mn>9</mn></mfrac></mtd></mtr></mtable><annotation encoding="application/x-tex">
+\begin{aligned}
+P(MATCH | X_1 \neq X_2) =  (1-P_{E1})\frac{P_{E2}}{3} +  (1-P_{E2})\frac{P_{E1}}{3} + 2\frac{P_{E1} P_{E2}}{9}
+\end{aligned}
+</annotation></semantics></math></p>
+<p><strong>Probability of a match under the random model</strong></p>
+<p>The second considered model is a pure random model where every base is equiprobable, hence having a probability of occurrence of a nucleotide equals <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mn>0.25</mn><annotation encoding="application/x-tex">0.25</annotation></semantics></math>. Under that hypothesis</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>M</mi><mi>A</mi><mi>T</mi><mi>C</mi><mi>H</mi><mo stretchy="false" form="prefix">|</mo><mtext mathvariant="normal">Random model</mtext><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mn>0.25</mn></mrow><annotation encoding="application/x-tex">
+P(MATCH | \text{Random model}) = 0.25
+</annotation></semantics></math></p>
+<p><strong>The score is a log ration of likelyhood</strong></p>
+<p>Score is define as the logarithm of the ratio between the likelyhood of the observations considering the sequencer error model over tha likelyhood u</p>
+<div class="cell">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="comm_computation_files/figure-html/unnamed-chunk-1-1.png" class="img-fluid figure-img" width="672"></p>
+<p></p><figcaption class="figure-caption">Evolution of the match and mismatch scores when the quality of base is 20 while the second range from 10 to 40.</figcaption><p></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="obimultiplex" class="level2" data-number="11.2">
+<h2 data-number="11.2" class="anchored" data-anchor-id="obimultiplex"><span class="header-section-number">11.2</span> <code>obimultiplex</code></h2>
+<blockquote class="blockquote">
+<p>Replace the <code>ngsfilter</code> original <em>OBITools</em></p>
+</blockquote>
+</section>
+<section id="obicomplement" class="level2" data-number="11.3">
+<h2 data-number="11.3" class="anchored" data-anchor-id="obicomplement"><span class="header-section-number">11.3</span> <code>obicomplement</code></h2>
+</section>
+<section id="obiclean" class="level2" data-number="11.4">
+<h2 data-number="11.4" class="anchored" data-anchor-id="obiclean"><span class="header-section-number">11.4</span> <code>obiclean</code></h2>
+</section>
+<section id="obiuniq" class="level2" data-number="11.5">
+<h2 data-number="11.5" class="anchored" data-anchor-id="obiuniq"><span class="header-section-number">11.5</span> <code>obiuniq</code></h2>
+
+
+<div id="refs" class="references csl-bib-body hanging-indent" role="doc-bibliography" style="display: none">
+<div id="ref-Lipman1985-hw" class="csl-entry" role="doc-biblioentry">
+Lipman, D J, and W R Pearson. 1985. <span>“<span class="nocase">Rapid and sensitive protein similarity searches</span>.”</span> <em>Science</em> 227 (4693): 1435–41. <a href="http://www.ncbi.nlm.nih.gov/pubmed/2983426">http://www.ncbi.nlm.nih.gov/pubmed/2983426</a>.
+</div>
+</div>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    target: function(trigger) {
+      return trigger.previousElementSibling;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="./comm_annotation.html" class="pagination-link">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Sequence annotations</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="./comm_sampling.html" class="pagination-link">
+        <span class="nav-page-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Sequence sampling and filtering</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+</body></html>

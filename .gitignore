@@ -5,6 +5,8 @@ bin
 vendor
 *.fastq
 *.fasta
+*.fastq.gz
+*.fasta.gz
 .DS_Store
 *.gml
 *.log
@@ -80,3 +82,18 @@ sample/consensus_graphs/specimen_hac_plants_Vern_disicolor_.gml
 93954
 Bact03.e5.gb_R254.obipcr.idx.fasta.save
 sample/test.obipcr.log
+Bact02.e3.gb_R254.obipcr.fasta.gz
+Example_Arth03.ngsfilter
+SPER01.csv
+SPER03.csv
+wolf_diet_ngsfilter.txt
+xx
+xxx.gb
+yyy_geom.csv
+yyy_LCS.csv
+yyy.json
+bug_obimultiplex/toto
+bug_obimultiplex/toto_mapping
+bug_obimultiplex/tutu
+bug_obimultiplex/tutu_mapping
+bug_obipairing/GIT1_GH_ngsfilter.txt
