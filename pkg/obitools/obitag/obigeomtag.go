@@ -138,7 +138,6 @@ func FindGeomClosest(sequence *obiseq.BioSequence,
 	}
 
 	matches := obiseq.MakeBioSequenceSlice(len(min_idx))
-	matches = matches[0:len(min_idx)]
 	for i, j := range min_idx {
 		matches[i] = (*references)[j]
 	}

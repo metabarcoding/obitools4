@@ -88,8 +88,19 @@ func (s *BioSequenceSlice) EnsureCapacity(capacity int) *BioSequenceSlice {
 		c = 0
 	}
 
-	if capacity > c {
-		*s = slices.Grow[BioSequenceSlice](*s, capacity-c)
+	n := 0
+	for capacity > c {
+		old_c := c
+		*s = slices.Grow(*s, capacity)
+		c = cap(*s)
+		if c < capacity {
+			n++
+			if n < 4 {
+				log.Warnf("cannot allocate a Biosequence Slice of size %d (only %d from %d)", capacity, c, old_c)
+			} else {
+				log.Panicf("cannot allocate a Biosequence Slice of size %d (only %d from %d)", capacity, c, old_c)
+			}
+		}
 	}
 
 	return s
