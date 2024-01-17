@@ -15,14 +15,14 @@ import (
 // SquareDist calculates the squared Euclidean distance between
 // two vectors 'a' and 'b'.
 //
-// 'a' and 'b' are slices of float64 values representing
+// 'a' and 'b' are slices of float64 or int values representing
 // coordinate points in space. It is assumed that both slices
 // have the same length.
 // Returns the calculated squared distance as a float64.
-func SquareDist[T float64 | int](a, b []T) float64 {
-	sum := 0.0
+func SquareDist[T float64 | int](a, b []T) T {
+	sum := T(0)
 	for i, v := range a {
-		diff := float64(v - b[i])
+		diff := v - b[i]
 		sum += diff * diff
 	}
 	return sum
@@ -35,7 +35,7 @@ func SquareDist[T float64 | int](a, b []T) float64 {
 // is paired with the corresponding element of `b`.
 // Returns the squared sum of the differences.
 func EuclideanDist[T float64 | int](a, b []T) float64 {
-	return math.Sqrt(SquareDist(a, b))
+	return math.Sqrt(float64(SquareDist(a, b)))
 }
 
 // DefaultRG creates and returns a new instance of *rand.Rand.

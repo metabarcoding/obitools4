@@ -1,7 +1,7 @@
 package obitag
 
 import (
-	"log"
+	log "github.com/sirupsen/logrus"
 	"math"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obialign"
@@ -99,9 +99,9 @@ func MapOnLandmarkSequences(sequence *obiseq.BioSequence, landmarks *obiseq.BioS
 func FindGeomClosest(sequence *obiseq.BioSequence,
 	landmarks *obiseq.BioSequenceSlice,
 	references *obiseq.BioSequenceSlice,
-	buffer *[]uint64) (*obiseq.BioSequence, float64, float64, []int, *obiseq.BioSequenceSlice) {
+	buffer *[]uint64) (*obiseq.BioSequence, int, float64, []int, *obiseq.BioSequenceSlice) {
 
-	min_dist := math.MaxFloat64
+	min_dist := math.MaxInt
 	min_idx := make([]int, 0)
 
 	query_location := MapOnLandmarkSequences(sequence, landmarks, buffer)
@@ -129,7 +129,7 @@ func FindGeomClosest(sequence *obiseq.BioSequence,
 
 	for _, i := range min_idx {
 		seq := (*references)[i]
-		lcs, length := obialign.FastLCSEGFScore(sequence, seq, -1, buffer)
+		lcs, length := obialign.FastLCSScore(sequence, seq, -1, buffer)
 		ident := float64(lcs) / float64(length)
 		if ident > best_id {
 			best_id = ident

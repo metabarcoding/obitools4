@@ -6,6 +6,7 @@ import (
 	"sort"
 	"sync"
 
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obistats"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
@@ -24,26 +25,36 @@ func GeomIndexSesquence(seqidx int,
 		log.Fatalf("Sequence %s does not have a coordinate", sequence.Id())
 	}
 
-	seq_dist := make([]float64, len(references))
+	seq_dist := make([]int, len(references))
 
 	var wg sync.WaitGroup
 
-	for i, ref := range references {
-		wg.Add(1)
-		go func(i int, ref *obiseq.BioSequence) {
-			defer wg.Done()
-			reflocation := ref.GetCoordinate()
-			if reflocation == nil {
-				log.Fatalf("Sequence %s does not have a coordinate", ref.Id())
-			}
+	iseq_channel := make(chan int)
 
-			seq_dist[i] = obistats.SquareDist(location, reflocation)
-		}(i, ref)
+	for k := 0; k < obioptions.CLIParallelWorkers(); k++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for i := range iseq_channel {
+				ref := references[i]
+				reflocation := ref.GetCoordinate()
+				if reflocation == nil {
+					log.Fatalf("Sequence %s does not have a coordinate", ref.Id())
+				}
+
+				seq_dist[i] = obistats.SquareDist(location, reflocation)
+			}
+		}()
 	}
 
+	for i := range references {
+		iseq_channel <- i
+	}
+
+	close(iseq_channel)
 	wg.Wait()
 
-	order := obiutils.Order(sort.Float64Slice(seq_dist))
+	order := obiutils.Order(sort.IntSlice(seq_dist))
 
 	lca := (*taxa)[seqidx]
 

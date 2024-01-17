@@ -29,20 +29,19 @@ import (
 // - taxid: The taxid associated with the matched distance.
 // - rank: The rank associated with the matched distance.
 // - scientificName: The scientific name associated with the matched distance.
-func MatchDistanceIndex(distance float64, distanceIdx map[int]string) (int, string, string) {
-	idist := int(distance)
+func MatchDistanceIndex(distance int, distanceIdx map[int]string) (int, string, string) {
 	keys := maps.Keys(distanceIdx)
 	slices.Sort(keys)
 
 	i := sort.Search(len(keys), func(i int) bool {
-		return idist <= keys[i]
+		return distance <= keys[i]
 	})
 
 	var taxid int
 	var rank string
 	var scientificName string
 
-	if i == len(keys) || idist > keys[len(keys)-1] {
+	if i == len(keys) || distance > keys[len(keys)-1] {
 		taxid = 1
 		rank = "no rank"
 		scientificName = "root"
