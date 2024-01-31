@@ -133,7 +133,7 @@ func _ParseEmblFile(source string, input <-chan _FileChunk, out obiiter.IBioSequ
 				}
 			case strings.HasPrefix(line, "     "):
 				parts := strings.SplitN(line[5:], " ", 7)
-				np := len(parts)
+				np := len(parts) - 1
 				for i := 0; i < np; i++ {
 					seqBytes.WriteString(parts[i])
 				}
