@@ -99,6 +99,11 @@ func (sequence *BioSequence) _revcmpMutation() *BioSequence {
 	return sequence
 }
 
+/**
+* ReverseComplementWorker is a function that returns a SeqWorker which performs reverse complement operation on given BioSequence.
+* @param inplace {bool}: If true, changes will be made to original sequence object else new sequence object will be created. Default value is false.
+* @returns {SeqWorker} A function that accepts *BioSequence and returns its reversed-complement form.
+ */
 func ReverseComplementWorker(inplace bool) SeqWorker {
 	f := func(input *BioSequence) *BioSequence {
 		return input.ReverseComplement(inplace)

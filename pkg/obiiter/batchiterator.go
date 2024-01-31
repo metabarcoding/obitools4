@@ -762,3 +762,10 @@ func IBatchOver(data obiseq.BioSequenceSlice,
 	}
 	return newIter
 }
+
+// func IBatchOverClasses(data obiseq.BioSequenceSlice,
+// 	classifier *obiseq.BioSequenceClassifier) IBioSequence {
+
+// 	newIter := MakeIBioSequence()
+// 	classMap := make(map[string]int)
+// }

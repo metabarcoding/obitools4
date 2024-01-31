@@ -36,6 +36,7 @@
 -   In `obimultiplex`, correct a bug leading to a miss-read of the ngsfilter file when tags where written in lower case.
 -   In `obitag`, correct a bug leading to the annotation by taxid 1 (root) all the sequences having a 100% match
     with one the reference sequence.
+-   Correct a bug in the EMBL reader.
 
 ## November 16th, 2023. Release 4.1.0
 
