@@ -118,7 +118,16 @@ func (marker *Marker) Match(sequence *obiseq.BioSequence) *DemultiplexMatch {
 	aseq, _ := obiapat.MakeApatSequence(sequence, false)
 
 	start, end, nerr, matched := marker.forward.BestMatch(aseq, marker.taglength, -1)
+
 	if matched {
+		if start < 0 {
+			start = 0
+		}
+
+		if end > sequence.Len() {
+			end = sequence.Len()
+		}
+
 		sseq := sequence.String()
 		direct := sseq[start:end]
 		tagstart := obiutils.MaxInt(start-marker.taglength, 0)
@@ -176,6 +185,14 @@ func (marker *Marker) Match(sequence *obiseq.BioSequence) *DemultiplexMatch {
 	start, end, nerr, matched = marker.reverse.BestMatch(aseq, marker.taglength, -1)
 
 	if matched {
+		if start < 0 {
+			start = 0
+		}
+
+		if end > sequence.Len() {
+			end = sequence.Len()
+		}
+
 		sseq := sequence.String()
 
 		reverse := strings.ToLower(sseq[start:end])
