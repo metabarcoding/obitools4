@@ -2,6 +2,15 @@
 
 ## Latest changes
 
+## February 16th, 2024. Release 4.1.2
+
+### Bug fixes
+
+-   Several bugs in the parsing of EMBL and Genbank files have been fixed. The bugs occurred in the case 
+    of very large sequences, such as complete genomes. The Genbank parser is now more robust. It breaks 
+    for more errors than the previous version. This allows to detect parsing errors instead of hiding them 
+    and producing wrong results.
+
 ## December 20th, 2023. Release 4.1.1
 
 ### New feature
