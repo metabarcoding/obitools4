@@ -186,54 +186,72 @@ func _ReadFlatFileChunk(reader io.Reader, readers chan _FileChunk) {
 	// Initialize the buffer to the size of a chunk of data
 	buff = make([]byte, _FileChunkSize)
 
+	// Read from the reader until the buffer is full or the end of the file is reached
+	l, err = io.ReadFull(reader, buff)
+	buff = buff[:l]
+
+	if err == io.ErrUnexpectedEOF {
+		err = nil
+	}
+
 	// Read from the reader until the end of the last entry is found or the end of the file is reached
 	for err == nil {
 
-		// Read from the reader until the buffer is full or the end of the file is reached
-		l, err = io.ReadFull(reader, buff)
-
-		if err == io.ErrUnexpectedEOF {
-			err = nil
-		}
-
 		// Create an extended buffer to read from if the end of the last entry is not found in the current buffer
 		extbuff := make([]byte, 1<<22)
-		buff = buff[:l]
 		end := 0
 		ic := 0
 
 		// Read from the reader in 1 MB increments until the end of the last entry is found
-		for end = _EndOfLastEntry(buff); err == nil && end < 0; end = _EndOfLastEntry(extbuff[:size]) {
+		for end = _EndOfLastEntry(buff); err == nil && end < 0; end = _EndOfLastEntry(buff) {
 			ic++
 			size, err = io.ReadFull(reader, extbuff)
 			buff = append(buff, extbuff[:size]...)
 		}
 
-		end = _EndOfLastEntry(buff)
-
-		// If an extension was read, log the size and number of extensions
-
 		if len(buff) > 0 {
-			remains := buff[end:]
+			lremain := len(buff) - end
+			remains := make([]byte, max(lremain, _FileChunkSize))
+			lcp := copy(remains, buff[end:])
+			remains = remains[:lcp]
+			if lcp < lremain {
+				log.Fatalf("Error copying remaining data of chunck %d : %d < %d", i, lcp, len(remains))
+			}
+
 			buff = buff[:end]
 
 			// Send the chunk of data as a _FileChunk struct to the readers channel
 			io := bytes.NewBuffer(buff)
 
-			log.Debugf("Flat File chunck : final buff size %d bytes (%d) (%d extensions) -> end = %d\n",
+			nzero := 0
+			for j := 0; j < len(buff); j++ {
+				if buff[j] == 0 {
+					nzero++
+				}
+			}
+
+			if nzero > 0 {
+				log.Fatalf("File chunck %d contains %d zero bytes", i, nzero)
+			}
+
+			log.Debugf("Flat File chunck %d : final buff size %d bytes (%d) (%d extensions count) -> end = %d starting by = %s, ending by = %s, remaining = %s",
+				i,
 				len(buff),
 				io.Cap(),
 				ic,
 				end,
+				io.Bytes()[0:30],
+				io.Bytes()[io.Len()-3:],
+				remains[0:30],
 			)
+
+			if string(buff[io.Len()-3:]) != "//\n" {
+				log.Fatalf("File chunck ends with 3 bytes : %s", io.Bytes()[io.Len()-3:])
+			}
 
 			readers <- _FileChunk{io, i}
 			i++
-
-			// Set the buffer to the size of a chunk of data and copy any remaining data to the new buffer
-			buff = make([]byte, _FileChunkSize)
-			copy(buff, remains)
-			//l = len(remains)
+			buff = remains
 		}
 	}
 
