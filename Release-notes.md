@@ -2,6 +2,14 @@
 
 ## Latest changes
 
+### Enhancement
+-   The bug corrected in the parsing of EMBL and Genbank files as implemented in version 4.1.2 of OBITools4,
+    potentially induced some reduction in the performance of the parsing. This should have been now fixed.
+-   In the same idea, parsing of genbank and EMBL files were reading and storing in memory not only the sequence
+    but also the annotations (features table). Up to now none of the obitools are using this information, but
+    with large complete genomes, it is occupying a lot of memory. To reduce this impact, the new version of the
+    parser doesn't any more store in memory the annotations by default.
+
 ## February 16th, 2024. Release 4.1.2
 
 ### Bug fixes

@@ -11,6 +11,7 @@ type __options__ struct {
 	with_progress_bar     bool
 	buffer_size           int
 	batch_size            int
+	total_seq_size        int
 	full_file_batch       bool
 	parallel_workers      int
 	closefile             bool
@@ -29,6 +30,7 @@ type __options__ struct {
 	csv_auto              bool
 	paired_filename       string
 	source                string
+	with_feature_table    bool
 }
 
 type Options struct {
@@ -45,6 +47,7 @@ func MakeOptions(setters []WithOption) Options {
 		buffer_size:           2,
 		parallel_workers:      obioptions.CLIReadParallelWorkers(),
 		batch_size:            obioptions.CLIBatchSize(),
+		total_seq_size:        1024 * 1024 * 100, // 100 MB by default
 		full_file_batch:       false,
 		closefile:             false,
 		appendfile:            false,
@@ -62,6 +65,7 @@ func MakeOptions(setters []WithOption) Options {
 		csv_auto:              false,
 		paired_filename:       "",
 		source:                "",
+		with_feature_table:    false,
 	}
 
 	opt := Options{&o}
@@ -75,6 +79,10 @@ func MakeOptions(setters []WithOption) Options {
 
 func (opt Options) BatchSize() int {
 	return opt.pointer.batch_size
+}
+
+func (opt Options) TotalSeqSize() int {
+	return opt.pointer.total_seq_size
 }
 
 func (opt Options) FullFileBatch() bool {
@@ -169,6 +177,10 @@ func (opt Options) Source() string {
 	return opt.pointer.source
 }
 
+func (opt Options) WithFeatureTable() bool {
+	return opt.pointer.with_feature_table
+}
+
 func OptionCloseFile() WithOption {
 	f := WithOption(func(opt Options) {
 		opt.pointer.closefile = true
@@ -254,6 +266,14 @@ func OptionsParallelWorkers(nworkers int) WithOption {
 func OptionsBatchSize(size int) WithOption {
 	f := WithOption(func(opt Options) {
 		opt.pointer.batch_size = size
+	})
+
+	return f
+}
+
+func OptionsBatchSizeDefault(bp int) WithOption {
+	f := WithOption(func(opt Options) {
+		opt.pointer.batch_size = bp
 	})
 
 	return f
@@ -382,6 +402,14 @@ func CSVNAValue(navalue string) WithOption {
 func CSVAutoColumn(auto bool) WithOption {
 	f := WithOption(func(opt Options) {
 		opt.pointer.csv_auto = auto
+	})
+
+	return f
+}
+
+func WithFeatureTable(with bool) WithOption {
+	f := WithOption(func(opt Options) {
+		opt.pointer.with_feature_table = with
 	})
 
 	return f

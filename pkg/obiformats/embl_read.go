@@ -94,7 +94,11 @@ func _EndOfLastEntry(buff []byte) int {
 	return -1
 }
 
-func _ParseEmblFile(source string, input <-chan _FileChunk, out obiiter.IBioSequence) {
+func _ParseEmblFile(source string, input <-chan _FileChunk,
+	out obiiter.IBioSequence,
+	withFeatureTable bool,
+	batch_size int,
+	total_seq_size int) {
 
 	for chunks := range input {
 		scanner := bufio.NewScanner(chunks.raw)
@@ -120,14 +124,16 @@ func _ParseEmblFile(source string, input <-chan _FileChunk, out obiiter.IBioSequ
 					defBytes.WriteByte(' ')
 				}
 				defBytes.WriteString(strings.TrimSpace(line[5:]))
-			case strings.HasPrefix(line, "FH   "):
+			case withFeatureTable && strings.HasPrefix(line, "FH   "):
 				featBytes.WriteString(line)
-			case line == "FH":
+			case withFeatureTable && line == "FH":
 				featBytes.WriteByte('\n')
 				featBytes.WriteString(line)
 			case strings.HasPrefix(line, "FT   "):
-				featBytes.WriteByte('\n')
-				featBytes.WriteString(line)
+				if withFeatureTable {
+					featBytes.WriteByte('\n')
+					featBytes.WriteString(line)
+				}
 				if strings.HasPrefix(line, `FT                   /db_xref="taxon:`) {
 					taxid, _ = strconv.Atoi(strings.SplitN(line[37:], `"`, 2)[0])
 				}
@@ -143,7 +149,9 @@ func _ParseEmblFile(source string, input <-chan _FileChunk, out obiiter.IBioSequ
 					defBytes.String())
 				sequence.SetSource(source)
 
-				sequence.SetFeatures(featBytes.Bytes())
+				if withFeatureTable {
+					sequence.SetFeatures(featBytes.Bytes())
+				}
 
 				annot := sequence.Annotations()
 				annot["scientific_name"] = scientificName
@@ -198,7 +206,7 @@ func _ReadFlatFileChunk(reader io.Reader, readers chan _FileChunk) {
 	for err == nil {
 
 		// Create an extended buffer to read from if the end of the last entry is not found in the current buffer
-		extbuff := make([]byte, 1<<22)
+		extbuff := make([]byte, _FileChunkSize)
 		end := 0
 		ic := 0
 
@@ -278,7 +286,9 @@ func ReadEMBL(reader io.Reader, options ...WithOption) obiiter.IBioSequence {
 
 	// for j := 0; j < opt.ParallelWorkers(); j++ {
 	for j := 0; j < nworkers; j++ {
-		go _ParseEmblFile(opt.Source(), entry_channel, newIter)
+		go _ParseEmblFile(opt.Source(), entry_channel, newIter,
+			opt.WithFeatureTable(),
+			opt.BatchSize(), opt.TotalSeqSize())
 	}
 
 	go _ReadFlatFileChunk(reader, entry_channel)

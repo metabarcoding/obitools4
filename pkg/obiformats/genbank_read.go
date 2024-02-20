@@ -30,7 +30,10 @@ var _seqlenght_rx = regexp.MustCompile(" +([0-9]+) bp")
 
 func _ParseGenbankFile(source string,
 	input <-chan _FileChunk, out obiiter.IBioSequence,
-	chunck_order func() int) {
+	chunck_order func() int,
+	withFeatureTable bool,
+	batch_size int,
+	total_seq_size int) {
 	state := inHeader
 	previous_chunk := -1
 
@@ -143,7 +146,10 @@ func _ParseGenbankFile(source string,
 						seqBytes.Bytes(),
 						defBytes.String())
 					sequence.SetSource(source)
-					sequence.SetFeatures(featBytes.Bytes())
+
+					if withFeatureTable {
+						sequence.SetFeatures(featBytes.Bytes())
+					}
 
 					annot := sequence.Annotations()
 					annot["scientific_name"] = scientificName
@@ -155,7 +161,7 @@ func _ParseGenbankFile(source string,
 					sequences = append(sequences, sequence)
 					sumlength += sequence.Len()
 
-					if len(sequences) == 100 || sumlength > 1e7 {
+					if len(sequences) == batch_size || sumlength > total_seq_size {
 						log.Debugln("Pushing sequences")
 						out.Push(obiiter.MakeBioSequenceBatch(chunck_order(), sequences))
 						sequences = make(obiseq.BioSequenceSlice, 0, 100)
@@ -184,8 +190,10 @@ func _ParseGenbankFile(source string,
 				default:
 					switch state {
 					case inFeature:
-						featBytes.WriteByte('\n')
-						featBytes.WriteString(line)
+						if withFeatureTable {
+							featBytes.WriteByte('\n')
+							featBytes.WriteString(line)
+						}
 						if strings.HasPrefix(line, `                     /db_xref="taxon:`) {
 							taxid, _ = strconv.Atoi(strings.SplitN(line[37:], `"`, 2)[0])
 						}
@@ -227,7 +235,8 @@ func ReadGenbank(reader io.Reader, options ...WithOption) obiiter.IBioSequence {
 
 	// for j := 0; j < opt.ParallelWorkers(); j++ {
 	for j := 0; j < nworkers; j++ {
-		go _ParseGenbankFile(opt.Source(), entry_channel, newIter, chunck_order)
+		go _ParseGenbankFile(opt.Source(), entry_channel, newIter, chunck_order,
+			opt.WithFeatureTable(), opt.BatchSize(), opt.TotalSeqSize())
 	}
 
 	go _ReadFlatFileChunk(reader, entry_channel)
