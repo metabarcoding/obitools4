@@ -256,6 +256,12 @@ func CLIAnnotationWorker() obiseq.SeqWorker {
 		annotator = annotator.ChainWorkers(w)
 	}
 
+	if CLISetTaxonomicPath() {
+		taxo := obigrep.CLILoadSelectedTaxonomy()
+		w := taxo.MakeSetPathWorker()
+		annotator = annotator.ChainWorkers(w)
+	}
+
 	if CLIHasAddLCA() {
 		taxo := obigrep.CLILoadSelectedTaxonomy()
 		w := obitax.AddLCAWorker(taxo, CLILCASlotName(), CLILCAThreshold())

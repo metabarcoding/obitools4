@@ -51,3 +51,14 @@ func (taxonomy *Taxonomy) MakeSetFamilyWorker() obiseq.SeqWorker {
 
 	return w
 }
+
+func (taxonomy *Taxonomy) MakeSetPathWorker() obiseq.SeqWorker {
+
+	w := func(s *obiseq.BioSequence) *obiseq.BioSequence {
+		taxonomy.SetPath(s)
+		return s
+	}
+
+	return w
+
+}

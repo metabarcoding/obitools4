@@ -2,6 +2,7 @@ package obitax
 
 import (
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
+	log "github.com/sirupsen/logrus"
 )
 
 // Setting the taxon at a given rank for a given sequence.
@@ -45,4 +46,23 @@ func (taxonomy *Taxonomy) SetGenus(sequence *obiseq.BioSequence) *TaxNode {
 // Setting the family of a sequence.
 func (taxonomy *Taxonomy) SetFamily(sequence *obiseq.BioSequence) *TaxNode {
 	return taxonomy.SetTaxonAtRank(sequence, "family")
+}
+
+func (taxonomy *Taxonomy) SetPath(sequence *obiseq.BioSequence) string {
+	taxid, err := taxonomy.Taxon(sequence.Taxid())
+
+	if err != nil {
+		log.Fatalf("Taxid %d not defined in the current taxonomy", sequence.Taxid())
+	}
+
+	path, err := taxid.Path()
+
+	if err != nil {
+		log.Fatalf("Taxonomy index error: %v", err)
+	}
+
+	tpath := path.String()
+	sequence.SetAttribute("taxonomic_path", tpath)
+
+	return tpath
 }
