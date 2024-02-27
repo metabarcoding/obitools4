@@ -1,3 +1,7 @@
+export GOPATH=$(shell pwd)/GO
+export GOBIN=$(GOPATH)/bin
+export PATH=$(GOBIN):$(shell echo $${PATH})
+
 GOCMD=go
 GOBUILD=$(GOCMD) build # -compiler gccgo -gccgoflags -O3
 GOCLEAN=$(GOCMD) clean
