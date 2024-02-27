@@ -218,8 +218,12 @@ func _ReadFlatFileChunk(reader io.Reader, readers chan _FileChunk) {
 		}
 
 		if len(buff) > 0 {
+			if end < 0 {
+				end = len(buff)
+			}
 			lremain := len(buff) - end
 			remains := make([]byte, max(lremain, _FileChunkSize))
+
 			lcp := copy(remains, buff[end:])
 			remains = remains[:lcp]
 			if lcp < lremain {
@@ -228,38 +232,21 @@ func _ReadFlatFileChunk(reader io.Reader, readers chan _FileChunk) {
 
 			buff = buff[:end]
 
-			// Send the chunk of data as a _FileChunk struct to the readers channel
-			io := bytes.NewBuffer(buff)
+			for len(buff) > 0 && (buff[len(buff)-1] == '\n' || buff[len(buff)-1] == '\r') {
+				buff = buff[:len(buff)-1]
+			}
 
-			nzero := 0
-			for j := 0; j < len(buff); j++ {
-				if buff[j] == 0 {
-					nzero++
+			if len(buff) > 0 {
+				io := bytes.NewBuffer(buff)
+
+				if string(buff[io.Len()-2:]) != "//" {
+					log.Fatalf("File chunck ends with 3 bytes : %s", io.Bytes()[io.Len()-3:])
 				}
+
+				readers <- _FileChunk{io, i}
+				i++
+				buff = remains
 			}
-
-			if nzero > 0 {
-				log.Fatalf("File chunck %d contains %d zero bytes", i, nzero)
-			}
-
-			log.Debugf("Flat File chunck %d : final buff size %d bytes (%d) (%d extensions count) -> end = %d starting by = %s, ending by = %s, remaining = %s",
-				i,
-				len(buff),
-				io.Cap(),
-				ic,
-				end,
-				io.Bytes()[0:30],
-				io.Bytes()[io.Len()-3:],
-				remains[0:30],
-			)
-
-			if string(buff[io.Len()-3:]) != "//\n" {
-				log.Fatalf("File chunck ends with 3 bytes : %s", io.Bytes()[io.Len()-3:])
-			}
-
-			readers <- _FileChunk{io, i}
-			i++
-			buff = remains
 		}
 	}
 

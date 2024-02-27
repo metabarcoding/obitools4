@@ -24,6 +24,7 @@ const (
 	inDefinition gbstate = 2
 	inFeature    gbstate = 3
 	inSequence   gbstate = 4
+	inContig     gbstate = 5
 )
 
 var _seqlenght_rx = regexp.MustCompile(" +([0-9]+) bp")
@@ -127,17 +128,21 @@ func _ParseGenbankFile(source string,
 					state = inSequence
 					processed = true
 
+				case strings.HasPrefix(line, "CONTIG"):
+					if state != inFeature && state != inContig {
+						log.Fatalf("Unexpected state %d while reading ORIGIN: %s", state, line)
+					}
+					state = inContig
+					processed = true
+
 				case line == "//":
 
-					if state != inSequence {
+					if state != inSequence && state != inContig {
 						log.Fatalf("Unexpected state %d while reading end of record %s", state, id)
 					}
 					// log.Debugln("Total lines := ", nl)
 					if id == "" {
 						log.Warn("Empty id when parsing genbank file")
-					}
-					if seqBytes.Len() == 0 {
-						log.Warn("Empty sequence when parsing genbank file")
 					}
 
 					log.Debugf("End of sequence %s: %dbp ", id, seqBytes.Len())
