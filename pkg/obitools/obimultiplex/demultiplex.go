@@ -30,7 +30,7 @@ func IExtractBarcode(iterator obiiter.IBioSequence) (obiiter.IBioSequence, error
 
 	worker := obingslibrary.ExtractBarcodeSliceWorker(ngsfilter, opts...)
 
-	newIter := iterator.MakeISliceWorker(worker)
+	newIter := iterator.MakeISliceWorker(worker, false)
 
 	if !CLIConservedErrors() {
 		log.Println("Discards unassigned sequences")

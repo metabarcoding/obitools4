@@ -14,7 +14,7 @@ func AhoCorazickWorker(slot string, patterns []string) obiseq.SeqWorker {
 	fslot := slot + "_Fwd"
 	rslot := slot + "_Rev"
 
-	f := func(s *obiseq.BioSequence) *obiseq.BioSequence {
+	f := func(s *obiseq.BioSequence) (obiseq.BioSequenceSlice, error) {
 		matchesF := len(matcher.FindAllByteSlice(s.Sequence()))
 		matchesR := len(matcher.FindAllByteSlice(s.ReverseComplement(false).Sequence()))
 
@@ -26,7 +26,7 @@ func AhoCorazickWorker(slot string, patterns []string) obiseq.SeqWorker {
 			s.SetAttribute(rslot, matchesR)
 		}
 
-		return s
+		return obiseq.BioSequenceSlice{s}, nil
 	}
 
 	return f

@@ -60,5 +60,5 @@ func CLIPCR(iterator obiiter.IBioSequence) (obiiter.IBioSequence, error) {
 		iterator = iterator.Pipe(frags)
 	}
 
-	return iterator.MakeISliceWorker(worker, obioptions.CLIParallelWorkers(), 0), nil
+	return iterator.MakeISliceWorker(worker, false, obioptions.CLIParallelWorkers(), 0), nil
 }

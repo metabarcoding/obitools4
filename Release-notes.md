@@ -2,13 +2,26 @@
 
 ## Latest changes
 
+### API Changes
+-   Two of the main class `obiseq.SeqWorker` and `obiseq.SeqWorker` have their declaration changed.
+    Both now return two values a `obiseq.BioSequenceSlice` and an `error`. This allow a worker to
+    return potentially several sequences as the result of the processing of a single sequence, or
+    zero, which is equivalent to filter out the input sequence.
+
 ### Enhancement
 -   The bug corrected in the parsing of EMBL and Genbank files as implemented in version 4.1.2 of OBITools4,
     potentially induced some reduction in the performance of the parsing. This should have been now fixed.
--   In the same idea, parsing of genbank and EMBL files were reading and storing in memory not only the sequence
+-   In the same idea, parsing of genbank and EMBL files were reading and storing in memory not only 
+    the sequence
     but also the annotations (features table). Up to now none of the obitools are using this information, but
-    with large complete genomes, it is occupying a lot of memory. To reduce this impact, the new version of the
-    parser doesn't any more store in memory the annotations by default.
+    with large complete genomes, it is occupying a lot of memory. To reduce this impact, the new version of
+    the parser doesn't any more store in memory the annotations by default.
+-   Add a **--taxonomic-path** to `obiannotate`. The option adds a `taxonomic_path` tag to sequences describing 
+    the taxonomic classification of the sequence according to its taxid. The path is a string. Each level of the
+    path is delimited by a `|` character. A level consists of three parts separated by a `@`. The first part is the
+    taxid, the second the scientific name and the last the taxonomic rank. The first level described is always the
+    root of the taxonomy. The latest corresponds to the taxid of the sequence. If a sequence is not annotated by
+    a taxid, as usual the sequence is assumed having the taxid 1 (the root of the taxonomy).
 
 ## February 16th, 2024. Release 4.1.2
 

@@ -1,20 +1,25 @@
 package obiseq
 
-import log "github.com/sirupsen/logrus"
+import (
+	"fmt"
+	"slices"
+
+	log "github.com/sirupsen/logrus"
+)
 
 type SeqAnnotator func(*BioSequence)
 
-type SeqWorker func(*BioSequence) *BioSequence
-type SeqSliceWorker func(BioSequenceSlice) BioSequenceSlice
+type SeqWorker func(*BioSequence) (BioSequenceSlice, error)
+type SeqSliceWorker func(BioSequenceSlice) (BioSequenceSlice, error)
 
-func NilSeqWorker(seq *BioSequence) *BioSequence {
-	return seq
+func NilSeqWorker(seq *BioSequence) (BioSequenceSlice, error) {
+	return BioSequenceSlice{seq}, nil
 }
 
 func AnnotatorToSeqWorker(function SeqAnnotator) SeqWorker {
-	f := func(seq *BioSequence) *BioSequence {
+	f := func(seq *BioSequence) (BioSequenceSlice, error) {
 		function(seq)
-		return seq
+		return BioSequenceSlice{seq}, nil
 	}
 	return f
 }
@@ -25,35 +30,47 @@ func SeqToSliceWorker(worker SeqWorker,
 
 	if worker == nil {
 		if inplace {
-			f = func(input BioSequenceSlice) BioSequenceSlice {
-				return input
+			f = func(input BioSequenceSlice) (BioSequenceSlice, error) {
+				return input, nil
 			}
 		} else {
-			f = func(input BioSequenceSlice) BioSequenceSlice {
+			f = func(input BioSequenceSlice) (BioSequenceSlice, error) {
 				output := MakeBioSequenceSlice(len(input))
 				copy(output, input)
-				return output
+				return output, nil
 			}
 		}
 	} else {
-		f = func(input BioSequenceSlice) BioSequenceSlice {
+		f = func(input BioSequenceSlice) (BioSequenceSlice, error) {
 			output := input
 			if !inplace {
 				output = MakeBioSequenceSlice(len(input))
 			}
 			i := 0
 			for _, s := range input {
-				r := worker(s)
-				if r != nil {
-					output[i] = r
-					i++
-				} else if breakOnError {
-					log.Fatalf("got an error on sequence %s processing",
-						r.Id())
+				r, err := worker(s)
+				if err == nil {
+					for _, rs := range r {
+						output[i] = rs
+						i++
+						if i == cap(output) {
+							slices.Grow(output, cap(output))
+						}
+					}
+
+				} else {
+					if breakOnError {
+						err = fmt.Errorf("got an error on sequence %s processing : %v",
+							s.Id(), err)
+						return BioSequenceSlice{}, err
+					} else {
+						log.Warnf("got an error on sequence %s processing",
+							s.Id())
+					}
 				}
 			}
 
-			return output[0:i]
+			return output[0:i], nil
 		}
 
 	}
@@ -61,15 +78,16 @@ func SeqToSliceWorker(worker SeqWorker,
 	return f
 }
 
-func SeqToSliceConditionalWorker(worker SeqWorker,
+func SeqToSliceConditionalWorker(
 	condition SequencePredicate,
+	worker SeqWorker,
 	inplace, breakOnError bool) SeqSliceWorker {
 
 	if condition == nil {
 		return SeqToSliceWorker(worker, inplace, breakOnError)
 	}
 
-	f := func(input BioSequenceSlice) BioSequenceSlice {
+	f := func(input BioSequenceSlice) (BioSequenceSlice, error) {
 		output := input
 		if !inplace {
 			output = MakeBioSequenceSlice(len(input))
@@ -79,18 +97,29 @@ func SeqToSliceConditionalWorker(worker SeqWorker,
 
 		for _, s := range input {
 			if condition(s) {
-				r := worker(s)
-				if r != nil {
-					output[i] = r
-					i++
-				} else if breakOnError {
-					log.Fatalf("got an error on sequence %s processing",
-						r.Id())
+				r, err := worker(s)
+				if err == nil {
+					for _, rs := range r {
+						output[i] = rs
+						i++
+						if i == cap(output) {
+							slices.Grow(output, cap(output))
+						}
+					}
+				} else {
+					if breakOnError {
+						err = fmt.Errorf("got an error on sequence %s processing : %v",
+							s.Id(), err)
+						return BioSequenceSlice{}, err
+					} else {
+						log.Warnf("got an error on sequence %s processing",
+							s.Id())
+					}
 				}
 			}
 		}
 
-		return output[0:i]
+		return output[0:i], nil
 	}
 
 	return f
@@ -105,11 +134,17 @@ func (worker SeqWorker) ChainWorkers(next SeqWorker) SeqWorker {
 		}
 	}
 
-	f := func(seq *BioSequence) *BioSequence {
+	sw := SeqToSliceWorker(next, true, false)
+
+	f := func(seq *BioSequence) (BioSequenceSlice, error) {
 		if seq == nil {
-			return nil
+			return BioSequenceSlice{}, nil
 		}
-		return next(worker(seq))
+		slice, err := worker(seq)
+		if err == nil {
+			slice, err = sw(slice)
+		}
+		return slice, err
 	}
 
 	return f

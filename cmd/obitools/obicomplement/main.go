@@ -24,7 +24,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	comp := fs.MakeIWorker(obiseq.ReverseComplementWorker(true))
+	comp := fs.MakeIWorker(obiseq.ReverseComplementWorker(true), true)
 	obiconvert.CLIWriteBioSequences(comp, true)
 
 	obiiter.WaitForLastPipe()

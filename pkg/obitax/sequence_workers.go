@@ -14,9 +14,9 @@ func (taxonomy *Taxonomy) MakeSetTaxonAtRankWorker(rank string) obiseq.SeqWorker
 			taxonomy.RankList())
 	}
 
-	w := func(sequence *obiseq.BioSequence) *obiseq.BioSequence {
+	w := func(sequence *obiseq.BioSequence) (obiseq.BioSequenceSlice, error) {
 		taxonomy.SetTaxonAtRank(sequence, rank)
-		return sequence
+		return obiseq.BioSequenceSlice{sequence}, nil
 	}
 
 	return w
@@ -24,9 +24,9 @@ func (taxonomy *Taxonomy) MakeSetTaxonAtRankWorker(rank string) obiseq.SeqWorker
 
 func (taxonomy *Taxonomy) MakeSetSpeciesWorker() obiseq.SeqWorker {
 
-	w := func(sequence *obiseq.BioSequence) *obiseq.BioSequence {
+	w := func(sequence *obiseq.BioSequence) (obiseq.BioSequenceSlice, error) {
 		taxonomy.SetSpecies(sequence)
-		return sequence
+		return obiseq.BioSequenceSlice{sequence}, nil
 	}
 
 	return w
@@ -34,9 +34,9 @@ func (taxonomy *Taxonomy) MakeSetSpeciesWorker() obiseq.SeqWorker {
 
 func (taxonomy *Taxonomy) MakeSetGenusWorker() obiseq.SeqWorker {
 
-	w := func(sequence *obiseq.BioSequence) *obiseq.BioSequence {
+	w := func(sequence *obiseq.BioSequence) (obiseq.BioSequenceSlice, error) {
 		taxonomy.SetGenus(sequence)
-		return sequence
+		return obiseq.BioSequenceSlice{sequence}, nil
 	}
 
 	return w
@@ -44,9 +44,9 @@ func (taxonomy *Taxonomy) MakeSetGenusWorker() obiseq.SeqWorker {
 
 func (taxonomy *Taxonomy) MakeSetFamilyWorker() obiseq.SeqWorker {
 
-	w := func(sequence *obiseq.BioSequence) *obiseq.BioSequence {
+	w := func(sequence *obiseq.BioSequence) (obiseq.BioSequenceSlice, error) {
 		taxonomy.SetFamily(sequence)
-		return sequence
+		return obiseq.BioSequenceSlice{sequence}, nil
 	}
 
 	return w
@@ -54,9 +54,9 @@ func (taxonomy *Taxonomy) MakeSetFamilyWorker() obiseq.SeqWorker {
 
 func (taxonomy *Taxonomy) MakeSetPathWorker() obiseq.SeqWorker {
 
-	w := func(s *obiseq.BioSequence) *obiseq.BioSequence {
-		taxonomy.SetPath(s)
-		return s
+	w := func(sequence *obiseq.BioSequence) (obiseq.BioSequenceSlice, error) {
+		taxonomy.SetPath(sequence)
+		return obiseq.BioSequenceSlice{sequence}, nil
 	}
 
 	return w

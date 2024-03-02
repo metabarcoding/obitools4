@@ -60,7 +60,7 @@ func annotateOBIClean(dataset obiseq.BioSequenceSlice,
 	sample map[string]*([]*seqPCR),
 	tag, NAValue string) obiiter.IBioSequence {
 	batchsize := 1000
-	var annot = func(data obiseq.BioSequenceSlice) obiseq.BioSequenceSlice {
+	var annot = func(data obiseq.BioSequenceSlice) (obiseq.BioSequenceSlice, error) {
 
 		for _, s := range data {
 			status := Status(s)
@@ -87,11 +87,11 @@ func annotateOBIClean(dataset obiseq.BioSequenceSlice,
 			annotation["obiclean_samplecount"] = head + internal + singleton
 
 		}
-		return data
+		return data, nil
 	}
 
 	iter := obiiter.IBatchOver(dataset, batchsize)
-	riter := iter.MakeISliceWorker(annot)
+	riter := iter.MakeISliceWorker(annot, false)
 
 	return riter
 }

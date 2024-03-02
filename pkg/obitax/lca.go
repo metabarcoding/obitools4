@@ -147,14 +147,14 @@ func AddLCAWorker(taxonomy *Taxonomy, slot_name string, threshold float64) obise
 		lca_name = "scientific_name"
 	}
 
-	f := func(sequence *obiseq.BioSequence) *obiseq.BioSequence {
+	f := func(sequence *obiseq.BioSequence) (obiseq.BioSequenceSlice, error) {
 		lca, rans, _ := taxonomy.LCA(sequence, threshold)
 
 		sequence.SetAttribute(slot_name, lca.Taxid())
 		sequence.SetAttribute(lca_name, lca.ScientificName())
 		sequence.SetAttribute(lca_error, math.Round((1-rans)*1000)/1000)
 
-		return sequence
+		return obiseq.BioSequenceSlice{sequence}, nil
 	}
 
 	return f

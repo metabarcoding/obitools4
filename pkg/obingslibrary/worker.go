@@ -172,8 +172,8 @@ func ExtractBarcodeSliceWorker(ngslibrary NGSLibrary,
 
 	ngslibrary.Compile(opt.AllowedMismatch(), opt.AllowsIndel())
 
-	worker := func(sequences obiseq.BioSequenceSlice) obiseq.BioSequenceSlice {
-		return _ExtractBarcodeSlice(ngslibrary, sequences, opt)
+	worker := func(sequences obiseq.BioSequenceSlice) (obiseq.BioSequenceSlice, error) {
+		return _ExtractBarcodeSlice(ngslibrary, sequences, opt), nil
 	}
 
 	return worker

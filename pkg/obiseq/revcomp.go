@@ -105,8 +105,8 @@ func (sequence *BioSequence) _revcmpMutation() *BioSequence {
 * @returns {SeqWorker} A function that accepts *BioSequence and returns its reversed-complement form.
  */
 func ReverseComplementWorker(inplace bool) SeqWorker {
-	f := func(input *BioSequence) *BioSequence {
-		return input.ReverseComplement(inplace)
+	f := func(input *BioSequence) (BioSequenceSlice, error) {
+		return BioSequenceSlice{input.ReverseComplement(inplace)}, nil
 	}
 
 	return f

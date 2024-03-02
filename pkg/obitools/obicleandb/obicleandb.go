@@ -50,10 +50,13 @@ func ICleanDB(itertator obiiter.IBioSequence) obiiter.IBioSequence {
 		obioptions.CLIParallelWorkers())
 
 	annotated := usable.MakeIWorker(taxonomy.MakeSetSpeciesWorker(),
+		false,
 		obioptions.CLIParallelWorkers(),
 	).MakeIWorker(taxonomy.MakeSetGenusWorker(),
+		false,
 		obioptions.CLIParallelWorkers(),
 	).MakeIWorker(taxonomy.MakeSetFamilyWorker(),
+		false,
 		obioptions.CLIParallelWorkers(),
 	)
 

@@ -15,11 +15,11 @@ import (
 )
 
 func DeleteAttributesWorker(toBeDeleted []string) obiseq.SeqWorker {
-	f := func(s *obiseq.BioSequence) *obiseq.BioSequence {
+	f := func(s *obiseq.BioSequence) (obiseq.BioSequenceSlice, error) {
 		for _, k := range toBeDeleted {
 			s.DeleteAttribute(k)
 		}
-		return s
+		return obiseq.BioSequenceSlice{s}, nil
 	}
 
 	return f
@@ -48,7 +48,7 @@ func MatchPatternWorker(pattern, name string, errormax int, allowsIndel bool) ob
 	slot_error := fmt.Sprintf("%s_error", name)
 	slot_location := fmt.Sprintf("%s_location", name)
 
-	f := func(s *obiseq.BioSequence) *obiseq.BioSequence {
+	f := func(s *obiseq.BioSequence) (obiseq.BioSequenceSlice, error) {
 		apats, err := obiapat.MakeApatSequence(s, false)
 		if err != nil {
 			log.Fatalf("error in preparing sequence %s : %v", s.Id(), err)
@@ -59,6 +59,11 @@ func MatchPatternWorker(pattern, name string, errormax int, allowsIndel bool) ob
 		if matched {
 			annot := s.Annotations()
 			annot[slot] = pattern
+
+			if start < 0 {
+				start = 0
+			}
+
 			match, err := s.Subsequence(start, end, false)
 			if err != nil {
 				log.Fatalf("Error in extracting pattern of sequence %s [%d;%d[ : %v",
@@ -83,7 +88,7 @@ func MatchPatternWorker(pattern, name string, errormax int, allowsIndel bool) ob
 				annot[slot_location] = fmt.Sprintf("complement(%d..%d)", start+1, end)
 			}
 		}
-		return s
+		return obiseq.BioSequenceSlice{s}, nil
 	}
 
 	return f
@@ -97,14 +102,14 @@ func ToBeKeptAttributesWorker(toBeKept []string) obiseq.SeqWorker {
 		d[v] = true
 	}
 
-	f := func(s *obiseq.BioSequence) *obiseq.BioSequence {
+	f := func(s *obiseq.BioSequence) (obiseq.BioSequenceSlice, error) {
 		annot := s.Annotations()
 		for key := range annot {
 			if _, ok := d[key]; !ok {
 				s.DeleteAttribute(key)
 			}
 		}
-		return s
+		return obiseq.BioSequenceSlice{s}, nil
 	}
 
 	return f
@@ -112,7 +117,7 @@ func ToBeKeptAttributesWorker(toBeKept []string) obiseq.SeqWorker {
 
 func CutSequenceWorker(from, to int, breakOnError bool) obiseq.SeqWorker {
 
-	f := func(s *obiseq.BioSequence) *obiseq.BioSequence {
+	f := func(s *obiseq.BioSequence) (obiseq.BioSequenceSlice, error) {
 		var f, t int
 
 		switch {
@@ -142,16 +147,15 @@ func CutSequenceWorker(from, to int, breakOnError bool) obiseq.SeqWorker {
 			if breakOnError {
 				log.Fatalf("Cannot cut sequence %s (%v)", s.Id(), err)
 			} else {
-				log.Warnf("Cannot cut sequence %s (%v), sequence discarded", s.Id(), err)
-				return nil
+				err = fmt.Errorf("Cannot cut sequence %s (%v), sequence discarded", s.Id(), err)
 			}
 		}
-		return rep
+		return obiseq.BioSequenceSlice{rep}, err
 	}
 
 	if from == 0 && to == 0 {
-		f = func(s *obiseq.BioSequence) *obiseq.BioSequence {
-			return s
+		f = func(s *obiseq.BioSequence) (obiseq.BioSequenceSlice, error) {
+			return obiseq.BioSequenceSlice{s}, nil
 		}
 	}
 
@@ -163,23 +167,23 @@ func CutSequenceWorker(from, to int, breakOnError bool) obiseq.SeqWorker {
 }
 
 func ClearAllAttributesWorker() obiseq.SeqWorker {
-	f := func(s *obiseq.BioSequence) *obiseq.BioSequence {
+	f := func(s *obiseq.BioSequence) (obiseq.BioSequenceSlice, error) {
 		annot := s.Annotations()
 		for key := range annot {
 			s.DeleteAttribute(key)
 		}
-		return s
+		return obiseq.BioSequenceSlice{s}, nil
 	}
 
 	return f
 }
 
 func RenameAttributeWorker(toBeRenamed map[string]string) obiseq.SeqWorker {
-	f := func(s *obiseq.BioSequence) *obiseq.BioSequence {
+	f := func(s *obiseq.BioSequence) (obiseq.BioSequenceSlice, error) {
 		for newName, oldName := range toBeRenamed {
 			s.RenameAttribute(newName, oldName)
 		}
-		return s
+		return obiseq.BioSequenceSlice{s}, nil
 	}
 
 	return f
@@ -201,20 +205,20 @@ func EvalAttributeWorker(expression map[string]string) obiseq.SeqWorker {
 }
 
 func AddTaxonAtRankWorker(taxonomy *obitax.Taxonomy, ranks ...string) obiseq.SeqWorker {
-	f := func(s *obiseq.BioSequence) *obiseq.BioSequence {
+	f := func(s *obiseq.BioSequence) (obiseq.BioSequenceSlice, error) {
 		for _, r := range ranks {
 			taxonomy.SetTaxonAtRank(s, r)
 		}
-		return s
+		return obiseq.BioSequenceSlice{s}, nil
 	}
 
 	return f
 }
 
 func AddSeqLengthWorker() obiseq.SeqWorker {
-	f := func(s *obiseq.BioSequence) *obiseq.BioSequence {
+	f := func(s *obiseq.BioSequence) (obiseq.BioSequenceSlice, error) {
 		s.SetAttribute("seq_length", s.Len())
-		return s
+		return obiseq.BioSequenceSlice{s}, nil
 	}
 
 	return f
@@ -309,8 +313,8 @@ func CLIAnnotationPipeline() obiiter.Pipeable {
 	predicate := obigrep.CLISequenceSelectionPredicate()
 	worker := CLIAnnotationWorker()
 
-	annotator := obiseq.SeqToSliceConditionalWorker(worker, predicate, true, false)
-	f := obiiter.SliceWorkerPipe(annotator, obioptions.CLIParallelWorkers())
+	annotator := obiseq.SeqToSliceConditionalWorker(predicate, worker, true, false)
+	f := obiiter.SliceWorkerPipe(annotator, false, obioptions.CLIParallelWorkers())
 
 	return f
 }

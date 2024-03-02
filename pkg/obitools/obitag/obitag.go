@@ -259,8 +259,8 @@ func IdentifySeqWorker(references obiseq.BioSequenceSlice,
 	taxa obitax.TaxonSet,
 	taxo *obitax.Taxonomy,
 	runExact bool) obiseq.SeqWorker {
-	return func(sequence *obiseq.BioSequence) *obiseq.BioSequence {
-		return Identify(sequence, references, refcounts, taxa, taxo, runExact)
+	return func(sequence *obiseq.BioSequence) (obiseq.BioSequenceSlice, error) {
+		return obiseq.BioSequenceSlice{Identify(sequence, references, refcounts, taxa, taxo, runExact)}, nil
 	}
 }
 
@@ -285,5 +285,5 @@ func CLIAssignTaxonomy(iterator obiiter.IBioSequence,
 
 	worker := IdentifySeqWorker(references, refcounts, taxa, taxo, CLIRunExact())
 
-	return iterator.MakeIWorker(worker, obioptions.CLIParallelWorkers(), 0)
+	return iterator.MakeIWorker(worker, false, obioptions.CLIParallelWorkers(), 0)
 }

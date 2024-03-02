@@ -28,16 +28,18 @@ func Expression(expression string) func(*BioSequence) (interface{}, error) {
 
 func EditIdWorker(expression string) SeqWorker {
 	e := Expression(expression)
-	f := func(sequence *BioSequence) *BioSequence {
+	f := func(sequence *BioSequence) (BioSequenceSlice, error) {
 		v, err := e(sequence)
-
-		if err != nil {
-			log.Fatalf("Expression '%s' cannot be evaluated on sequence %s",
+		if err == nil {
+			sequence.SetId(fmt.Sprintf("%v", v))
+		} else {
+			err = fmt.Errorf("Expression '%s' cannot be evaluated on sequence %s : %v",
 				expression,
-				sequence.Id())
+				sequence.Id(),
+				err)
 		}
-		sequence.SetId(fmt.Sprintf("%v", v))
-		return sequence
+
+		return BioSequenceSlice{sequence}, err
 	}
 
 	return f
@@ -45,16 +47,18 @@ func EditIdWorker(expression string) SeqWorker {
 
 func EditAttributeWorker(key string, expression string) SeqWorker {
 	e := Expression(expression)
-	f := func(sequence *BioSequence) *BioSequence {
+	f := func(sequence *BioSequence) (BioSequenceSlice, error) {
 		v, err := e(sequence)
-
-		if err != nil {
-			log.Fatalf("Expression '%s' cannot be evaluated on sequence %s",
+		if err == nil {
+			sequence.SetAttribute(key, v)
+		} else {
+			err = fmt.Errorf("Expression '%s' cannot be evaluated on sequence %s : %v",
 				expression,
-				sequence.Id())
+				sequence.Id(),
+				err)
 		}
-		sequence.SetAttribute(key, v)
-		return sequence
+
+		return BioSequenceSlice{sequence}, err
 	}
 
 	return f

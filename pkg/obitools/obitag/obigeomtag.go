@@ -1,8 +1,9 @@
 package obitag
 
 import (
-	log "github.com/sirupsen/logrus"
 	"math"
+
+	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obialign"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
@@ -190,9 +191,10 @@ func GeomIdentifySeqWorker(references *obiseq.BioSequenceSlice,
 
 	landmarks := ExtractLandmarkSeqs(references)
 	taxa := ExtractTaxonSet(references, taxo)
-	return func(sequence *obiseq.BioSequence) *obiseq.BioSequence {
+	return func(sequence *obiseq.BioSequence) (obiseq.BioSequenceSlice, error) {
 		buffer := make([]uint64, 100)
-		return GeomIdentify(sequence, landmarks, references, taxa, taxo, &buffer)
+		return obiseq.BioSequenceSlice{GeomIdentify(sequence, landmarks, references, taxa, taxo, &buffer)},
+			nil
 	}
 }
 
@@ -202,5 +204,5 @@ func CLIGeomAssignTaxonomy(iterator obiiter.IBioSequence,
 ) obiiter.IBioSequence {
 
 	worker := GeomIdentifySeqWorker(&references, taxo)
-	return iterator.MakeIWorker(worker, obioptions.CLIParallelWorkers(), 0)
+	return iterator.MakeIWorker(worker, false, obioptions.CLIParallelWorkers(), 0)
 }
