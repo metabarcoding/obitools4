@@ -34,7 +34,7 @@ func (iterator IBioSequence) MakeIWorker(worker obiseq.SeqWorker,
 
 	}()
 
-	sw := obiseq.SeqToSliceWorker(worker, true, breakOnError)
+	sw := obiseq.SeqToSliceWorker(worker, breakOnError)
 
 	f := func(iterator IBioSequence) {
 		var err error
@@ -90,7 +90,7 @@ func (iterator IBioSequence) MakeIConditionalWorker(predicate obiseq.SequencePre
 
 	}()
 
-	sw := obiseq.SeqToSliceConditionalWorker(predicate, worker, true, breakOnError)
+	sw := obiseq.SeqToSliceConditionalWorker(predicate, worker, breakOnError)
 
 	f := func(iterator IBioSequence) {
 		var err error

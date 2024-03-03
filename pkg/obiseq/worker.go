@@ -25,37 +25,27 @@ func AnnotatorToSeqWorker(function SeqAnnotator) SeqWorker {
 }
 
 func SeqToSliceWorker(worker SeqWorker,
-	inplace, breakOnError bool) SeqSliceWorker {
+	breakOnError bool) SeqSliceWorker {
 	var f SeqSliceWorker
 
 	if worker == nil {
-		if inplace {
-			f = func(input BioSequenceSlice) (BioSequenceSlice, error) {
-				return input, nil
-			}
-		} else {
-			f = func(input BioSequenceSlice) (BioSequenceSlice, error) {
-				output := MakeBioSequenceSlice(len(input))
-				copy(output, input)
-				return output, nil
-			}
+		f = func(input BioSequenceSlice) (BioSequenceSlice, error) {
+			return input, nil
 		}
 	} else {
 		f = func(input BioSequenceSlice) (BioSequenceSlice, error) {
-			output := input
-			if !inplace {
-				output = MakeBioSequenceSlice(len(input))
-			}
+			output := MakeBioSequenceSlice(len(input))
 			i := 0
 			for _, s := range input {
 				r, err := worker(s)
 				if err == nil {
 					for _, rs := range r {
+						if i == len(output) {
+							output = slices.Grow(output, cap(output))
+							output = output[:cap(output)]
+						}
 						output[i] = rs
 						i++
-						if i == cap(output) {
-							slices.Grow(output, cap(output))
-						}
 					}
 
 				} else {
@@ -64,8 +54,8 @@ func SeqToSliceWorker(worker SeqWorker,
 							s.Id(), err)
 						return BioSequenceSlice{}, err
 					} else {
-						log.Warnf("got an error on sequence %s processing",
-							s.Id())
+						log.Warnf("got an error on sequence %s processing : %v",
+							s.Id(), err)
 					}
 				}
 			}
@@ -80,18 +70,14 @@ func SeqToSliceWorker(worker SeqWorker,
 
 func SeqToSliceConditionalWorker(
 	condition SequencePredicate,
-	worker SeqWorker,
-	inplace, breakOnError bool) SeqSliceWorker {
+	worker SeqWorker, breakOnError bool) SeqSliceWorker {
 
 	if condition == nil {
-		return SeqToSliceWorker(worker, inplace, breakOnError)
+		return SeqToSliceWorker(worker, breakOnError)
 	}
 
 	f := func(input BioSequenceSlice) (BioSequenceSlice, error) {
-		output := input
-		if !inplace {
-			output = MakeBioSequenceSlice(len(input))
-		}
+		output := MakeBioSequenceSlice(len(input))
 
 		i := 0
 
@@ -100,11 +86,12 @@ func SeqToSliceConditionalWorker(
 				r, err := worker(s)
 				if err == nil {
 					for _, rs := range r {
+						if i == len(output) {
+							output = slices.Grow(output, cap(output))
+							output = output[:cap(output)]
+						}
 						output[i] = rs
 						i++
-						if i == cap(output) {
-							slices.Grow(output, cap(output))
-						}
 					}
 				} else {
 					if breakOnError {
@@ -112,8 +99,8 @@ func SeqToSliceConditionalWorker(
 							s.Id(), err)
 						return BioSequenceSlice{}, err
 					} else {
-						log.Warnf("got an error on sequence %s processing",
-							s.Id())
+						log.Warnf("got an error on sequence %s processing : %v",
+							s.Id(), err)
 					}
 				}
 			}
@@ -134,7 +121,7 @@ func (worker SeqWorker) ChainWorkers(next SeqWorker) SeqWorker {
 		}
 	}
 
-	sw := SeqToSliceWorker(next, true, false)
+	sw := SeqToSliceWorker(next, false)
 
 	f := func(seq *BioSequence) (BioSequenceSlice, error) {
 		if seq == nil {

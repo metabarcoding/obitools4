@@ -214,7 +214,7 @@ func MakeApatSequence(sequence *obiseq.BioSequence, circular bool, recycle ...Ap
 			var errmsg *C.char
 
 			if apat_p != nil && apat_p.pointer != nil {
-				log.Debugf("Finaliser called on %p\n", apat_p.pointer)
+				// log.Debugf("Finaliser called on %p\n", apat_p.pointer)
 				C.delete_apatseq(apat_p.pointer, &errno, &errmsg)
 			}
 		})
@@ -376,3 +376,37 @@ func (pattern ApatPattern) BestMatch(sequence ApatSequence, begin, length int) (
 // func AllocatedApaSequences() int {
 // 	return int(_AllocatedApaSequences)
 // }
+
+func (pattern ApatPattern) AllMatches(sequence ApatSequence, begin, length int) (loc [][3]int) {
+	res := pattern.FindAllIndex(sequence, begin, length)
+
+	sbuffer := [(int(C.MAX_PAT_LEN) + int(C.MAX_PAT_ERR) + 1) * (int(C.MAX_PAT_LEN) + 1)]uint64{}
+	buffer := sbuffer[:]
+
+	for _, m := range res {
+		if m[2] > 0 && pattern.pointer.pointer.hasIndel {
+			start := m[0] - m[2]
+			end := m[0] + int(pattern.pointer.pointer.patlen) + m[2]
+			start = obiutils.MaxInt(start, 0)
+			end = obiutils.MinInt(end, sequence.Len())
+
+			cpattern := (*[1 << 30]byte)(unsafe.Pointer(pattern.pointer.pointer.cpat))
+			frg := sequence.pointer.reference.Sequence()[start:end]
+
+			score, lali := obialign.FastLCSEGFScoreByte(
+				frg,
+				(*cpattern)[0:int(pattern.pointer.pointer.patlen)],
+				m[2], true, &buffer)
+
+			// log.Debugf("seq[%d] : %s %d, %d", i, sequence.pointer.reference.Id(), score, lali)
+
+			m[2] = lali - score
+			m[0] = m[0] + int(pattern.pointer.pointer.patlen) - lali
+			m[1] = m[0] + lali
+		}
+	}
+
+	log.Debugf("All matches : %v", res)
+
+	return res
+}

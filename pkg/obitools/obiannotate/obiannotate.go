@@ -313,7 +313,7 @@ func CLIAnnotationPipeline() obiiter.Pipeable {
 	predicate := obigrep.CLISequenceSelectionPredicate()
 	worker := CLIAnnotationWorker()
 
-	annotator := obiseq.SeqToSliceConditionalWorker(predicate, worker, true, false)
+	annotator := obiseq.SeqToSliceConditionalWorker(predicate, worker, false)
 	f := obiiter.SliceWorkerPipe(annotator, false, obioptions.CLIParallelWorkers())
 
 	return f
