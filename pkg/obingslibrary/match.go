@@ -182,6 +182,11 @@ func (marker *Marker) Match(sequence *obiseq.BioSequence) *DemultiplexMatch {
 		return &m
 	}
 
+	//
+	// At this point the forward primer didn't match.
+	// We try now with the reverse primer
+	//
+
 	start, end, nerr, matched = marker.reverse.BestMatch(aseq, marker.taglength, -1)
 
 	if matched {

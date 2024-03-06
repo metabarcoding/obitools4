@@ -124,7 +124,7 @@ func SplitPattern(sequence *obiseq.BioSequence,
 	matches := LocatePatterns(sequence, patterns)
 
 	from := Pattern_match{
-		name:    "5extremity",
+		name:    "extremity",
 		pattern: "",
 		match:   "",
 		begin:   0,
@@ -169,10 +169,19 @@ func SplitPattern(sequence *obiseq.BioSequence,
 			if from.name == to.name {
 				sub.SetAttribute("obisplit_group", from.name)
 			} else {
-				sub.SetAttribute("obisplit_group", fmt.Sprintf("%s-%s", from.name, to.name))
+				fname := from.name
+				tname := to.name
+				if tname == "extremity" {
+					fname, tname = tname, fname
+				} else {
+					if tname < fname && fname != "extremity" {
+						fname, tname = tname, fname
+					}
+				}
+				sub.SetAttribute("obisplit_group", fmt.Sprintf("%s-%s", fname, tname))
 			}
 
-			sub.SetAttribute("obisplit_location", fmt.Sprintf("%d..%d", start, end))
+			sub.SetAttribute("obisplit_location", fmt.Sprintf("%d..%d", start+1, end))
 
 			sub.SetAttribute("obisplit_right_error", to.nerrors)
 			sub.SetAttribute("obisplit_left_error", from.nerrors)
@@ -191,7 +200,7 @@ func SplitPattern(sequence *obiseq.BioSequence,
 
 	if from.end < sequence.Len() {
 		to := Pattern_match{
-			name:    "3extremity",
+			name:    "extremity",
 			pattern: "",
 			match:   "",
 			begin:   sequence.Len(),
@@ -218,9 +227,18 @@ func SplitPattern(sequence *obiseq.BioSequence,
 		if from.name == to.name {
 			sub.SetAttribute("obisplit_group", from.name)
 		} else {
-			sub.SetAttribute("obisplit_group", fmt.Sprintf("%s-%s", from.name, to.name))
+			fname := from.name
+			tname := to.name
+			if tname == "extremity" {
+				fname, tname = tname, fname
+			} else {
+				if tname < fname && fname != "extremity" {
+					fname, tname = tname, fname
+				}
+			}
+			sub.SetAttribute("obisplit_group", fmt.Sprintf("%s-%s", fname, tname))
 		}
-		sub.SetAttribute("obisplit_location", fmt.Sprintf("%d..%d", start, end))
+		sub.SetAttribute("obisplit_location", fmt.Sprintf("%d..%d", start+1, end))
 
 		sub.SetAttribute("obisplit_right_error", to.nerrors)
 		sub.SetAttribute("obisplit_left_error", from.nerrors)

@@ -1,7 +1,7 @@
 package obiiter
 
 import (
-	"log"
+	log "github.com/sirupsen/logrus"
 )
 
 func (b BioSequenceBatch) IsPaired() bool {
