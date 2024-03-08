@@ -1,7 +1,7 @@
 package obilua
 
 import (
-	"log"
+	log "github.com/sirupsen/logrus"
 
 	lua "github.com/yuin/gopher-lua"
 )
@@ -32,6 +32,8 @@ func pushInterfaceToLua(L *lua.LState, val interface{}) {
 		pushMapStringBoolToLua(L, v)
 	case map[string]float64:
 		pushMapStringFloat64ToLua(L, v)
+	case map[string]interface{}:
+		pushMapStringInterfaceToLua(L, v)
 	case []string:
 		pushSliceStringToLua(L, v)
 	case []int:
@@ -43,8 +45,31 @@ func pushInterfaceToLua(L *lua.LState, val interface{}) {
 	case nil:
 		L.Push(lua.LNil)
 	default:
-		log.Fatalf("Cannot deal with value Mv", val)
+		log.Fatalf("Cannot deal with value %v", val)
 	}
+}
+
+func pushMapStringInterfaceToLua(L *lua.LState, m map[string]interface{}) {
+	// Create a new Lua table
+	luaTable := L.NewTable()
+	// Iterate over the Go map and set the key-value pairs in the Lua table
+	for key, value := range m {
+		switch v := value.(type) {
+		case int:
+			luaTable.RawSetString(key, lua.LNumber(v))
+		case float64:
+			luaTable.RawSetString(key, lua.LNumber(v))
+		case bool:
+			luaTable.RawSetString(key, lua.LBool(v))
+		case string:
+			luaTable.RawSetString(key, lua.LString(v))
+		default:
+			log.Fatalf("Doesn't deal with map containing value %v", v)
+		}
+	}
+
+	// Push the Lua table onto the stack
+	L.Push(luaTable)
 }
 
 // pushMapStringIntToLua creates a new Lua table and iterates over the Go map to set key-value pairs in the Lua table. It then pushes the Lua table onto the stack.
@@ -57,7 +82,7 @@ func pushMapStringIntToLua(L *lua.LState, m map[string]int) {
 
 	// Iterate over the Go map and set the key-value pairs in the Lua table
 	for key, value := range m {
-		L.SetField(luaTable, key, lua.LNumber(value))
+		L.SetTable(luaTable, lua.LString(key), lua.LNumber(value))
 	}
 
 	// Push the Lua table onto the stack
@@ -73,7 +98,7 @@ func pushMapStringStringToLua(L *lua.LState, m map[string]string) {
 
 	// Iterate over the Go map and set the key-value pairs in the Lua table
 	for key, value := range m {
-		L.SetField(luaTable, key, lua.LString(value))
+		L.SetTable(luaTable, lua.LString(key), lua.LString(value))
 	}
 
 	// Push the Lua table onto the stack
@@ -94,7 +119,7 @@ func pushMapStringBoolToLua(L *lua.LState, m map[string]bool) {
 
 	// Iterate over the Go map and set the key-value pairs in the Lua table
 	for key, value := range m {
-		L.SetField(luaTable, key, lua.LBool(value))
+		L.SetTable(luaTable, lua.LString(key), lua.LBool(value))
 	}
 
 	// Push the Lua table onto the stack
@@ -112,7 +137,7 @@ func pushMapStringFloat64ToLua(L *lua.LState, m map[string]float64) {
 	// Iterate over the Go map and set the key-value pairs in the Lua table
 	for key, value := range m {
 		// Use lua.LNumber since Lua does not differentiate between float and int
-		L.SetField(luaTable, key, lua.LNumber(value))
+		L.SetTable(luaTable, lua.LString(key), lua.LNumber(value))
 	}
 
 	// Push the Lua table onto the stack

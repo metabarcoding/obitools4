@@ -2,6 +2,7 @@ package obilua
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
@@ -16,6 +17,7 @@ func NewInterpreter() *lua.LState {
 	lua := lua.NewState()
 
 	RegisterObilib(lua)
+	RegisterObiContext(lua)
 
 	return lua
 }
@@ -48,16 +50,70 @@ func CompileScript(filePath string) (*lua.FunctionProto, error) {
 func LuaWorker(proto *lua.FunctionProto) obiseq.SeqWorker {
 	interpreter := NewInterpreter()
 	lfunc := interpreter.NewFunctionFromProto(proto)
+	interpreter.Push(lfunc)
+	err := interpreter.PCall(0, lua.MultRet, nil)
 
-	f := func(sequence *obiseq.BioSequence) (obiseq.BioSequenceSlice, error) {
-		interpreter.SetGlobal("sequence", obiseq2Lua(interpreter, sequence))
-		interpreter.Push(lfunc)
-		err := interpreter.PCall(0, lua.MultRet, nil)
-
-		return obiseq.BioSequenceSlice{sequence}, err
+	if err != nil {
+		log.Fatalf("Error in executing the lua script")
 	}
 
-	return f
+	result := interpreter.GetGlobal("worker")
+
+	if lua_worker, ok := result.(*lua.LFunction); ok {
+		f := func(sequence *obiseq.BioSequence) (obiseq.BioSequenceSlice, error) {
+			// Call the Lua function concat
+			// Lua analogue:
+			//	str = concat("Go", "Lua")
+			//	print(str)
+			if err := interpreter.CallByParam(lua.P{
+				Fn:      lua_worker, // name of Lua function
+				NRet:    1,          // number of returned values
+				Protect: true,       // return err or panic
+			}, obiseq2Lua(interpreter, sequence)); err != nil {
+				log.Fatal(err)
+			}
+
+			lreponse := interpreter.Get(-1)
+			defer interpreter.Pop(1)
+
+			if reponse, ok := lreponse.(*lua.LUserData); ok {
+				s := reponse.Value
+				switch val := s.(type) {
+				case *obiseq.BioSequence:
+					return obiseq.BioSequenceSlice{val}, err
+				default:
+					return nil, fmt.Errorf("worker function doesn't return the correct type")
+				}
+			}
+
+			return nil, fmt.Errorf("worker function doesn't return the correct type")
+		}
+
+		return f
+	}
+
+	log.Fatalf("THe worker object is not a function")
+	return nil
+	// f := func(sequence *obiseq.BioSequence) (obiseq.BioSequenceSlice, error) {
+	// 	interpreter.SetGlobal("sequence", obiseq2Lua(interpreter, sequence))
+	// 	interpreter.Push(lfunc)
+	// 	err := interpreter.PCall(0, lua.MultRet, nil)
+	// 	result := interpreter.GetGlobal("result")
+
+	// 	if result != lua.LNil {
+	// 		log.Info("youpi ", result)
+	// 	}
+
+	// 	rep := interpreter.GetGlobal("sequence")
+
+	// 	if rep.Type() == lua.LTUserData {
+	// 		ud := rep.(*lua.LUserData)
+	// 		sequence = ud.Value.(*obiseq.BioSequence)
+	// 	}
+
+	// 	return obiseq.BioSequenceSlice{sequence}, err
+	// }
+
 }
 
 func LuaProcessor(iterator obiiter.IBioSequence, name, program string, breakOnError bool, nworkers int) obiiter.IBioSequence {
@@ -69,16 +125,61 @@ func LuaProcessor(iterator obiiter.IBioSequence, name, program string, breakOnEr
 
 	newIter.Add(nworkers)
 
-	go func() {
-		newIter.WaitAndClose()
-	}()
-
 	bp := []byte(program)
 	proto, err := Compile(bp, name)
 
 	if err != nil {
 		log.Fatalf("Cannot compile script %s : %v", name, err)
 	}
+
+	interpreter := NewInterpreter()
+	lfunc := interpreter.NewFunctionFromProto(proto)
+	interpreter.Push(lfunc)
+	err = interpreter.PCall(0, lua.MultRet, nil)
+
+	if err != nil {
+		log.Fatalf("Error in executing the lua script")
+	}
+
+	result := interpreter.GetGlobal("begin")
+	if lua_begin, ok := result.(*lua.LFunction); ok {
+		if err := interpreter.CallByParam(lua.P{
+			Fn:      lua_begin, // name of Lua function
+			NRet:    0,         // number of returned values
+			Protect: true,      // return err or panic
+		}); err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	interpreter.Close()
+
+	go func() {
+		newIter.WaitAndClose()
+
+		interpreter := NewInterpreter()
+		lfunc := interpreter.NewFunctionFromProto(proto)
+		interpreter.Push(lfunc)
+		err = interpreter.PCall(0, lua.MultRet, nil)
+
+		if err != nil {
+			log.Fatalf("Error in executing the lua script")
+		}
+
+		result := interpreter.GetGlobal("finish")
+		if lua_finish, ok := result.(*lua.LFunction); ok {
+			if err := interpreter.CallByParam(lua.P{
+				Fn:      lua_finish, // name of Lua function
+				NRet:    0,          // number of returned values
+				Protect: true,       // return err or panic
+			}); err != nil {
+				log.Fatal(err)
+			}
+		}
+
+		interpreter.Close()
+
+	}()
 
 	ff := func(iterator obiiter.IBioSequence) {
 		w := LuaWorker(proto)

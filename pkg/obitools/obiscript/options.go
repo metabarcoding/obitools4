@@ -47,37 +47,22 @@ func CLIAskScriptTemplate() bool {
 }
 
 func CLIScriptTemplate() string {
-	return `
-	import {
-		"sync"
-		"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
-	}
-	//
-	// Begin function run before the first sequence being processed
-	//
+	return `function begin()
+    obicontext.item("compteur",0)
+end
 
-	func Begin(environment *sync.Map) {
+function worker(sequence)
+    samples = sequence:attribute("merged_sample")
+    samples["tutu"]=4
+    sequence:attribute("merged_sample",samples)
+    sequence:attribute("toto",44444)
+    nb = obicontext.inc("compteur")
+    sequence:id("seq_" .. nb)
+    return sequence
+end
 
-	}
-
-	//
-	// Begin function run after the last sequence being processed
-	//
-
-	func End(environment *sync.Map) {
-
-	}
-
-	//
-	// Worker function run for each sequence validating the selection predicat as specified by 
-	// the command line options.
-	//
-	// The function must return the altered sequence.
-	// If the function returns nil, the sequence is discarded from the output
-	func Worker(sequence *obiseq.BioSequence, environment *sync.Map) *obiseq.BioSequence {
-
-
-		return sequence
-	}
+function finish()
+    print("compteur = " .. obicontext.item("compteur"))
+end
 	`
 }

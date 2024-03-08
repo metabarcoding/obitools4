@@ -1,8 +1,6 @@
 package obilua
 
 import (
-	log "github.com/sirupsen/logrus"
-
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	lua "github.com/yuin/gopher-lua"
 )
@@ -31,6 +29,7 @@ func obiseq2Lua(interpreter *lua.LState,
 
 	return ud
 }
+
 func newObiSeq(luaState *lua.LState) int {
 	seqid := luaState.CheckString(1)
 	seq := []byte(luaState.CheckString(2))
@@ -47,12 +46,17 @@ func newObiSeq(luaState *lua.LState) int {
 }
 
 var bioSequenceMethods = map[string]lua.LGFunction{
-	"id":         bioSequenceGetSetId,
-	"sequence":   bioSequenceGetSetSequence,
-	"definition": bioSequenceGetSetDefinition,
-	"count":      bioSequenceGetSetCount,
-	"taxid":      bioSequenceGetSetTaxid,
-	"attribute":  bioSequenceGetSetAttribute,
+	"id":            bioSequenceGetSetId,
+	"sequence":      bioSequenceGetSetSequence,
+	"definition":    bioSequenceGetSetDefinition,
+	"count":         bioSequenceGetSetCount,
+	"taxid":         bioSequenceGetSetTaxid,
+	"attribute":     bioSequenceGetSetAttribute,
+	"len":           bioSequenceGetLength,
+	"has_sequence":  bioSequenceHasSequence,
+	"has_qualities": bioSequenceHasQualities,
+	"source":        bioSequenceGetSource,
+	"md5":           bioSequenceGetMD5,
 }
 
 // checkBioSequence checks if the first argument in the Lua stack is a *obiseq.BioSequence.
@@ -132,13 +136,17 @@ func bioSequenceGetSetAttribute(luaState *lua.LState) int {
 	if luaState.GetTop() == 3 {
 		ud := luaState.CheckAny(3)
 
-		log.Infof("ud : %v [%v]", ud, ud.Type())
 		//
 		// Perhaps the code needs some type checking on ud.Value
 		// It's a first test
 		//
 
-		s.SetAttribute(attName, ud)
+		if v, ok := ud.(*lua.LTable); ok {
+			s.SetAttribute(attName, Table2Interface(luaState, v))
+		} else {
+			s.SetAttribute(attName, ud)
+		}
+
 		return 0
 	}
 
@@ -150,5 +158,44 @@ func bioSequenceGetSetAttribute(luaState *lua.LState) int {
 		pushInterfaceToLua(luaState, value)
 	}
 
+	return 1
+}
+
+func bioSequenceGetLength(luaState *lua.LState) int {
+	s := checkBioSequence(luaState)
+	luaState.Push(lua.LNumber(s.Len()))
+	return 1
+}
+
+func bioSequenceHasSequence(luaState *lua.LState) int {
+	s := checkBioSequence(luaState)
+	luaState.Push(lua.LBool(s.HasSequence()))
+	return 1
+}
+
+func bioSequenceHasQualities(luaState *lua.LState) int {
+	s := checkBioSequence(luaState)
+	luaState.Push(lua.LBool(s.HasQualities()))
+	return 1
+}
+
+func bioSequenceGetSource(luaState *lua.LState) int {
+	s := checkBioSequence(luaState)
+	if s.HasSource() {
+		luaState.Push(lua.LString(s.Source()))
+	} else {
+		luaState.Push(lua.LNil)
+	}
+	return 1
+}
+
+func bioSequenceGetMD5(luaState *lua.LState) int {
+	s := checkBioSequence(luaState)
+	md5 := s.MD5()
+	rt := luaState.NewTable()
+	for i := 0; i < 16; i++ {
+		rt.Append(lua.LNumber(md5[i]))
+	}
+	luaState.Push(rt)
 	return 1
 }
