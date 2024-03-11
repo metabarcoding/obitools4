@@ -182,7 +182,7 @@ func _ParseGenbankFile(source string,
 					processed = true
 
 				case state == inSequence:
-					log.Debugf("Chunk %d : Genbank: line %d, state = %d : %s", chunks.order, nl, state, line)
+					// log.Debugf("Chunk %d : Genbank: line %d, state = %d : %s", chunks.order, nl, state, line)
 
 					sl++
 					parts := strings.SplitN(line[10:], " ", 6)
@@ -207,6 +207,10 @@ func _ParseGenbankFile(source string,
 						processed = true
 					case inEntry:
 						processed = true
+					case inContig:
+						processed = true
+					default:
+						log.Fatalf("Unexpected state %d while reading: %s", state, line)
 					}
 				}
 			}
