@@ -333,6 +333,9 @@ func _Pcr(seq ApatSequence,
 
 									annot["reverse_primer"] = reverse.String()
 									match, _ = seq.pointer.reference.Subsequence(rm[0], rm[1], opt.pointer.circular)
+									if match == nil {
+										log.Fatalf("error in extracting sequence from reference: %d:%d (%v)\n", rm[0], rm[1], opt.pointer.circular)
+									}
 									match = match.ReverseComplement(true)
 									annot["reverse_match"] = match.String()
 									match.Recycle()

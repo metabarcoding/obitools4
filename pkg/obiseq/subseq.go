@@ -2,6 +2,8 @@ package obiseq
 
 import (
 	"fmt"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // Subsequence returns a subsequence of the BioSequence.
@@ -23,14 +25,20 @@ func (sequence *BioSequence) Subsequence(from, to int, circular bool) (*BioSeque
 		return nil, fmt.Errorf("from out of bounds %d < 0", from)
 	}
 
-	if from >= sequence.Len() {
+	if from >= sequence.Len() && !circular {
 		return nil,
 			fmt.Errorf("from out of bounds %d >= %d", from, sequence.Len())
+	} else {
+		log.Debugf("(%s) correcting from position from %d to %d", sequence.Id(), to, (to-1)%sequence.Len()+1)
+		from = from % sequence.Len()
 	}
 
-	if to > sequence.Len() {
+	if to > sequence.Len() && !circular {
 		return nil,
 			fmt.Errorf("to out of bounds %d > %d", to, sequence.Len())
+	} else {
+		log.Debugf("(%s) correcting to position from %d to %d", sequence.Id(), to, (to-1)%sequence.Len()+1)
+		to = ((to - 1) % sequence.Len()) + 1
 	}
 
 	var newSeq *BioSequence
