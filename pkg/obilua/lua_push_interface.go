@@ -64,7 +64,7 @@ func pushMapStringInterfaceToLua(L *lua.LState, m map[string]interface{}) {
 		case string:
 			luaTable.RawSetString(key, lua.LString(v))
 		default:
-			log.Fatalf("Doesn't deal with map containing value %v", v)
+			log.Fatalf("Doesn't deal with map containing value %v of type %T", v, v)
 		}
 	}
 

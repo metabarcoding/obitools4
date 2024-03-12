@@ -14,7 +14,17 @@ func Table2Interface(interpreter *lua.LState, table *lua.LTable) interface{} {
 	if isArray {
 		val := make([]interface{}, table.Len())
 		for i := 1; i <= table.Len(); i++ {
-			val[i-1] = table.RawGetInt(i)
+			v := table.RawGetInt(i)
+			switch v.Type() {
+			case lua.LTNil:
+				val[i-1] = nil
+			case lua.LTBool:
+				val[i-1] = bool(v.(lua.LBool))
+			case lua.LTNumber:
+				val[i-1] = float64(v.(lua.LNumber))
+			case lua.LTString:
+				val[i-1] = string(v.(lua.LString))
+			}
 		}
 		return val
 	} else {
@@ -22,7 +32,16 @@ func Table2Interface(interpreter *lua.LState, table *lua.LTable) interface{} {
 		val := make(map[string]interface{})
 		table.ForEach(func(k, v lua.LValue) {
 			if ks, ok := k.(lua.LString); ok {
-				val[string(ks)] = v
+				switch v.Type() {
+				case lua.LTNil:
+					val[string(ks)] = nil
+				case lua.LTBool:
+					val[string(ks)] = bool(v.(lua.LBool))
+				case lua.LTNumber:
+					val[string(ks)] = float64(v.(lua.LNumber))
+				case lua.LTString:
+					val[string(ks)] = string(v.(lua.LString))
+				}
 			}
 		})
 		return val
