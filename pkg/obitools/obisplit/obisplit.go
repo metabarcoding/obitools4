@@ -253,6 +253,10 @@ func SplitPattern(sequence *obiseq.BioSequence,
 
 	}
 
+	for i := 0; i < nfrag; i++ {
+		res[i].SetAttribute("obisplit_nfrg", nfrag)
+	}
+
 	return res[:nfrag], nil
 }
 
