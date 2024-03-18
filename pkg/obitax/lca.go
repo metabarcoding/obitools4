@@ -12,11 +12,11 @@ import (
 
 func (t1 *TaxNode) LCA(t2 *TaxNode) (*TaxNode, error) {
 	if t1 == nil {
-		log.Fatalf("Try to get LCA of nil taxon")
+		log.Panicf("Try to get LCA of nil taxon")
 	}
 
 	if t2 == nil {
-		log.Fatalf("Try to get LCA of nil taxon")
+		log.Panicf("Try to get LCA of nil taxon")
 	}
 
 	p1, err1 := t1.Path()

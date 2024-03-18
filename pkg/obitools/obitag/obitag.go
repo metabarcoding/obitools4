@@ -278,10 +278,21 @@ func CLIAssignTaxonomy(iterator obiiter.IBioSequence,
 
 	buffer := make([]byte, 0, 1000)
 
-	for i, seq := range references {
-		refcounts[i] = obikmer.Count4Mer(seq, &buffer, nil)
-		taxa[i], _ = taxo.Taxon(seq.Taxid())
+	var err error
+	j:= 0
+	for _, seq := range references {
+		references[j] = seq
+		refcounts[j] = obikmer.Count4Mer(seq, &buffer, nil)
+		taxa[j], err = taxo.Taxon(seq.Taxid())
+		if err == nil {
+			j++
+		} else {
+			log.Warnf("Taxid %d is not described in the taxonomy. Sequence %s is discared from the reference database",seq.Taxid(),seq.Id())
+		}
 	}
+
+	references = references[:j]
+	refcounts  = refcounts[:j]
 
 	worker := IdentifySeqWorker(references, refcounts, taxa, taxo, CLIRunExact())
 
