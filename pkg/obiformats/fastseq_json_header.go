@@ -17,18 +17,24 @@ func _parse_json_header_(header string, annotations obiseq.Annotation) string {
 	stop := -1
 	level := 0
 	lh := len(header)
+	inquote := false
 
 	for i := 0; (i < lh) && (stop < 0); i++ {
 		// fmt.Printf("[%d,%d-%d] : %d (%c) (%d,%c)\n", i, start, stop, header[i], header[i], '{', '{')
-		if level == 0 && header[i] == '{' {
+		if level == 0 && header[i] == '{' && !inquote {
 			start = i
 		}
 
-		if header[i] == '{' {
+		// TODO: escaped double quotes are not considered
+		if start > -1 && header[i] == '"' {
+			inquote = !inquote
+		}
+
+		if header[i] == '{' && !inquote {
 			level++
 		}
 
-		if header[i] == '}' {
+		if header[i] == '}' && !inquote {
 			level--
 		}
 
