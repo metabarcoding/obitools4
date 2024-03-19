@@ -1,6 +1,6 @@
 module git.metabarcoding.org/obitools/obitools4/obitools4
 
-go 1.21
+go 1.22.1
 
 require (
 	github.com/DavidGamba/go-getoptions v0.28.0
@@ -15,7 +15,7 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.7.0
 	github.com/tevino/abool/v2 v2.1.0
-	github.com/traefik/yaegi v0.15.1
+	github.com/yuin/gopher-lua v1.1.1
 	golang.org/x/exp v0.0.0-20231006140011-7918f672742d
 	gonum.org/v1/gonum v0.14.0
 	gopkg.in/yaml.v3 v3.0.1
@@ -23,22 +23,11 @@ require (
 )
 
 require (
-	github.com/alecthomas/chroma v0.10.0 // indirect
-	github.com/alexeyco/binder v0.0.0-20180729220023-2a21303f588a // indirect
-	github.com/chzyer/readline v1.5.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/dlclark/regexp2 v1.11.0 // indirect
-	github.com/dop251/goja v0.0.0-20240220182346-e401ed450204 // indirect
-	github.com/fatih/color v1.16.0 // indirect
-	github.com/go-sourcemap/sourcemap v2.1.3+incompatible // indirect
-	github.com/google/pprof v0.0.0-20230207041349-798e818bf904 // indirect
 	github.com/kr/pretty v0.3.0 // indirect
 	github.com/kr/text v0.2.0 // indirect
-	github.com/mattn/go-colorable v0.1.13 // indirect
-	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/yuin/gopher-lua v1.1.1 // indirect
-	golang.org/x/text v0.13.0 // indirect
+	github.com/rogpeppe/go-internal v1.6.1 // indirect
 )
 
 require (

@@ -2,6 +2,10 @@
 
 ## Latest changes
 
+### New feature
+-   A new OBITools named `obiscript` allows to process each sequence according to a Lua script. This is 
+    an experimental tool. The **--template** option allows for generating an example script on the `stdout`.
+
 ### API Changes
 -   Two of the main class `obiseq.SeqWorker` and `obiseq.SeqWorker` have their declaration changed.
     Both now return two values a `obiseq.BioSequenceSlice` and an `error`. This allow a worker to
@@ -9,11 +13,14 @@
     zero, which is equivalent to filter out the input sequence.
 
 ### Enhancement
+-   In `obitag` if the reference database contains sequences annotated by taxid not referenced in the taxonomy,
+    the corresponding sequences are discarded from the reference database and a warning indicating the sequence id
+    and the wrong taxid is emitted.
 -   The bug corrected in the parsing of EMBL and Genbank files as implemented in version 4.1.2 of OBITools4,
     potentially induced some reduction in the performance of the parsing. This should have been now fixed.
 -   In the same idea, parsing of genbank and EMBL files were reading and storing in memory not only 
     the sequence
-    but also the annotations (features table). Up to now none of the obitools are using this information, but
+    but also the annotations (features table). Up to now none of the OBITools are using this information, but
     with large complete genomes, it is occupying a lot of memory. To reduce this impact, the new version of
     the parser doesn't any more store in memory the annotations by default.
 -   Add a **--taxonomic-path** to `obiannotate`. The option adds a `taxonomic_path` tag to sequences describing 
@@ -22,6 +29,10 @@
     taxid, the second the scientific name and the last the taxonomic rank. The first level described is always the
     root of the taxonomy. The latest corresponds to the taxid of the sequence. If a sequence is not annotated by
     a taxid, as usual the sequence is assumed having the taxid 1 (the root of the taxonomy).
+
+### Bug fixes
+-   Fix a bug in the parsing of the JSON header of FASTA and FASTQ files occurring when a string includes a curly
+    brace.
 
 ## February 16th, 2024. Release 4.1.2
 
