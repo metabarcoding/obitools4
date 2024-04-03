@@ -120,33 +120,37 @@ func FindClosests(sequence *obiseq.BioSequence,
 			}
 		}
 
-		//
-		// We have found a better candidate than never
-		//
-		if maxe == -1 || score < maxe {
-			bests = bests[:0]       // Empty the best lists
-			bestidxs = bestidxs[:0] //
+		if lcs >= 0 {
+			//
+			// We have found a better candidate than never
+			//
+			if maxe == -1 || score < maxe {
+				bests = bests[:0]       // Empty the best lists
+				bestidxs = bestidxs[:0] //
 
-			maxe = score // Memorize the best scores
-			wordmin = max(0, max(sequence.Len(), ref.Len())-3-4*maxe)
-			bestId = float64(lcs) / float64(alilength)
-			// log.Warnln(sequence.Id(), ref.Id(), cw[order], maxe, bestId, wordmin)
-		}
-
-		if score == maxe {
-			bests = append(bests, ref)
-			bestidxs = append(bestidxs, order)
-			id := float64(lcs) / float64(alilength)
-			if id > bestId {
-				bestId = id
+				maxe = score // Memorize the best scores
+				wordmin = max(0, max(sequence.Len(), ref.Len())-3-4*maxe)
+				bestId = float64(lcs) / float64(alilength)
 				bestmatch = ref.Id()
+				// log.Warnln(sequence.Id(), ref.Id(), cw[order], maxe, bestId, wordmin)
 			}
-			// log.Println(ref.Id(), maxe, bestId,bestidxs)
+
+			if score == maxe {
+				bests = append(bests, ref)
+				bestidxs = append(bestidxs, order)
+				id := float64(lcs) / float64(alilength)
+				if id > bestId {
+					bestId = id
+					bestmatch = ref.Id()
+				}
+				// log.Println(ref.Id(), maxe, bestId,bestidxs)
+			}
+
 		}
 
 	}
 
-	// log.Debugln("Closest Match", sequence.Id(), maxe, bestId, bestidxs, len(bests))
+	log.Debugln("Closest Match", sequence.Id(), maxe, bestId, references[bestidxs[0]].Id(), bestidxs, len(bests))
 	return bests, maxe, bestId, bestmatch, bestidxs
 }
 
@@ -168,6 +172,7 @@ func Identify(sequence *obiseq.BioSequence,
 	taxa obitax.TaxonSet,
 	taxo *obitax.Taxonomy,
 	runExact bool) *obiseq.BioSequence {
+
 	bests, differences, identity, bestmatch, seqidxs := FindClosests(sequence, references, refcounts, runExact)
 	taxon := (*obitax.TaxNode)(nil)
 

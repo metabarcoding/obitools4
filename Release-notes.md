@@ -2,6 +2,10 @@
 
 ## Latest changes
 
+### Bug
+
+-   In `obitag`, correct the wrong assignation of the **obitag_bestmatch** attribute.
+
 ## April 2nd, 2024. Release 4.2.0
 
 ### New feature
