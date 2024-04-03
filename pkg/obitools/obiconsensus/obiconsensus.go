@@ -99,9 +99,19 @@ func BuildConsensus(seqs obiseq.BioSequenceSlice,
 		}
 	}
 
-	seq, err := graph.LongestConsensus(seqs[0].Source())
+	id := seqs[0].Source()
+	if id == "" {
+		id = seqs[0].Id()
+	}
+	seq, err := graph.LongestConsensus(id)
 
-	seq.SetCount(len(seqs))
+	sumCount := 0
+
+	for _, s := range seqs {
+		sumCount += s.Count()
+	}
+
+	seq.SetCount(sumCount)
 	seq.SetAttribute("seq_length", seq.Len())
 	seq.SetAttribute("kmer_size", kmer_size)
 	seq.SetAttribute("kmer_min_occur", threshold)

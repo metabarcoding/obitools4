@@ -315,7 +315,7 @@ func (g *DeBruijnGraph) Weight(index uint64) int {
 	return int(val)
 }
 
-func (graph *DeBruijnGraph) append(sequence []byte, current uint64) {
+func (graph *DeBruijnGraph) append(sequence []byte, current uint64, weight int) {
 
 	for i := 0; i < len(sequence); i++ {
 		current <<= 2
@@ -323,14 +323,14 @@ func (graph *DeBruijnGraph) append(sequence []byte, current uint64) {
 		b := iupac[sequence[i]]
 		if len(b) == 1 {
 			current |= b[0]
-			graph.graph[current] = uint(graph.Weight(current) + 1)
+			graph.graph[current] = uint(graph.Weight(current) + weight)
 		} else {
 			for j := 0; j < len(b); j++ {
 				current &= ^uint64(3)
 				current |= b[j]
 
-				graph.graph[current] = uint(graph.Weight(current) + 1)
-				graph.append(sequence[(i+1):], current)
+				graph.graph[current] = uint(graph.Weight(current) + weight)
+				graph.append(sequence[(i+1):], current, weight)
 			}
 			return
 		}
@@ -341,6 +341,7 @@ func (graph *DeBruijnGraph) append(sequence []byte, current uint64) {
 func (graph *DeBruijnGraph) Push(sequence *obiseq.BioSequence) {
 	key := uint64(0)
 	s := sequence.Sequence()
+	w := sequence.Count()
 	init := make([]uint64, 0, 16)
 	var f func(start int, key uint64)
 	f = func(start int, key uint64) {
@@ -365,7 +366,7 @@ func (graph *DeBruijnGraph) Push(sequence *obiseq.BioSequence) {
 		f(0, key)
 
 		for _, idx := range init {
-			graph.append(s[graph.kmersize:], idx)
+			graph.append(s[graph.kmersize:], idx, w)
 		}
 	}
 }

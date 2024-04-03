@@ -64,7 +64,7 @@ func MakeOptions(setters []WithOption) Options {
 		csv_keys:              make([]string, 0),
 		csv_auto:              false,
 		paired_filename:       "",
-		source:                "",
+		source:                "unknown",
 		with_feature_table:    false,
 	}
 
