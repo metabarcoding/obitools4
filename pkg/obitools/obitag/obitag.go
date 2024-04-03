@@ -101,10 +101,6 @@ func FindClosests(sequence *obiseq.BioSequence,
 		ref := references[order]
 		score := int(1e9)
 
-		if maxe != -1 {
-			wordmin = obiutils.MaxInt(sequence.Len(), ref.Len()) - 3 - 4*maxe
-		}
-
 		if cw[order] < wordmin {
 			break
 		}
@@ -124,12 +120,17 @@ func FindClosests(sequence *obiseq.BioSequence,
 			}
 		}
 
+		//
+		// We have found a better candidate than never
+		//
 		if maxe == -1 || score < maxe {
-			bests = bests[:0]
-			bestidxs = bestidxs[:0]
-			maxe = score
+			bests = bests[:0]       // Empty the best lists
+			bestidxs = bestidxs[:0] //
+
+			maxe = score // Memorize the best scores
+			wordmin = max(0, max(sequence.Len(), ref.Len())-3-4*maxe)
 			bestId = float64(lcs) / float64(alilength)
-			// log.Println(ref.Id(), maxe, bestId,bestidxs)
+			// log.Warnln(sequence.Id(), ref.Id(), cw[order], maxe, bestId, wordmin)
 		}
 
 		if score == maxe {
@@ -279,7 +280,7 @@ func CLIAssignTaxonomy(iterator obiiter.IBioSequence,
 	buffer := make([]byte, 0, 1000)
 
 	var err error
-	j:= 0
+	j := 0
 	for _, seq := range references {
 		references[j] = seq
 		refcounts[j] = obikmer.Count4Mer(seq, &buffer, nil)
@@ -287,12 +288,12 @@ func CLIAssignTaxonomy(iterator obiiter.IBioSequence,
 		if err == nil {
 			j++
 		} else {
-			log.Warnf("Taxid %d is not described in the taxonomy. Sequence %s is discared from the reference database",seq.Taxid(),seq.Id())
+			log.Warnf("Taxid %d is not described in the taxonomy. Sequence %s is discared from the reference database", seq.Taxid(), seq.Id())
 		}
 	}
 
 	references = references[:j]
-	refcounts  = refcounts[:j]
+	refcounts = refcounts[:j]
 
 	worker := IdentifySeqWorker(references, refcounts, taxa, taxo, CLIRunExact())
 

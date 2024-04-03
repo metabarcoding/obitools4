@@ -33,6 +33,8 @@
 ### Bug fixes
 -   Fix a bug in the parsing of the JSON header of FASTA and FASTQ files occurring when a string includes a curly
     brace.
+-   Fix a bug in the function looking for the closest match in `obitag`. This error led to some wrong taxonomic 
+    assignment.
 
 ## February 16th, 2024. Release 4.1.2
 

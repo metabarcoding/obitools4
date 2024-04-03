@@ -34,7 +34,7 @@ func TagOptionSet(options *getoptions.GetOpt) {
 
 	// options.BoolVar(&_RunExact, "exact", _RunExact,
 	// 	options.Alias("E"),
-	// 	options.Description("Unactivate the heuristic limatitating the sequence comparisons"))
+	// 	options.Description("Desactivate the heuristic limitating the sequence comparisons"))
 
 }
 
