@@ -2,6 +2,8 @@
 
 ## Latest changes
 
+## April 2nd, 2024. Release 4.2.0
+
 ### New feature
 -   A new OBITools named `obiscript` allows to process each sequence according to a Lua script. This is 
     an experimental tool. The **--template** option allows for generating an example script on the `stdout`.
