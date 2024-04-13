@@ -1,6 +1,10 @@
 package obilua
 
-import lua "github.com/yuin/gopher-lua"
+import (
+	"log"
+
+	lua "github.com/yuin/gopher-lua"
+)
 
 func Table2Interface(interpreter *lua.LState, table *lua.LTable) interface{} {
 	// <EC> 07/03/2024: il y a sans doute plus efficace mais pour l'instant
@@ -46,6 +50,39 @@ func Table2Interface(interpreter *lua.LState, table *lua.LTable) interface{} {
 		})
 		return val
 	}
+}
+
+func Table2ByteSlice(interpreter *lua.LState, table *lua.LTable) []byte {
+	isArray := true
+	table.ForEach(func(key, value lua.LValue) {
+		if _, ok := key.(lua.LNumber); !ok {
+			isArray = false
+		}
+	})
+
+	if isArray {
+		val := make([]byte, table.Len())
+
+		for i := 1; i <= table.Len(); i++ {
+			v := table.RawGetInt(i)
+			switch v.Type() {
+			case lua.LTNumber:
+				if x:=float64(v.(lua.LNumber)); x <=255 {
+					val[i-1] = byte(x)
+				} else {
+					log.Fatalf("LUA: Value %f at index %d is to large to be converted to byte", x,i)
+				}
+			default:
+				log.Fatalf("LUA: Value %v at index %d cannot be converted to byte", v,i)
+			}
+		}
+
+		return val
+	}
+
+	log.Fatalf("LUA: Value %v cannot be converted to []byte", table)
+
+	return nil
 }
 
 // 	}

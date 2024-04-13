@@ -21,6 +21,7 @@ var _BatchSize = 5000
 var _Pprof = false
 var _Quality_Shift_Input = 33
 var _Quality_Shift_Output = 33
+var _Version = "4.2.1"
 
 type ArgumentParser func([]string) (*getoptions.GetOpt, []string)
 
@@ -30,6 +31,7 @@ func GenerateOptionParser(optionset ...func(*getoptions.GetOpt)) ArgumentParser 
 	options.SetMode(getoptions.Bundling)
 	options.SetUnknownMode(getoptions.Fail)
 	options.Bool("help", false, options.Alias("h", "?"))
+	options.Bool("version", false)
 	options.BoolVar(&_Debug, "debug", false)
 	options.BoolVar(&_Pprof, "pprof", false)
 
@@ -60,6 +62,11 @@ func GenerateOptionParser(optionset ...func(*getoptions.GetOpt)) ArgumentParser 
 		if options.Called("help") {
 			fmt.Fprint(os.Stderr, options.Help())
 			os.Exit(1)
+		}
+
+		if options.Called("version") {
+			fmt.Fprintf(os.Stderr, "obitools version %s\n", _Version)
+			os.Exit(0)
 		}
 
 		log.SetLevel(log.InfoLevel)

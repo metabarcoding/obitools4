@@ -37,15 +37,17 @@ func pushInterfaceToLua(L *lua.LState, val interface{}) {
 	case []string:
 		pushSliceStringToLua(L, v)
 	case []int:
-		pushSliceIntToLua(L, v)
+		pushSliceNumericToLua(L, v)
+	case []byte:
+		pushSliceNumericToLua(L, v)
 	case []float64:
-		pushSliceFloat64ToLua(L, v)
+		pushSliceNumericToLua(L, v)
 	case []bool:
 		pushSliceBoolToLua(L, v)
 	case nil:
 		L.Push(lua.LNil)
 	default:
-		log.Fatalf("Cannot deal with value %v", val)
+		log.Fatalf("Cannot deal with value (%T) : %v", val, val)
 	}
 }
 
@@ -149,6 +151,21 @@ func pushMapStringFloat64ToLua(L *lua.LState, m map[string]float64) {
 // L *lua.LState, slice []int
 // None
 func pushSliceIntToLua(L *lua.LState, slice []int) {
+	// Create a new Lua table
+	luaTable := L.NewTable()
+
+	// Iterate over the Go slice and set the elements in the Lua table
+	for _, value := range slice {
+		// Append the value to the Lua table
+		// Lua is 1-indexed, so we use the length of the table + 1 as the next index
+		luaTable.Append(lua.LNumber(value))
+	}
+
+	// Push the Lua table onto the stack
+	L.Push(luaTable)
+}
+
+func pushSliceNumericToLua[T float64 | int | byte](L *lua.LState, slice []T) {
 	// Create a new Lua table
 	luaTable := L.NewTable()
 

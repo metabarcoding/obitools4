@@ -48,6 +48,7 @@ func newObiSeq(luaState *lua.LState) int {
 var bioSequenceMethods = map[string]lua.LGFunction{
 	"id":            bioSequenceGetSetId,
 	"sequence":      bioSequenceGetSetSequence,
+	"qualities":     bioSequenceGetSetQualities,
 	"definition":    bioSequenceGetSetDefinition,
 	"count":         bioSequenceGetSetCount,
 	"taxid":         bioSequenceGetSetTaxid,
@@ -96,6 +97,29 @@ func bioSequenceGetSetSequence(luaState *lua.LState) int {
 		return 0
 	}
 	luaState.Push(lua.LString(s.String()))
+	return 1
+}
+
+func bioSequenceGetSetQualities(luaState *lua.LState) int {
+	s := checkBioSequence(luaState)
+	if luaState.GetTop() == 2 {
+		ud := luaState.CheckAny(2)
+
+		//
+		// Perhaps the code needs some type checking on ud.Value
+		// It's a first test
+		//
+
+		if v, ok := ud.(*lua.LTable); ok {
+			s.SetQualities(Table2ByteSlice(luaState, v))
+			return 0
+		}
+
+	}
+
+	value := []byte(s.Qualities())
+	pushInterfaceToLua(luaState, value)
+
 	return 1
 }
 

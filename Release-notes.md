@@ -2,13 +2,20 @@
 
 ## Latest changes
 
+### New features
+
+-   A new option **--version** has been added to every obitools command.
+    It will print the version of the command.
+-   In `obiscript` a `qualities` method has been added to retrieve or set the quality scores from a
+    BioSequence object.         
+
 ### Bug
 
 -   In `obitag`, correct the wrong assignation of the **obitag_bestmatch** attribute.
 
 ## April 2nd, 2024. Release 4.2.0
 
-### New feature
+### New features
 -   A new OBITools named `obiscript` allows to process each sequence according to a Lua script. This is 
     an experimental tool. The **--template** option allows for generating an example script on the `stdout`.
 
