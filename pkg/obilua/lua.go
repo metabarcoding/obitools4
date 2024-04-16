@@ -81,6 +81,8 @@ func LuaWorker(proto *lua.FunctionProto) obiseq.SeqWorker {
 				switch val := s.(type) {
 				case *obiseq.BioSequence:
 					return obiseq.BioSequenceSlice{val}, err
+				case *obiseq.BioSequenceSlice:
+					return *val, err
 				default:
 					return nil, fmt.Errorf("worker function doesn't return the correct type")
 				}

@@ -7,6 +7,7 @@ import (
 
 func RegisterObiSeq(luaState *lua.LState) {
 	registerBioSequenceType(luaState)
+	registerBioSequenceSliceType(luaState)
 }
 
 const luaBioSequenceTypeName = "BioSequence"

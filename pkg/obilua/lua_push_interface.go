@@ -146,25 +146,6 @@ func pushMapStringFloat64ToLua(L *lua.LState, m map[string]float64) {
 	L.Push(luaTable)
 }
 
-// pushSliceIntToLua creates a new Lua table and sets the elements of a Go slice in the Lua table. Then, it pushes the Lua table onto the stack.
-//
-// L *lua.LState, slice []int
-// None
-func pushSliceIntToLua(L *lua.LState, slice []int) {
-	// Create a new Lua table
-	luaTable := L.NewTable()
-
-	// Iterate over the Go slice and set the elements in the Lua table
-	for _, value := range slice {
-		// Append the value to the Lua table
-		// Lua is 1-indexed, so we use the length of the table + 1 as the next index
-		luaTable.Append(lua.LNumber(value))
-	}
-
-	// Push the Lua table onto the stack
-	L.Push(luaTable)
-}
-
 func pushSliceNumericToLua[T float64 | int | byte](L *lua.LState, slice []T) {
 	// Create a new Lua table
 	luaTable := L.NewTable()
@@ -210,24 +191,6 @@ func pushSliceBoolToLua(L *lua.LState, slice []bool) {
 	for _, value := range slice {
 		// Lua is 1-indexed, so we use the length of the table + 1 as the next index
 		luaTable.Append(lua.LBool(value))
-	}
-
-	// Push the Lua table onto the stack
-	L.Push(luaTable)
-}
-
-// pushSliceFloat64ToLua creates a new Lua table and pushes it onto the stack.
-//
-// L *lua.LState - the Lua state
-// slice []float64 - the Go slice to be inserted into the Lua table
-func pushSliceFloat64ToLua(L *lua.LState, slice []float64) {
-	// Create a new Lua table
-	luaTable := L.NewTable()
-
-	// Iterate over the Go slice and insert each float64 into the Lua table
-	for _, value := range slice {
-		// Lua is 1-indexed, so we append the value to the Lua table
-		luaTable.Append(lua.LNumber(value))
 	}
 
 	// Push the Lua table onto the stack
