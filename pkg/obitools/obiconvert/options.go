@@ -1,6 +1,10 @@
 package obiconvert
 
 import (
+	"os"
+
+	log "github.com/sirupsen/logrus"
+
 	"github.com/DavidGamba/go-getoptions"
 )
 
@@ -182,7 +186,14 @@ func CLIAnalyzeOnly() int {
 }
 
 func CLIProgressBar() bool {
-	return !__no_progress_bar__
+	// If the output is not a terminal, then we do not display the progress bar
+	o, _ := os.Stderr.Stat()
+	onTerminal := (o.Mode() & os.ModeCharDevice) == os.ModeCharDevice
+	if !onTerminal {
+		log.Info("Stderr is redirected, progress bar disabled")
+	}
+
+	return onTerminal && !__no_progress_bar__
 }
 
 func CLIOutPutFileName() string {
