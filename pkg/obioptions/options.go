@@ -88,7 +88,12 @@ func GenerateOptionParser(optionset ...func(*getoptions.GetOpt)) ArgumentParser 
 		}
 
 		// Setup the maximum number of CPU usable by the program
-		runtime.GOMAXPROCS(_MaxAllowedCPU)
+		if _MaxAllowedCPU == 1 {
+			log.Warn("Limitating the Maximum number of CPU to 1 is not recommanded")
+			runtime.GOMAXPROCS(1)
+		} else {
+			runtime.GOMAXPROCS(_MaxAllowedCPU)
+		}
 		if options.Called("max-cpu") {
 			log.Printf("CPU number limited to %d", _MaxAllowedCPU)
 		}
