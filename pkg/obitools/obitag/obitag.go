@@ -293,7 +293,9 @@ func CLIAssignTaxonomy(iterator obiiter.IBioSequence,
 		if err == nil {
 			j++
 		} else {
-			log.Warnf("Taxid %d is not described in the taxonomy. Sequence %s is discared from the reference database", seq.Taxid(), seq.Id())
+			log.Warnf("Taxid %d is not described in the taxonomy."+
+				      " Sequence %s is discared from the reference database", 
+					  seq.Taxid(), seq.Id())
 		}
 	}
 

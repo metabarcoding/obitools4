@@ -1,6 +1,8 @@
 package obiconvert
 
 import (
+	"io/fs"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -93,6 +95,15 @@ func CLIWriteBioSequences(iterator obiiter.IBioSequence,
 			newIter, err = obiformats.WriteSequencesToFile(iterator, fn, opts...)
 		}
 	} else {
+		log.Info("Output is done on stdout")
+		var s fs.FileInfo
+		s, err = os.Stdout.Stat()
+		if err != nil {
+			return obiiter.NilIBioSequence, err
+		}
+
+		log.Infof("Data is writen to %s", s.Name())
+
 		opts = append(opts, obiformats.OptionsSkipEmptySequence(CLISkipEmpty()))
 		switch CLIOutputFormat() {
 		case "fastq":

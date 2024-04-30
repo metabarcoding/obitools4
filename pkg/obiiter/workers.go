@@ -1,6 +1,8 @@
 package obiiter
 
 import (
+	"runtime"
+
 	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
@@ -24,42 +26,8 @@ func (iterator IBioSequence) MakeIWorker(worker obiseq.SeqWorker,
 		nworkers = sizes[0]
 	}
 
-	newIter := MakeIBioSequence()
-
-	newIter.Add(nworkers)
-
-	go func() {
-		newIter.WaitAndClose()
-		log.Debugln("End of the batch workers")
-
-	}()
-
 	sw := obiseq.SeqToSliceWorker(worker, breakOnError)
-
-	f := func(iterator IBioSequence) {
-		var err error
-		for iterator.Next() {
-			batch := iterator.Get()
-			batch.slice, err = sw(batch.slice)
-			if err != nil && breakOnError {
-				log.Fatalf("Error on sequence processing : %v", err)
-			}
-			newIter.Push(batch)
-		}
-		newIter.Done()
-	}
-
-	log.Debugln("Start of the batch workers")
-	for i := 0; i < nworkers-1; i++ {
-		go f(iterator.Split())
-	}
-	go f(iterator)
-
-	if iterator.IsPaired() {
-		newIter.MarkAsPaired()
-	}
-
-	return newIter
+	return iterator.MakeISliceWorker(sw, breakOnError, nworkers)
 }
 
 // MakeIConditionalWorker applies a given worker function to each sequence in the iterator that satisfies the given predicate.
@@ -80,42 +48,10 @@ func (iterator IBioSequence) MakeIConditionalWorker(predicate obiseq.SequencePre
 		nworkers = sizes[0]
 	}
 
-	newIter := MakeIBioSequence()
-
-	newIter.Add(nworkers)
-
-	go func() {
-		newIter.WaitAndClose()
-		log.Debugln("End of the batch workers")
-
-	}()
-
 	sw := obiseq.SeqToSliceConditionalWorker(predicate, worker, breakOnError)
 
-	f := func(iterator IBioSequence) {
-		var err error
-		for iterator.Next() {
-			batch := iterator.Get()
-			batch.slice, err = sw(batch.slice)
-			if err != nil && breakOnError {
-				log.Fatalf("Error on sequence processing : %v", err)
-			}
-			newIter.Push(batch)
-		}
-		newIter.Done()
-	}
+	return iterator.MakeISliceWorker(sw, breakOnError, nworkers)
 
-	log.Debugln("Start of the batch workers")
-	for i := 0; i < nworkers-1; i++ {
-		go f(iterator.Split())
-	}
-	go f(iterator)
-
-	if iterator.IsPaired() {
-		newIter.MarkAsPaired()
-	}
-
-	return newIter
 }
 
 // MakeISliceWorker applies a SeqSliceWorker function to each slice in the IBioSequence iterator,
@@ -137,13 +73,6 @@ func (iterator IBioSequence) MakeISliceWorker(worker obiseq.SeqSliceWorker, brea
 
 	newIter := MakeIBioSequence()
 
-	newIter.Add(nworkers)
-
-	go func() {
-		newIter.WaitAndClose()
-		log.Println("End of the batch slice workers")
-	}()
-
 	f := func(iterator IBioSequence) {
 		var err error
 		for iterator.Next() {
@@ -153,15 +82,24 @@ func (iterator IBioSequence) MakeISliceWorker(worker obiseq.SeqSliceWorker, brea
 				log.Fatalf("Error on sequence processing : %v", err)
 			}
 			newIter.Push(batch)
+			runtime.GC()
 		}
 		newIter.Done()
 	}
 
-	log.Printf("Start of the batch slice workers on %d workers\n", nworkers)
-	for i := 0; i < nworkers-1; i++ {
+	log.Debugln("Start of the batch workers")
+	for i := 1; i < nworkers; i++ {
+		newIter.Add(1)
 		go f(iterator.Split())
 	}
+	newIter.Add(1)
 	go f(iterator)
+
+	go func() {
+		newIter.WaitAndClose()
+		log.Debugln("End of the batch workers")
+
+	}()
 
 	if iterator.IsPaired() {
 		newIter.MarkAsPaired()
