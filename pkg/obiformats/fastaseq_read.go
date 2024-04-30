@@ -1,250 +1,155 @@
 package obiformats
 
 import (
+	"bufio"
 	"bytes"
-	"fmt"
 	"io"
 	"os"
 	"path"
+	"slices"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
-	"golang.org/x/exp/slices"
 
 	log "github.com/sirupsen/logrus"
 )
 
-// lastFastaCut extracts the up to the last sequence cut from a given buffer.
-//
-// It takes a parameter:
-//   - buffer []byte: the buffer to extract the sequence cut from.
-//
-// It returns two values:
-//   - []byte: the extracted sequences.
-//   - []byte: the remaining buffer after the sequence cut (the last sequence).
-func lastFastaCut(buffer []byte) ([]byte, []byte) {
+func _EndOfLastFastaEntry(buffer []byte) int {
+	var i int
+
 	imax := len(buffer)
 	last := 0
 	state := 0
-	for i := imax - 1; i >= 0 && state < 2; i-- {
-		if state == 0 && buffer[i] == '>' {
+
+	for i = imax - 1; i >= 0 && state < 2; i-- {
+		C := buffer[i]
+		if C == '>' && state == 0 {
 			state = 1
 			last = i
-		} else if state == 1 && (buffer[i] == '\r' || buffer[i] == '\n') {
+		} else if state == 1 && (C == '\n' || C == '\r') {
 			state = 2
 		} else {
 			state = 0
 		}
 	}
 
-	if state == 2 {
-		return buffer[:last], bytes.Clone(buffer[last:])
+	if i == 0 || state != 2 {
+		return -1
 	}
-	return []byte{}, buffer
+	return last
 }
 
-// firstFastaCut cuts the input buffer at the first occurrence of a ">" character
-// following a sequence of "\r" or "\n" characters.
-//
-// It takes a byte slice as input, representing the buffer to be cut.
-// It returns two byte slices: the first slice contains the part of the buffer before the cut,
-// and the second slice contains the part of the buffer after the cut.
-func firstFastaCut(buffer []byte) ([]byte, []byte) {
-	imax := len(buffer)
-	last := 0
-	state := 0
-	for i := 0; i < imax && state < 2; i++ {
-		if (state == 0 || state == 1) && (buffer[i] == '\r' || buffer[i] == '\n') {
-			state = 1
-		} else if (state == 1 || i == 0) && buffer[i] == '>' {
-			state = 2
-			last = i
-		} else {
-			state = 0
-		}
-	}
+func _ParseFastaFile(source string,
+	input ChannelSeqFileChunk,
+	out obiiter.IBioSequence) {
 
-	if state == 2 {
-		return bytes.Clone(buffer[:last]), buffer[last:]
-	}
-	return buffer, []byte{}
-
-}
-
-func Concatenate[S ~[]E, E any](s1, s2 S) S {
-	if len(s1) > 0 {
-		if len(s2) > 0 {
-			return append(s1[:len(s1):len(s1)], s2...)
-		}
-		return s1
-	}
-	return s2
-}
-
-type FastxChunk struct {
-	Bytes []byte
-	index int
-}
-
-func FastaChunkReader(r io.Reader, size int, cutHead bool) (chan FastxChunk, error) {
-	out := make(chan FastxChunk)
-	buff := make([]byte, size)
-
-	n, err := io.ReadFull(r, buff)
-
-	if err == io.ErrUnexpectedEOF {
-		err = nil
-	}
-
-	if n > 0 && err == nil {
-		if n < size {
-			buff = buff[:n]
-		}
-
-		begin, buff := firstFastaCut(buff)
-
-		if len(begin) > 0 && !cutHead {
-			return out, fmt.Errorf("begin is not empty : %s", string(begin))
-		}
-
-		go func(buff []byte) {
-			idx := 0
-			end := []byte{}
-
-			for err == nil && n > 0 {
-				buff = Concatenate(end, buff)
-				buff, end = lastFastaCut(buff)
-				if len(buff) > 0 {
-					out <- FastxChunk{
-						Bytes: bytes.Clone(buff),
-						index: idx,
-					}
-					idx++
-				} else {
-					size = size * 2
-				}
-
-				buff = slices.Grow(buff[:0], size)[0:size]
-				n, err = io.ReadFull(r, buff)
-				if n < size {
-					buff = buff[:n]
-				}
-
-				if err == io.ErrUnexpectedEOF {
-					err = nil
-				}
-
-				// fmt.Printf("n = %d, err = %v\n", n, err)
-			}
-
-			if len(end) > 0 {
-				out <- FastxChunk{
-					Bytes: bytes.Clone(end),
-					index: idx,
-				}
-			}
-
-			close(out)
-		}(buff)
-	}
-
-	return out, nil
-}
-
-func ParseFastaChunk(source string, ch FastxChunk) *obiiter.BioSequenceBatch {
-	slice := make(obiseq.BioSequenceSlice, 0, obioptions.CLIBatchSize())
-
-	state := 0
-	start := 0
-	current := 0
 	var identifier string
 	var definition string
 
-	for i := 0; i < len(ch.Bytes); i++ {
-		C := ch.Bytes[i]
-		is_end_of_line := C == '\r' || C == '\n'
-		is_space := C == ' ' || C == '\t'
-		is_sep := is_space || is_end_of_line
+	state := 0
 
-		switch state {
-		case 0:
-			if C == '>' {
-				// Beginning of sequence
-				state = 1
-			}
-		case 1:
-			if is_sep {
-				// No identifier -> ERROR
-				log.Errorf("%s : sequence entry does not have an identifier", source)
-				return nil
-			} else {
-				// Beginning of identifier
-				state = 2
-				start = i
-			}
-		case 2:
-			if is_sep {
-				// End of identifier
-				identifier = string(ch.Bytes[start:i])
-				state = 3
-			}
-			if is_end_of_line {
-				// Definition empty
-				definition = ""
-				state = 5
-			}
-		case 3:
-			if is_end_of_line {
-				// Definition empty
-				definition = ""
-				state = 5
-			} else if !is_space {
-				// Beginning of definition
-				start = i
-				state = 4
-			}
-		case 4:
-			if is_end_of_line {
-				definition = string(ch.Bytes[start:i])
-				state = 5
+	idBytes := new(bytes.Buffer)
+	defBytes := new(bytes.Buffer)
+	seqBytes := new(bytes.Buffer)
 
-			}
-		case 5:
-			if !is_end_of_line {
-				// Beginning of sequence
-				start = i
-				if C >= 'A' && C <= 'Z' {
-					ch.Bytes[current] = C + 'a' - 'A'
+	for chunks := range input {
+		scanner := bufio.NewReader(chunks.raw)
+		sequences := make(obiseq.BioSequenceSlice, 0, 100)
+		for C, err := scanner.ReadByte(); err != io.EOF; C, err = scanner.ReadByte() {
+
+			is_end_of_line := C == '\r' || C == '\n'
+			is_space := C == ' ' || C == '\t'
+			is_sep := is_space || is_end_of_line
+
+			switch state {
+			case 0:
+				if C == '>' {
+					// Beginning of sequence
+					state = 1
 				}
-				current = i + 1
-				state = 6
-			}
-		case 6:
-			if C == '>' {
-				// End of sequence
-				s := obiseq.NewBioSequence(identifier, bytes.Clone(ch.Bytes[start:current]), definition)
-				s.SetSource(source)
-				slice = append(slice, s)
-				state = 1
-
-			} else if !is_sep {
-				if C >= 'A' && C <= 'Z' {
-					C = C + 'a' - 'A'
+			case 1:
+				if is_sep {
+					// No identifier -> ERROR
+					log.Errorf("%s : sequence entry does not have an identifier", source)
+				} else {
+					// Beginning of identifier
+					idBytes.Reset()
+					state = 2
+					idBytes.WriteByte(C)
 				}
-				// Removing white space from the sequence
-				if (C >= 'a' && C <= 'z') || C == '-' || C == '.' || C == '[' || C == ']' {
-					ch.Bytes[current] = C
-					current++
+			case 2:
+				if is_sep {
+					// End of identifier
+					identifier = idBytes.String()
+					idBytes.Reset()
+					state = 3
+				} else {
+					idBytes.WriteByte(C)
+				}
+				if is_end_of_line {
+					// Definition empty
+					definition = ""
+					state = 5
+				}
+			case 3:
+				if is_end_of_line {
+					// Definition empty
+					definition = ""
+					state = 5
+				} else if !is_space {
+					// Beginning of definition
+					defBytes.Reset()
+					defBytes.WriteByte(C)
+					state = 4
+				}
+			case 4:
+				if is_end_of_line {
+					definition = defBytes.String()
+					state = 5
+				}
+			case 5:
+				if !is_end_of_line {
+					// Beginning of sequence
+					seqBytes.Reset()
+					if C >= 'A' && C <= 'Z' {
+						C = C + 'a' - 'A'
+					}
+
+					if (C >= 'a' && C <= 'z') || C == '-' || C == '.' || C == '[' || C == ']' {
+						seqBytes.WriteByte(C)
+					}
+					state = 6
+				}
+			case 6:
+				if C == '>' {
+					// End of sequence
+					s := obiseq.NewBioSequence(identifier, slices.Clone(seqBytes.Bytes()), definition)
+					s.SetSource(source)
+					sequences = append(sequences, s)
+					state = 1
+
+				} else if !is_sep {
+					if C >= 'A' && C <= 'Z' {
+						C = C + 'a' - 'A'
+					}
+					// Removing white space from the sequence
+					if (C >= 'a' && C <= 'z') || C == '-' || C == '.' || C == '[' || C == ']' {
+						seqBytes.WriteByte(C)
+					}
 				}
 			}
 		}
+
+		if len(sequences) > 0 {
+			log.Debugln("Pushing sequences")
+			out.Push(obiiter.MakeBioSequenceBatch(chunks.order, sequences))
+		}
 	}
 
-	slice = append(slice, obiseq.NewBioSequence(identifier, bytes.Clone(ch.Bytes[start:current]), definition))
-	batch := obiiter.MakeBioSequenceBatch(ch.index, slice)
-	return &batch
+	out.Done()
+
 }
 
 func ReadFasta(reader io.Reader, options ...WithOption) (obiiter.IBioSequence, error) {
@@ -254,35 +159,21 @@ func ReadFasta(reader io.Reader, options ...WithOption) (obiiter.IBioSequence, e
 	source := opt.Source()
 
 	nworker := obioptions.CLIReadParallelWorkers()
-	out.Add(nworker)
+	chkchan := ReadSeqFileChunk(reader, _EndOfLastFastaEntry)
 
-	chkchan, err := FastaChunkReader(reader, 1024*500, false)
-
-	if err != nil {
-		return obiiter.NilIBioSequence, err
+	for i := 0; i < nworker; i++ {
+		out.Add(1)
+		go _ParseFastaFile(source, chkchan, out)
 	}
 
 	go func() {
 		out.WaitAndClose()
 	}()
 
-	parser := func() {
-		defer out.Done()
-		for chk := range chkchan {
-			seqs := ParseFastaChunk(source, chk)
-			if seqs != nil {
-				out.Push(*seqs)
-			}
-		}
-	}
-
-	for i := 0; i < nworker; i++ {
-		go parser()
-	}
-
 	newIter := out.SortBatches().Rebatch(opt.BatchSize())
 
 	log.Debugln("Full file batch mode : ", opt.FullFileBatch())
+
 	if opt.FullFileBatch() {
 		newIter = newIter.CompleteFileIterator()
 	}

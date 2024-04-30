@@ -15,13 +15,6 @@ import (
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 )
 
-var _FileChunkSize = 1 << 28
-
-type _FileChunk struct {
-	raw   io.Reader
-	order int
-}
-
 // _EndOfLastEntry finds the index of the last entry in the given byte slice 'buff'
 // using a pattern match of the form:
 // <CR>?<LF>//<CR>?<LF>
@@ -94,7 +87,7 @@ func _EndOfLastEntry(buff []byte) int {
 	return -1
 }
 
-func _ParseEmblFile(source string, input <-chan _FileChunk,
+func _ParseEmblFile(source string, input ChannelSeqFileChunk,
 	out obiiter.IBioSequence,
 	withFeatureTable bool,
 	batch_size int,
@@ -170,115 +163,28 @@ func _ParseEmblFile(source string, input <-chan _FileChunk,
 
 }
 
-// _ReadFlatFileChunk reads a chunk of data from the given 'reader' and sends it to the
-// 'readers' channel as a _FileChunk struct. The function reads from the reader until
-// the end of the last entry is found, then sends the chunk to the channel. If the end
-// of the last entry is not found in the current chunk, the function reads from the reader
-// in 1 MB increments until the end of the last entry is found. The function repeats this
-// process until the end of the file is reached.
-//
-// Arguments:
-// reader io.Reader - an io.Reader to read data from
-// readers chan _FileChunk - a channel to send the data as a _FileChunk struct
-//
-// Returns:
-// None
-func _ReadFlatFileChunk(reader io.Reader, readers chan _FileChunk) {
-	var err error
-	var buff []byte
-
-	size := 0
-	l := 0
-	i := 0
-
-	// Initialize the buffer to the size of a chunk of data
-	buff = make([]byte, _FileChunkSize)
-
-	// Read from the reader until the buffer is full or the end of the file is reached
-	l, err = io.ReadFull(reader, buff)
-	buff = buff[:l]
-
-	if err == io.ErrUnexpectedEOF {
-		err = nil
-	}
-
-	// Read from the reader until the end of the last entry is found or the end of the file is reached
-	for err == nil {
-
-		// Create an extended buffer to read from if the end of the last entry is not found in the current buffer
-		extbuff := make([]byte, _FileChunkSize)
-		end := 0
-		ic := 0
-
-		// Read from the reader in 1 MB increments until the end of the last entry is found
-		for end = _EndOfLastEntry(buff); err == nil && end < 0; end = _EndOfLastEntry(buff) {
-			ic++
-			size, err = io.ReadFull(reader, extbuff)
-			buff = append(buff, extbuff[:size]...)
-		}
-
-		if len(buff) > 0 {
-			if end < 0 {
-				end = len(buff)
-			}
-			lremain := len(buff) - end
-			remains := make([]byte, max(lremain, _FileChunkSize))
-
-			lcp := copy(remains, buff[end:])
-			remains = remains[:lcp]
-			if lcp < lremain {
-				log.Fatalf("Error copying remaining data of chunck %d : %d < %d", i, lcp, len(remains))
-			}
-
-			buff = buff[:end]
-
-			for len(buff) > 0 && (buff[len(buff)-1] == '\n' || buff[len(buff)-1] == '\r') {
-				buff = buff[:len(buff)-1]
-			}
-
-			if len(buff) > 0 {
-				io := bytes.NewBuffer(buff)
-
-				if string(buff[io.Len()-2:]) != "//" {
-					log.Fatalf("File chunck ends with 3 bytes : %s", io.Bytes()[io.Len()-3:])
-				}
-
-				readers <- _FileChunk{io, i}
-				i++
-				buff = remains
-			}
-		}
-	}
-
-	// Close the readers channel when the end of the file is reached
-	close(readers)
-
-}
-
 //	6    5  43 2    1
 //
 // <CR>?<LF>//<CR>?<LF>
 func ReadEMBL(reader io.Reader, options ...WithOption) obiiter.IBioSequence {
 	opt := MakeOptions(options)
-	entry_channel := make(chan _FileChunk)
 
+	entry_channel := ReadSeqFileChunk(reader, _EndOfLastEntry)
 	newIter := obiiter.MakeIBioSequence()
 
 	nworkers := opt.ParallelWorkers()
-	newIter.Add(nworkers)
-
-	go func() {
-		newIter.WaitAndClose()
-	}()
 
 	// for j := 0; j < opt.ParallelWorkers(); j++ {
 	for j := 0; j < nworkers; j++ {
+		newIter.Add(1)
 		go _ParseEmblFile(opt.Source(), entry_channel, newIter,
 			opt.WithFeatureTable(),
 			opt.BatchSize(), opt.TotalSeqSize())
 	}
 
-	go _ReadFlatFileChunk(reader, entry_channel)
+	go func() {
+		newIter.WaitAndClose()
+	}()
 
 	if opt.pointer.full_file_batch {
 		newIter = newIter.CompleteFileIterator()

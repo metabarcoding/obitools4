@@ -76,8 +76,11 @@ func GenerateOptionParser(optionset ...func(*getoptions.GetOpt)) ArgumentParser 
 		}
 
 		if options.Called("pprof") {
-			go http.ListenAndServe("localhost:8080", nil)
-			log.Infoln("Start a pprof server at address http://localhost:8080/debug/pprof")
+			url := "localhost:6060"
+			go http.ListenAndServe(url, nil)
+			log.Infof("Start a pprof server at address %s/debug/pprof", url)
+			log.Info("Profil can be followed running concurrently the command :")
+			log.Info("  go tool pprof -http=127.0.0.1:8080 'http://localhost:6060/debug/pprof/profile?seconds=30'")
 		}
 
 		// Handle user errors
@@ -104,9 +107,9 @@ func GenerateOptionParser(optionset ...func(*getoptions.GetOpt)) ArgumentParser 
 
 		log.Printf("Number of workers set %d", CLIParallelWorkers())
 
-		if options.Called("workers") {
+		// if options.Called("workers") {
 
-		}
+		// }
 
 		if options.Called("solexa") {
 			SetInputQualityShift(64)

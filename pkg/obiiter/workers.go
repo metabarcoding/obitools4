@@ -1,8 +1,6 @@
 package obiiter
 
 import (
-	"runtime"
-
 	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
@@ -82,7 +80,6 @@ func (iterator IBioSequence) MakeISliceWorker(worker obiseq.SeqSliceWorker, brea
 				log.Fatalf("Error on sequence processing : %v", err)
 			}
 			newIter.Push(batch)
-			runtime.GC()
 		}
 		newIter.Done()
 	}

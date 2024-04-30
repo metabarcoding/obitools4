@@ -30,7 +30,8 @@ const (
 var _seqlenght_rx = regexp.MustCompile(" +([0-9]+) bp")
 
 func _ParseGenbankFile(source string,
-	input <-chan _FileChunk, out obiiter.IBioSequence,
+	input ChannelSeqFileChunk,
+	out obiiter.IBioSequence,
 	chunck_order func() int,
 	withFeatureTable bool,
 	batch_size int,
@@ -230,27 +231,31 @@ func _ParseGenbankFile(source string,
 
 func ReadGenbank(reader io.Reader, options ...WithOption) obiiter.IBioSequence {
 	opt := MakeOptions(options)
-	entry_channel := make(chan _FileChunk)
+	// entry_channel := make(chan _FileChunk)
 
+	entry_channel := ReadSeqFileChunk(reader, _EndOfLastEntry)
 	newIter := obiiter.MakeIBioSequence()
 
 	nworkers := opt.ParallelWorkers()
 	chunck_order := obiutils.AtomicCounter()
-	newIter.Add(nworkers)
+
+	// for j := 0; j < opt.ParallelWorkers(); j++ {
+	for j := 0; j < nworkers; j++ {
+		newIter.Add(1)
+		go _ParseGenbankFile(opt.Source(),
+			entry_channel, newIter, chunck_order,
+			opt.WithFeatureTable(),
+			opt.BatchSize(),
+			opt.TotalSeqSize())
+	}
+
+	// go _ReadFlatFileChunk(reader, entry_channel)
 
 	go func() {
 		newIter.WaitAndClose()
 	}()
 
-	// for j := 0; j < opt.ParallelWorkers(); j++ {
-	for j := 0; j < nworkers; j++ {
-		go _ParseGenbankFile(opt.Source(), entry_channel, newIter, chunck_order,
-			opt.WithFeatureTable(), opt.BatchSize(), opt.TotalSeqSize())
-	}
-
-	go _ReadFlatFileChunk(reader, entry_channel)
-
-	if opt.pointer.full_file_batch {
+	if opt.FullFileBatch() {
 		newIter = newIter.CompleteFileIterator()
 	}
 
