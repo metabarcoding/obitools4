@@ -229,6 +229,8 @@ func _ParseFastqFile(source string,
 					// End of identifier
 					identifier = idBytes.String()
 					state = 3
+				} else {
+					idBytes.WriteByte(C)
 				}
 				if is_end_of_line {
 					// Definition empty
@@ -250,6 +252,8 @@ func _ParseFastqFile(source string,
 				if is_end_of_line {
 					definition = defBytes.String()
 					state = 5
+				} else {
+					defBytes.WriteByte(C)
 				}
 			case 5: // Beginning of sequence
 				if !is_end_of_line {
@@ -308,6 +312,8 @@ func _ParseFastqFile(source string,
 					}
 					sequences[len(sequences)-1].SetQualities(q)
 					state = 11
+				} else {
+					qualBytes.WriteByte(C)
 				}
 			case 11:
 				if is_end_of_line {

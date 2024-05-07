@@ -11,14 +11,24 @@ import (
 
 type StatsOnValues map[string]int
 
+// StatsOnSlotName returns the name of the slot that summarizes statistics of occurrence for a given attribute.
+//
+// Parameters:
+// - key: the attribute key (string)
+//
+// Return type:
+// - string
 func StatsOnSlotName(key string) string {
 	return "merged_" + key
 }
 
-/*
-	 	Tests if the sequence has already a slot summarizing statistics
-		 of occurrence for a given attribute.
-*/
+// HasStatsOn tests if the sequence has already a slot summarizing statistics of occurrence for a given attribute.
+//
+// Parameters:
+// - key: the attribute key (string)
+//
+// Return type:
+// - bool
 func (sequence *BioSequence) HasStatsOn(key string) bool {
 	if !sequence.HasAnnotation() {
 		return false
@@ -31,7 +41,14 @@ func (sequence *BioSequence) HasStatsOn(key string) bool {
 	return ok
 }
 
-// A function that takes a BioSequence and a key and returns a StatsOnValues.
+// StatsOn returns the slot summarizing statistics of occurrence for a given attribute.
+//
+// Parameters:
+// - key: the attribute key (string) to be summarized
+// - na: the value to be used if the attribute is not present
+//
+// Return type:
+// - StatsOnValues
 func (sequence *BioSequence) StatsOn(key string, na string) StatsOnValues {
 	mkey := StatsOnSlotName(key)
 	annotations := sequence.Annotations()
@@ -77,7 +94,14 @@ func (sequence *BioSequence) StatsOn(key string, na string) StatsOnValues {
 	return stats
 }
 
-// Adding the count of the sequence to the count of the key in the stats.
+// StatsPlusOne adds the count of the sequence toAdd to the count of the key in the stats.
+//
+// Parameters:
+// - key: the attribute key (string) to be summarized
+// - toAdd: the BioSequence to add to the stats
+// - na: the value to be used if the attribute is not present
+// Return type:
+// - bool
 func (sequence *BioSequence) StatsPlusOne(key string, toAdd *BioSequence, na string) bool {
 	sval := na
 	annotations := sequence.Annotations()
@@ -109,10 +133,14 @@ func (sequence *BioSequence) StatsPlusOne(key string, toAdd *BioSequence, na str
 		old = 0
 	}
 	stats[sval] = old + toAdd.Count()
-	annotations[StatsOnSlotName(key)] = stats
+	annotations[StatsOnSlotName(key)] = stats // TODO: check if this is necessary
 	return retval
 }
 
+// Merge merges the given StatsOnValues with the current StatsOnValues.
+//
+// It takes a parameter `toMerged` of type StatsOnValues, which represents the StatsOnValues to be merged.
+// It returns a value of type StatsOnValues, which represents the merged StatsOnValues.
 func (stats StatsOnValues) Merge(toMerged StatsOnValues) StatsOnValues {
 	for k, val := range toMerged {
 		old, ok := stats[k]
@@ -125,7 +153,16 @@ func (stats StatsOnValues) Merge(toMerged StatsOnValues) StatsOnValues {
 	return stats
 }
 
-// Merging two sequences.
+// Merge merges two sequences into a single sequence.
+//
+// Parameters:
+// - tomerge: the sequence to be merged (BioSequence)
+// - na: the value to be used if the attribute is not present (string)
+// - inplace: a boolean indicating whether to merge in place or not (bool)
+// - statsOn: a variadic string parameter representing the attributes to be summarized (string)
+//
+// Return type:
+// - *BioSequence: the merged sequence (BioSequence)
 func (sequence *BioSequence) Merge(tomerge *BioSequence, na string, inplace bool, statsOn ...string) *BioSequence {
 	if !inplace {
 		sequence = sequence.Copy()
@@ -184,17 +221,15 @@ func (sequence *BioSequence) Merge(tomerge *BioSequence, na string, inplace bool
 	return sequence
 }
 
-/*
-*
-
-	Merges a set of sequence into a single sequence.
-
-	The function assumes that every sequence in the batch is
-	identical in term of sequence. Actually the function only
-	aggregates the annotations of the different sequences to be merged
-
-	Quality information is lost during the merge procedure.
-*/
+// Merge merges the given sequences into a single sequence.
+//
+// Parameters:
+// - sequences: a slice of BioSequence objects to be merged (BioSequenceSlice)
+// - na: the value to be used if the attribute is not present (string)
+// - statsOn: a slice of strings representing the attributes to be summarized ([]string)
+//
+// Return type:
+// - *BioSequence: the merged sequence (BioSequence)
 func (sequences BioSequenceSlice) Merge(na string, statsOn []string) *BioSequence {
 	seq := sequences[0]
 	//sequences[0] = nil

@@ -108,6 +108,8 @@ func _ParseFastaFile(source string,
 				if is_end_of_line {
 					definition = defBytes.String()
 					state = 5
+				} else {
+					defBytes.WriteByte(C)
 				}
 			case 5:
 				if !is_end_of_line {

@@ -1,8 +1,15 @@
 package obialign
 
-import "git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
+import (
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
+	"golang.org/x/exp/constraints"
+)
 
-func abs(x int) int {
+// abs computes the absolute value of a given float or integer.
+//
+// x: the input value of type k (float or integer).
+// k: the return type, which is the absolute value of x.
+func abs[k constraints.Float | constraints.Integer](x k) k {
 	if x < 0 {
 		return -x
 	}
@@ -10,6 +17,17 @@ func abs(x int) int {
 	return x
 }
 
+// D1Or0 checks if two sequences are identical or differ by one position.
+//
+// Parameters:
+// - seq1: a pointer to the first sequence
+// - seq2: a pointer to the second sequence
+//
+// Returns:
+// - int: 0 if the sequences are identical or 0 if they differ by one position, -1 otherwise
+// - int: the position where the sequences differ, -1 if they are identical
+// - byte: the character in the first sequence at the differing position, '-' if it's a deletion
+// - byte: the character in the second sequence at the differing position, '-' if it's a deletion
 func D1Or0(seq1, seq2 *obiseq.BioSequence) (int, int, byte, byte) {
 
 	pos := -1
