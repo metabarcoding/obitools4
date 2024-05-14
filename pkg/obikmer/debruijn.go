@@ -9,6 +9,7 @@ import (
 	"slices"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 	"github.com/daichi-m/go18ds/sets/linkedhashset"
 	"github.com/daichi-m/go18ds/stacks/arraystack"
 	log "github.com/sirupsen/logrus"
@@ -294,7 +295,7 @@ func (g *DeBruijnGraph) LongestPath(max_length int) []uint64 {
 	return path
 }
 
-func (g *DeBruijnGraph) LongestConsensus(id string, max_length int) (*obiseq.BioSequence, error) {
+func (g *DeBruijnGraph) LongestConsensus(id string) (*obiseq.BioSequence, error) {
 	//path := g.LongestPath(max_length)
 	path := g.HaviestPath()
 	s := g.DecodePath(path)
@@ -464,11 +465,12 @@ func (graph *DeBruijnGraph) Gml() string {
 
 	for idx := range graph.graph {
 		srcid := nodeidx[idx]
+		weight := graph.Weight(idx)
 		n := graph.Nexts(idx)
 		for _, dst := range n {
 			dstid := nodeidx[dst]
+			weight := obiutils.Min(graph.Weight(dst), weight)
 			label := decode[dst&3]
-			weight := graph.Weight(dst)
 			buffer.WriteString(
 				fmt.Sprintf(`edge [ source "%d"
 					target "%d" 

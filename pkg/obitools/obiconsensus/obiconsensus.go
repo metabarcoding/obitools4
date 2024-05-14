@@ -17,9 +17,7 @@ import (
 
 func BuildConsensus(seqs obiseq.BioSequenceSlice,
 	consensus_id string,
-	kmer_size int, quorum float64,
-	min_depth float64,
-	max_length int,
+	kmer_size int,
 	save_graph bool, dirname string) (*obiseq.BioSequence, error) {
 
 	if save_graph {
@@ -37,7 +35,7 @@ func BuildConsensus(seqs obiseq.BioSequenceSlice,
 			}
 		}
 
-		fasta, err := os.Create(path.Join(dirname, fmt.Sprintf("%s.fasta", consensus_id)))
+		fasta, err := os.Create(path.Join(dirname, fmt.Sprintf("%s_consensus.fasta", consensus_id)))
 
 		if err == nil {
 			defer fasta.Close()
@@ -58,16 +56,7 @@ func BuildConsensus(seqs obiseq.BioSequenceSlice,
 			longest[i] = slices.Max(sa.CommonSuffix())
 		}
 
-		// o := obiutils.Order(sort.IntSlice(longest))
-		// i := int(float64(len(seqs)) * quorum)
-
-		// if i >= len(o) {
-		// 	i = len(o) - 1
-		// }
-
 		kmer_size = slices.Max(longest) + 1
-
-		// kmer_size = longest[o[i]] + 1
 		log.Printf("estimated kmer size : %d", kmer_size)
 	}
 
@@ -90,7 +79,7 @@ func BuildConsensus(seqs obiseq.BioSequenceSlice,
 	if save_graph {
 
 		file, err := os.Create(path.Join(dirname,
-			fmt.Sprintf("%s_raw_consensus.gml", consensus_id)))
+			fmt.Sprintf("%s_consensus.gml", consensus_id)))
 
 		if err != nil {
 			fmt.Println(err)
@@ -103,65 +92,7 @@ func BuildConsensus(seqs obiseq.BioSequenceSlice,
 	log.Printf("Graph size : %d\n", graph.Len())
 	total_kmer := graph.Len()
 
-	// threshold := 0
-
-	// switch {
-	// case min_depth < 0:
-	// 	spectrum := graph.WeightSpectrum()
-	// 	cum := make(map[int]int)
-
-	// 	spectrum[1] = 0
-	// 	for i := 2; i < len(spectrum); i++ {
-	// 		spectrum[i] += spectrum[i-1]
-	// 		cum[spectrum[i]]++
-	// 	}
-
-	// 	max := 0
-	// 	kmax := 0
-	// 	for k, obs := range cum {
-	// 		if obs > max {
-	// 			max = obs
-	// 			kmax = k
-	// 		}
-	// 	}
-
-	// 	for i, total := range spectrum {
-	// 		if total == kmax {
-	// 			threshold = i
-	// 			break
-	// 		}
-	// 	}
-	// 	threshold /= 2
-
-	// 	if threshold < 1 {
-	// 		threshold = 1
-	// 	}
-
-	// 	log.Info("Estimated kmer_min_occur = ", threshold)
-	// case min_depth >= 1:
-	// 	threshold = int(min_depth)
-	// default:
-	// 	threshold = int(float64(len(seqs)) * min_depth)
-	// }
-
-	// graph.FilterMinWeight(threshold)
-
-	// log.Printf("Graph size : %d\n", graph.Len())
-
-	// if save_graph {
-
-	// 	file, err := os.Create(path.Join(dirname,
-	// 		fmt.Sprintf("%s_consensus.gml", consensus_id)))
-
-	// 	if err != nil {
-	// 		fmt.Println(err)
-	// 	} else {
-	// 		file.WriteString(graph.Gml())
-	// 		file.Close()
-	// 	}
-	// }
-
-	seq, err := graph.LongestConsensus(consensus_id, max_length)
+	seq, err := graph.LongestConsensus(consensus_id)
 
 	sumCount := 0
 
@@ -173,59 +104,12 @@ func BuildConsensus(seqs obiseq.BioSequenceSlice,
 		seq.SetCount(sumCount)
 		seq.SetAttribute("seq_length", seq.Len())
 		seq.SetAttribute("kmer_size", kmer_size)
-		//seq.SetAttribute("kmer_min_occur", threshold)
 		seq.SetAttribute("kmer_max_occur", graph.MaxWeight())
 		seq.SetAttribute("filtered_graph_size", graph.Len())
 		seq.SetAttribute("full_graph_size", total_kmer)
 	}
 	return seq, err
 }
-
-// func BuildConsensusWithTimeout(seqs obiseq.BioSequenceSlice,
-// 	kmer_size int, quorum float64,
-// 	min_depth float64,
-// 	save_graph bool, dirname string, timeout time.Duration) (*obiseq.BioSequence, error) {
-
-// 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-// 	defer cancel()
-
-// 	consensus := func() *obiseq.BioSequence {
-// 		cons, err := BuildConsensus(seqs, kmer_size, quorum, min_depth, save_graph, dirname,)
-// 		if err != nil {
-// 			cons = nil
-// 		}
-
-// 		return cons
-// 	}
-
-// 	computation := func() <-chan *obiseq.BioSequence {
-// 		result := make(chan *obiseq.BioSequence)
-
-// 		go func() {
-// 			select {
-// 			case <-ctx.Done():
-// 				result <- nil
-// 			default:
-// 				result <- consensus()
-
-// 			}
-// 		}()
-
-// 		return result
-// 	}
-
-// 	calcResult := computation()
-
-// 	select {
-// 	case result := <-calcResult:
-// 		if result == nil {
-// 			return nil, fmt.Errorf("cannot compute consensus")
-// 		}
-// 		return result, nil
-// 	case <-ctx.Done():
-// 		return nil, fmt.Errorf("compute consensus timeout, exiting")
-// 	}
-// }
 
 func Consensus(iterator obiiter.IBioSequence) obiiter.IBioSequence {
 	newIter := obiiter.MakeIBioSequence()
@@ -266,9 +150,7 @@ func Consensus(iterator obiiter.IBioSequence) obiiter.IBioSequence {
 			}
 			consensus, err := BuildConsensus(sequences,
 				id,
-				CLIKmerSize(), CLIThreshold(),
-				CLIKmerDepth(),
-				CLIMaxConsensusLength(),
+				CLIKmerSize(),
 				CLISaveGraphToFiles(),
 				CLIGraphFilesDirectory(),
 			)

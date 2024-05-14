@@ -7,9 +7,6 @@ import (
 
 var _saveGraph = "__@@NOSAVE@@__"
 var _kmerSize = -1
-var _threshold = 0.99
-var _mindepth = -1.0
-var _consensus_max_length = -1
 
 func ObiconsensusOptionSet(options *getoptions.GetOpt) {
 
@@ -24,26 +21,6 @@ func ObiconsensusOptionSet(options *getoptions.GetOpt) {
 		options.Description("The size of the kmer used to build the consensus. "+
 			"Default value = -1, which means that the kmer size is estimated from the data"),
 	)
-
-	options.Float64Var(&_threshold, "threshold", _threshold,
-		options.ArgName("RATIO"),
-		options.Description("A threshold between O and 1 used to determine the optimal "+
-			"kmer size"),
-	)
-
-	options.Float64Var(&_mindepth, "min-depth", _mindepth,
-		options.ArgName("DEPTH"),
-		options.Description("if DEPTH is between 0 and 1, it corresponds to fraction of the "+
-			"reads in which a kmer must occurs to be conserved in the graph. If DEPTH is greater "+
-			"than 1, indicate the minimum count of occurrence for a kmer to be kept. "+
-			"Default value = -1, which means that the DEPTH is estimated from the data"),
-	)
-
-	options.IntVar(&_consensus_max_length, "consensus-max-length", _consensus_max_length,
-		options.ArgName("LENGTH"),
-		options.Description("Maximum length of the consensus sequence. "+
-			"Default value = -1, which means that no limit is applied"),
-	)	
 
 }
 
@@ -65,16 +42,4 @@ func CLIGraphFilesDirectory() string {
 
 func CLIKmerSize() int {
 	return _kmerSize
-}
-
-func CLIKmerDepth() float64 {
-	return _mindepth
-}
-
-func CLIThreshold() float64 {
-	return _threshold
-}
-
-func CLIMaxConsensusLength() int {
-	return _consensus_max_length
 }

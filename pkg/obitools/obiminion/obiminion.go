@@ -157,7 +157,7 @@ func BuildDiffSeqGraph(name, name_key string,
 }
 
 func MinionDenoise(graph *obigraph.Graph[*obiseq.BioSequence, Mutation],
-	sample_key string, kmer_size int, max_length int, threshold float64, depth float64) obiseq.BioSequenceSlice {
+	sample_key string, kmer_size int) obiseq.BioSequenceSlice {
 	denoised := obiseq.MakeBioSequenceSlice(len(*graph.Vertices))
 
 	for i, v := range *graph.Vertices {
@@ -173,8 +173,6 @@ func MinionDenoise(graph *obigraph.Graph[*obiseq.BioSequence, Mutation],
 			clean, err = obiconsensus.BuildConsensus(pack,
 				fmt.Sprintf("%s_consensus", v.Id()),
 				kmer_size,
-				threshold,
-				depth, max_length,
 				CLISaveGraphToFiles(), CLIGraphFilesDirectory())
 
 			if err != nil {
@@ -208,11 +206,6 @@ func CLIOBIMinion(itertator obiiter.IBioSequence) obiiter.IBioSequence {
 
 	samples := SeqBySamples(db, CLISampleAttribute())
 	db.Recycle(false)
-
-	log.Infof("Dataset composed of %d samples\n", len(samples))
-	if CLIMaxConsensusLength() > 0 {
-		log.Infof("Maximum consensus length: %d\n", CLIMaxConsensusLength())
-	}
 
 	log.Infof("Dataset composed of %d samples\n", len(samples))
 
@@ -266,10 +259,7 @@ func CLIOBIMinion(itertator obiiter.IBioSequence) obiiter.IBioSequence {
 
 			denoised := MinionDenoise(graph,
 				CLISampleAttribute(),
-				CLIKmerSize(),
-				CLIMaxConsensusLength(),
-				CLIThreshold(),
-				CLIKmerDepth())
+				CLIKmerSize())
 
 			newIter.Push(obiiter.MakeBioSequenceBatch(sample_order, denoised))
 
