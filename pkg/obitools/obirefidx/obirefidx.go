@@ -63,7 +63,7 @@ func IndexSequence(seqidx int,
 			if lca[order] == ancestor {
 				// nseq[i]++
 				if mini != -1 {
-					wordmin = obiutils.MaxInt(sequence.Len(), references[order].Len()) - 3 - 4*mini
+					wordmin = obiutils.Max(sequence.Len(), references[order].Len()) - 3 - 4*mini
 				}
 
 				if cw[order] < wordmin {
@@ -189,7 +189,7 @@ func IndexReferenceDB(iterator obiiter.IBioSequence) obiiter.IBioSequence {
 	indexed := obiiter.MakeIBioSequence()
 	go func() {
 		for i := 0; i < len(references); i += 10 {
-			limits <- [2]int{i, obiutils.MinInt(i+10, len(references))}
+			limits <- [2]int{i, obiutils.Min(i+10, len(references))}
 		}
 		close(limits)
 	}()

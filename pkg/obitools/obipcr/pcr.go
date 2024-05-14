@@ -47,8 +47,8 @@ func CLIPCR(iterator obiiter.IBioSequence) (obiiter.IBioSequence, error) {
 		frags := obiiter.IFragments(
 			CLIMaxLength()*1000,
 			CLIMaxLength()*100,
-			CLIMaxLength()+obiutils.MaxInt(len(CLIForwardPrimer()),
-				len(CLIReversePrimer()))+obiutils.MinInt(len(CLIForwardPrimer()),
+			CLIMaxLength()+obiutils.Max(len(CLIForwardPrimer()),
+				len(CLIReversePrimer()))+obiutils.Min(len(CLIForwardPrimer()),
 				len(CLIReversePrimer()))/2,
 			100,
 			obioptions.CLIParallelWorkers(),

@@ -9,6 +9,7 @@ var _saveGraph = "__@@NOSAVE@@__"
 var _kmerSize = -1
 var _threshold = 0.99
 var _mindepth = -1.0
+var _consensus_max_length = -1
 
 func ObiconsensusOptionSet(options *getoptions.GetOpt) {
 
@@ -38,6 +39,12 @@ func ObiconsensusOptionSet(options *getoptions.GetOpt) {
 			"Default value = -1, which means that the DEPTH is estimated from the data"),
 	)
 
+	options.IntVar(&_consensus_max_length, "consensus-max-length", _consensus_max_length,
+		options.ArgName("LENGTH"),
+		options.Description("Maximum length of the consensus sequence. "+
+			"Default value = -1, which means that no limit is applied"),
+	)	
+
 }
 
 func OptionSet(options *getoptions.GetOpt) {
@@ -66,4 +73,8 @@ func CLIKmerDepth() float64 {
 
 func CLIThreshold() float64 {
 	return _threshold
+}
+
+func CLIMaxConsensusLength() int {
+	return _consensus_max_length
 }

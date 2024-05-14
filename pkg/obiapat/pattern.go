@@ -348,8 +348,8 @@ func (pattern ApatPattern) BestMatch(sequence ApatSequence, begin, length int) (
 
 	start = best[0] - nerr
 	end = best[0] + int(pattern.pointer.pointer.patlen) + nerr
-	start = obiutils.MaxInt(start, 0)
-	end = obiutils.MinInt(end, sequence.Len())
+	start = obiutils.Max(start, 0)
+	end = obiutils.Min(end, sequence.Len())
 
 	cpattern := (*[1 << 30]byte)(unsafe.Pointer(pattern.pointer.pointer.cpat))
 	frg := sequence.pointer.reference.Sequence()[start:end]
@@ -387,8 +387,8 @@ func (pattern ApatPattern) AllMatches(sequence ApatSequence, begin, length int) 
 		if m[2] > 0 && pattern.pointer.pointer.hasIndel {
 			start := m[0] - m[2]
 			end := m[0] + int(pattern.pointer.pointer.patlen) + m[2]
-			start = obiutils.MaxInt(start, 0)
-			end = obiutils.MinInt(end, sequence.Len())
+			start = obiutils.Max(start, 0)
+			end = obiutils.Min(end, sequence.Len())
 
 			cpattern := (*[1 << 30]byte)(unsafe.Pointer(pattern.pointer.pointer.cpat))
 			frg := sequence.pointer.reference.Sequence()[start:end]

@@ -30,7 +30,7 @@ func IFragments(minsize, length, overlap, size, nworkers int) Pipeable {
 						news = append(news, s)
 					} else {
 						for i := 0; i < s.Len(); i += step {
-							end := obiutils.MinInt(i+length, s.Len())
+							end := obiutils.Min(i+length, s.Len())
 							fusion := false
 							if (s.Len() - end) < step {
 								end = s.Len()

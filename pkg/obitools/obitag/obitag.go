@@ -110,7 +110,7 @@ func FindClosests(sequence *obiseq.BioSequence,
 			d, _, _, _ := obialign.D1Or0(sequence, references[order])
 			if d >= 0 {
 				score = d
-				alilength = obiutils.MaxInt(sequence.Len(), ref.Len())
+				alilength = obiutils.Max(sequence.Len(), ref.Len())
 				lcs = alilength - score
 			}
 		} else {

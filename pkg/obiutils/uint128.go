@@ -13,8 +13,8 @@ import (
 // Zero is a zero-valued uint128.
 var Zero Uint128
 
-// Max is the largest possible uint128 value.
-var Max = New(math.MaxUint64, math.MaxUint64)
+// MaxUint128 is the largest possible uint128 value.
+var MaxUint128 = New(math.MaxUint64, math.MaxUint64)
 
 // A Uint128 is an unsigned 128-bit number.
 type Uint128 struct {

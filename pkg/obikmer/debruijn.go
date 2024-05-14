@@ -2,13 +2,16 @@ package obikmer
 
 import (
 	"bytes"
+	"container/heap"
 	"fmt"
 	"math"
 	"math/bits"
+	"slices"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	"github.com/daichi-m/go18ds/sets/linkedhashset"
 	"github.com/daichi-m/go18ds/stacks/arraystack"
+	log "github.com/sirupsen/logrus"
 )
 
 type KmerIdx32 uint32
@@ -49,36 +52,60 @@ type KmerIdx_t interface {
 }
 
 type DeBruijnGraph struct {
-	kmersize int
-	kmermask uint64
-	prevc    uint64
+	kmersize int    // k-mer size
+	kmermask uint64 // mask used to set to 0 the bits that are not in the k-mer
+	prevc    uint64 //
 	prevg    uint64
 	prevt    uint64
-	graph    map[uint64]uint
+	graph    map[uint64]uint // Kmer are encoded as uint64 with 2 bits per character
 }
 
+// MakeDeBruijnGraph creates a De Bruijn Graph with the specified k-mer size.
+//
+// Parameters:
+//
+//	kmersize int - the size of the k-mers
+//
+// Returns:
+//
+//	*DeBruijnGraph - a pointer to the created De Bruijn's Graph
 func MakeDeBruijnGraph(kmersize int) *DeBruijnGraph {
 	g := DeBruijnGraph{
 		kmersize: kmersize,
-		kmermask: ^(^uint64(0) << (uint64(kmersize+1) * 2)),
-		prevc:    uint64(1) << (uint64(kmersize) * 2),
-		prevg:    uint64(2) << (uint64(kmersize) * 2),
-		prevt:    uint64(3) << (uint64(kmersize) * 2),
+		kmermask: ^(^uint64(0) << (uint64(kmersize) * 2)), // k-mer mask used to set to 0 the bits that are not in the k-mer
+		prevc:    uint64(1) << (uint64(kmersize-1) * 2),
+		prevg:    uint64(2) << (uint64(kmersize-1) * 2),
+		prevt:    uint64(3) << (uint64(kmersize-1) * 2),
 		graph:    make(map[uint64]uint),
 	}
 
 	return &g
 }
 
+// KmerSize returns the size of the k-mers in the DeBruijn graph.
+//
+// This function takes no parameters.
+// It returns an integer representing the size of the k-mers.
 func (g *DeBruijnGraph) KmerSize() int {
 	return g.kmersize
 }
 
+// Len returns the length of the graph.
+//
+// This function takes no parameters.
+// It returns an integer representing the number of nodes in the graph.
 func (g *DeBruijnGraph) Len() int {
 	return len(g.graph)
 }
 
-func (g *DeBruijnGraph) MaxLink() int {
+// MaxWeight returns the maximum weight of a node from the DeBruijn's Graph.
+//
+// It iterates over each count in the graph map and updates the max value if the current count is greater.
+// Finally, it returns the maximum weight as an integer.
+//
+// Returns:
+// - int: the maximum weight value.
+func (g *DeBruijnGraph) MaxWeight() int {
 	max := uint(0)
 	for _, count := range g.graph {
 		if count > max {
@@ -89,8 +116,12 @@ func (g *DeBruijnGraph) MaxLink() int {
 	return int(max)
 }
 
-func (g *DeBruijnGraph) LinkSpectrum() []int {
-	max := g.MaxLink()
+// WeightSpectrum calculates the weight spectrum of nodes in the DeBruijn's graph.
+//
+// No parameters.
+// Returns an array of integers representing the weight spectrum.
+func (g *DeBruijnGraph) WeightSpectrum() []int {
+	max := g.MaxWeight()
 	spectrum := make([]int, max+1)
 	for _, count := range g.graph {
 		spectrum[int(count)]++
@@ -99,7 +130,10 @@ func (g *DeBruijnGraph) LinkSpectrum() []int {
 	return spectrum
 }
 
-func (g *DeBruijnGraph) FilterMin(min int) {
+// FilterMinWeight filters the DeBruijnGraph by removing nodes with weight less than the specified minimum.
+//
+// min: an integer representing the minimum count threshold.
+func (g *DeBruijnGraph) FilterMinWeight(min int) {
 	umin := uint(min)
 	for idx, count := range g.graph {
 		if count < umin {
@@ -109,8 +143,12 @@ func (g *DeBruijnGraph) FilterMin(min int) {
 }
 
 func (g *DeBruijnGraph) Previouses(index uint64) []uint64 {
+	if _, ok := g.graph[index]; !ok {
+		log.Panicf("k-mer %s (index %d) is not in graph", g.DecodeNode(index), index)
+	}
+
 	rep := make([]uint64, 0, 4)
-	index = index >> 2
+	index >>= 2
 
 	if _, ok := g.graph[index]; ok {
 		rep = append(rep, index)
@@ -135,6 +173,10 @@ func (g *DeBruijnGraph) Previouses(index uint64) []uint64 {
 }
 
 func (g *DeBruijnGraph) Nexts(index uint64) []uint64 {
+	if _, ok := g.graph[index]; !ok {
+		log.Panicf("k-mer %s (index %d) is not in graph", g.DecodeNode(index), index)
+	}
+
 	rep := make([]uint64, 0, 4)
 	index = (index << 2) & g.kmermask
 
@@ -160,11 +202,11 @@ func (g *DeBruijnGraph) Nexts(index uint64) []uint64 {
 	return rep
 }
 
-func (g *DeBruijnGraph) MaxNext(index uint64) (uint64, bool) {
+func (g *DeBruijnGraph) MaxNext(index uint64) (uint64, int, bool) {
 	ns := g.Nexts(index)
 
 	if len(ns) == 0 {
-		return uint64(0), false
+		return uint64(0), 0, false
 	}
 
 	max := uint(0)
@@ -177,7 +219,34 @@ func (g *DeBruijnGraph) MaxNext(index uint64) (uint64, bool) {
 		}
 	}
 
-	return rep, true
+	return rep, int(max), true
+}
+
+func (g *DeBruijnGraph) Heads() []uint64 {
+	rep := make([]uint64, 0, 10)
+
+	for k := range g.graph {
+		if len(g.Previouses(k)) == 0 {
+			rep = append(rep, k)
+		}
+	}
+
+	return rep
+}
+
+func (g *DeBruijnGraph) MaxHead() (uint64, int, bool) {
+	rep := uint64(0)
+	max := uint(0)
+	found := false
+	for k, w := range g.graph {
+		if len(g.Previouses(k)) == 0 && w > max {
+			rep = k
+			max = w
+			found = true
+		}
+	}
+
+	return rep, int(max), found
 }
 
 func (g *DeBruijnGraph) MaxPath() []uint64 {
@@ -185,17 +254,17 @@ func (g *DeBruijnGraph) MaxPath() []uint64 {
 	ok := false
 	idx := uint64(0)
 
-	idx, ok = g.MaxHead()
+	idx, _, ok = g.MaxHead()
 
 	for ok {
 		path = append(path, idx)
-		idx, ok = g.MaxNext(idx)
+		idx, _, ok = g.MaxNext(idx)
 	}
 
 	return path
 }
 
-func (g *DeBruijnGraph) LongestPath() []uint64 {
+func (g *DeBruijnGraph) LongestPath(max_length int) []uint64 {
 	var path []uint64
 	wmax := uint(0)
 	ok := true
@@ -209,7 +278,11 @@ func (g *DeBruijnGraph) LongestPath() []uint64 {
 			nw := g.graph[idx]
 			w += nw
 			lp = append(lp, idx)
-			idx, ok = g.MaxNext(idx)
+			idx, _, ok = g.MaxNext(idx)
+			if max_length > 0 && len(lp) > max_length {
+				ok = false
+				w = 0
+			}
 		}
 
 		if w > wmax {
@@ -221,8 +294,9 @@ func (g *DeBruijnGraph) LongestPath() []uint64 {
 	return path
 }
 
-func (g *DeBruijnGraph) LongestConsensus(id string) (*obiseq.BioSequence, error) {
-	path := g.LongestPath()
+func (g *DeBruijnGraph) LongestConsensus(id string, max_length int) (*obiseq.BioSequence, error) {
+	//path := g.LongestPath(max_length)
+	path := g.HaviestPath()
 	s := g.DecodePath(path)
 
 	if len(s) > 0 {
@@ -238,37 +312,10 @@ func (g *DeBruijnGraph) LongestConsensus(id string) (*obiseq.BioSequence, error)
 	return nil, fmt.Errorf("cannot identify optimum path")
 }
 
-func (g *DeBruijnGraph) Heads() []uint64 {
-	rep := make([]uint64, 0, 10)
-
-	for k := range g.graph {
-		if len(g.Previouses(k)) == 0 {
-			rep = append(rep, k)
-		}
-	}
-
-	return rep
-}
-
-func (g *DeBruijnGraph) MaxHead() (uint64, bool) {
-	rep := uint64(0)
-	max := uint(0)
-	found := false
-	for k, w := range g.graph {
-		if len(g.Previouses(k)) == 0 && w > max {
-			rep = k
-			found = true
-		}
-	}
-
-	return rep, found
-}
-
 func (g *DeBruijnGraph) DecodeNode(index uint64) string {
 	rep := make([]byte, g.kmersize)
-	index >>= 2
 	for i := g.kmersize - 1; i >= 0; i-- {
-		rep[i], _ = decode[index&3]
+		rep[i] = decode[index&3]
 		index >>= 2
 	}
 
@@ -282,7 +329,7 @@ func (g *DeBruijnGraph) DecodePath(path []uint64) string {
 	if len(path) > 0 {
 		buf.WriteString(g.DecodeNode(path[0]))
 
-		for _, idx := range path {
+		for _, idx := range path[1:] {
 			buf.WriteByte(decode[idx&3])
 		}
 	}
@@ -307,6 +354,13 @@ func (g *DeBruijnGraph) BestConsensus(id string) (*obiseq.BioSequence, error) {
 	return nil, fmt.Errorf("cannot identify optimum path")
 }
 
+// Weight returns the weight of the node at the given index in the DeBruijnGraph.
+//
+// Parameters:
+// - index: the index of the node in the graph.
+//
+// Returns:
+// - int: the weight of the node.
 func (g *DeBruijnGraph) Weight(index uint64) int {
 	val, ok := g.graph[index]
 	if !ok {
@@ -315,59 +369,64 @@ func (g *DeBruijnGraph) Weight(index uint64) int {
 	return int(val)
 }
 
+// append appends a sequence of nucleotides to the DeBruijnGraph.
+//
+// Parameters:
+// - sequence: a byte slice representing the sequence of nucleotides to append.
+// - current: the current node in the graph to which the sequence will be appended.
+// - weight: the weight of the added nodes.
 func (graph *DeBruijnGraph) append(sequence []byte, current uint64, weight int) {
 
-	for i := 0; i < len(sequence); i++ {
-		current <<= 2
-		current &= graph.kmermask
-		b := iupac[sequence[i]]
-		if len(b) == 1 {
-			current |= b[0]
-			graph.graph[current] = uint(graph.Weight(current) + weight)
-		} else {
-			for j := 0; j < len(b); j++ {
-				current &= ^uint64(3)
-				current |= b[j]
+	if len(sequence) == 0 {
+		return
+	}
 
-				graph.graph[current] = uint(graph.Weight(current) + weight)
-				graph.append(sequence[(i+1):], current, weight)
-			}
-			return
-		}
+	current <<= 2
+	current &= graph.kmermask
+	b := iupac[sequence[0]]
+	current |= b[0]
+	graph.graph[current] = uint(graph.Weight(current) + weight)
+	graph.append(sequence[1:], current, weight)
 
+	for j := 1; j < len(b); j++ {
+		current &= ^uint64(3)
+		current |= b[j]
+		graph.graph[current] = uint(graph.Weight(current) + weight)
+		graph.append(sequence[1:], current, weight)
 	}
 }
 
 func (graph *DeBruijnGraph) Push(sequence *obiseq.BioSequence) {
-	key := uint64(0)
-	s := sequence.Sequence()
-	w := sequence.Count()
-	init := make([]uint64, 0, 16)
-	var f func(start int, key uint64)
-	f = func(start int, key uint64) {
-		for i := start; i < graph.kmersize; i++ {
-			key <<= 2
-			b := iupac[s[i]]
-			if len(b) == 1 {
-				key |= b[0]
-			} else {
-				for j := 0; j < len(b); j++ {
-					key &= ^uint64(3)
-					key |= b[j]
-					f(i+1, key)
-				}
-				return
-			}
+	s := sequence.Sequence() // Get the sequence as a byte slice
+	w := sequence.Count()    // Get the weight of the sequence
+
+	var initFirstKmer func(start int, key uint64)
+
+	// Initialize the first k-mer
+	// start is the index of the nucleotide in the k-mer to add
+	// key is the value of the k-mer index before adding the start nucleotide
+	initFirstKmer = func(start int, key uint64) {
+		if start == 0 {
+			key = 0
 		}
-		init = append(init, key&graph.kmermask)
+
+		if start < graph.kmersize {
+			key <<= 2
+			b := iupac[s[start]]
+
+			for _, code := range b {
+				key &= ^uint64(3)
+				key |= code
+				initFirstKmer(start+1, key)
+			}
+		} else {
+			graph.graph[key] = uint(graph.Weight(key) + w)
+			graph.append(s[graph.kmersize:], key, w)
+		}
 	}
 
 	if sequence.Len() > graph.kmersize {
-		f(0, key)
-
-		for _, idx := range init {
-			graph.append(s[graph.kmersize:], idx, w)
-		}
+		initFirstKmer(0, 0)
 	}
 }
 
@@ -381,43 +440,51 @@ func (graph *DeBruijnGraph) Gml() string {
 		
 		`)
 
+	nodeidx := make(map[uint64]int)
+	nodeid := 0
+
 	for idx := range graph.graph {
-		node := graph.DecodeNode(idx)
-		buffer.WriteString(
-			fmt.Sprintf("node [ id \"%s\" ]\n", node),
-		)
-		n := graph.Nexts(uint64(idx))
-		if len(n) == 0 {
-			idx <<= 2
-			idx &= graph.kmermask
+		nodeid++
+		nodeidx[idx] = nodeid
+		n := graph.Nexts(idx)
+		p := graph.Previouses(idx)
+
+		if len(n) == 0 || len(p) == 0 {
+
 			node := graph.DecodeNode(idx)
 			buffer.WriteString(
-				fmt.Sprintf("node [ id \"%s\" \n label \"%s\" ]\n", node, node),
+				fmt.Sprintf("node [ id \"%d\" \n label \"%s\" ]\n", nodeid, node),
+			)
+		} else {
+			buffer.WriteString(
+				fmt.Sprintf("node [ id \"%d\" ]\n", nodeid),
 			)
 		}
 	}
 
-	for idx, weight := range graph.graph {
-		src := graph.DecodeNode(idx)
-		label := decode[idx&3]
-		idx <<= 2
-		idx &= graph.kmermask
-		dst := graph.DecodeNode(idx)
-
-		buffer.WriteString(
-			fmt.Sprintf(`edge [ source "%s"
-				target "%s" 
-				color "#00FF00"
-				label "%c[%d]"
-				graphics		[
-					width		%f
-					arrow		"last"
-					fill		"#007F80"
+	for idx := range graph.graph {
+		srcid := nodeidx[idx]
+		n := graph.Nexts(idx)
+		for _, dst := range n {
+			dstid := nodeidx[dst]
+			label := decode[dst&3]
+			weight := graph.Weight(dst)
+			buffer.WriteString(
+				fmt.Sprintf(`edge [ source "%d"
+					target "%d" 
+					color "#00FF00"
+					label "%c[%d]"
+					graphics		[
+						width		%f
+						arrow		"last"
+						fill		"#007F80"
+						]
 					]
-				]
-				
-				`, src, dst, label, weight, math.Log(float64(weight))),
-		)
+					
+					`, srcid, dstid, label, weight, math.Sqrt(float64(weight))),
+			)
+		}
+
 	}
 	buffer.WriteString("]\n")
 	return buffer.String()
@@ -471,4 +538,152 @@ func (g *DeBruijnGraph) HammingDistance(kmer1, kmer2 uint64) int {
 	ident |= (ident >> 1)
 	ident &= 0x5555555555555555 & g.kmermask
 	return bits.OnesCount64(ident)
+}
+
+type UInt64Heap []uint64
+
+func (h UInt64Heap) Len() int           { return len(h) }
+func (h UInt64Heap) Less(i, j int) bool { return h[i] < h[j] }
+func (h UInt64Heap) Swap(i, j int)      { h[i], h[j] = h[j], h[i] }
+
+func (h *UInt64Heap) Push(x any) {
+	// Push and Pop use pointer receivers because they modify the slice's length,
+	// not just its contents.
+	*h = append(*h, x.(uint64))
+}
+
+func (h *UInt64Heap) Pop() any {
+	old := *h
+	n := len(old)
+	x := old[n-1]
+	*h = old[0 : n-1]
+	return x
+}
+
+func (g *DeBruijnGraph) HaviestPath() []uint64 {
+
+	if g.HasCycle() {
+		return nil
+	}
+	// Initialize the distance array and visited set
+	distances := make(map[uint64]int)
+	visited := make(map[uint64]bool)
+	prevNodes := make(map[uint64]uint64)
+	heaviestNode := uint64(0)
+	heaviestWeight := 0
+
+	queue := &UInt64Heap{}
+	heap.Init(queue)
+
+	startNodes := make(map[uint64]struct{})
+	for _, n := range g.Heads() {
+		startNodes[n] = struct{}{}
+		heap.Push(queue, n)
+		distances[n] = g.Weight(n)
+		prevNodes[n] = 0
+		visited[n] = false
+	}
+
+	// Priority queue to keep track of nodes to visit
+	for len(*queue) > 0 {
+		// Get the node with the smallest distance
+		currentNode := heap.Pop(queue).(uint64)
+
+		// If the current node has already been visited, skip it
+		if visited[currentNode] {
+			continue
+		}
+
+		// Mark the node as visited
+		visited[currentNode] = true
+		weight := distances[currentNode]
+
+		// Update the heaviest node
+		if weight > heaviestWeight {
+			heaviestWeight = weight
+			heaviestNode = currentNode
+		}
+
+		if currentNode == 0 {
+			log.Warn("current node is 0")
+		}
+		// Update the distance of the neighbors
+		nextNodes := g.Nexts(currentNode)
+		for _, nextNode := range nextNodes {
+			if nextNode == 0 {
+				log.Warn("next node is 0")
+			}
+			weight := g.Weight(nextNode) + distances[currentNode]
+			if distances[nextNode] < weight {
+				distances[nextNode] = weight
+				prevNodes[nextNode] = currentNode
+				visited[nextNode] = false
+				heap.Push(queue, nextNode)
+
+				// Keep track of the node with the heaviest weight
+				if weight > heaviestWeight {
+					heaviestWeight = weight
+					heaviestNode = nextNode
+				}
+			}
+		}
+	}
+
+	log.Infof("Heaviest node: %d [%v]", heaviestNode, heaviestWeight)
+	// Reconstruct the path from the start node to the heaviest node found
+	heaviestPath := make([]uint64, 0)
+	currentNode := heaviestNode
+	for _, ok := startNodes[currentNode]; !ok && !slices.Contains(heaviestPath, currentNode); _, ok = startNodes[currentNode] {
+		heaviestPath = append(heaviestPath, currentNode)
+		//log.Infof("Current node: %d <- %d", currentNode, prevNodes[currentNode])
+		currentNode = prevNodes[currentNode]
+	}
+
+	if slices.Contains(heaviestPath, currentNode) {
+		log.Fatalf("Cycle detected %v -> %v (%v) len(%v)", heaviestPath, currentNode, startNodes, len(heaviestPath))
+		return nil
+	}
+
+	heaviestPath = append(heaviestPath, currentNode)
+
+	// Reverse the path
+	slices.Reverse(heaviestPath)
+
+	return heaviestPath
+}
+
+func (g *DeBruijnGraph) HasCycle() bool {
+	// Initialize the visited and stack arrays
+	visited := make(map[uint64]bool)
+	stack := make(map[uint64]bool)
+
+	// Helper function to perform DFS
+	var dfs func(node uint64) bool
+	dfs = func(node uint64) bool {
+		visited[node] = true
+		stack[node] = true
+
+		nextNodes := g.Nexts(node)
+		for _, nextNode := range nextNodes {
+			if !visited[nextNode] {
+				if dfs(nextNode) {
+					return true
+				}
+			} else if stack[nextNode] {
+				return true
+			}
+		}
+		stack[node] = false
+		return false
+	}
+
+	// Perform DFS on each node to check for cycles
+	for node := range g.graph {
+		if !visited[node] {
+			if dfs(node) {
+				return true
+			}
+		}
+	}
+	return false
 }

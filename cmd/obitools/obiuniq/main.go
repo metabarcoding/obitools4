@@ -43,7 +43,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	unique := obiuniq.Unique(sequences)
+	unique := obiuniq.CLIUnique(sequences)
 	obiconvert.CLIWriteBioSequences(unique, true)
 
 	obiiter.WaitForLastPipe()

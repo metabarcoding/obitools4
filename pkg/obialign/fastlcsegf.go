@@ -130,11 +130,11 @@ func FastLCSEGFScoreByte(bA, bB []byte, maxError int, endgapfree bool, buffer *[
 		// in_matrix := false
 		x1 := y - lB + extra
 		x2 := extra - y
-		xs := obiutils.MaxInt(obiutils.MaxInt(x1, x2), 0)
+		xs := obiutils.Max(obiutils.Max(x1, x2), 0)
 
 		x1 = y + extra
 		x2 = lA + extra - y
-		xf := obiutils.MinInt(obiutils.MinInt(x1, x2), even-1) + 1
+		xf := obiutils.Min(obiutils.Min(x1, x2), even-1) + 1
 
 		for x := xs; x < xf; x++ {
 
@@ -222,11 +222,11 @@ func FastLCSEGFScoreByte(bA, bB []byte, maxError int, endgapfree bool, buffer *[
 		// . 9   10 + 2 - 1
 		x1 = y - lB + extra + even
 		x2 = extra - y + even - 1
-		xs = obiutils.MaxInt(obiutils.MaxInt(x1, x2), even)
+		xs = obiutils.Max(obiutils.Max(x1, x2), even)
 
 		x1 = y + extra + even
 		x2 = lA + extra - y + even - 1
-		xf = obiutils.MinInt(obiutils.MinInt(x1, x2), width-1) + 1
+		xf = obiutils.Min(obiutils.Min(x1, x2), width-1) + 1
 
 		for x := xs; x < xf; x++ {
 
@@ -348,16 +348,15 @@ func FastLCSEGFScoreByte(bA, bB []byte, maxError int, endgapfree bool, buffer *[
 //   - Matching: 1
 //   - Mismatch or gap: 0
 //
-// Compared to FastLCSScoreByte the length of the shortest alignment returned does not include the end-gaps.
+// Parameters:
+// - seqA: The first bio sequence.
+// - seqB: The second bio sequence.
+// - maxError: The maximum allowed error between the sequences. If set to -1, no limit is applied.
+// - buffer: A pointer to a uint64 slice to store intermediate results. If nil, a new slice is created.
 //
-// if buffer != nil, the buffer is used to store intermediate results.
-// Otherwise, a new buffer is allocated.
-//
-// seqA: The first bio sequence.
-// seqB: The second bio sequence.
-// maxError: The maximum allowed error between the sequences.
-// buffer: A buffer to store intermediate results.
-// Returns the score of the longest common subsequence and the length of the shortest alignment corresponding.
+// Returns:
+// - The score of the longest common subsequence.
+// - The length of the shortest alignment corresponding to the LCS.
 func FastLCSEGFScore(seqA, seqB *obiseq.BioSequence, maxError int, buffer *[]uint64) (int, int) {
 	return FastLCSEGFScoreByte(seqA.Sequence(), seqB.Sequence(), maxError, true, buffer)
 }
@@ -372,14 +371,16 @@ func FastLCSEGFScore(seqA, seqB *obiseq.BioSequence, maxError int, buffer *[]uin
 //   - Matching: 1
 //   - Mismatch or gap: 0
 //
-// if buffer != nil, the buffer is used to store intermediate results.
-// Otherwise, a new buffer is allocated.
+// Parameters:
+// - seqA: The first bio sequence.
+// - seqB: The second bio sequence.
+// - maxError: The maximum allowed error between the sequences. If set to -1, no limit is applied.
+// - buffer: A pointer to a uint64 slice to store intermediate results. If nil, a new slice is created.
 //
-// seqA: The first bio sequence.
-// seqB: The second bio sequence.
-// maxError: The maximum allowed error between the sequences.
-// buffer: A buffer to store intermediate results.
-// Returns the score of the longest common subsequence and the length of the shortest alignment corresponding.
+// Returns:
+// - The score of the longest common subsequence.
+// - The length of the shortest alignment corresponding to the LCS.
 func FastLCSScore(seqA, seqB *obiseq.BioSequence, maxError int, buffer *[]uint64) (int, int) {
 	return FastLCSEGFScoreByte(seqA.Sequence(), seqB.Sequence(), maxError, false, buffer)
 }
+

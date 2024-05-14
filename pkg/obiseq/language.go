@@ -38,13 +38,7 @@ import (
 // 	return float64(m)
 // }
 
-// func minIntVector(values []int) float64 {
-// 	m := values[0]
-// 	for _, v := range values {
-// 		if v < m {
-// 			m = v
-// 		}
-// 	}
+
 
 // 	return float64(m)
 // }

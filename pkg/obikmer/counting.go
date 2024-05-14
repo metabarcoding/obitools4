@@ -9,9 +9,10 @@ import (
 
 type Table4mer [256]uint16
 
-func Count4Mer(seq *obiseq.BioSequence, buffer *[]byte, counts *Table4mer) *Table4mer {
 
-	iternal_buffer := Encode4mer(seq, buffer)
+
+func Count4Mer(seq *obiseq.BioSequence, buffer *[]byte, counts *Table4mer) *Table4mer {
+	iternal_buffer := Encode4mer(seq, buffer) // The slice of 4-mer codes
 
 	if counts == nil {
 		var w Table4mer
@@ -19,7 +20,7 @@ func Count4Mer(seq *obiseq.BioSequence, buffer *[]byte, counts *Table4mer) *Tabl
 	}
 
 	// Every cells of the counter is set to zero
-	for i := 0; i < 256; i++ {
+	for i := 0; i < 256; i++ { // 256 is the number of possible 4-mer codes
 		(*counts)[i] = 0
 	}
 
@@ -32,7 +33,7 @@ func Count4Mer(seq *obiseq.BioSequence, buffer *[]byte, counts *Table4mer) *Tabl
 func Common4Mer(count1, count2 *Table4mer) int {
 	sum := 0
 	for i := 0; i < 256; i++ {
-		sum += int(obiutils.MinUInt16((*count1)[i], (*count2)[i]))
+		sum += int(obiutils.Min((*count1)[i], (*count2)[i]))
 	}
 	return sum
 }
@@ -48,7 +49,7 @@ func Sum4Mer(count *Table4mer) int {
 func LCS4MerBounds(count1, count2 *Table4mer) (int, int) {
 	s1 := Sum4Mer(count1)
 	s2 := Sum4Mer(count2)
-	smin := obiutils.MinInt(s1, s2)
+	smin := obiutils.Min(s1, s2)
 
 	cw := Common4Mer(count1, count2)
 
@@ -65,7 +66,7 @@ func LCS4MerBounds(count1, count2 *Table4mer) (int, int) {
 func Error4MerBounds(count1, count2 *Table4mer) (int, int) {
 	s1 := Sum4Mer(count1)
 	s2 := Sum4Mer(count2)
-	smax := obiutils.MaxInt(s1, s2)
+	smax := obiutils.Max(s1, s2)
 
 	cw := Common4Mer(count1, count2)
 

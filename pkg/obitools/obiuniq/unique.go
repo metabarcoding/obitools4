@@ -8,7 +8,7 @@ import (
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 )
 
-func Unique(sequences obiiter.IBioSequence) obiiter.IBioSequence {
+func CLIUnique(sequences obiiter.IBioSequence) obiiter.IBioSequence {
 
 	options := make([]obichunk.WithOption, 0, 30)
 
