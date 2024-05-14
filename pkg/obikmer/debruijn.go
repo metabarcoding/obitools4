@@ -6,12 +6,11 @@ import (
 	"fmt"
 	"math"
 	"math/bits"
+	"os"
 	"slices"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
-	"github.com/daichi-m/go18ds/sets/linkedhashset"
-	"github.com/daichi-m/go18ds/stacks/arraystack"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -397,6 +396,10 @@ func (graph *DeBruijnGraph) append(sequence []byte, current uint64, weight int) 
 	}
 }
 
+// Push appends a BioSequence to the DeBruijnGraph.
+//
+// Parameters:
+// - sequence: a pointer to a BioSequence containing the sequence to be added.
 func (graph *DeBruijnGraph) Push(sequence *obiseq.BioSequence) {
 	s := sequence.Sequence() // Get the sequence as a byte slice
 	w := sequence.Count()    // Get the weight of the sequence
@@ -493,45 +496,19 @@ func (graph *DeBruijnGraph) Gml() string {
 
 }
 
-// fonction tri_topologique(G, V):
-//     T <- une liste vide pour stocker l'ordre topologique
-//     S <- une pile vide pour stocker les nœuds sans prédécesseurs
-//     pour chaque nœud v dans V:
-//         si Pred(v) est vide:
-//             empiler S avec v
-//     tant que S n'est pas vide:
-//         nœud <- dépiler S
-//         ajouter nœud à T
-//         pour chaque successeur s de nœud:
-//             supprimer l'arc (nœud, s) de G
-//             si Pred(s) est vide:
-//                 empiler S avec s
-//     si G contient encore des arcs:
-//         renvoyer une erreur (le graphe contient au moins un cycle)
-//     sinon:
-//         renvoyer T (l'ordre topologique)
+// WriteGml writes the DeBruijnGraph to a GML file.
+//
+// filename: the name of the file to write the GML representation to.
+// error: an error if any occurs during the file creation or writing process.
+func (graph *DeBruijnGraph) WriteGml(filename string) error {
 
-// A topological sort of the graph.
-func (g *DeBruijnGraph) PartialOrder() *linkedhashset.Set[uint64] {
-	S := arraystack.New[uint64]()
-	T := linkedhashset.New[uint64]()
-
-	for v := range g.graph {
-		if len(g.Previouses(v)) == 0 {
-			S.Push(v)
-		}
+	f, err := os.Create(filename)
+	if err != nil {
+		return err
 	}
-
-	for !S.Empty() {
-		v, _ := S.Pop()
-		T.Add(v)
-		for _, w := range g.Nexts(v) {
-			if T.Contains(g.Previouses(w)...) {
-				S.Push(w)
-			}
-		}
-	}
-	return T
+	defer f.Close()
+	_, err = f.WriteString(graph.Gml())
+	return err
 }
 
 // Calculating the hamming distance between two k-mers.

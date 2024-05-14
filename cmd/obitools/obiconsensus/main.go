@@ -16,7 +16,6 @@ func main() {
 	optionParser := obioptions.GenerateOptionParser(obiconsensus.OptionSet)
 
 	_, args := optionParser(os.Args)
-	obiconvert.SetFullFileBatch()
 
 	fs, err := obiconvert.CLIReadBioSequences(args...)
 
@@ -25,8 +24,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	consensus := obiconsensus.Consensus(fs)
-	obiconvert.CLIWriteBioSequences(consensus, true)
+	cleaned := obiconsensus.CLIOBIMinion(fs)
+
+	obiconvert.CLIWriteBioSequences(cleaned, true)
 
 	obiiter.WaitForLastPipe()
 
