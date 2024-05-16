@@ -2,6 +2,20 @@
 
 ## Latest changes
 
+### CPU limitation
+
+- By default, *OBITools4* tries to use all the computing power available on your computer.
+  In some circumstances this can be problematic (e.g. if you are running on a computer 
+  cluster managed by your university). You can limit the number of CPU cores used by 
+  *OBITools4* or by using the **--max-cpu** option or by setting the **OBIMAXCPU** environment 
+  variable.
+  Some strange behaviour of *OBITools4* has been observed when users try to limit the maximum 
+  number of usable CPU cores to one. This seems to be caused by the Go language, and it is not 
+  obvious to get *OBITools4* to run correctly on a single core in all circumstances. Therefore, 
+  if you ask to use a single core, **OBITools4** will print a warning message and actually set 
+  this parameter to two cores. If you really want a single core, you can use the 
+  **--force-one-core** option. But be aware that this can lead to incorrect calculations.
+
 ### New features
 
 -   A new option **--version** has been added to every obitools command.
@@ -9,9 +23,26 @@
 -   In `obiscript` a `qualities` method has been added to retrieve or set the quality scores from a
     BioSequence object.         
 
+### Enhancement
+
+-   In every *OBITools* command, the progress bar are automatically deactivated when the 
+    standard error output is redirected.
+-   Because Genbank and ENA:EMBL contain very large sequences, while OBITools4 are optimized
+    As Genbank and ENA:EMBL contain very large sequences, while OBITools4 is optimised for 
+    short sequences, `obipcr` faces some problems with excessive consumption of computer 
+    resources, especially memory. Several improvements in the tuning of the default `obipcr` 
+    parameters and some new features, currently only available for FASTA and FASTQ file readers, 
+    have been implemented to limit the memory impact of `obipcr` without changing the 
+    computational efficiency too much.
+-   Logging system and therefore format, have been homogenized.
+
 ### Bug
 
 -   In `obitag`, correct the wrong assignation of the **obitag_bestmatch** attribute.
+-   In `obiclean`, the **--no-progress-bar** option desactivate all the progress bars, 
+    not only the data are read.
+-   Several corrections in reading of FASTA and FASTQ files including some code 
+    simplifications and factorisation.
 
 ## April 2nd, 2024. Release 4.2.0
 

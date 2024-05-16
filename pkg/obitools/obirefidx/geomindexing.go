@@ -2,7 +2,7 @@ package obirefidx
 
 import (
 	"fmt"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"sort"
 	"sync"
 

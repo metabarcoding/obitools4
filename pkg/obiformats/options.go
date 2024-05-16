@@ -14,6 +14,7 @@ type __options__ struct {
 	total_seq_size        int
 	full_file_batch       bool
 	parallel_workers      int
+	no_order              bool
 	closefile             bool
 	appendfile            bool
 	compressed            bool
@@ -48,6 +49,7 @@ func MakeOptions(setters []WithOption) Options {
 		parallel_workers:      obioptions.CLIReadParallelWorkers(),
 		batch_size:            obioptions.CLIBatchSize(),
 		total_seq_size:        1024 * 1024 * 100, // 100 MB by default
+		no_order:              false,
 		full_file_batch:       false,
 		closefile:             false,
 		appendfile:            false,
@@ -99,6 +101,10 @@ func (opt Options) ParseFastSeqHeader() obiseq.SeqAnnotator {
 
 func (opt Options) FormatFastSeqHeader() func(*obiseq.BioSequence) string {
 	return opt.pointer.fastseq_header_writer
+}
+
+func (opt Options) NoOrder() bool {
+	return opt.pointer.no_order
 }
 
 func (opt Options) ProgressBar() bool {
@@ -204,6 +210,16 @@ func OptionsAppendFile(append bool) WithOption {
 
 	return f
 }
+
+func OptionNoOrder(no_order bool) WithOption {
+	f := WithOption(func(opt Options) {
+		opt.pointer.no_order = no_order
+	})
+
+	return f
+}
+
+
 
 func OptionsCompressed(compressed bool) WithOption {
 	f := WithOption(func(opt Options) {

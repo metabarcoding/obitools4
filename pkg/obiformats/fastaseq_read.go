@@ -9,7 +9,6 @@ import (
 	"slices"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 
@@ -43,7 +42,11 @@ func _EndOfLastFastaEntry(buffer []byte) int {
 
 func _ParseFastaFile(source string,
 	input ChannelSeqFileChunk,
-	out obiiter.IBioSequence) {
+	out obiiter.IBioSequence,
+	no_order bool,
+	batch_size int,
+	chunck_order func() int,
+) {
 
 	var identifier string
 	var definition string
@@ -56,7 +59,7 @@ func _ParseFastaFile(source string,
 
 	for chunks := range input {
 		scanner := bufio.NewReader(chunks.raw)
-		sequences := make(obiseq.BioSequenceSlice, 0, 100)
+		sequences := make(obiseq.BioSequenceSlice, 0, batch_size)
 		for C, err := scanner.ReadByte(); err != io.EOF; C, err = scanner.ReadByte() {
 
 			is_end_of_line := C == '\r' || C == '\n'
@@ -130,6 +133,12 @@ func _ParseFastaFile(source string,
 					s := obiseq.NewBioSequence(identifier, slices.Clone(seqBytes.Bytes()), definition)
 					s.SetSource(source)
 					sequences = append(sequences, s)
+					if no_order {
+						if len(sequences) == batch_size {
+							out.Push(obiiter.MakeBioSequenceBatch(chunck_order(), sequences))
+							sequences = make(obiseq.BioSequenceSlice, 0, batch_size)
+						}
+					}
 					state = 1
 
 				} else if !is_sep {
@@ -145,8 +154,11 @@ func _ParseFastaFile(source string,
 		}
 
 		if len(sequences) > 0 {
-			log.Debugln("Pushing sequences")
-			out.Push(obiiter.MakeBioSequenceBatch(chunks.order, sequences))
+			if no_order {
+				out.Push(obiiter.MakeBioSequenceBatch(chunck_order(), sequences))
+			} else {
+				out.Push(obiiter.MakeBioSequenceBatch(chunks.order, sequences))
+			}
 		}
 	}
 
@@ -158,14 +170,19 @@ func ReadFasta(reader io.Reader, options ...WithOption) (obiiter.IBioSequence, e
 	opt := MakeOptions(options)
 	out := obiiter.MakeIBioSequence()
 
-	source := opt.Source()
+	nworker := opt.ParallelWorkers()
 
-	nworker := obioptions.CLIReadParallelWorkers()
 	chkchan := ReadSeqFileChunk(reader, _EndOfLastFastaEntry)
+	chunck_order := obiutils.AtomicCounter()
 
 	for i := 0; i < nworker; i++ {
 		out.Add(1)
-		go _ParseFastaFile(source, chkchan, out)
+		go _ParseFastaFile(opt.Source(),
+			chkchan,
+			out,
+			opt.NoOrder(),
+			opt.BatchSize(),
+			chunck_order)
 	}
 
 	go func() {

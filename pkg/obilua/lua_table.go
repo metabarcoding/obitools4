@@ -1,7 +1,7 @@
 package obilua
 
 import (
-	"log"
+	log "github.com/sirupsen/logrus"
 
 	lua "github.com/yuin/gopher-lua"
 )
@@ -67,13 +67,13 @@ func Table2ByteSlice(interpreter *lua.LState, table *lua.LTable) []byte {
 			v := table.RawGetInt(i)
 			switch v.Type() {
 			case lua.LTNumber:
-				if x:=float64(v.(lua.LNumber)); x <=255 {
+				if x := float64(v.(lua.LNumber)); x <= 255 {
 					val[i-1] = byte(x)
 				} else {
-					log.Fatalf("LUA: Value %f at index %d is to large to be converted to byte", x,i)
+					log.Fatalf("LUA: Value %f at index %d is to large to be converted to byte", x, i)
 				}
 			default:
-				log.Fatalf("LUA: Value %v at index %d cannot be converted to byte", v,i)
+				log.Fatalf("LUA: Value %v at index %d cannot be converted to byte", v, i)
 			}
 		}
 

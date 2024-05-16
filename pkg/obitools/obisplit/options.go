@@ -3,7 +3,7 @@ package obisplit
 import (
 	"encoding/csv"
 	"fmt"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"os"
 	"slices"
 

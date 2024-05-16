@@ -3,11 +3,12 @@ package obiformats
 import (
 	"bytes"
 	"fmt"
-	"log"
 	"math"
 	"regexp"
 	"strconv"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"

@@ -2,8 +2,9 @@ package obiutils
 
 import (
 	"fmt"
-	"log"
 	"reflect"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // InterfaceToString converts an interface value to a string.

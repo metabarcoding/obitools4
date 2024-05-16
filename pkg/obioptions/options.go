@@ -16,6 +16,8 @@ import (
 var _Debug = false
 var _WorkerPerCore = 2.0
 var _ReadWorkerPerCore = 1.0
+var _StrictReadWorker = 0
+var _ParallelFilesRead = 0
 var _MaxAllowedCPU = runtime.NumCPU()
 var _BatchSize = 5000
 var _Pprof = false
@@ -31,9 +33,16 @@ func GenerateOptionParser(optionset ...func(*getoptions.GetOpt)) ArgumentParser 
 	options.SetMode(getoptions.Bundling)
 	options.SetUnknownMode(getoptions.Fail)
 	options.Bool("help", false, options.Alias("h", "?"))
-	options.Bool("version", false)
-	options.BoolVar(&_Debug, "debug", false)
-	options.BoolVar(&_Pprof, "pprof", false)
+
+	options.Bool("version", false,
+		options.Description("Prints the version and exits."))
+
+	options.BoolVar(&_Debug, "debug", false,
+		options.GetEnv("OBIDEBUG"),
+		options.Description("Enable debug mode, by setting log level to debug."))
+
+	options.BoolVar(&_Pprof, "pprof", false,
+		options.Description("Enable pprof server. Look at the log for details."))
 
 	// options.IntVar(&_ParallelWorkers, "workers", _ParallelWorkers,
 	// 	options.Alias("w"),
@@ -42,6 +51,9 @@ func GenerateOptionParser(optionset ...func(*getoptions.GetOpt)) ArgumentParser 
 	options.IntVar(&_MaxAllowedCPU, "max-cpu", _MaxAllowedCPU,
 		options.GetEnv("OBIMAXCPU"),
 		options.Description("Number of parallele threads computing the result"))
+
+	options.BoolVar(&_Pprof, "force-one-cpu", false,
+		options.Description("Force to use only one cpu core for parallel processing"))
 
 	options.IntVar(&_BatchSize, "batch-size", _BatchSize,
 		options.GetEnv("OBIBATCHSIZE"),
@@ -93,11 +105,20 @@ func GenerateOptionParser(optionset ...func(*getoptions.GetOpt)) ArgumentParser 
 		// Setup the maximum number of CPU usable by the program
 		if _MaxAllowedCPU == 1 {
 			log.Warn("Limitating the Maximum number of CPU to 1 is not recommanded")
-			runtime.GOMAXPROCS(1)
-		} else {
-			runtime.GOMAXPROCS(_MaxAllowedCPU)
+			log.Warn("The number of CPU requested has been set to 2")
+			SetMaxCPU(2)
 		}
-		if options.Called("max-cpu") {
+
+		if options.Called("force-one-cpu") {
+			log.Warn("Limitating the Maximum number of CPU to 1 is not recommanded")
+			log.Warn("The number of CPU has been forced to 1")
+			log.Warn("This can lead to unexpected behavior")
+			SetMaxCPU(1)
+		}
+
+		runtime.GOMAXPROCS(_MaxAllowedCPU)
+
+		if options.Called("max-cpu") || options.Called("force-one-cpu") {
 			log.Printf("CPU number limited to %d", _MaxAllowedCPU)
 		}
 
@@ -119,74 +140,200 @@ func GenerateOptionParser(optionset ...func(*getoptions.GetOpt)) ArgumentParser 
 	}
 }
 
-// Predicate indicating if the debug mode is activated.
+// CLIIsDebugMode returns whether the CLI is in debug mode.
+//
+// The debug mode is activated by the command line option --debug or
+// the environment variable OBIDEBUG.
+// It can be activated programmatically by the SetDebugOn() function.
+//
+// No parameters.
+// Returns a boolean indicating if the CLI is in debug mode.
 func CLIIsDebugMode() bool {
 	return _Debug
 }
 
-// CLIParallelWorkers returns the number of parallel workers requested by
-// the command line option --workers|-w.
+// CLIParallelWorkers returns the number of parallel workers used for
+// computing the result.
+//
+// The number of parallel workers is determined by the command line option
+// --max-cpu|-m and the environment variable OBIMAXCPU. This number is
+// multiplied by the variable _WorkerPerCore.
+//
+// No parameters.
+// Returns an integer representing the number of parallel workers.
 func CLIParallelWorkers() int {
-	return int(float64(_MaxAllowedCPU) * float64(_WorkerPerCore))
+	return int(float64(CLIMaxCPU()) * float64(WorkerPerCore()))
 }
 
+// CLIReadParallelWorkers returns the number of parallel workers used for
+// reading files.
+//
+// The number of parallel workers is determined by the command line option
+// --max-cpu|-m and the environment variable OBIMAXCPU. This number is
+// multiplied by the variable _ReadWorkerPerCore.
+//
+// No parameters.
+// Returns an integer representing the number of parallel workers.
 func CLIReadParallelWorkers() int {
-	return int(float64(_MaxAllowedCPU) * float64(_ReadWorkerPerCore))
+	if StrictReadWorker() == 0 {
+		return int(float64(CLIMaxCPU()) * ReadWorkerPerCore())
+	} else {
+		return StrictReadWorker()
+	}
 }
 
-// CLIParallelWorkers returns the number of parallel workers requested by
-// the command line option --workers|-w.
+// CLIMaxCPU returns the maximum number of CPU cores allowed.
+//
+// The maximum number of CPU cores is determined by the command line option
+// --max-cpu|-m and the environment variable OBIMAXCPU.
+//
+// No parameters.
+// Returns an integer representing the maximum number of CPU cores allowed.
 func CLIMaxCPU() int {
 	return _MaxAllowedCPU
 }
 
-// CLIBatchSize returns the expeted size of the sequence batches
+// CLIBatchSize returns the expected size of the sequence batches.
+//
+// In Obitools, the sequences are processed in parallel by batches.
+// The number of sequence in each batch is determined by the command line option
+// --batch-size and the environment variable OBIBATCHSIZE.
+//
+// No parameters.
+// Returns an integer value.
 func CLIBatchSize() int {
 	return _BatchSize
 }
 
-// DebugOn sets the debug mode on.
-func DebugOn() {
+// SetDebugOn sets the debug mode on.
+func SetDebugOn() {
 	_Debug = true
 }
 
-// DebugOff sets the debug mode off.
-func DebugOff() {
+// SetDebugOff sets the debug mode off.
+func SetDebugOff() {
 	_Debug = false
 }
 
+// SetWorkerPerCore sets the number of workers per CPU core.
+//
+// It takes a float64 parameter representing the number of workers
+// per CPU core and does not return any value.
 func SetWorkerPerCore(n float64) {
 	_WorkerPerCore = n
 }
 
+// SetReadWorkerPerCore sets the number of worker per CPU
+// core for reading files.
+//
+// n float64
 func SetReadWorkerPerCore(n float64) {
 	_ReadWorkerPerCore = n
 }
 
+// WorkerPerCore returns the number of workers per CPU core.
+//
+// No parameters.
+// Returns a float64 representing the number of workers per CPU core.
 func WorkerPerCore() float64 {
 	return _WorkerPerCore
 }
 
+// ReadWorkerPerCore returns the number of worker per CPU core for
+// computing the result.
+//
+// No parameters.
+// Returns a float64 representing the number of worker per CPU core.
 func ReadWorkerPerCore() float64 {
 	return _ReadWorkerPerCore
 }
 
+// SetBatchSize sets the size of the sequence batches.
+//
+// n - an integer representing the size of the sequence batches.
 func SetBatchSize(n int) {
 	_BatchSize = n
 }
 
+// InputQualityShift returns the quality shift value for input.
+//
+// It can be set programmatically by the SetInputQualityShift() function.
+// This value is used to decode the quality scores in FASTQ files.
+// The quality shift value defaults to 33, which is the correct value for
+// Sanger formated FASTQ files.
+// The quality shift value can be modified to 64 by the command line option
+// --solexa, for decoding old Solexa formated FASTQ files.
+//
+// No parameters.
+// Returns an integer representing the quality shift value for input.
 func InputQualityShift() int {
 	return _Quality_Shift_Input
 }
 
+// OutputQualityShift returns the quality shift value used for FASTQ output.
+//
+// No parameters.
+// Returns an integer representing the quality shift value for output.
 func OutputQualityShift() int {
 	return _Quality_Shift_Output
 }
 
+// SetInputQualityShift sets the quality shift value for decoding FASTQ.
+//
+// n - an integer representing the quality shift value to be set.
 func SetInputQualityShift(n int) {
 	_Quality_Shift_Input = n
 }
 
+// SetOutputQualityShift sets the quality shift value used for FASTQ output.
+//
+// n - an integer representing the quality shift value to be set.
 func SetOutputQualityShift(n int) {
 	_Quality_Shift_Output = n
+}
+
+// SetMaxCPU sets the maximum number of CPU cores allowed.
+//
+// n - an integer representing the new maximum number of CPU cores.
+func SetMaxCPU(n int) {
+	_MaxAllowedCPU = n
+}
+
+// SetReadWorker sets the number of workers for reading files.
+//
+// The number of worker dedicated to reading files is determined
+// as the number of allowed CPU cores multiplied by number of read workers per core.
+// Setting the number of read workers using this function allows to decouple the number
+// of read workers from the number of CPU cores.
+//
+// n - an integer representing the number of workers to be set.
+func SetStrictReadWorker(n int) {
+	_StrictReadWorker = n
+}
+
+// ReadWorker returns the number of workers for reading files.
+//
+// No parameters.
+// Returns an integer representing the number of workers.
+func StrictReadWorker() int {
+	return _StrictReadWorker
+}
+
+// ParallelFilesRead returns the number of files to be read in parallel.
+//
+// No parameters.
+// Returns an integer representing the number of files to be read.
+func ParallelFilesRead() int {
+	if _ParallelFilesRead == 0 {
+		return CLIParallelWorkers()
+	} else {
+		return _ParallelFilesRead
+	}
+}
+
+// SetParallelFilesRead sets the number of files to be read in parallel.
+//
+// n - an integer representing the number of files to be set.
+func SetParallelFilesRead(n int) {
+	_ParallelFilesRead = n
 }

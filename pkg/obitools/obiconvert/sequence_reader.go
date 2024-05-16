@@ -136,7 +136,7 @@ func CLIReadBioSequences(filenames ...string) (obiiter.IBioSequence, error) {
 			nreader := 1
 
 			if CLINoInputOrder() {
-				nreader = obioptions.CLIParallelWorkers()
+				nreader = obioptions.ParallelFilesRead()
 			}
 
 			iterator = obiformats.ReadSequencesBatchFromFiles(

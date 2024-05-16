@@ -184,7 +184,11 @@ func lastFastqCut(buffer []byte) ([]byte, []byte) {
 func _ParseFastqFile(source string,
 	input ChannelSeqFileChunk,
 	out obiiter.IBioSequence,
-	quality_shift byte) {
+	quality_shift byte,
+	no_order bool,
+	batch_size int,
+	chunck_order func() int,
+) {
 
 	var identifier string
 	var definition string
@@ -311,6 +315,14 @@ func _ParseFastqFile(source string,
 						q[i] = q[i] - quality_shift
 					}
 					sequences[len(sequences)-1].SetQualities(q)
+
+					if no_order {
+						if len(sequences) == batch_size {
+							out.Push(obiiter.MakeBioSequenceBatch(chunck_order(), sequences))
+							sequences = make(obiseq.BioSequenceSlice, 0, batch_size)
+						}
+					}
+
 					state = 11
 				} else {
 					qualBytes.WriteByte(C)
@@ -328,9 +340,13 @@ func _ParseFastqFile(source string,
 		}
 
 		if len(sequences) > 0 {
-			log.Debugln("Pushing sequences")
-			out.Push(obiiter.MakeBioSequenceBatch(chunks.order, sequences))
+			if no_order {
+				out.Push(obiiter.MakeBioSequenceBatch(chunck_order(), sequences))
+			} else {
+				out.Push(obiiter.MakeBioSequenceBatch(chunks.order, sequences))
+			}
 		}
+
 	}
 
 	out.Done()
@@ -341,15 +357,20 @@ func ReadFastq(reader io.Reader, options ...WithOption) (obiiter.IBioSequence, e
 	opt := MakeOptions(options)
 	out := obiiter.MakeIBioSequence()
 
-	source := opt.Source()
+	nworker := opt.ParallelWorkers()
+	chunkorder := obiutils.AtomicCounter()
 
-	nworker := obioptions.CLIReadParallelWorkers()
 	chkchan := ReadSeqFileChunk(reader, _EndOfLastFastqEntry)
 
 	for i := 0; i < nworker; i++ {
 		out.Add(1)
-		go _ParseFastqFile(source, chkchan, out,
-			byte(obioptions.InputQualityShift()))
+		go _ParseFastqFile(opt.Source(),
+			chkchan,
+			out,
+			byte(obioptions.InputQualityShift()),
+			opt.NoOrder(),
+			opt.BatchSize(),
+			chunkorder)
 	}
 
 	go func() {

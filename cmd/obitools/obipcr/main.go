@@ -27,6 +27,8 @@ func main() {
 
 	obioptions.SetWorkerPerCore(2)
 	obioptions.SetReadWorkerPerCore(0.5)
+	obioptions.SetParallelFilesRead(obioptions.CLIParallelWorkers() / 4)
+	obioptions.SetBatchSize(10)
 
 	optionParser := obioptions.GenerateOptionParser(obipcr.OptionSet)
 

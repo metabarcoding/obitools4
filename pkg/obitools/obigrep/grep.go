@@ -1,7 +1,7 @@
 package obigrep
 
 import (
-	"log"
+	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"

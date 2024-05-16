@@ -179,7 +179,8 @@ func ReadEMBL(reader io.Reader, options ...WithOption) obiiter.IBioSequence {
 		newIter.Add(1)
 		go _ParseEmblFile(opt.Source(), entry_channel, newIter,
 			opt.WithFeatureTable(),
-			opt.BatchSize(), opt.TotalSeqSize())
+			opt.BatchSize(), 
+			opt.TotalSeqSize())
 	}
 
 	go func() {

@@ -221,5 +221,5 @@ func IndexReferenceDB(iterator obiiter.IBioSequence) obiiter.IBioSequence {
 		go f()
 	}
 
-	return indexed.Rebatch(1000)
+	return indexed.Rebatch(obioptions.CLIBatchSize())
 }

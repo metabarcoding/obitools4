@@ -1,8 +1,9 @@
 package obiseq
 
 import (
-	"log"
 	"sync"
+
+	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 )

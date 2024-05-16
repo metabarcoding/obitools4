@@ -2,9 +2,10 @@ package obiseq
 
 import (
 	"fmt"
-	"log"
 	"reflect"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 	"github.com/PaesslerAG/gval"
@@ -37,8 +38,6 @@ import (
 
 // 	return float64(m)
 // }
-
-
 
 // 	return float64(m)
 // }
