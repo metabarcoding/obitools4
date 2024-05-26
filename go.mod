@@ -13,7 +13,7 @@ require (
 	github.com/rrethy/ahocorasick v1.0.0
 	github.com/schollz/progressbar/v3 v3.13.1
 	github.com/sirupsen/logrus v1.9.3
-	github.com/stretchr/testify v1.7.0
+	github.com/stretchr/testify v1.8.4
 	github.com/tevino/abool/v2 v2.1.0
 	github.com/yuin/gopher-lua v1.1.1
 	golang.org/x/exp v0.0.0-20231006140011-7918f672742d
@@ -24,16 +24,19 @@ require (
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/goombaio/orderedmap v0.0.0-20180924084748-ba921b7e2419 // indirect
 	github.com/kr/pretty v0.3.0 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/pbnjay/memory v0.0.0-20210728143218-7b4eea64cf58 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rogpeppe/go-internal v1.6.1 // indirect
+	github.com/smallnest/exp v0.3.1 // indirect
 )
 
 require (
 	github.com/dsnet/compress v0.0.1
 	github.com/gabriel-vasile/mimetype v1.4.3
+	github.com/goombaio/orderedset v0.0.0-20180925151225-8e67b20a9b77
 	github.com/klauspost/compress v1.17.2
 	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db // indirect
