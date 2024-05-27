@@ -80,7 +80,6 @@ func ReadSeqFileChunk(reader io.Reader,
 					end = len(buff)
 				}
 
-	
 				pnext := end
 				lremain := len(buff) - pnext
 				buff = buff[:end]

@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	log "github.com/sirupsen/logrus"
+	 "github.com/goombaio/orderedset"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiformats"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
@@ -15,7 +16,7 @@ import (
 
 func _ExpandListOfFiles(check_ext bool, filenames ...string) ([]string, error) {
 	var err error
-	list_of_files := make([]string, 0, 100)
+	list_of_files := orderedset.NewOrderedSet()
 	for _, fn := range filenames {
 
 		err = filepath.Walk(fn,
@@ -42,7 +43,9 @@ func _ExpandListOfFiles(check_ext bool, filenames ...string) ([]string, error) {
 						if e != nil {
 							return e
 						}
-						list_of_files = append(list_of_files, subdir...)
+						for _, f := range subdir {
+							list_of_files.Add(f)
+						}
 					} else {
 						check_ext = true
 					}
@@ -60,8 +63,8 @@ func _ExpandListOfFiles(check_ext bool, filenames ...string) ([]string, error) {
 						strings.HasSuffix(path, "dat.gz") ||
 						strings.HasSuffix(path, "ecopcr") ||
 						strings.HasSuffix(path, "ecopcr.gz") {
-						log.Printf("Appending %s file\n", path)
-						list_of_files = append(list_of_files, path)
+						log.Debugf("Appending %s file\n", path)
+						list_of_files.Add(path)
 					}
 				}
 				return nil
@@ -72,7 +75,13 @@ func _ExpandListOfFiles(check_ext bool, filenames ...string) ([]string, error) {
 		}
 	}
 
-	return list_of_files, nil
+	res := make([]string, 0, list_of_files.Size())
+	for _, v := range list_of_files.Values() {
+		res = append(res, v.(string))
+	}
+
+	log.Infof("Found %d files to process", len(res))
+	return res, nil
 }
 
 func CLIReadBioSequences(filenames ...string) (obiiter.IBioSequence, error) {

@@ -153,6 +153,12 @@ func _ParseFastaFile(source string,
 			}
 		}
 
+		if state == 6 {
+			s := obiseq.NewBioSequence(identifier, slices.Clone(seqBytes.Bytes()), definition)
+			s.SetSource(source)
+			sequences = append(sequences, s)
+		}
+
 		if len(sequences) > 0 {
 			if no_order {
 				out.Push(obiiter.MakeBioSequenceBatch(chunck_order(), sequences))
