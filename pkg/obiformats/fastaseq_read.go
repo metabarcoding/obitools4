@@ -59,7 +59,17 @@ func _ParseFastaFile(source string,
 
 	for chunks := range input {
 		scanner := bufio.NewReader(chunks.raw)
+		start, _ := scanner.Peek(20)
+		if start[0] != '>' {
+			log.Fatalf("%s : first character is not '>'", string(start))
+		}
+		if start[1] == ' ' {
+			log.Fatalf("%s :Strange", string(start))
+		}
 		sequences := make(obiseq.BioSequenceSlice, 0, batch_size)
+
+		previous := byte(0)
+
 		for C, err := scanner.ReadByte(); err != io.EOF; C, err = scanner.ReadByte() {
 
 			is_end_of_line := C == '\r' || C == '\n'
@@ -71,11 +81,18 @@ func _ParseFastaFile(source string,
 				if C == '>' {
 					// Beginning of sequence
 					state = 1
+				} else {
+					// ERROR
+					log.Fatalf("%s : sequence entry does not start with '>'", source)
 				}
 			case 1:
 				if is_sep {
 					// No identifier -> ERROR
-					log.Errorf("%s : sequence entry does not have an identifier", source)
+
+					context, _ := scanner.Peek(30)
+					context = append([]byte{C}, context...)
+					log.Fatalf("%s [%s]: sequence entry does not have an identifier",
+						source, string(context))
 				} else {
 					// Beginning of identifier
 					idBytes.Reset()
@@ -124,22 +141,39 @@ func _ParseFastaFile(source string,
 
 					if (C >= 'a' && C <= 'z') || C == '-' || C == '.' || C == '[' || C == ']' {
 						seqBytes.WriteByte(C)
+					} else {
+						context, _ := scanner.Peek(30)
+						context = append(
+							append([]byte{previous}, C),
+							context...)
+						log.Fatalf("%s [%s]: sequence contains invalid character %c (%s)",
+							source, identifier, C, string(context))
 					}
 					state = 6
 				}
 			case 6:
 				if C == '>' {
-					// End of sequence
-					s := obiseq.NewBioSequence(identifier, slices.Clone(seqBytes.Bytes()), definition)
-					s.SetSource(source)
-					sequences = append(sequences, s)
-					if no_order {
-						if len(sequences) == batch_size {
-							out.Push(obiiter.MakeBioSequenceBatch(chunck_order(), sequences))
-							sequences = make(obiseq.BioSequenceSlice, 0, batch_size)
+					if previous == '\r' || previous == '\n' {
+						// End of sequence
+						s := obiseq.NewBioSequence(identifier, slices.Clone(seqBytes.Bytes()), definition)
+						s.SetSource(source)
+						sequences = append(sequences, s)
+						if no_order {
+							if len(sequences) == batch_size {
+								out.Push(obiiter.MakeBioSequenceBatch(chunck_order(), sequences))
+								sequences = make(obiseq.BioSequenceSlice, 0, batch_size)
+							}
 						}
+						state = 1
+					} else {
+						// Error
+						context, _ := scanner.Peek(30)
+						context = append(
+							append([]byte{previous}, C),
+							context...)
+						log.Fatalf("%s [%s]: sequence cannot contain '>' in the middle (%s)",
+							source, identifier, string(context))
 					}
-					state = 1
 
 				} else if !is_sep {
 					if C >= 'A' && C <= 'Z' {
@@ -148,9 +182,19 @@ func _ParseFastaFile(source string,
 					// Removing white space from the sequence
 					if (C >= 'a' && C <= 'z') || C == '-' || C == '.' || C == '[' || C == ']' {
 						seqBytes.WriteByte(C)
+					} else {
+						context, _ := scanner.Peek(30)
+						context = append(
+							append([]byte{previous}, C),
+							context...)
+						log.Fatalf("%s [%s]: sequence contains invalid character %c (%s)",
+							source, identifier, C, string(context))
 					}
 				}
+
 			}
+
+			previous = C
 		}
 
 		if state == 6 {
