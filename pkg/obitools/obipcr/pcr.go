@@ -4,7 +4,6 @@ import (
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiapat"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -47,8 +46,8 @@ func CLIPCR(iterator obiiter.IBioSequence) (obiiter.IBioSequence, error) {
 		frags := obiiter.IFragments(
 			CLIMaxLength()*1000,
 			CLIMaxLength()*100,
-			CLIMaxLength()+obiutils.Max(len(CLIForwardPrimer()),
-				len(CLIReversePrimer()))+obiutils.Min(len(CLIForwardPrimer()),
+			CLIMaxLength()+max(len(CLIForwardPrimer()),
+				len(CLIReversePrimer()))+min(len(CLIForwardPrimer()),
 				len(CLIReversePrimer()))/2,
 			100,
 			obioptions.CLIParallelWorkers(),

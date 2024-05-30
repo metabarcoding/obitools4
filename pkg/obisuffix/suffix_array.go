@@ -6,7 +6,6 @@ import (
 	"sort"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 )
 
 type Suffix struct {
@@ -27,7 +26,7 @@ func SuffixLess(suffixarray SuffixArray) func(i, j int) bool {
 		sj := suffixarray.Suffixes[j]
 		bj := (*suffixarray.Sequences)[int(sj.Idx)].Sequence()[sj.Pos:]
 
-		l := obiutils.Min(len(bi), len(bj))
+		l := min(len(bi), len(bj))
 		p := 0
 		for p < l && bi[p] == bj[p] {
 			p++
@@ -92,7 +91,7 @@ func (suffixarray *SuffixArray) CommonSuffix() []int {
 		si := suffixarray.Suffixes[i]
 		bi := (*suffixarray.Sequences)[int(si.Idx)].Sequence()[si.Pos:]
 
-		l := obiutils.Min(len(bi), len(bp))
+		l := min(len(bi), len(bp))
 		p := 0
 		for p < l && bi[p] == bp[p] {
 			p++

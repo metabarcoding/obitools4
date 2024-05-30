@@ -110,7 +110,7 @@ func FindClosests(sequence *obiseq.BioSequence,
 			d, _, _, _ := obialign.D1Or0(sequence, references[order])
 			if d >= 0 {
 				score = d
-				alilength = obiutils.Max(sequence.Len(), ref.Len())
+				alilength = max(sequence.Len(), ref.Len())
 				lcs = alilength - score
 			}
 		} else {
@@ -294,8 +294,8 @@ func CLIAssignTaxonomy(iterator obiiter.IBioSequence,
 			j++
 		} else {
 			log.Warnf("Taxid %d is not described in the taxonomy."+
-				      " Sequence %s is discared from the reference database", 
-					  seq.Taxid(), seq.Id())
+				" Sequence %s is discared from the reference database",
+				seq.Taxid(), seq.Id())
 		}
 	}
 

@@ -15,7 +15,6 @@ import (
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obialign"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 )
 
 var _MaxPatLen = int(C.MAX_PAT_LEN)
@@ -53,26 +52,24 @@ var NilApatPattern = ApatPattern{nil}
 // type.
 var NilApatSequence = ApatSequence{nil}
 
-// MakeApatPattern creates an ApatPattern object based on the given pattern, error maximum and allowsIndel flag.
+// MakeApatPattern creates an ApatPattern object based on the given pattern, error maximum, and allowsIndel flag.
 //
-// The pattern is a short DNA sequence (up to 64 symboles).
+// Parameters:
+// The pattern is a short DNA sequence (up to 64 symbols).
 // Ambiguities can be represented or using UIPAC symboles,
 // or using the [...] classical in regular pattern grammar.
 // For example, the ambiguity A/T can be indicated using W
 // or [AT]. A nucleotide can be negated by preceding it with
-// a '!'. The APAT algorithm allows for error during the
-// matching process. The maximum number of tolerated error
-// is indicated at the construction of the pattern using
-// the errormax parameter. Some positions can be marked as not
+// a '!'. The pattern is converted to uppercase.
+// Some positions can be marked as not
 // allowed for mismatches. They have to be signaled using a '#'
 // sign after the corresponding nucleotide.
 //
-// Parameters:
-// pattern: The input pattern string.
-// errormax: The maximum number of errors allowed.
-// allowsIndel: A flag indicating whether indels are allowed or not.
+// errormax is the maximum number of errors allowed in the pattern.
 //
-// Returns an ApatPattern object and an error.
+// allowsIndel is a flag indicating whether indels are allowed in the pattern.
+//
+// Returns an ApatPattern object and an error if the pattern is invalid.
 func MakeApatPattern(pattern string, errormax int, allowsIndel bool) (ApatPattern, error) {
 	cpattern := C.CString(pattern)
 	defer C.free(unsafe.Pointer(cpattern))
@@ -264,6 +261,7 @@ func (sequence ApatSequence) Free() {
 // values of the [3]int indicate respectively the start and the end position of
 // the match. Following the GO convention the end position is not included in the
 // match. The third value indicates the number of error detected for this occurrence.
+
 func (pattern ApatPattern) FindAllIndex(sequence ApatSequence, begin, length int) (loc [][3]int) {
 	if begin < 0 {
 		begin = 0
@@ -348,8 +346,8 @@ func (pattern ApatPattern) BestMatch(sequence ApatSequence, begin, length int) (
 
 	start = best[0] - nerr
 	end = best[0] + int(pattern.pointer.pointer.patlen) + nerr
-	start = obiutils.Max(start, 0)
-	end = obiutils.Min(end, sequence.Len())
+	start = max(start, 0)
+	end = min(end, sequence.Len())
 
 	cpattern := (*[1 << 30]byte)(unsafe.Pointer(pattern.pointer.pointer.cpat))
 	frg := sequence.pointer.reference.Sequence()[start:end]
@@ -377,6 +375,22 @@ func (pattern ApatPattern) BestMatch(sequence ApatSequence, begin, length int) (
 // 	return int(_AllocatedApaSequences)
 // }
 
+// AllMatches finds all matches of a given pattern in a sequence.
+//
+// It only works if the parttern is a pure IUPAC sequence without
+// supplementary characters normally allowed : ! and #.
+//
+// It takes the following parameters:
+// - pattern: the pattern to search for (ApatPattern).
+// - sequence: the sequence to search in (ApatSequence).
+// - begin: the starting index of the search (int).
+// - length: the length of the search (int).
+//
+// It returns a slice of [3]int representing the locations of all matches in the sequence.
+// The AllMatches methood returns return a slice of [3]int. The two firsts
+// values of the [3]int indicate respectively the start and the end position of
+// the match. Following the GO convention the end position is not included in the
+// match. The third value indicates the number of error detected for this occurrence.
 func (pattern ApatPattern) AllMatches(sequence ApatSequence, begin, length int) (loc [][3]int) {
 	res := pattern.FindAllIndex(sequence, begin, length)
 
@@ -384,12 +398,17 @@ func (pattern ApatPattern) AllMatches(sequence ApatSequence, begin, length int) 
 	buffer := sbuffer[:]
 
 	for _, m := range res {
+		// Recompute the start and end position of the match
+		// when the pattern allows for indels
 		if m[2] > 0 && pattern.pointer.pointer.hasIndel {
 			start := m[0] - m[2]
 			end := m[0] + int(pattern.pointer.pointer.patlen) + m[2]
-			start = obiutils.Max(start, 0)
-			end = obiutils.Min(end, sequence.Len())
-
+			start = max(start, 0)
+			end = min(end, sequence.Len())
+			// 1 << 30 = 1,073,741,824 = 1Gb
+			// It's a virtual array mapping the sequence to the pattern
+			// in the C code.
+			// No allocations are done here.
 			cpattern := (*[1 << 30]byte)(unsafe.Pointer(pattern.pointer.pointer.cpat))
 			frg := sequence.pointer.reference.Sequence()[start:end]
 

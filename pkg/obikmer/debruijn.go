@@ -10,7 +10,6 @@ import (
 	"slices"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -472,7 +471,7 @@ func (graph *DeBruijnGraph) Gml() string {
 		n := graph.Nexts(idx)
 		for _, dst := range n {
 			dstid := nodeidx[dst]
-			weight := obiutils.Min(graph.Weight(dst), weight)
+			weight := min(graph.Weight(dst), weight)
 			label := decode[dst&3]
 			buffer.WriteString(
 				fmt.Sprintf(`edge [ source "%d"

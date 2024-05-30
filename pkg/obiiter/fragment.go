@@ -4,7 +4,6 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 )
 
 func IFragments(minsize, length, overlap, size, nworkers int) Pipeable {
@@ -30,7 +29,7 @@ func IFragments(minsize, length, overlap, size, nworkers int) Pipeable {
 						news = append(news, s)
 					} else {
 						for i := 0; i < s.Len(); i += step {
-							end := obiutils.Min(i+length, s.Len())
+							end := min(i+length, s.Len())
 							fusion := false
 							if (s.Len() - end) < step {
 								end = s.Len()

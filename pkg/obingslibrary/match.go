@@ -9,7 +9,6 @@ import (
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiapat"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 )
 
 type DemultiplexMatch struct {
@@ -130,7 +129,7 @@ func (marker *Marker) Match(sequence *obiseq.BioSequence) *DemultiplexMatch {
 
 		sseq := sequence.String()
 		direct := sseq[start:end]
-		tagstart := obiutils.Max(start-marker.taglength, 0)
+		tagstart := max(start-marker.taglength, 0)
 		ftag := strings.ToLower(sseq[tagstart:start])
 
 		m := DemultiplexMatch{
@@ -150,7 +149,7 @@ func (marker *Marker) Match(sequence *obiseq.BioSequence) *DemultiplexMatch {
 			reverse, _ := sequence.Subsequence(start, end, false)
 			defer reverse.Recycle()
 			reverse = reverse.ReverseComplement(true)
-			endtag := obiutils.Min(end+marker.taglength, sequence.Len())
+			endtag := min(end+marker.taglength, sequence.Len())
 			rtag, err := sequence.Subsequence(end, endtag, false)
 			defer rtag.Recycle()
 			srtag := ""
@@ -201,7 +200,7 @@ func (marker *Marker) Match(sequence *obiseq.BioSequence) *DemultiplexMatch {
 		sseq := sequence.String()
 
 		reverse := strings.ToLower(sseq[start:end])
-		tagstart := obiutils.Max(start-marker.taglength, 0)
+		tagstart := max(start-marker.taglength, 0)
 		rtag := strings.ToLower(sseq[tagstart:start])
 
 		m := DemultiplexMatch{
@@ -221,7 +220,7 @@ func (marker *Marker) Match(sequence *obiseq.BioSequence) *DemultiplexMatch {
 			defer direct.Recycle()
 			direct = direct.ReverseComplement(true)
 
-			endtag := obiutils.Min(end+marker.taglength, sequence.Len())
+			endtag := min(end+marker.taglength, sequence.Len())
 			ftag, err := sequence.Subsequence(end, endtag, false)
 			defer ftag.Recycle()
 			sftag := ""

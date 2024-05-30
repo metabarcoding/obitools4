@@ -2,7 +2,6 @@ package obialign
 
 import (
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 )
 
 var _iupac = [26]byte{
@@ -130,11 +129,11 @@ func FastLCSEGFScoreByte(bA, bB []byte, maxError int, endgapfree bool, buffer *[
 		// in_matrix := false
 		x1 := y - lB + extra
 		x2 := extra - y
-		xs := obiutils.Max(obiutils.Max(x1, x2), 0)
+		xs := max(x1, x2, 0)
 
 		x1 = y + extra
 		x2 = lA + extra - y
-		xf := obiutils.Min(obiutils.Min(x1, x2), even-1) + 1
+		xf := min(x1, x2, even-1) + 1
 
 		for x := xs; x < xf; x++ {
 
@@ -222,11 +221,11 @@ func FastLCSEGFScoreByte(bA, bB []byte, maxError int, endgapfree bool, buffer *[
 		// . 9   10 + 2 - 1
 		x1 = y - lB + extra + even
 		x2 = extra - y + even - 1
-		xs = obiutils.Max(obiutils.Max(x1, x2), even)
+		xs = max(x1, x2, even)
 
 		x1 = y + extra + even
 		x2 = lA + extra - y + even - 1
-		xf = obiutils.Min(obiutils.Min(x1, x2), width-1) + 1
+		xf = min(x1, x2, width-1) + 1
 
 		for x := xs; x < xf; x++ {
 
@@ -383,4 +382,3 @@ func FastLCSEGFScore(seqA, seqB *obiseq.BioSequence, maxError int, buffer *[]uin
 func FastLCSScore(seqA, seqB *obiseq.BioSequence, maxError int, buffer *[]uint64) (int, int) {
 	return FastLCSEGFScoreByte(seqA.Sequence(), seqB.Sequence(), maxError, false, buffer)
 }
-
