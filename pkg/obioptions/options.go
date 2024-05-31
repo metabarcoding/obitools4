@@ -21,8 +21,8 @@ var _ParallelFilesRead = 0
 var _MaxAllowedCPU = runtime.NumCPU()
 var _BatchSize = 5000
 var _Pprof = false
-var _Quality_Shift_Input = 33
-var _Quality_Shift_Output = 33
+var _Quality_Shift_Input = byte(33)
+var _Quality_Shift_Output = byte(33)
 var _Version = "4.2.1"
 
 type ArgumentParser func([]string) (*getoptions.GetOpt, []string)
@@ -266,7 +266,7 @@ func SetBatchSize(n int) {
 //
 // No parameters.
 // Returns an integer representing the quality shift value for input.
-func InputQualityShift() int {
+func InputQualityShift() byte {
 	return _Quality_Shift_Input
 }
 
@@ -274,22 +274,22 @@ func InputQualityShift() int {
 //
 // No parameters.
 // Returns an integer representing the quality shift value for output.
-func OutputQualityShift() int {
+func OutputQualityShift() byte {
 	return _Quality_Shift_Output
 }
 
 // SetInputQualityShift sets the quality shift value for decoding FASTQ.
 //
 // n - an integer representing the quality shift value to be set.
-func SetInputQualityShift(n int) {
-	_Quality_Shift_Input = n
+func SetInputQualityShift[T int | byte](n T) {
+	_Quality_Shift_Input = byte(n)
 }
 
 // SetOutputQualityShift sets the quality shift value used for FASTQ output.
 //
 // n - an integer representing the quality shift value to be set.
-func SetOutputQualityShift(n int) {
-	_Quality_Shift_Output = n
+func SetOutputQualityShift[T int | byte](n T) {
+	_Quality_Shift_Output = byte(n)
 }
 
 // SetMaxCPU sets the maximum number of CPU cores allowed.

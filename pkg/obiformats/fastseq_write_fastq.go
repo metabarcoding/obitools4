@@ -11,7 +11,6 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 )
@@ -34,7 +33,7 @@ func FormatFastq(seq *obiseq.BioSequence, formater FormatHeader) string {
 	)
 }
 
-func FormatFastqBatch(batch obiiter.BioSequenceBatch, quality_shift int,
+func FormatFastqBatch(batch obiiter.BioSequenceBatch,
 	formater FormatHeader, skipEmpty bool) []byte {
 	var bs bytes.Buffer
 	for _, seq := range batch.Slice() {
@@ -75,7 +74,6 @@ func WriteFastq(iterator obiiter.IBioSequence,
 	chunkchan := make(chan FileChunck)
 
 	header_format := opt.FormatFastSeqHeader()
-	quality := obioptions.OutputQualityShift()
 
 	newIter.Add(nwriters)
 
@@ -94,7 +92,7 @@ func WriteFastq(iterator obiiter.IBioSequence,
 		for iterator.Next() {
 			batch := iterator.Get()
 			chunk := FileChunck{
-				FormatFastqBatch(batch, quality, header_format, opt.SkipEmptySequence()),
+				FormatFastqBatch(batch, header_format, opt.SkipEmptySequence()),
 				batch.Order(),
 			}
 			chunkchan <- chunk

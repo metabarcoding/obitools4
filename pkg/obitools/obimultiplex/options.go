@@ -8,6 +8,8 @@ import (
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obingslibrary"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
 	"github.com/DavidGamba/go-getoptions"
+
+	log "github.com/sirupsen/logrus"
 )
 
 var _NGSFilterFile = ""
@@ -74,6 +76,7 @@ func CLINGSFIlter() (obingslibrary.NGSLibrary, error) {
 		return nil, fmt.Errorf("open file error: %v", err)
 	}
 
+	log.Infof("Reading NGSFilter file: %s", _NGSFilterFile)
 	ngsfiler, err := obiformats.ReadNGSFilter(file)
 
 	if err != nil {
