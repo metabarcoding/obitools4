@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	log "github.com/sirupsen/logrus"
@@ -30,6 +31,16 @@ func main() {
 	optionParser := obioptions.GenerateOptionParser(obimultiplex.OptionSet)
 
 	_, args := optionParser(os.Args)
+
+	if obimultiplex.CLIAskConfigTemplate() {
+		fmt.Print(obimultiplex.CLIConfigTemplate())
+		os.Exit(0)
+	}
+
+	if !obimultiplex.CLIHasNGSFilterFile() {
+		log.Error("You must provide a tag list file following the NGSFilter format")
+		os.Exit(1)
+	}
 
 	sequences, err := obiconvert.CLIReadBioSequences(args...)
 
