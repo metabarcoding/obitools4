@@ -276,7 +276,14 @@ func (s *BioSequence) QualitiesString() string {
 	qual := s.Qualities()
 	qual_ascii := make([]byte, len(qual))
 	for i := 0; i < len(qual); i++ {
-		qual_ascii[i] = byte(qual[i] + byte(quality_shift))
+		quality := qual[i]
+		if quality < 0 {
+			quality = 0
+		}
+		if quality > 93 {
+			quality = 93
+		}
+		qual_ascii[i] = quality + quality_shift
 	}
 	return string(qual_ascii)
 }
