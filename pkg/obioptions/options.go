@@ -23,7 +23,6 @@ var _BatchSize = 5000
 var _Pprof = false
 var _Quality_Shift_Input = byte(33)
 var _Quality_Shift_Output = byte(33)
-var _Version = "4.2.1"
 
 type ArgumentParser func([]string) (*getoptions.GetOpt, []string)
 
@@ -77,7 +76,7 @@ func GenerateOptionParser(optionset ...func(*getoptions.GetOpt)) ArgumentParser 
 		}
 
 		if options.Called("version") {
-			fmt.Fprintf(os.Stderr, "obitools version %s\n", _Version)
+			fmt.Fprintf(os.Stderr, "OBITools %s\n", VersionString())
 			os.Exit(0)
 		}
 

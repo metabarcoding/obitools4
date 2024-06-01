@@ -7,9 +7,9 @@ require (
 	github.com/PaesslerAG/gval v1.2.2
 	github.com/barkimedes/go-deepcopy v0.0.0-20220514131651-17c30cfc62df
 	github.com/chen3feng/stl4go v0.1.1
-	github.com/daichi-m/go18ds v1.12.1
 	github.com/goccy/go-json v0.10.2
 	github.com/klauspost/pgzip v1.2.6
+	github.com/pbnjay/memory v0.0.0-20210728143218-7b4eea64cf58
 	github.com/rrethy/ahocorasick v1.0.0
 	github.com/schollz/progressbar/v3 v3.13.1
 	github.com/sirupsen/logrus v1.9.3
@@ -27,10 +27,8 @@ require (
 	github.com/goombaio/orderedmap v0.0.0-20180924084748-ba921b7e2419 // indirect
 	github.com/kr/pretty v0.3.0 // indirect
 	github.com/kr/text v0.2.0 // indirect
-	github.com/pbnjay/memory v0.0.0-20210728143218-7b4eea64cf58 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rogpeppe/go-internal v1.6.1 // indirect
-	github.com/smallnest/exp v0.3.1 // indirect
 )
 
 require (

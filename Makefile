@@ -4,6 +4,7 @@
 
 GOCMD=go
 GOBUILD=$(GOCMD) build # -compiler gccgo -gccgoflags -O3
+GOGENERATE=$(GOCMD) generate
 GOCLEAN=$(GOCMD) clean
 GOTEST=$(GOCMD) test
 GOGET=$(GOCMD) get
@@ -21,7 +22,7 @@ OBITOOLS:=$(notdir $(OBITOOLS_DIRS))
 
 
 define MAKE_PKG_RULE
-pkg-$(notdir $(1)): $(1)
+pkg-$(notdir $(1)): $(1) pkg/obioptions/version.go
 	@echo -n - Building package $(notdir $(1))...
 	@$(GOBUILD) ./$(1) \
 	    2> pkg-$(notdir $(1)).log \
@@ -31,7 +32,7 @@ pkg-$(notdir $(1)): $(1)
 endef
 
 define MAKE_OBITOOLS_RULE
-$(OBITOOLS_PREFIX)$(notdir $(1)): $(BUILD_DIR) $(1)
+$(OBITOOLS_PREFIX)$(notdir $(1)): $(BUILD_DIR) $(1) pkg/obioptions/version.go
 	@echo -n - Building obitool $(notdir $(1))...
 	@$(GOBUILD)  -o $(BUILD_DIR)/$(OBITOOLS_PREFIX)$(notdir $(1)) ./$(1) \
 	             2> $(OBITOOLS_PREFIX)$(notdir $(1)).log \
@@ -40,6 +41,17 @@ $(OBITOOLS_PREFIX)$(notdir $(1)): $(BUILD_DIR) $(1)
 	@echo Done.
 endef
 
+GIT=$(shell which git 2>&1 >/dev/null && which git)
+GITDIR=$(shell ls -d .git 2>/dev/null && echo .git || echo)
+ifneq ($(strip $(GIT)),)
+ifneq ($(strip $(GITDIR)),)
+COMMIT_ID:=$(shell $(GIT) log -1 HEAD --format=%h)
+LAST_TAG:=$(shell $(GIT) describe --tags $$($(GIT) rev-list --tags --max-count=1) | \
+      	        tr '_' ' ')
+endif
+endif
+
+OUTPUT:=$(shell mktemp)
 
 all: obitools
 
@@ -71,4 +83,19 @@ $(foreach P,$(PACKAGE_DIRS),$(eval $(call MAKE_PKG_RULE,$(P))))
 
 $(foreach P,$(OBITOOLS_DIRS),$(eval $(call MAKE_OBITOOLS_RULE,$(P))))
 
-.PHONY: all packages obitools man obibook doc update-deps
+pkg/obioptions/version.go: .FORCE
+ifneq ($(strip $(COMMIT_ID)),)
+	@cat $@ \
+	| sed  -E 's/^var _Commit = "[^"]*"/var _Commit = "'$(COMMIT_ID)'"/' \
+	| sed  -E 's/^var _Version = "[^"]*"/var _Version = "'"$(LAST_TAG)"'"/' \
+	> $(OUTPUT)
+
+	@diff $@ $(OUTPUT) 2>&1 > /dev/null \
+    	|| echo "Update version.go : $@ to $(LAST_TAG) ($(COMMIT_ID))" \
+    	&& mv $(OUTPUT) $@
+
+	@rm -f $(OUTPUT)
+endif
+
+.PHONY: all packages obitools man obibook doc update-deps .FORCE
+.FORCE:
