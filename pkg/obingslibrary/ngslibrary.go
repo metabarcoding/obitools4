@@ -1,7 +1,8 @@
 package obingslibrary
 
 import (
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiapat"
+	"fmt"
+
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 )
 
@@ -22,44 +23,112 @@ type PCR struct {
 	Annotations obiseq.Annotation
 }
 
-type Marker struct {
-	forward   obiapat.ApatPattern
-	cforward  obiapat.ApatPattern
-	reverse   obiapat.ApatPattern
-	creverse  obiapat.ApatPattern
-	taglength int
-	samples   map[TagPair]*PCR
+type NGSLibrary struct {
+	Matching string
+	Primers  map[string]PrimerPair
+	Markers  map[PrimerPair]*Marker
 }
-type NGSLibrary map[PrimerPair]*Marker
 
 func MakeNGSLibrary() NGSLibrary {
-	return make(NGSLibrary, 10)
+	return NGSLibrary{
+		Primers: make(map[string]PrimerPair, 10),
+		Markers: make(map[PrimerPair]*Marker, 10),
+	}
 }
 
 func (library *NGSLibrary) GetMarker(forward, reverse string) (*Marker, bool) {
 	pair := PrimerPair{forward, reverse}
-	marker, ok := (*library)[pair]
+	marker, ok := (library.Markers)[pair]
 
 	if ok {
 		return marker, true
 	}
 
-	m := Marker{samples: make(map[TagPair]*PCR, 1000)}
-	(*library)[pair] = &m
+	m := Marker{
+		Forward_tag_length:    0,
+		Reverse_tag_length:    0,
+		Forward_spacer:        0,
+		Reverse_spacer:        0,
+		Forward_tag_delimiter: 0,
+		Reverse_tag_delimiter: 0,
+		samples:               make(map[TagPair]*PCR, 1000),
+	}
+
+	(library.Markers)[pair] = &m
 
 	return &m, false
 }
 
-func (marker *Marker) GetPCR(forward, reverse string) (*PCR, bool) {
-	pair := TagPair{forward, reverse}
-	pcr, ok := marker.samples[pair]
+func (library *NGSLibrary) SetForwardTagSpacer(spacer int) {
+	for _, marker := range library.Markers {
+		marker.SetForwardTagSpacer(spacer)
+	}
+}
+
+func (library *NGSLibrary) SetReverseTagSpacer(spacer int) {
+	for _, marker := range library.Markers {
+		marker.SetReverseTagSpacer(spacer)
+	}
+}
+
+func (library *NGSLibrary) SetTagSpacer(spacer int) {
+	library.SetForwardTagSpacer(spacer)
+	library.SetReverseTagSpacer(spacer)
+}
+
+func (library *NGSLibrary) SetTagSpacerFor(primer string, spacer int) {
+	primers, ok := library.Primers[primer]
 
 	if ok {
-		return pcr, ok
+		marker, ok := library.Markers[primers]
+
+		if ok {
+			if primer == primers.Forward {
+				marker.SetForwardTagSpacer(spacer)
+			} else {
+				marker.SetReverseTagSpacer(spacer)
+			}
+		}
 	}
+}
 
-	ipcr := PCR{}
-	marker.samples[pair] = &ipcr
+func (library *NGSLibrary) SetForwardTagDelimiter(delim byte) {
+	for _, marker := range library.Markers {
+		marker.SetForwardTagDelimiter(delim)
+	}
+}
 
-	return &ipcr, false
+func (library *NGSLibrary) SetReverseTagDelimiter(delim byte) {
+	for _, marker := range library.Markers {
+		marker.SetReverseTagDelimiter(delim)
+	}
+}
+
+func (library *NGSLibrary) SetTagDelimiter(delim byte) {
+	library.SetForwardTagDelimiter(delim)
+	library.SetReverseTagDelimiter(delim)
+}
+
+func (library *NGSLibrary) CheckTagLength() {
+
+	for _, marker := range library.Markers {
+		marker.CheckTagLength()
+	}
+}
+
+func (library *NGSLibrary) CheckPrimerUnicity() error {
+	for primers := range library.Markers {
+		if _, ok := library.Primers[primers.Forward]; ok {
+			return fmt.Errorf("forward primer %s is used more than once", primers.Forward)
+		}
+		if _, ok := library.Primers[primers.Reverse]; ok {
+			return fmt.Errorf("reverse primer %s is used more than once", primers.Reverse)
+		}
+		if primers.Forward == primers.Reverse {
+			return fmt.Errorf("forward and reverse primers are the same : %s", primers.Forward)
+		}
+		library.Primers[primers.Forward] = primers
+		library.Primers[primers.Reverse] = primers
+	}
+	return nil
 }

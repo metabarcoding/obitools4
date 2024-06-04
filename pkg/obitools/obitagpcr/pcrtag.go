@@ -33,12 +33,6 @@ func IPCRTagPESequencesBatch(iterator obiiter.IBioSequence,
 
 	newIter := obiiter.MakeIBioSequence()
 	newIter.MarkAsPaired()
-	newIter.Add(nworkers)
-
-	go func() {
-		newIter.WaitAndClose()
-		log.Printf("End of the sequence PCR Taging")
-	}()
 
 	f := func(iterator obiiter.IBioSequence, wid int) {
 		arena := obialign.MakePEAlignArena(150, 150)
@@ -128,16 +122,22 @@ func IPCRTagPESequencesBatch(iterator obiiter.IBioSequence,
 
 	log.Printf("Start of the sequence Pairing using %d workers\n", nworkers)
 
+	newIter.Add(nworkers)
 	for i := 1; i < nworkers; i++ {
 		go f(iterator.Split(), i)
 	}
 	go f(iterator, 0)
 
+	go func() {
+		newIter.WaitAndClose()
+		log.Printf("End of the sequence PCR Taging")
+	}()
+
 	iout := newIter
 
 	if !obimultiplex.CLIConservedErrors() {
 		log.Println("Discards unassigned sequences")
-		iout = iout.Rebatch(obioptions.CLIBatchSize())
+		iout = iout.FilterOn(obiseq.HasAttribute("demultiplex_error").Not(), obioptions.CLIBatchSize())
 	}
 
 	var unidentified obiiter.IBioSequence

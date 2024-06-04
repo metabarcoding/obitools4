@@ -6,7 +6,10 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
+	"strconv"
 	"strings"
+
+	"errors"
 
 	log "github.com/sirupsen/logrus"
 
@@ -85,6 +88,53 @@ func _parseMainNGSFilter(text string) (obingslibrary.PrimerPair, obingslibrary.T
 		true
 }
 
+func NGSFilterCsvDetector(raw []byte, limit uint32) bool {
+	r := csv.NewReader(bytes.NewReader(dropLastLine(raw, limit)))
+	r.Comma = ','
+	r.ReuseRecord = true
+	r.LazyQuotes = true
+	r.FieldsPerRecord = -1
+	r.Comment = '#'
+
+	nfields := 0
+
+	lines := 0
+	for {
+		rec, err := r.Read()
+		if len(rec) > 0 && rec[0] == "@param" {
+			continue
+		}
+		if errors.Is(err, io.EOF) {
+			break
+		}
+		if err != nil {
+			return false
+		}
+
+		if nfields == 0 {
+			nfields = len(rec)
+		} else if nfields != len(rec) {
+			return false
+		}
+		lines++
+	}
+
+	return nfields > 1 && lines > 1
+
+}
+
+func dropLastLine(b []byte, readLimit uint32) []byte {
+	if readLimit == 0 || uint32(len(b)) < readLimit {
+		return b
+	}
+	for i := len(b) - 1; i > 0; i-- {
+		if b[i] == '\n' {
+			return b[:i]
+		}
+	}
+	return b
+}
+
 func OBIMimeNGSFilterTypeGuesser(stream io.Reader) (*mimetype.MIME, io.Reader, error) {
 
 	// Create a buffer to store the read data
@@ -94,6 +144,8 @@ func OBIMimeNGSFilterTypeGuesser(stream io.Reader) (*mimetype.MIME, io.Reader, e
 	if err != nil && err != io.ErrUnexpectedEOF {
 		return nil, nil, err
 	}
+
+	mimetype.Lookup("text/plain").Extend(NGSFilterCsvDetector, "text/ngsfilter-csv", ".csv")
 
 	// Detect the MIME type using the mimetype library
 	mimeType := mimetype.Detect(buf[:n])
@@ -111,7 +163,7 @@ func OBIMimeNGSFilterTypeGuesser(stream io.Reader) (*mimetype.MIME, io.Reader, e
 	return mimeType, newReader, nil
 }
 
-func ReadNGSFilter(reader io.Reader) (obingslibrary.NGSLibrary, error) {
+func ReadNGSFilter(reader io.Reader) (*obingslibrary.NGSLibrary, error) {
 	mimetype, newReader, err := OBIMimeNGSFilterTypeGuesser(reader)
 
 	if err != nil {
@@ -120,13 +172,13 @@ func ReadNGSFilter(reader io.Reader) (obingslibrary.NGSLibrary, error) {
 
 	log.Infof("NGSFilter configuration mimetype: %s", mimetype.String())
 
-	if mimetype.String() == "text/csv" {
+	if mimetype.String() == "text/ngsfilter-csv" {
 		return ReadCSVNGSFilter(newReader)
 	}
 
 	return ReadOldNGSFilter(newReader)
 }
-func ReadOldNGSFilter(reader io.Reader) (obingslibrary.NGSLibrary, error) {
+func ReadOldNGSFilter(reader io.Reader) (*obingslibrary.NGSLibrary, error) {
 	ngsfilter := obingslibrary.MakeNGSLibrary()
 
 	lines := _readLines(reader)
@@ -154,7 +206,7 @@ func ReadOldNGSFilter(reader io.Reader) (obingslibrary.NGSLibrary, error) {
 		pcr, ok := marker.GetPCR(tags.Forward, tags.Reverse)
 
 		if ok {
-			return ngsfilter,
+			return &ngsfilter,
 				fmt.Errorf("line %d : tag pair (%s,%s) used more than once with marker (%s,%s)",
 					i, tags.Forward, tags.Reverse, primers.Forward, primers.Reverse)
 		}
@@ -170,17 +222,47 @@ func ReadOldNGSFilter(reader io.Reader) (obingslibrary.NGSLibrary, error) {
 
 	}
 
-	return ngsfilter, nil
+	return &ngsfilter, nil
 }
 
-func ReadCSVNGSFilter(reader io.Reader) (obingslibrary.NGSLibrary, error) {
+var library_parameter = map[string]func(library *obingslibrary.NGSLibrary, values ...string){
+	"@spacer": func(library *obingslibrary.NGSLibrary, values ...string) {
+		switch len(values) {
+		case 0:
+			log.Fatalln("Missing value for @spacer parameter")
+		case 1:
+			spacer, err := strconv.Atoi(values[0])
+
+			if err != nil {
+				log.Fatalln("Invalid value for @spacer parameter")
+			}
+
+			library.SetTagSpacer(spacer)
+		case 2:
+			primer := values[0]
+			spacer, err := strconv.Atoi(values[1])
+
+			if err != nil {
+				log.Fatalln("Invalid value for @spacer parameter")
+			}
+
+			library.SetTagSpacerFor(primer, spacer)
+		default:
+			log.Fatalln("Invalid value for @spacer parameter")
+		}
+	},
+}
+
+func ReadCSVNGSFilter(reader io.Reader) (*obingslibrary.NGSLibrary, error) {
 	ngsfilter := obingslibrary.MakeNGSLibrary()
 	file := csv.NewReader(reader)
 
 	file.Comma = ','
-	file.Comment = '#'
-	file.TrimLeadingSpace = true
 	file.ReuseRecord = true
+	file.LazyQuotes = true
+	file.Comment = '#'
+	file.FieldsPerRecord = -1
+	file.TrimLeadingSpace = true
 
 	records, err := file.ReadAll()
 
@@ -188,11 +270,29 @@ func ReadCSVNGSFilter(reader io.Reader) (obingslibrary.NGSLibrary, error) {
 		return nil, err
 	}
 
-	log.Info("Read ", len(records), " records")
-	log.Infof("First record: %s", records[0])
+	i := 0
+	for i = 0; i < len(records) && records[i][0] == "@param"; i++ {
+		param := records[i][1]
+		if len(records[i]) < 3 {
+			log.Fatalf("At line %d: Missing value for parameter %s", i, param)
+		}
+		data := records[i][2:]
+		setparam, ok := library_parameter[param]
+
+		if ok {
+			setparam(&ngsfilter, data...)
+		} else {
+			log.Warnf("At line %d: Skipping unknown parameter %s: %v", i, param, data)
+		}
+	}
+
+	records = records[i:]
 
 	header := records[0]
 	data := records[1:]
+
+	log.Info("Read ", len(records), " records")
+	log.Infof("First record: %s", header)
 
 	// Find the index of the column named "sample"
 	experimentColIndex := -1
@@ -253,7 +353,7 @@ func ReadCSVNGSFilter(reader io.Reader) (obingslibrary.NGSLibrary, error) {
 		pcr, ok := marker.GetPCR(tags.Forward, tags.Reverse)
 
 		if ok {
-			return ngsfilter,
+			return &ngsfilter,
 				fmt.Errorf("line %d : tag pair (%s,%s) used more than once with marker (%s,%s)",
 					i, tags.Forward, tags.Reverse, forward_primer, reverse_primer)
 		}
@@ -271,5 +371,5 @@ func ReadCSVNGSFilter(reader io.Reader) (obingslibrary.NGSLibrary, error) {
 
 	}
 
-	return ngsfilter, nil
+	return &ngsfilter, nil
 }

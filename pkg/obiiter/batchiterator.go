@@ -510,13 +510,13 @@ func (iterator IBioSequence) DivideOn(predicate obiseq.SequencePredicate,
 	trueIter := MakeIBioSequence()
 	falseIter := MakeIBioSequence()
 
+	if iterator.IsPaired() {
+		trueIter.MarkAsPaired()
+		falseIter.MarkAsPaired()
+	}
+
 	trueIter.Add(1)
 	falseIter.Add(1)
-
-	go func() {
-		trueIter.WaitAndClose()
-		falseIter.WaitAndClose()
-	}()
 
 	go func() {
 		trueOrder := 0
@@ -562,10 +562,11 @@ func (iterator IBioSequence) DivideOn(predicate obiseq.SequencePredicate,
 		falseIter.Done()
 	}()
 
-	if iterator.IsPaired() {
-		trueIter.MarkAsPaired()
-		falseIter.MarkAsPaired()
-	}
+	go func() {
+		trueIter.WaitAndClose()
+		falseIter.WaitAndClose()
+	}()
+
 	return trueIter, falseIter
 }
 

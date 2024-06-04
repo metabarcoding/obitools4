@@ -161,7 +161,7 @@ func (sequence *BioSequence) Recycle() {
 
 // Copy returns a new BioSequence that is a copy of the original BioSequence.
 //
-// It copies the id and definition fields of the original BioSequence to the new BioSequence.
+// It copies the id of the original BioSequence to the new BioSequence.
 // It also creates new slices and copies the values from the original BioSequence's sequence, qualities, and feature fields to the new BioSequence.
 // If the original BioSequence has annotations, it locks the annot_lock and copies the annotations to the new BioSequence.
 //
@@ -170,15 +170,14 @@ func (s *BioSequence) Copy() *BioSequence {
 	newSeq := NewEmptyBioSequence(0)
 
 	newSeq.id = s.id
-	//newSeq.definition = s.definition
 
 	newSeq.sequence = CopySlice(s.sequence)
 	newSeq.qualities = CopySlice(s.qualities)
 	newSeq.feature = CopySlice(s.feature)
 
 	if len(s.annotations) > 0 {
-		defer s.annot_lock.Unlock()
 		s.annot_lock.Lock()
+		defer s.annot_lock.Unlock()
 		newSeq.annotations = GetAnnotation(s.annotations)
 	}
 
@@ -208,6 +207,10 @@ func (s *BioSequence) Definition() string {
 		}
 	}
 	return definition
+}
+
+func (s *BioSequence) HasDefinition() bool {
+	return s.HasAttribute("definition")
 }
 
 // HasSequence checks if the BioSequence has a sequence.
@@ -420,8 +423,7 @@ func (s *BioSequence) SetSequence(sequence []byte) {
 	if s.sequence != nil {
 		RecycleSlice(&s.sequence)
 	}
-	s.sequence = GetSlice(len(sequence))[0:len(sequence)]
-	copy(s.sequence, obiutils.InPlaceToLower(sequence))
+	s.sequence = CopySlice(obiutils.InPlaceToLower(sequence))
 }
 
 // Setting the qualities of the BioSequence.
@@ -429,8 +431,7 @@ func (s *BioSequence) SetQualities(qualities Quality) {
 	if s.qualities != nil {
 		RecycleSlice(&s.qualities)
 	}
-	s.qualities = GetSlice(len(qualities))[0:len(qualities)]
-	copy(s.qualities, qualities)
+	s.qualities = CopySlice(qualities)
 }
 
 // A method that appends a byte slice to the qualities of the BioSequence.

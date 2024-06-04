@@ -7,7 +7,6 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiapat"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 )
 
@@ -28,7 +27,7 @@ type DemultiplexMatch struct {
 }
 
 func (library *NGSLibrary) Compile(maxError int, allowsIndel bool) error {
-	for primers, marker := range *library {
+	for primers, marker := range library.Markers {
 		err := marker.Compile(primers.Forward,
 			primers.Reverse,
 			maxError, allowsIndel)
@@ -40,7 +39,7 @@ func (library *NGSLibrary) Compile(maxError int, allowsIndel bool) error {
 }
 
 func (library *NGSLibrary) Match(sequence *obiseq.BioSequence) *DemultiplexMatch {
-	for primers, marker := range *library {
+	for primers, marker := range library.Markers {
 		m := marker.Match(sequence)
 		if m != nil {
 			m.ForwardPrimer = strings.ToLower(primers.Forward)
@@ -55,203 +54,6 @@ func (library *NGSLibrary) ExtractBarcode(sequence *obiseq.BioSequence, inplace 
 	match := library.Match(sequence)
 
 	return match.ExtractBarcode(sequence, inplace)
-}
-
-func (marker *Marker) Compile(forward, reverse string, maxError int, allowsIndel bool) error {
-	var err error
-	marker.forward, err = obiapat.MakeApatPattern(forward, maxError, allowsIndel)
-	if err != nil {
-		return err
-	}
-	marker.reverse, err = obiapat.MakeApatPattern(reverse, maxError, allowsIndel)
-	if err != nil {
-		return err
-	}
-
-	marker.cforward, err = marker.forward.ReverseComplement()
-	if err != nil {
-		return err
-	}
-	marker.creverse, err = marker.reverse.ReverseComplement()
-	if err != nil {
-		return err
-	}
-
-	marker.taglength = 0
-	for tags := range marker.samples {
-		lf := len(tags.Forward)
-		lr := len(tags.Reverse)
-
-		l := lf
-		if lf == 0 {
-			l = lr
-		}
-
-		if lr != 0 && l != lr {
-			return fmt.Errorf("forward tag (%s) and reverse tag (%s) do not have the same length",
-				tags.Forward, tags.Reverse)
-		}
-
-		if marker.taglength != 0 && l != marker.taglength {
-			return fmt.Errorf("tag pair (%s,%s) is not compatible with a tag length of %d",
-				tags.Forward, tags.Reverse, marker.taglength)
-		} else {
-			marker.taglength = l
-		}
-	}
-
-	return nil
-}
-
-// Match finds the best matching demultiplex for a given sequence.
-//
-// Parameters:
-//
-//	marker - a pointer to a Marker struct that contains the forward and reverse primers.
-//	sequence - a pointer to a BioSequence struct that represents the input sequence.
-//
-// Returns:
-//
-//	A pointer to a DemultiplexMatch struct that contains the best matching demultiplex.
-func (marker *Marker) Match(sequence *obiseq.BioSequence) *DemultiplexMatch {
-	aseq, _ := obiapat.MakeApatSequence(sequence, false)
-
-	start, end, nerr, matched := marker.forward.BestMatch(aseq, marker.taglength, -1)
-
-	if matched {
-		if start < 0 {
-			start = 0
-		}
-
-		if end > sequence.Len() {
-			end = sequence.Len()
-		}
-
-		sseq := sequence.String()
-		direct := sseq[start:end]
-		tagstart := max(start-marker.taglength, 0)
-		ftag := strings.ToLower(sseq[tagstart:start])
-
-		m := DemultiplexMatch{
-			ForwardMatch:      direct,
-			ForwardTag:        ftag,
-			BarcodeStart:      end,
-			ForwardMismatches: nerr,
-			IsDirect:          true,
-			Error:             nil,
-		}
-
-		start, end, nerr, matched = marker.creverse.BestMatch(aseq, start, -1)
-
-		if matched {
-
-			// extracting primer matches
-			reverse, _ := sequence.Subsequence(start, end, false)
-			defer reverse.Recycle()
-			reverse = reverse.ReverseComplement(true)
-			endtag := min(end+marker.taglength, sequence.Len())
-			rtag, err := sequence.Subsequence(end, endtag, false)
-			defer rtag.Recycle()
-			srtag := ""
-
-			if err != nil {
-				rtag = nil
-			} else {
-				rtag.ReverseComplement(true)
-				srtag = strings.ToLower(rtag.String())
-			}
-
-			m.ReverseMatch = strings.ToLower(reverse.String())
-			m.ReverseMismatches = nerr
-			m.BarcodeEnd = start
-			m.ReverseTag = srtag
-
-			sample, ok := marker.samples[TagPair{ftag, srtag}]
-
-			if ok {
-				m.Pcr = sample
-			}
-
-			return &m
-
-		}
-
-		m.Error = fmt.Errorf("cannot locates reverse priming site")
-
-		return &m
-	}
-
-	//
-	// At this point the forward primer didn't match.
-	// We try now with the reverse primer
-	//
-
-	start, end, nerr, matched = marker.reverse.BestMatch(aseq, marker.taglength, -1)
-
-	if matched {
-		if start < 0 {
-			start = 0
-		}
-
-		if end > sequence.Len() {
-			end = sequence.Len()
-		}
-
-		sseq := sequence.String()
-
-		reverse := strings.ToLower(sseq[start:end])
-		tagstart := max(start-marker.taglength, 0)
-		rtag := strings.ToLower(sseq[tagstart:start])
-
-		m := DemultiplexMatch{
-			ReverseMatch:      reverse,
-			ReverseTag:        rtag,
-			BarcodeStart:      end,
-			ReverseMismatches: nerr,
-			IsDirect:          false,
-			Error:             nil,
-		}
-
-		start, end, nerr, matched = marker.cforward.BestMatch(aseq, end, -1)
-
-		if matched {
-
-			direct, _ := sequence.Subsequence(start, end, false)
-			defer direct.Recycle()
-			direct = direct.ReverseComplement(true)
-
-			endtag := min(end+marker.taglength, sequence.Len())
-			ftag, err := sequence.Subsequence(end, endtag, false)
-			defer ftag.Recycle()
-			sftag := ""
-			if err != nil {
-				ftag = nil
-
-			} else {
-				ftag = ftag.ReverseComplement(true)
-				sftag = strings.ToLower(ftag.String())
-			}
-
-			m.ForwardMatch = direct.String()
-			m.ForwardTag = sftag
-			m.ForwardMismatches = nerr
-			m.BarcodeEnd = start
-
-			sample, ok := marker.samples[TagPair{sftag, rtag}]
-
-			if ok {
-				m.Pcr = sample
-			}
-
-			return &m
-		}
-
-		m.Error = fmt.Errorf("cannot locates forward priming site")
-
-		return &m
-	}
-
-	return nil
 }
 
 // ExtractBarcode extracts the barcode from the given biosequence.

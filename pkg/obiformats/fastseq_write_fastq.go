@@ -26,11 +26,13 @@ func FormatFastq(seq *obiseq.BioSequence, formater FormatHeader) string {
 		info = formater(seq)
 	}
 
-	return fmt.Sprintf("@%s %s\n%s\n+\n%s",
+	f := fmt.Sprintf("@%s %s\n%s\n+\n%s",
 		seq.Id(), info,
 		seq.String(),
 		q,
 	)
+
+	return f
 }
 
 func FormatFastqBatch(batch obiiter.BioSequenceBatch,
@@ -38,7 +40,8 @@ func FormatFastqBatch(batch obiiter.BioSequenceBatch,
 	var bs bytes.Buffer
 	for _, seq := range batch.Slice() {
 		if seq.Len() > 0 {
-			bs.WriteString(FormatFastq(seq, formater))
+			fs := FormatFastq(seq, formater)
+			bs.WriteString(fs)
 			bs.WriteString("\n")
 		} else {
 			if skipEmpty {
@@ -49,6 +52,7 @@ func FormatFastqBatch(batch obiiter.BioSequenceBatch,
 		}
 
 	}
+
 	return bs.Bytes()
 }
 

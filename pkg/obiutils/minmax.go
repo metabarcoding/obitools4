@@ -1,6 +1,7 @@
 package obiutils
 
 import (
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/exp/constraints"
 )
 
@@ -28,4 +29,21 @@ func MinMaxSlice[T constraints.Ordered](vec []T) (min, max T) {
 	}
 
 	return
+}
+
+func MaxMap[K comparable, T constraints.Ordered](values map[K]T) (K, T) {
+
+	if len(values) == 0 {
+		log.Panicf("empty map")
+	}
+
+	var maxKey K
+	var maxValue T
+	for k, v := range values {
+		if v > maxValue {
+			maxValue = v
+			maxKey = k
+		}
+	}
+	return maxKey, maxValue
 }

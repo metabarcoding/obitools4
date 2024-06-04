@@ -139,7 +139,7 @@ func MakeOptions(setters []WithOption) Options {
 	return opt
 }
 
-func _ExtractBarcodeSlice(ngslibrary NGSLibrary,
+func _ExtractBarcodeSlice(ngslibrary *NGSLibrary,
 	sequences obiseq.BioSequenceSlice,
 	options Options) obiseq.BioSequenceSlice {
 	newSlice := make(obiseq.BioSequenceSlice, 0, len(sequences))
@@ -154,7 +154,7 @@ func _ExtractBarcodeSlice(ngslibrary NGSLibrary,
 	return newSlice
 }
 
-func ExtractBarcodeSlice(ngslibrary NGSLibrary,
+func ExtractBarcodeSlice(ngslibrary *NGSLibrary,
 	sequences obiseq.BioSequenceSlice,
 	options ...WithOption) obiseq.BioSequenceSlice {
 
@@ -165,7 +165,7 @@ func ExtractBarcodeSlice(ngslibrary NGSLibrary,
 	return _ExtractBarcodeSlice(ngslibrary, sequences, opt)
 }
 
-func ExtractBarcodeSliceWorker(ngslibrary NGSLibrary,
+func ExtractBarcodeSliceWorker(ngslibrary *NGSLibrary,
 	options ...WithOption) obiseq.SeqSliceWorker {
 
 	opt := MakeOptions(options)
