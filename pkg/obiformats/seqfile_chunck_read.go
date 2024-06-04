@@ -106,6 +106,16 @@ func ReadSeqFileChunk(reader io.Reader,
 			}
 		}
 
+		if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
+			log.Fatalf("Error reading data from file : %s", err)
+		}
+
+		// Send the last chunk to the channel
+		if len(buff) > 0 {
+			io := bytes.NewBuffer(slices.Clone(buff))
+			chunk_channel <- SeqFileChunk{io, i}
+		}
+
 		// Close the readers channel when the end of the file is reached
 		close(chunk_channel)
 	}()

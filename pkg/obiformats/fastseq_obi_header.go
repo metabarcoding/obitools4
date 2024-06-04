@@ -285,11 +285,17 @@ func ParseOBIFeatures(text string, annotations obiseq.Annotation) string {
 
 func ParseFastSeqOBIHeader(sequence *obiseq.BioSequence) {
 	annotations := sequence.Annotations()
+	definition := sequence.Definition()
+	sequence.SetDefinition("")
 
-	definition := ParseOBIFeatures(sequence.Definition(),
-		annotations)
+	definition = ParseOBIFeatures(definition, annotations)
 
-	sequence.SetDefinition(definition)
+	if len(definition) > 0 {
+		if sequence.HasDefinition() {
+			definition = sequence.Definition() + " " + definition
+		}
+		sequence.SetDefinition(definition)
+	}
 }
 
 func FormatFastSeqOBIHeader(sequence *obiseq.BioSequence) string {

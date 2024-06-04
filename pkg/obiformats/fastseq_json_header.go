@@ -12,7 +12,6 @@ import (
 )
 
 func _parse_json_header_(header string, annotations obiseq.Annotation) string {
-
 	start := -1
 	stop := -1
 	level := 0
@@ -58,6 +57,9 @@ func _parse_json_header_(header string, annotations obiseq.Annotation) string {
 			if vt == math.Floor(vt) {
 				annotations[k] = int(vt)
 			}
+			{
+				annotations[k] = vt
+			}
 		}
 	}
 
@@ -69,8 +71,18 @@ func _parse_json_header_(header string, annotations obiseq.Annotation) string {
 }
 
 func ParseFastSeqJsonHeader(sequence *obiseq.BioSequence) {
-	sequence.SetDefinition(_parse_json_header_(sequence.Definition(),
-		sequence.Annotations()))
+	definition := sequence.Definition()
+	sequence.SetDefinition("")
+
+	definition_part := _parse_json_header_(
+		definition,
+		sequence.Annotations())
+	if len(definition_part) > 0 {
+		if sequence.HasDefinition() {
+			definition_part = sequence.Definition() + " " + definition_part
+		}
+		sequence.SetDefinition(definition_part)
+	}
 }
 
 func FormatFastSeqJsonHeader(sequence *obiseq.BioSequence) string {
@@ -80,7 +92,7 @@ func FormatFastSeqJsonHeader(sequence *obiseq.BioSequence) string {
 		text, err := obiutils.JsonMarshal(sequence.Annotations())
 
 		if err != nil {
-			panic(err)
+			log.Fatal(err)
 		}
 
 		return string(text)
