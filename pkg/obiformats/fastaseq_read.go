@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 	"path"
-	"slices"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
@@ -155,7 +154,11 @@ func _ParseFastaFile(source string,
 				if C == '>' {
 					if previous == '\r' || previous == '\n' {
 						// End of sequence
-						s := obiseq.NewBioSequence(identifier, slices.Clone(seqBytes.Bytes()), definition)
+						rawseq := seqBytes.Bytes()
+						if len(rawseq) == 0 {
+							log.Fatalf("@%s[%s] : sequence is empty", identifier, source)
+						}
+						s := obiseq.NewBioSequence(identifier, rawseq, definition)
 						s.SetSource(source)
 						sequences = append(sequences, s)
 						if no_order {
@@ -198,17 +201,21 @@ func _ParseFastaFile(source string,
 		}
 
 		if state == 6 {
-			s := obiseq.NewBioSequence(identifier, slices.Clone(seqBytes.Bytes()), definition)
+			rawseq := seqBytes.Bytes()
+			if len(rawseq) == 0 {
+				log.Fatalf("@%s[%s] : sequence is empty", identifier, source)
+			}
+			s := obiseq.NewBioSequence(identifier, rawseq, definition)
 			s.SetSource(source)
 			sequences = append(sequences, s)
 		}
 
 		if len(sequences) > 0 {
+			co := chunks.order
 			if no_order {
-				out.Push(obiiter.MakeBioSequenceBatch(chunck_order(), sequences))
-			} else {
-				out.Push(obiiter.MakeBioSequenceBatch(chunks.order, sequences))
+				co = chunck_order()
 			}
+			out.Push(obiiter.MakeBioSequenceBatch(co, sequences))
 		}
 	}
 

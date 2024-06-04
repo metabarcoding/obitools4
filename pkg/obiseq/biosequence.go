@@ -273,19 +273,19 @@ func (s *BioSequence) Qualities() Quality {
 // Returns a string representing the qualities of the BioSequence after applying the shift.
 func (s *BioSequence) QualitiesString() string {
 	quality_shift := obioptions.OutputQualityShift()
+
 	qual := s.Qualities()
-	qual_ascii := make([]byte, len(qual))
+	qual_ascii := GetSlice(len(qual))[0:len(qual)]
 	for i := 0; i < len(qual); i++ {
 		quality := qual[i]
-		if quality < 0 {
-			quality = 0
-		}
 		if quality > 93 {
 			quality = 93
 		}
 		qual_ascii[i] = quality + quality_shift
 	}
-	return string(qual_ascii)
+	qual_sting := string(qual_ascii)
+	RecycleSlice(&qual_ascii)
+	return qual_sting
 }
 
 // Features returns the feature string of the BioSequence.
@@ -420,7 +420,8 @@ func (s *BioSequence) SetSequence(sequence []byte) {
 	if s.sequence != nil {
 		RecycleSlice(&s.sequence)
 	}
-	s.sequence = obiutils.InPlaceToLower(sequence)
+	s.sequence = GetSlice(len(sequence))[0:len(sequence)]
+	copy(s.sequence, obiutils.InPlaceToLower(sequence))
 }
 
 // Setting the qualities of the BioSequence.
@@ -428,7 +429,8 @@ func (s *BioSequence) SetQualities(qualities Quality) {
 	if s.qualities != nil {
 		RecycleSlice(&s.qualities)
 	}
-	s.qualities = qualities
+	s.qualities = GetSlice(len(qualities))[0:len(qualities)]
+	copy(s.qualities, qualities)
 }
 
 // A method that appends a byte slice to the qualities of the BioSequence.

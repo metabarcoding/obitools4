@@ -15,6 +15,17 @@ var _BioSequenceByteSlicePool = sync.Pool{
 	},
 }
 
+// RecycleSlice recycles a byte slice by clearing its contents and returning it
+// to a pool if it is small enough.
+//
+// Parameters: - s: a pointer to a byte slice that will be recycled.
+//
+// This function first checks if the input slice is not nil and has a non-zero
+// capacity. If so, it clears the contents of the slice by setting its length to
+// 0. Then, it checks if the capacity of the slice is less than or equal to
+// 1024. If it is, the function puts the slice into a pool for reuse. If the
+// capacity is 0 or greater than 1024, the function does nothing. If the input
+// slice is nil or has a zero capacity, the function logs a panic message.
 func RecycleSlice(s *[]byte) {
 	if s != nil && cap(*s) > 0 {
 		*s = (*s)[:0]
@@ -27,9 +38,22 @@ func RecycleSlice(s *[]byte) {
 	}
 }
 
-// It returns a slice of bytes from a pool of slices.
+// GetSlice returns a byte slice with the specified capacity.
 //
-// the slice can be prefilled with the provided values
+// The function first checks if the capacity is less than or equal to 1024. If it is,
+// it retrieves a byte slice from the _BioSequenceByteSlicePool. If the retrieved
+// slice is nil, has a nil underlying array, or has a capacity less than the
+// specified capacity, a new byte slice is created with the specified capacity.
+// If the capacity is greater than 1024, a new byte slice is created with the
+// specified capacity.
+//
+// The function returns the byte slice.
+//
+// Parameters:
+// - capacity: the desired capacity of the byte slice.
+//
+// Return type:
+// - []byte: the byte slice with the specified capacity.
 func GetSlice(capacity int) []byte {
 	p := (*[]byte)(nil)
 	if capacity <= 1024 {

@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 	"path"
-	"slices"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
@@ -97,7 +96,25 @@ func _EndOfLastFastqEntry(buffer []byte) int {
 	if i == 0 || state != 7 {
 		return -1
 	}
+
 	return cut
+}
+
+func _storeSequenceQuality(bytes *bytes.Buffer, out *obiseq.BioSequence, quality_shift byte) {
+	q := bytes.Bytes()
+	if len(q) == 0 {
+		log.Fatalf("@%s[%s] : sequence quality is empty", out.Id(), out.Source())
+	}
+
+	if len(q) != out.Len() {
+		log.Fatalf("%s[%s] : sequence data and quality lenght not equal (%d <> %d)",
+			out.Id(), out.Source(), len(q), out.Len())
+	}
+
+	for i := 0; i < len(q); i++ {
+		q[i] = q[i] - quality_shift
+	}
+	out.SetQualities(q)
 }
 
 func _ParseFastqFile(source string,
@@ -122,6 +139,8 @@ func _ParseFastqFile(source string,
 	for chunks := range input {
 		scanner := bufio.NewReader(chunks.raw)
 		sequences := make(obiseq.BioSequenceSlice, 0, 100)
+		previous := byte(0)
+
 		for C, err := scanner.ReadByte(); err != io.EOF; C, err = scanner.ReadByte() {
 
 			is_end_of_line := C == '\r' || C == '\n'
@@ -135,12 +154,12 @@ func _ParseFastqFile(source string,
 					// Beginning of sequence
 					state = 1
 				} else {
-					log.Errorf("%s : sequence entry is not starting with @", source)
+					log.Fatalf("%s : sequence entry is not starting with @", source)
 				}
 			case 1: // Beginning of identifier (Mandatory)
 				if is_sep {
 					// No identifier -> ERROR
-					log.Errorf("%s : sequence identifier is empty", source)
+					log.Fatalf("%s : sequence identifier is empty", source)
 				} else {
 					// Beginning of identifier
 					state = 2
@@ -191,7 +210,11 @@ func _ParseFastqFile(source string,
 			case 6:
 				if is_end_of_line {
 					// End of sequence
-					s := obiseq.NewBioSequence(identifier, slices.Clone(seqBytes.Bytes()), definition)
+					rawseq := seqBytes.Bytes()
+					if len(rawseq) == 0 {
+						log.Fatalf("@%s[%s] : sequence is empty", identifier, source)
+					}
+					s := obiseq.NewBioSequence(identifier, rawseq, definition)
 					s.SetSource(source)
 					sequences = append(sequences, s)
 					state = 7
@@ -199,7 +222,16 @@ func _ParseFastqFile(source string,
 					if C >= 'A' && C <= 'Z' {
 						C = C + 'a' - 'A'
 					}
-					seqBytes.WriteByte(C)
+					if (C >= 'a' && C <= 'z') || C == '-' || C == '.' || C == '[' || C == ']' {
+						seqBytes.WriteByte(C)
+					} else {
+						context, _ := scanner.Peek(30)
+						context = append(
+							append([]byte{previous}, C),
+							context...)
+						log.Fatalf("%s [%s]: sequence contains invalid character %c (%s)",
+							source, identifier, C, string(context))
+					}
 				}
 			case 7:
 				if is_end_of_line {
@@ -207,9 +239,10 @@ func _ParseFastqFile(source string,
 				} else if C == '+' {
 					state = 8
 				} else {
-					log.Errorf("@%s[%s] : sequence data not followed by a line starting with + but a %c", identifier, source, C)
+					log.Fatalf("@%s[%s] : sequence data not followed by a line starting with + but a %c", identifier, source, C)
 				}
 			case 8:
+				// State consuming the + internal header line
 				if is_end_of_line {
 					state = 9
 				}
@@ -224,16 +257,7 @@ func _ParseFastqFile(source string,
 				}
 			case 10:
 				if is_end_of_line {
-					// End of quality
-					q := qualBytes.Bytes()
-					if len(q) != sequences[len(sequences)-1].Len() {
-						log.Errorf("%s[%s] : sequence data and quality lenght not equal (%d/%d)",
-							identifier, source, len(q), sequences[len(sequences)-1].Len())
-					}
-					for i := 0; i < len(q); i++ {
-						q[i] = q[i] - quality_shift
-					}
-					sequences[len(sequences)-1].SetQualities(q)
+					_storeSequenceQuality(qualBytes, sequences[len(sequences)-1], quality_shift)
 
 					if no_order {
 						if len(sequences) == batch_size {
@@ -252,18 +276,25 @@ func _ParseFastqFile(source string,
 				} else if C == '@' {
 					state = 1
 				} else {
-					log.Errorf("%s[%s] : sequence record not followed by a line starting with @", identifier, source)
+					log.Fatalf("%s[%s] : sequence record not followed by a line starting with @", identifier, source)
 				}
 
 			}
+
+			previous = C
 		}
 
 		if len(sequences) > 0 {
-			if no_order {
-				out.Push(obiiter.MakeBioSequenceBatch(chunck_order(), sequences))
-			} else {
-				out.Push(obiiter.MakeBioSequenceBatch(chunks.order, sequences))
+			if state == 10 {
+				_storeSequenceQuality(qualBytes, sequences[len(sequences)-1], quality_shift)
+				state = 1
 			}
+
+			co := chunks.order
+			if no_order {
+				co = chunck_order()
+			}
+			out.Push(obiiter.MakeBioSequenceBatch(co, sequences))
 		}
 
 	}

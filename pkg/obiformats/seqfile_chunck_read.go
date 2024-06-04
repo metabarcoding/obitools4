@@ -91,11 +91,6 @@ func ReadSeqFileChunk(reader io.Reader,
 					io := bytes.NewBuffer(slices.Clone(buff))
 					chunk_channel <- SeqFileChunk{io, i}
 					i++
-
-					// if string(buff[io.Len()-2:]) != "//" {
-					// 	log.Fatalf("File chunck ends with 3 bytes : %s", io.Bytes()[io.Len()-3:])
-					// }
-
 				}
 
 				if lremain > 0 {
