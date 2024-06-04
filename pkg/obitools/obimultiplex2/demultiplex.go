@@ -31,16 +31,17 @@ func IExtractBarcode(iterator obiiter.IBioSequence) (obiiter.IBioSequence, error
 	worker := ngsfilter.ExtractMultiBarcodeSliceWorker(opts...)
 
 	newIter := iterator.MakeISliceWorker(worker, false)
+	out := newIter
 
 	if !CLIConservedErrors() {
 		log.Infoln("Discards unassigned sequences")
-		newIter = newIter.FilterOn(obiseq.HasAttribute("demultiplex_error").Not(), obioptions.CLIBatchSize())
+		out = out.FilterOn(obiseq.HasAttribute("demultiplex_error").Not(), obioptions.CLIBatchSize())
 	}
 
 	var unidentified obiiter.IBioSequence
 	if CLIUnidentifiedFileName() != "" {
 		log.Printf("Unassigned sequences saved in file: %s\n", CLIUnidentifiedFileName())
-		unidentified, newIter = newIter.DivideOn(obiseq.HasAttribute("demultiplex_error"),
+		unidentified, out = newIter.DivideOn(obiseq.HasAttribute("demultiplex_error"),
 			obioptions.CLIBatchSize())
 
 		go func() {
@@ -56,5 +57,5 @@ func IExtractBarcode(iterator obiiter.IBioSequence) (obiiter.IBioSequence, error
 	}
 	log.Printf("Sequence demultiplexing using %d workers\n", obioptions.CLIParallelWorkers())
 
-	return newIter, nil
+	return out, nil
 }
