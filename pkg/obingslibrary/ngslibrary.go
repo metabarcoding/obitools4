@@ -24,15 +24,20 @@ type PCR struct {
 }
 
 type NGSLibrary struct {
-	Matching string
-	Primers  map[string]PrimerPair
-	Markers  map[PrimerPair]*Marker
+	Matching           string
+	Allowed_mismatches int
+	Allows_indels      bool
+	Primers            map[string]PrimerPair
+	Markers            map[PrimerPair]*Marker
 }
 
 func MakeNGSLibrary() NGSLibrary {
 	return NGSLibrary{
-		Primers: make(map[string]PrimerPair, 10),
-		Markers: make(map[PrimerPair]*Marker, 10),
+		Matching:           "strict",
+		Allowed_mismatches: 2,
+		Allows_indels:      false,
+		Primers:            make(map[string]PrimerPair, 10),
+		Markers:            make(map[PrimerPair]*Marker, 10),
 	}
 }
 
@@ -109,6 +114,22 @@ func (library *NGSLibrary) SetTagDelimiter(delim byte) {
 	library.SetReverseTagDelimiter(delim)
 }
 
+func (library *NGSLibrary) SetTagDelimiterFor(primer string, delim byte) {
+	primers, ok := library.Primers[primer]
+
+	if ok {
+		marker, ok := library.Markers[primers]
+
+		if ok {
+			if primer == primers.Forward {
+				marker.SetForwardTagDelimiter(delim)
+			} else {
+				marker.SetReverseTagDelimiter(delim)
+			}
+		}
+	}
+}
+
 func (library *NGSLibrary) CheckTagLength() {
 
 	for _, marker := range library.Markers {
@@ -131,4 +152,29 @@ func (library *NGSLibrary) CheckPrimerUnicity() error {
 		library.Primers[primers.Reverse] = primers
 	}
 	return nil
+}
+
+// SetMatching sets the matching strategy for the library.
+// Returns an error if the matching strategy is invalid.
+func (library *NGSLibrary) SetMatching(matching string) error {
+	switch matching {
+	case "strict", "hamming", "indel": // Valid matching strategies
+		library.Matching = matching
+	default:
+		return fmt.Errorf("invalid matching : %s", matching)
+	}
+	return nil
+}
+
+func (library *NGSLibrary) SetAllowedMismatch(allowed_mismatches int) {
+	if allowed_mismatches < 0 {
+		allowed_mismatches = 0
+	}
+	library.Allowed_mismatches = allowed_mismatches
+}
+
+// SetAllowsIndels sets whether the library allows indels.
+// The value of the argument allows_indels is directly assigned to the library's Allows_indels field.
+func (library *NGSLibrary) SetAllowsIndels(allows_indels bool) {
+	library.Allows_indels = allows_indels
 }

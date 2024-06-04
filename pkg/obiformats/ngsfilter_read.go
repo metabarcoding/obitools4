@@ -226,7 +226,7 @@ func ReadOldNGSFilter(reader io.Reader) (*obingslibrary.NGSLibrary, error) {
 }
 
 var library_parameter = map[string]func(library *obingslibrary.NGSLibrary, values ...string){
-	"@spacer": func(library *obingslibrary.NGSLibrary, values ...string) {
+	"spacer": func(library *obingslibrary.NGSLibrary, values ...string) {
 		switch len(values) {
 		case 0:
 			log.Fatalln("Missing value for @spacer parameter")
@@ -251,6 +251,108 @@ var library_parameter = map[string]func(library *obingslibrary.NGSLibrary, value
 			log.Fatalln("Invalid value for @spacer parameter")
 		}
 	},
+	"forward_spacer": func(library *obingslibrary.NGSLibrary, values ...string) {
+		switch len(values) {
+		case 0:
+			log.Fatalln("Missing value for @forward_spacer parameter")
+		case 1:
+			spacer, err := strconv.Atoi(values[0])
+
+			if err != nil {
+				log.Fatalln("Invalid value for @forward_spacer parameter")
+			}
+
+			library.SetForwardTagSpacer(spacer)
+		default:
+			log.Fatalln("Invalid value for @forward_spacer parameter")
+		}
+	},
+	"reverse_spacer": func(library *obingslibrary.NGSLibrary, values ...string) {
+		switch len(values) {
+		case 0:
+			log.Fatalln("Missing value for @reverse_spacer parameter")
+		case 1:
+			spacer, err := strconv.Atoi(values[0])
+
+			if err != nil {
+				log.Fatalln("Invalid value for @reverse_spacer parameter")
+			}
+
+			library.SetReverseTagSpacer(spacer)
+		default:
+			log.Fatalln("Invalid value for @reverse_spacer parameter")
+		}
+	},
+	"tag_delimiter": func(library *obingslibrary.NGSLibrary, values ...string) {
+		switch len(values) {
+		case 0:
+			log.Fatalln("Missing value for @tag_delimiter parameter")
+		case 1:
+			library.SetTagDelimiter([]byte(values[0])[0])
+		case 2:
+			library.SetTagDelimiterFor(values[0], []byte(values[1])[0])
+		default:
+			log.Fatalln("Invalid value for @tag_delimiter parameter")
+		}
+	},
+	"forward_tag_delimiter": func(library *obingslibrary.NGSLibrary, values ...string) {
+		switch len(values) {
+		case 0:
+			log.Fatalln("Missing value for @forward_tag_delimiter parameter")
+		case 1:
+			library.SetForwardTagDelimiter([]byte(values[0])[0])
+		default:
+			log.Fatalln("Invalid value for @forward_tag_delimiter parameter")
+		}
+	},
+	"reverse_tag_delimiter": func(library *obingslibrary.NGSLibrary, values ...string) {
+		switch len(values) {
+		case 0:
+			log.Fatalln("Missing value for @reverse_tag_delimiter parameter")
+		case 1:
+			library.SetReverseTagDelimiter([]byte(values[0])[0])
+		default:
+			log.Fatalln("Invalid value for @reverse_tag_delimiter parameter")
+		}
+	},
+	"matching": func(library *obingslibrary.NGSLibrary, values ...string) {
+		switch len(values) {
+		case 0:
+			log.Fatalln("Missing value for @matching parameter")
+		case 1:
+			if err := library.SetMatching(values[0]); err != nil {
+				log.Fatalf("Invalid value %s for @matching parameter", values[0])
+			}
+		default:
+			log.Fatalln("Invalid value for @matching parameter")
+		}
+	},
+	"primer_mismatches": func(library *obingslibrary.NGSLibrary, values ...string) {
+		switch len(values) {
+		case 0:
+			log.Fatalln("Missing value for @primer_error parameter")
+		case 1:
+			dist, err := strconv.Atoi(values[0])
+
+			if err != nil {
+				log.Fatalf("Invalid value %s for @primer_error parameter", values[0])
+			}
+
+			library.SetAllowedMismatch(dist)
+		default:
+			log.Fatalln("Invalid value for @primer_error parameter")
+		}
+	},
+	"indels": func(library *obingslibrary.NGSLibrary, values ...string) {
+		switch len(values) {
+		case 0:
+			log.Fatalln("Missing value for @indels parameter")
+		case 1:
+			library.SetAllowsIndels(values[0] == "true")
+		default:
+			log.Fatalln("Invalid value for @indels parameter")
+		}
+	},
 }
 
 func ReadCSVNGSFilter(reader io.Reader) (*obingslibrary.NGSLibrary, error) {
@@ -272,20 +374,9 @@ func ReadCSVNGSFilter(reader io.Reader) (*obingslibrary.NGSLibrary, error) {
 
 	i := 0
 	for i = 0; i < len(records) && records[i][0] == "@param"; i++ {
-		param := records[i][1]
-		if len(records[i]) < 3 {
-			log.Fatalf("At line %d: Missing value for parameter %s", i, param)
-		}
-		data := records[i][2:]
-		setparam, ok := library_parameter[param]
-
-		if ok {
-			setparam(&ngsfilter, data...)
-		} else {
-			log.Warnf("At line %d: Skipping unknown parameter %s: %v", i, param, data)
-		}
 	}
 
+	params := records[0:i]
 	records = records[i:]
 
 	header := records[0]
@@ -369,6 +460,21 @@ func ReadCSVNGSFilter(reader io.Reader) (*obingslibrary.NGSLibrary, error) {
 			}
 		}
 
+	}
+
+	for i := 0; i < len(params); i++ {
+		param := params[i][1]
+		if len(params[i]) < 3 {
+			log.Fatalf("At line %d: Missing value for parameter %s", i, param)
+		}
+		data := params[i][2:]
+		setparam, ok := library_parameter[param]
+
+		if ok {
+			setparam(&ngsfilter, data...)
+		} else {
+			log.Warnf("At line %d: Skipping unknown parameter %s: %v", i, param, data)
+		}
 	}
 
 	return &ngsfilter, nil
