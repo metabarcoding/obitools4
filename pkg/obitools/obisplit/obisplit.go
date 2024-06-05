@@ -168,6 +168,11 @@ func SplitPattern(sequence *obiseq.BioSequence,
 
 			if from.name == to.name {
 				sub.SetAttribute("obisplit_group", from.name)
+				if from.name == "extremity" {
+					sub.SetAttribute("obisplit_set", "NA")
+				} else {
+					sub.SetAttribute("obisplit_set", from.name)
+				}
 			} else {
 				fname := from.name
 				tname := to.name
@@ -179,6 +184,11 @@ func SplitPattern(sequence *obiseq.BioSequence,
 					}
 				}
 				sub.SetAttribute("obisplit_group", fmt.Sprintf("%s-%s", fname, tname))
+				if fname == "extremity" {
+					sub.SetAttribute("obisplit_set", tname)
+				} else {
+					sub.SetAttribute("obisplit_set", "NA")
+				}
 			}
 
 			sub.SetAttribute("obisplit_location", fmt.Sprintf("%d..%d", start+1, end))
@@ -226,6 +236,12 @@ func SplitPattern(sequence *obiseq.BioSequence,
 		sub.SetAttribute("obisplit_frg", nfrag)
 		if from.name == to.name {
 			sub.SetAttribute("obisplit_group", from.name)
+			if from.name == "extremity" {
+				sub.SetAttribute("obisplit_set", "NA")
+			} else {
+				sub.SetAttribute("obisplit_set", from.name)
+			}
+
 		} else {
 			fname := from.name
 			tname := to.name
@@ -236,7 +252,13 @@ func SplitPattern(sequence *obiseq.BioSequence,
 					fname, tname = tname, fname
 				}
 			}
+
 			sub.SetAttribute("obisplit_group", fmt.Sprintf("%s-%s", fname, tname))
+			if fname == "extremity" {
+				sub.SetAttribute("obisplit_set", tname)
+			} else {
+				sub.SetAttribute("obisplit_set", "NA")
+			}
 		}
 		sub.SetAttribute("obisplit_location", fmt.Sprintf("%d..%d", start+1, end))
 

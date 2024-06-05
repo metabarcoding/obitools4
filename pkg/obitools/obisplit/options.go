@@ -76,11 +76,11 @@ func CLIConfig() []SplitSequence {
 
 	header := records[0]
 
-	pattern_idx := slices.Index(header, "T-tag")
+	pattern_idx := slices.Index(header, "tag")
 	pool_idx := slices.Index(header, "pcr_pool")
 
 	if pattern_idx == -1 {
-		log.Fatalf("Config file %s doesn't contain `T-tag`column", CLIConfigFile())
+		log.Fatalf("Config file %s doesn't contain `tag`column", CLIConfigFile())
 	}
 
 	if pool_idx == -1 {
@@ -128,7 +128,7 @@ func CLIAskConfigTemplate() bool {
 }
 
 func CLIConfigTemplate() string {
-	return `T-tag,pcr_pool
+	return `tag,pcr_pool
 CGGCACCTGTTACGCAGCCACTATCGGCT,pool_1
 CGGCAAGACCCTATTGCATTGGCGCGGCT,pool_2
 `
