@@ -312,7 +312,7 @@ func normalizeTagDelimiter(delim byte) byte {
 		delim = 0
 	} else {
 		if delim >= 'A' && delim <= 'Z' {
-			delim = delim + 'A' - 'a'
+			delim = delim - 'A' + 'a'
 		}
 		if delim != 'a' && delim != 'c' && delim != 'g' && delim != 't' {
 			log.Fatalf("invalid reverse tag delimiter: %c, only 'a', 'c', 'g', 't' and '0' are allowed", delim)
