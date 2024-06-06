@@ -67,24 +67,22 @@ func _parseMainNGSFilterTags(text string) obingslibrary.TagPair {
 	}
 }
 
-func _parseMainNGSFilter(text string) (obingslibrary.PrimerPair, obingslibrary.TagPair, string, string, bool, bool) {
+func _parseMainNGSFilter(text string) (obingslibrary.PrimerPair, obingslibrary.TagPair, string, string, bool) {
 	fields := strings.Fields(text)
 
 	if len(fields) != 6 {
-		return obingslibrary.PrimerPair{}, obingslibrary.TagPair{}, "", "", false, false
+		return obingslibrary.PrimerPair{}, obingslibrary.TagPair{}, "", "", false
 	}
 
 	tags := _parseMainNGSFilterTags(fields[2])
-	partial := fields[5] == "T" || fields[5] == "t"
 
 	return obingslibrary.PrimerPair{
-			Forward: fields[3],
-			Reverse: fields[4],
+			Forward: strings.ToLower(fields[3]),
+			Reverse: strings.ToLower(fields[4]),
 		},
 		tags,
 		fields[0],
 		fields[1],
-		partial,
 		true
 }
 
@@ -164,7 +162,12 @@ func OBIMimeNGSFilterTypeGuesser(stream io.Reader) (*mimetype.MIME, io.Reader, e
 }
 
 func ReadNGSFilter(reader io.Reader) (*obingslibrary.NGSLibrary, error) {
-	mimetype, newReader, err := OBIMimeNGSFilterTypeGuesser(reader)
+	var ngsfilter *obingslibrary.NGSLibrary
+	var err error
+	var mimetype *mimetype.MIME
+	var newReader io.Reader
+
+	mimetype, newReader, err = OBIMimeNGSFilterTypeGuesser(reader)
 
 	if err != nil {
 		return nil, err
@@ -172,12 +175,22 @@ func ReadNGSFilter(reader io.Reader) (*obingslibrary.NGSLibrary, error) {
 
 	log.Infof("NGSFilter configuration mimetype: %s", mimetype.String())
 
-	if mimetype.String() == "text/ngsfilter-csv" {
-		return ReadCSVNGSFilter(newReader)
+	if mimetype.String() == "text/ngsfilter-csv" || mimetype.String() == "text/csv" {
+		ngsfilter, err = ReadCSVNGSFilter(newReader)
+	} else {
+		ngsfilter, err = ReadOldNGSFilter(newReader)
 	}
 
-	return ReadOldNGSFilter(newReader)
+	if err != nil {
+		return nil, err
+	}
+
+	ngsfilter.CheckPrimerUnicity()
+	ngsfilter.CheckTagLength()
+
+	return ngsfilter, nil
 }
+
 func ReadOldNGSFilter(reader io.Reader) (*obingslibrary.NGSLibrary, error) {
 	ngsfilter := obingslibrary.MakeNGSLibrary()
 
@@ -196,7 +209,7 @@ func ReadOldNGSFilter(reader io.Reader) (*obingslibrary.NGSLibrary, error) {
 			return nil, fmt.Errorf("line %d : invalid format", i+1)
 		}
 
-		primers, tags, experiment, sample, partial, ok := _parseMainNGSFilter(split[0])
+		primers, tags, experiment, sample, ok := _parseMainNGSFilter(split[0])
 
 		if !ok {
 			return nil, fmt.Errorf("line %d : invalid format : \n%s", i+1, line)
@@ -213,7 +226,6 @@ func ReadOldNGSFilter(reader io.Reader) (*obingslibrary.NGSLibrary, error) {
 
 		pcr.Experiment = experiment
 		pcr.Sample = sample
-		pcr.Partial = partial
 
 		if len(split) > 1 && len(split[1]) > 0 {
 			pcr.Annotations = make(obiseq.Annotation)
@@ -288,9 +300,11 @@ var library_parameter = map[string]func(library *obingslibrary.NGSLibrary, value
 		case 0:
 			log.Fatalln("Missing value for @tag_delimiter parameter")
 		case 1:
-			library.SetTagDelimiter([]byte(values[0])[0])
+			value := []byte(values[0])[0]
+			library.SetTagDelimiter(value)
 		case 2:
-			library.SetTagDelimiterFor(values[0], []byte(values[1])[0])
+			value := []byte(values[1])[0]
+			library.SetTagDelimiterFor(values[0], value)
 		default:
 			log.Fatalln("Invalid value for @tag_delimiter parameter")
 		}
@@ -300,7 +314,8 @@ var library_parameter = map[string]func(library *obingslibrary.NGSLibrary, value
 		case 0:
 			log.Fatalln("Missing value for @forward_tag_delimiter parameter")
 		case 1:
-			library.SetForwardTagDelimiter([]byte(values[0])[0])
+			value := []byte(values[0])[0]
+			library.SetForwardTagDelimiter(value)
 		default:
 			log.Fatalln("Invalid value for @forward_tag_delimiter parameter")
 		}
@@ -310,7 +325,8 @@ var library_parameter = map[string]func(library *obingslibrary.NGSLibrary, value
 		case 0:
 			log.Fatalln("Missing value for @reverse_tag_delimiter parameter")
 		case 1:
-			library.SetReverseTagDelimiter([]byte(values[0])[0])
+			value := []byte(values[0])[0]
+			library.SetReverseTagDelimiter(value)
 		default:
 			log.Fatalln("Invalid value for @reverse_tag_delimiter parameter")
 		}
@@ -338,9 +354,50 @@ var library_parameter = map[string]func(library *obingslibrary.NGSLibrary, value
 				log.Fatalf("Invalid value %s for @primer_error parameter", values[0])
 			}
 
-			library.SetAllowedMismatch(dist)
+			library.SetAllowedMismatches(dist)
+		case 2:
+			primer := values[0]
+			dist, err := strconv.Atoi(values[1])
+
+			if err != nil {
+				log.Fatalf("Invalid value %s for @primer_error parameter", values[1])
+			}
+
+			library.SetAllowedMismatchesFor(primer, dist)
 		default:
 			log.Fatalln("Invalid value for @primer_error parameter")
+		}
+	},
+	"forward_mismatches": func(library *obingslibrary.NGSLibrary, values ...string) {
+		switch len(values) {
+		case 0:
+			log.Fatalln("Missing value for @forward_primer_error parameter")
+		case 1:
+			dist, err := strconv.Atoi(values[0])
+
+			if err != nil {
+				log.Fatalf("Invalid value %s for @forward_primer_error parameter", values[0])
+			}
+
+			library.SetForwardAllowedMismatches(dist)
+		default:
+			log.Fatalln("Invalid value for @forward_primer_error parameter")
+		}
+	},
+	"reverse_mismatches": func(library *obingslibrary.NGSLibrary, values ...string) {
+		switch len(values) {
+		case 0:
+			log.Fatalln("Missing value for @reverse_primer_error parameter")
+		case 1:
+			dist, err := strconv.Atoi(values[0])
+
+			if err != nil {
+				log.Fatalf("Invalid value %s for @reverse_primer_error parameter", values[0])
+			}
+
+			library.SetReverseAllowedMismatches(dist)
+		default:
+			log.Fatalln("Invalid value for @reverse_primer_error parameter")
 		}
 	},
 	"indels": func(library *obingslibrary.NGSLibrary, values ...string) {
@@ -349,8 +406,31 @@ var library_parameter = map[string]func(library *obingslibrary.NGSLibrary, value
 			log.Fatalln("Missing value for @indels parameter")
 		case 1:
 			library.SetAllowsIndels(values[0] == "true")
+		case 2:
+			library.SetAllowsIndelsFor(values[0], values[1] == "true")
 		default:
 			log.Fatalln("Invalid value for @indels parameter")
+		}
+	},
+
+	"forward_indels": func(library *obingslibrary.NGSLibrary, values ...string) {
+		switch len(values) {
+		case 0:
+			log.Fatalln("Missing value for @forward_indels parameter")
+		case 1:
+			library.SetForwardAllowsIndels(values[0] == "true")
+		default:
+			log.Fatalln("Invalid value for @forward_indels parameter")
+		}
+	},
+	"reverse_indels": func(library *obingslibrary.NGSLibrary, values ...string) {
+		switch len(values) {
+		case 0:
+			log.Fatalln("Missing value for @reverse_indels parameter")
+		case 1:
+			library.SetReverseAllowsIndels(values[0] == "true")
+		default:
+			log.Fatalln("Invalid value for @reverse_indels parameter")
 		}
 	},
 }
@@ -451,7 +531,6 @@ func ReadCSVNGSFilter(reader io.Reader) (*obingslibrary.NGSLibrary, error) {
 
 		pcr.Experiment = fields[experimentColIndex]
 		pcr.Sample = fields[sampleColIndex]
-		pcr.Partial = false
 
 		if extraColumns != nil {
 			pcr.Annotations = make(obiseq.Annotation)

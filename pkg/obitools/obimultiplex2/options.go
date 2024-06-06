@@ -15,7 +15,7 @@ import (
 var _NGSFilterFile = ""
 var _askTemplate = false
 var _UnidentifiedFile = ""
-var _AllowedMismatch = int(2)
+var _AllowedMismatch = -1
 var _AllowsIndel = false
 var _ConservedError = false
 

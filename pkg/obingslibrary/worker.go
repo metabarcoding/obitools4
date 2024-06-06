@@ -93,11 +93,11 @@ func (options Options) Unidentified() string {
 	return options.pointer.unidentified
 }
 
-func (options Options) AllowedMismatch() int {
+func (options Options) AllowedMismatches() int {
 	return options.pointer.allowedMismatch
 }
 
-func (options Options) AllowsIndel() bool {
+func (options Options) AllowsIndels() bool {
 	return options.pointer.allowsIndel
 }
 
@@ -160,7 +160,7 @@ func ExtractBarcodeSlice(ngslibrary *NGSLibrary,
 
 	opt := MakeOptions(options)
 
-	ngslibrary.Compile(opt.AllowedMismatch(), opt.AllowsIndel())
+	ngslibrary.Compile(opt.AllowedMismatches(), opt.AllowsIndels())
 
 	return _ExtractBarcodeSlice(ngslibrary, sequences, opt)
 }
@@ -170,7 +170,7 @@ func ExtractBarcodeSliceWorker(ngslibrary *NGSLibrary,
 
 	opt := MakeOptions(options)
 
-	ngslibrary.Compile(opt.AllowedMismatch(), opt.AllowsIndel())
+	ngslibrary.Compile(opt.AllowedMismatches(), opt.AllowsIndels())
 
 	worker := func(sequences obiseq.BioSequenceSlice) (obiseq.BioSequenceSlice, error) {
 		return _ExtractBarcodeSlice(ngslibrary, sequences, opt), nil

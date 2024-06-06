@@ -2,6 +2,7 @@ package obingslibrary
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiapat"
@@ -18,6 +19,12 @@ type Marker struct {
 	Reverse_tag_length    int
 	Forward_spacer        int
 	Reverse_spacer        int
+	Forward_error         int
+	Reverse_error         int
+	Forward_allows_indels bool
+	Reverse_allows_indels bool
+	Forward_matching      string
+	Reverse_matching      string
 	Forward_tag_delimiter byte
 	Reverse_tag_delimiter byte
 	samples               map[TagPair]*PCR
@@ -45,6 +52,38 @@ func (marker *Marker) Compile(forward, reverse string, maxError int, allowsIndel
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+func (marker *Marker) Compile2(forward, reverse string) error {
+	var err error
+
+	marker.CheckTagLength()
+
+	marker.forward, err = obiapat.MakeApatPattern(
+		forward,
+		marker.Forward_error,
+		marker.Forward_allows_indels)
+	if err != nil {
+		return err
+	}
+	marker.reverse, err = obiapat.MakeApatPattern(
+		reverse,
+		marker.Reverse_error,
+		marker.Reverse_allows_indels)
+	if err != nil {
+		return err
+	}
+
+	marker.cforward, err = marker.forward.ReverseComplement()
+	if err != nil {
+		return err
+	}
+	marker.creverse, err = marker.reverse.ReverseComplement()
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -200,7 +239,8 @@ func (marker *Marker) Match(sequence *obiseq.BioSequence) *DemultiplexMatch {
 }
 
 func (marker *Marker) GetPCR(forward, reverse string) (*PCR, bool) {
-	pair := TagPair{forward, reverse}
+	pair := TagPair{strings.ToLower(forward),
+		strings.ToLower(reverse)}
 	pcr, ok := marker.samples[pair]
 
 	if ok {
@@ -234,7 +274,7 @@ func (marker *Marker) CheckTagLength() error {
 				others = append(others, k)
 			}
 		}
-		return fmt.Errorf("forward tag length %d is not the same for all the PCRs : %v\n", maxfl, others)
+		return fmt.Errorf("forward tag length %d is not the same for all the PCRs : %v", maxfl, others)
 	}
 
 	maxrl, _ := obiutils.MaxMap(reverse_length)
@@ -246,7 +286,7 @@ func (marker *Marker) CheckTagLength() error {
 				others = append(others, k)
 			}
 		}
-		return fmt.Errorf("reverse tag length %d is not the same for all the PCRs : %v\n", maxrl, others)
+		return fmt.Errorf("reverse tag length %d is not the same for all the PCRs : %v", maxrl, others)
 	}
 
 	marker.Forward_tag_length = maxfl
@@ -267,15 +307,90 @@ func (marker *Marker) SetTagSpacer(spacer int) {
 	marker.SetReverseTagSpacer(spacer)
 }
 
+func normalizeTagDelimiter(delim byte) byte {
+	if delim == '0' || delim == 0 {
+		delim = 0
+	} else {
+		if delim >= 'A' && delim <= 'Z' {
+			delim = delim + 'A' - 'a'
+		}
+		if delim != 'a' && delim != 'c' && delim != 'g' && delim != 't' {
+			log.Fatalf("invalid reverse tag delimiter: %c, only 'a', 'c', 'g', 't' and '0' are allowed", delim)
+		}
+	}
+
+	return delim
+}
+
 func (marker *Marker) SetForwardTagDelimiter(delim byte) {
-	marker.Forward_tag_delimiter = delim
+	marker.Forward_tag_delimiter = normalizeTagDelimiter(delim)
 }
 
 func (marker *Marker) SetReverseTagDelimiter(delim byte) {
-	marker.Reverse_tag_delimiter = delim
+	marker.Reverse_tag_delimiter = normalizeTagDelimiter(delim)
 }
 
 func (marker *Marker) SetTagDelimiter(delim byte) {
 	marker.SetForwardTagDelimiter(delim)
 	marker.SetReverseTagDelimiter(delim)
+}
+
+func (marker *Marker) SetForwardAllowedMismatches(allowed_mismatches int) {
+	marker.Forward_error = allowed_mismatches
+}
+
+func (marker *Marker) SetReverseAllowedMismatches(allowed_mismatches int) {
+	marker.Reverse_error = allowed_mismatches
+}
+
+func (marker *Marker) SetAllowedMismatch(allowed_mismatches int) {
+	marker.SetForwardAllowedMismatches(allowed_mismatches)
+	marker.SetReverseAllowedMismatches(allowed_mismatches)
+}
+
+func (marker *Marker) SetForwardAllowsIndels(allows_indel bool) {
+	marker.Forward_allows_indels = allows_indel
+}
+
+func (marker *Marker) SetReverseAllowsIndels(allows_indel bool) {
+	marker.Reverse_allows_indels = allows_indel
+}
+
+func (marker *Marker) SetAllowsIndel(allows_indel bool) {
+	marker.SetForwardAllowsIndels(allows_indel)
+	marker.SetReverseAllowsIndels(allows_indel)
+}
+
+func (marker *Marker) SetForwardMatching(matching string) error {
+	switch matching {
+	case "strict", "hamming", "indel": // Valid matching strategies
+		marker.Forward_matching = matching
+
+	default:
+		return fmt.Errorf("invalid matching : %s", matching)
+	}
+
+	return nil
+}
+
+func (marker *Marker) SetReverseMatching(matching string) error {
+	switch matching {
+	case "strict", "hamming", "indel": // Valid matching strategies
+		marker.Reverse_matching = matching
+
+	default:
+		return fmt.Errorf("invalid matching : %s", matching)
+	}
+
+	return nil
+}
+
+func (marker *Marker) SetMatching(matching string) error {
+	if err := marker.SetForwardMatching(matching); err != nil {
+		return err
+	}
+	if err := marker.SetReverseMatching(matching); err != nil {
+		return err
+	}
+	return nil
 }

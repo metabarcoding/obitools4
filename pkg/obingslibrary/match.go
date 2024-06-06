@@ -3,7 +3,6 @@ package obingslibrary
 import (
 	"errors"
 	"fmt"
-	"strings"
 
 	log "github.com/sirupsen/logrus"
 
@@ -26,24 +25,12 @@ type DemultiplexMatch struct {
 	Error             error
 }
 
-func (library *NGSLibrary) Compile(maxError int, allowsIndel bool) error {
-	for primers, marker := range library.Markers {
-		err := marker.Compile(primers.Forward,
-			primers.Reverse,
-			maxError, allowsIndel)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 func (library *NGSLibrary) Match(sequence *obiseq.BioSequence) *DemultiplexMatch {
 	for primers, marker := range library.Markers {
 		m := marker.Match(sequence)
 		if m != nil {
-			m.ForwardPrimer = strings.ToLower(primers.Forward)
-			m.ReversePrimer = strings.ToLower(primers.Reverse)
+			m.ForwardPrimer = primers.Forward
+			m.ReversePrimer = primers.Reverse
 			return m
 		}
 	}

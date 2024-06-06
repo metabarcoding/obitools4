@@ -2,6 +2,7 @@ package obingslibrary
 
 import (
 	"fmt"
+	"strings"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 )
@@ -19,30 +20,24 @@ type TagPair struct {
 type PCR struct {
 	Experiment  string
 	Sample      string
-	Partial     bool
 	Annotations obiseq.Annotation
 }
 
 type NGSLibrary struct {
-	Matching           string
-	Allowed_mismatches int
-	Allows_indels      bool
-	Primers            map[string]PrimerPair
-	Markers            map[PrimerPair]*Marker
+	Primers map[string]PrimerPair
+	Markers map[PrimerPair]*Marker
 }
 
 func MakeNGSLibrary() NGSLibrary {
 	return NGSLibrary{
-		Matching:           "strict",
-		Allowed_mismatches: 2,
-		Allows_indels:      false,
-		Primers:            make(map[string]PrimerPair, 10),
-		Markers:            make(map[PrimerPair]*Marker, 10),
+		Primers: make(map[string]PrimerPair, 10),
+		Markers: make(map[PrimerPair]*Marker, 10),
 	}
 }
 
 func (library *NGSLibrary) GetMarker(forward, reverse string) (*Marker, bool) {
-	pair := PrimerPair{forward, reverse}
+	pair := PrimerPair{strings.ToLower(forward),
+		strings.ToLower(reverse)}
 	marker, ok := (library.Markers)[pair]
 
 	if ok {
@@ -56,12 +51,41 @@ func (library *NGSLibrary) GetMarker(forward, reverse string) (*Marker, bool) {
 		Reverse_spacer:        0,
 		Forward_tag_delimiter: 0,
 		Reverse_tag_delimiter: 0,
+		Forward_error:         2,
+		Reverse_error:         2,
+		Forward_matching:      "strict",
+		Reverse_matching:      "strict",
+		Forward_allows_indels: false,
+		Reverse_allows_indels: false,
 		samples:               make(map[TagPair]*PCR, 1000),
 	}
 
 	(library.Markers)[pair] = &m
 
 	return &m, false
+}
+
+func (library *NGSLibrary) Compile(maxError int, allowsIndel bool) error {
+	for primers, marker := range library.Markers {
+		err := marker.Compile(primers.Forward,
+			primers.Reverse,
+			maxError, allowsIndel)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (library *NGSLibrary) Compile2() error {
+	for primers, marker := range library.Markers {
+		err := marker.Compile2(primers.Forward,
+			primers.Reverse)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (library *NGSLibrary) SetForwardTagSpacer(spacer int) {
@@ -82,6 +106,7 @@ func (library *NGSLibrary) SetTagSpacer(spacer int) {
 }
 
 func (library *NGSLibrary) SetTagSpacerFor(primer string, spacer int) {
+	primer = strings.ToLower(primer)
 	primers, ok := library.Primers[primer]
 
 	if ok {
@@ -115,6 +140,7 @@ func (library *NGSLibrary) SetTagDelimiter(delim byte) {
 }
 
 func (library *NGSLibrary) SetTagDelimiterFor(primer string, delim byte) {
+	primer = strings.ToLower(primer)
 	primers, ok := library.Primers[primer]
 
 	if ok {
@@ -154,27 +180,131 @@ func (library *NGSLibrary) CheckPrimerUnicity() error {
 	return nil
 }
 
-// SetMatching sets the matching strategy for the library.
-// Returns an error if the matching strategy is invalid.
-func (library *NGSLibrary) SetMatching(matching string) error {
-	switch matching {
-	case "strict", "hamming", "indel": // Valid matching strategies
-		library.Matching = matching
-	default:
-		return fmt.Errorf("invalid matching : %s", matching)
+func (library *NGSLibrary) SetForwardMatching(matching string) error {
+
+	for _, marker := range library.Markers {
+		err := marker.SetForwardMatching(matching)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (library *NGSLibrary) SetReverseMatching(matching string) error {
+	for _, marker := range library.Markers {
+		err := marker.SetReverseMatching(matching)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
-func (library *NGSLibrary) SetAllowedMismatch(allowed_mismatches int) {
-	if allowed_mismatches < 0 {
-		allowed_mismatches = 0
+func (library *NGSLibrary) SetMatching(matching string) error {
+	err := library.SetForwardMatching(matching)
+
+	if err != nil {
+		return err
 	}
-	library.Allowed_mismatches = allowed_mismatches
+
+	err = library.SetReverseMatching(matching)
+
+	return err
+}
+
+func (library *NGSLibrary) SetMatchingFor(primer string, matching string) error {
+	primer = strings.ToLower(primer)
+	primers, ok := library.Primers[primer]
+
+	if ok {
+		marker, ok := library.Markers[primers]
+
+		if ok {
+			if primer == primers.Forward {
+				err := marker.SetForwardMatching(matching)
+				if err != nil {
+					return err
+				}
+			} else {
+				err := marker.SetReverseMatching(matching)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+
+	return nil
 }
 
 // SetAllowsIndels sets whether the library allows indels.
 // The value of the argument allows_indels is directly assigned to the library's Allows_indels field.
+func (library *NGSLibrary) SetForwardAllowsIndels(allows_indels bool) {
+	for _, marker := range library.Markers {
+		marker.SetForwardAllowsIndels(allows_indels)
+	}
+}
+
+func (library *NGSLibrary) SetReverseAllowsIndels(allows_indels bool) {
+	for _, marker := range library.Markers {
+		marker.SetReverseAllowsIndels(allows_indels)
+	}
+}
+
 func (library *NGSLibrary) SetAllowsIndels(allows_indels bool) {
-	library.Allows_indels = allows_indels
+	library.SetForwardAllowsIndels(allows_indels)
+	library.SetReverseAllowsIndels(allows_indels)
+}
+
+func (library *NGSLibrary) SetAllowsIndelsFor(primer string, allows_indel bool) {
+	primer = strings.ToLower(primer)
+	primers, ok := library.Primers[primer]
+
+	if ok {
+		marker, ok := library.Markers[primers]
+
+		if ok {
+			if primer == primers.Forward {
+				marker.SetForwardAllowsIndels(allows_indel)
+			} else {
+				marker.SetReverseAllowsIndels(allows_indel)
+			}
+		}
+	}
+}
+
+func (library *NGSLibrary) SetForwardAllowedMismatches(allowed_mismatches int) {
+	for _, marker := range library.Markers {
+		marker.SetForwardAllowedMismatches(allowed_mismatches)
+	}
+}
+
+func (library *NGSLibrary) SetReverseAllowedMismatches(allowed_mismatches int) {
+	for _, marker := range library.Markers {
+		marker.SetReverseAllowedMismatches(allowed_mismatches)
+	}
+}
+
+func (library *NGSLibrary) SetAllowedMismatches(allowed_mismatches int) {
+	library.SetForwardAllowedMismatches(allowed_mismatches)
+	library.SetReverseAllowedMismatches(allowed_mismatches)
+}
+
+func (library *NGSLibrary) SetAllowedMismatchesFor(primer string, allowed_mismatches int) {
+	primer = strings.ToLower(primer)
+	primers, ok := library.Primers[primer]
+
+	if ok {
+		marker, ok := library.Markers[primers]
+
+		if ok {
+			if primer == primers.Forward {
+				marker.SetForwardAllowedMismatches(allowed_mismatches)
+			} else {
+				marker.SetReverseAllowedMismatches(allowed_mismatches)
+			}
+		}
+	}
 }
