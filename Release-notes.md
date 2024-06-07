@@ -26,7 +26,7 @@
 -   In `obiscript` a `qualities` method has been added to retrieve or set the
     quality scores from a BioSequence object.\
 
--   In obiparing the ngsfilter file describing the samples can be no provided
+-   In `obimultuplex` the ngsfilter file describing the samples can be no provided
     not only using the classical nfsfilter format but also using the csv format.
     When using csv, the first line must contain the column names. 5 columns are
     expected:
@@ -45,6 +45,11 @@
     Supplementary columns are allowed. Their names and content will be used to
     annotate the sequence corresponding to the sample, as the `key=value;` did
     in the nfsfilter format.
+
+    The CSV format used allows for comment lines starting with `#` character.
+    Special data lines starting with `@param` in the first column allow to
+    configure the algorithm. The options **--template** provided an over
+    commented example of the csv format, including all the possible options.
 
 ### Enhancement
 
