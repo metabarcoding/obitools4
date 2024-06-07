@@ -15,7 +15,7 @@ import (
 var _NGSFilterFile = ""
 var _askTemplate = false
 var _UnidentifiedFile = ""
-var _AllowedMismatch = int(2)
+var _AllowedMismatch = -1
 var _AllowsIndel = false
 var _ConservedError = false
 
@@ -99,10 +99,112 @@ func CLIAskConfigTemplate() bool {
 }
 
 func CLIConfigTemplate() string {
-	return `experiment,sample,sample_tag,forward_primer,reverse_primer
+	return `###
+### Example of NGSFilter CSV configuration file
+###
+#
+# The CSV file can contain comments starting with the # character
+# and empty lines.
+# At the top of the file a set of lines of three or four columns and having
+# the first column containing @param can be used to define parameters
+# for the obimultiplex tool. The structure of these lines is :
+#
+#       @param,parameter_name,parameter_value
+#       @param,parameter_name,parameter_value1,parameter_value2
+#
+# The following lines describes the PCR multiplexed in the sequencing library.
+# The first line describes the columns of the CSV file and the following lines
+# describe the PCR multiplexed.
+#
+# Five columns are expected :
+#
+# - experiment: the experiment name
+# - sample: the sample (pcr) name
+# - sample_tag: the tag identifying the sample
+# - forward_primer: the forward primer sequence
+# - reverse_primer: the reverse primer sequence
+#
+# Supplementary columns are allowed. Their names and content will be used to
+# annotate the sequence corresponding to the sample, as the key=value; located
+# after the @ sign did in the original ngsfilter file format.
+#
+###
+###  Description of the parameters
+###
+#
+# The forward_spacer and the reverse_spacer allow to specify the number of
+# nucleotide separating the 5' end of the forward or reverse primer respectively
+# to the 3' end of the tag. The default value is 0.
+#
+# The param spacer allows for specify this value for both forward and reverse 
+# simultaneously. The spacer parameter can also, when used wirh two arguments,
+# allow to specify the # the spacer value for a specific primer:
+#
+#       @param,spacer,CAGCTGCTATGTCGATGCTGACT,2
+#
+@param,forward_spacer,0
+@param,reverse_spacer,0
+#
+# A new method for designing indel proof tag is to not use one of the four 
+# nucleotides in their sequence and to flank the tag with this fourth nucleotide.
+# That nucleotide is the tag delimiter. Similarly, to the spacer value, 
+# three ways to specify the tag delimiter exist:
+#   - the forward_tag_delimiter and reverse_tag_delimiter
+#   - the tag_delimiter in its two forms with one and two arguments
+#
+@param,forward_tag_delimiter,0
+@param,reverse_tag_delimiter,0
+#
+# Three algorithms are available to math a pair of tags with a sample.
+# It is specified using the @matching parameter. The three possible
+# values are strict, hamming, and indel. The default value is strict.
+# As for previous parameters, forward_matching and reverse_matching can
+# be used to specify the matching value for each primer. And spacer
+# can be used with two arguments to specify the matching value for 
+# a specific primer.
+#
+@param,matching,strict
+#
+# The primer_mismatches parameter allows to specify the number of errors allowed
+# when matching the primer. The default value is 2. The same declination of
+# the parameters forward_primer_mismatches and reverse_primer_mismatches exist.
+#
+@param,primer_mismatches,2
+#
+# The @indel parameter allows to specify if indel are allowed during the matching
+# of the primers to the sequence. The default value is false. forward_indel and
+# reverse_indel can be used to specify the value for each primer.
+#
+@param,indels,false
+#
+###
+###  Description of the PCR multiplexed
+###
+#
+# Below is an example for the minimal description of the PCRs multiplexed in the
+# sequencing library.
+#
+# The first line is the column names and must exist.
+# Five columns are expected :
+# - experiment: the experiment name, that allows for grouping samples
+# - sample: the sample (pcr) name
+# - sample_tag: the tag identifying the sample
+#   The sample tag must be unique in the library for a given pair of primers
+#   + They can be a simple DNA word as here. This means that the same tag is used
+#     for both primers.
+#   + It can be two DNA words separated by a colon. For example, aagtag:gaagtag.
+#     This means that the first tag is used for the forward primer and the second for the
+#     reverse primers. "aagtag" is the same as "aagtag:aagtag".
+#   + In the two word syntax, if a primer forward or reverse is not tagged, its tag
+#     is replaced by a hyphen '-', for example 'aagtag:-' or '-:aagtag'.
+#   For a given primer all the tags must have the same length.
+# - forward_primer: the forward primer sequence
+# - reverse_primer: the reverse primer sequence
+# 
+experiment,sample,sample_tag,forward_primer,reverse_primer
 wolf_diet,13a_F730603,aattaac,TTAGATACCCCACTATGC,TAGAACAGGCTCCTCTAG
-wolf_diet,15a_F730814,gaagtag:gaatatc,TTAGATACCCCACTATGC,TAGAACAGGCTCCTCTAG
-wolf_diet,26a_F040644,gaatatc:-,TTAGATACCCCACTATGC,TAGAACAGGCTCCTCTAG
-wolf_diet,29a_F260619,-:-,TTAGATACCCCACTATGC,TAGAACAGGCTCCTCTAG
+wolf_diet,15a_F730814,gaagtag,TTAGATACCCCACTATGC,TAGAACAGGCTCCTCTAG
+wolf_diet,26a_F040644,gaatatc,TTAGATACCCCACTATGC,TAGAACAGGCTCCTCTAG
+wolf_diet,29a_F260619,gcctcct,TTAGATACCCCACTATGC,TAGAACAGGCTCCTCTAG
 `
 }
