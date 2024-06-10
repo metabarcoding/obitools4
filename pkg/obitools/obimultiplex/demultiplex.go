@@ -35,13 +35,13 @@ func IExtractBarcode(iterator obiiter.IBioSequence) (obiiter.IBioSequence, error
 
 	if !CLIConservedErrors() {
 		log.Infoln("Discards unassigned sequences")
-		out = out.FilterOn(obiseq.HasAttribute("demultiplex_error").Not(), obioptions.CLIBatchSize())
+		out = out.FilterOn(obiseq.HasAttribute("obimultiplex_error").Not(), obioptions.CLIBatchSize())
 	}
 
 	var unidentified obiiter.IBioSequence
 	if CLIUnidentifiedFileName() != "" {
 		log.Printf("Unassigned sequences saved in file: %s\n", CLIUnidentifiedFileName())
-		unidentified, out = newIter.DivideOn(obiseq.HasAttribute("demultiplex_error"),
+		unidentified, out = newIter.DivideOn(obiseq.HasAttribute("obimultiplex_error"),
 			obioptions.CLIBatchSize())
 
 		go func() {

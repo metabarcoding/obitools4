@@ -146,11 +146,10 @@ func (marker *Marker) beginFixedTagExtractor(
 
 	fb := begin - spacer - taglength
 	if fb < 0 {
-		log.Warnf("begin %v", fb)
 		return ""
 	}
 
-	return sequence.String()[fb : begin-spacer]
+	return sequence.String()[fb:(begin - spacer)]
 }
 
 func (marker *Marker) endDelimitedTagExtractor(
@@ -266,11 +265,11 @@ func (library *NGSLibrary) TagExtractor(
 	reverse_tag := marker.endTagExtractor(sequence, end, forward)
 
 	if forward_tag != "" {
-		annotations["forward_tag"] = forward_tag
+		annotations["obimultiplex_forward_tag"] = forward_tag
 	}
 
 	if reverse_tag != "" {
-		annotations["reverse_tag"] = reverse_tag
+		annotations["obimultiplex_reverse_tag"] = reverse_tag
 	}
 
 	return &TagPair{forward_tag, reverse_tag}
@@ -286,7 +285,7 @@ func (marker *Marker) ClosestForwardTag(
 	for ts := range marker.samples {
 		d := dist(ts.Forward, tag)
 
-		if d == mindist {
+		if d == mindist && mintag != "" && ts.Forward != mintag {
 			mintag = ""
 		}
 
@@ -309,7 +308,7 @@ func (marker *Marker) ClosestReverseTag(
 	for ts := range marker.samples {
 		d := dist(ts.Reverse, tag)
 
-		if d == mindist {
+		if d == mindist && mintag != "" && ts.Reverse != mintag {
 			mintag = ""
 		}
 
@@ -382,7 +381,7 @@ func (library *NGSLibrary) SampleIdentifier(
 	pcr, ok := marker.samples[proposed]
 
 	if !ok {
-		annotations["demultiplex_error"] = fmt.Sprintf("Cannot associate sample to the tag pair (%s:%s)", forward, reverse)
+		annotations["obimultiplex_error"] = fmt.Sprintf("Cannot associate sample to the tag pair (%s:%s)", forward, reverse)
 		return nil
 	}
 
@@ -489,47 +488,47 @@ func (library *NGSLibrary) ExtractMultiBarcode(sequence *obiseq.BioSequence) (ob
 				if match.Marker == -from.Marker && match.Forward == from.Forward {
 					barcode_error := false
 					annotations := obiseq.GetAnnotation()
-					annotations["forward_primer"] = primerseqs[from.Marker].Forward
-					annotations["reverse_primer"] = primerseqs[from.Marker].Reverse
+					annotations["obimultiplex_forward_primer"] = primerseqs[from.Marker].Forward
+					annotations["obimultiplex_reverse_primer"] = primerseqs[from.Marker].Reverse
 
 					if from.Forward {
 						if from.Begin < 0 || from.End > sequence.Len() {
 							barcode_error = true
-							annotations["multiplex_error"] = "Cannot extract forward match"
+							annotations["obimultiplex_error"] = "Cannot extract forward match"
 						} else {
-							annotations["forward_match"] = sequence.String()[from.Begin:from.End]
+							annotations["obimultiplex_forward_match"] = sequence.String()[from.Begin:from.End]
 						}
 
 						sseq, err := sequence.Subsequence(match.Begin, match.End, false)
 
 						if err != nil {
 							barcode_error = true
-							annotations["multiplex_error"] = "Cannot extract reverse match"
+							annotations["obimultiplex_error"] = "Cannot extract reverse match"
 						} else {
-							annotations["reverse_match"] = sseq.ReverseComplement(true).String()
+							annotations["obimultiplex_reverse_match"] = sseq.ReverseComplement(true).String()
 						}
 
-						annotations["forward_error"] = from.Mismatches
-						annotations["reverse_error"] = match.Mismatches
+						annotations["obimultiplex_forward_error"] = from.Mismatches
+						annotations["obimultiplex_reverse_error"] = match.Mismatches
 					} else {
 						if from.Begin < 0 || from.End > sequence.Len() {
 							barcode_error = true
-							annotations["multiplex_error"] = "Cannot extract reverse match"
+							annotations["obimultiplex_error"] = "Cannot extract reverse match"
 						} else {
-							annotations["reverse_match"] = sequence.String()[from.Begin:from.End]
+							annotations["obimultiplex_reverse_match"] = sequence.String()[from.Begin:from.End]
 						}
 
 						sseq, err := sequence.Subsequence(match.Begin, match.End, false)
 
 						if err != nil {
 							barcode_error = true
-							annotations["multiplex_error"] = "Cannot extract forward match"
+							annotations["obimultiplex_error"] = "Cannot extract forward match"
 						} else {
-							annotations["forward_match"] = sseq.ReverseComplement(true).String()
+							annotations["obimultiplex_forward_match"] = sseq.ReverseComplement(true).String()
 						}
 
-						annotations["reverse_error"] = from.Mismatches
-						annotations["forward_error"] = match.Mismatches
+						annotations["obimultiplex_reverse_error"] = from.Mismatches
+						annotations["obimultiplex_forward_error"] = match.Mismatches
 					}
 
 					if !barcode_error {
@@ -572,11 +571,11 @@ func (library *NGSLibrary) ExtractMultiBarcode(sequence *obiseq.BioSequence) (ob
 	}
 
 	if len(results) == 0 {
-		sequence.SetAttribute("demultiplex_error", "No barcode identified")
+		sequence.SetAttribute("obimultiplex_error", "No barcode identified")
 		results = append(results, sequence)
 	} else {
 		for i, result := range results {
-			result.SetAttribute("amplicon_rank", fmt.Sprintf("%d/%d", i+1, len(results)))
+			result.SetAttribute("obimultiplex_amplicon_rank", fmt.Sprintf("%d/%d", i+1, len(results)))
 		}
 	}
 
