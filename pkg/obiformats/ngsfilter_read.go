@@ -400,6 +400,58 @@ var library_parameter = map[string]func(library *obingslibrary.NGSLibrary, value
 			log.Fatalln("Invalid value for @reverse_primer_error parameter")
 		}
 	},
+	"tag_indels": func(library *obingslibrary.NGSLibrary, values ...string) {
+		switch len(values) {
+		case 0:
+			log.Fatalln("Missing value for @tag_indels parameter")
+		case 1:
+			indels, err := strconv.Atoi(values[0])
+
+			if err != nil {
+				log.Fatalf("Invalid value %s for @tag_indels parameter", values[0])
+			}
+			library.SetTagIndels(indels)
+		case 2:
+			indels, err := strconv.Atoi(values[1])
+
+			if err != nil {
+				log.Fatalf("Invalid value %s for @tag_indels parameter", values[1])
+			}
+
+			library.SetTagIndelsFor(values[0], indels)
+		}
+	},
+
+	"forward_tag_indels": func(library *obingslibrary.NGSLibrary, values ...string) {
+		switch len(values) {
+		case 0:
+			log.Fatalln("Missing value for @forward_tag_indels parameter")
+		case 1:
+			indels, err := strconv.Atoi(values[0])
+
+			if err != nil {
+				log.Fatalf("Invalid value %s for @forward_tag_indels parameter", values[0])
+			}
+			library.SetForwardTagIndels(indels)
+		default:
+			log.Fatalln("Invalid value for @forward_tag_indels parameter")
+		}
+	},
+	"reverse_tag_indels": func(library *obingslibrary.NGSLibrary, values ...string) {
+		switch len(values) {
+		case 0:
+			log.Fatalln("Missing value for @reverse_tag_indels parameter")
+		case 1:
+			indels, err := strconv.Atoi(values[0])
+
+			if err != nil {
+				log.Fatalf("Invalid value %s for @reverse_tag_indels parameter", values[0])
+			}
+			library.SetReverseTagIndels(indels)
+		default:
+			log.Fatalln("Invalid value for @reverse_tag_indels parameter")
+		}
+	},
 	"indels": func(library *obingslibrary.NGSLibrary, values ...string) {
 		switch len(values) {
 		case 0:

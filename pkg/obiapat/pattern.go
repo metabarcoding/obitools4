@@ -317,9 +317,6 @@ func (pattern ApatPattern) FindAllIndex(sequence ApatSequence, begin, length int
 func (pattern ApatPattern) BestMatch(sequence ApatSequence, begin, length int) (start int, end int, nerr int, matched bool) {
 	res := pattern.FindAllIndex(sequence, begin, length)
 
-	sbuffer := [(int(C.MAX_PAT_LEN) + int(C.MAX_PAT_ERR) + 1) * (int(C.MAX_PAT_LEN) + 1)]uint64{}
-	buffer := sbuffer[:]
-
 	if len(res) == 0 {
 		matched = false
 		return
@@ -358,16 +355,49 @@ func (pattern ApatPattern) BestMatch(sequence ApatSequence, begin, length int) (
 		best[0], nerr, int(pattern.pointer.pointer.patlen),
 		sequence.Len(), start, end)
 
-	score, lali := obialign.FastLCSEGFScoreByte(
-		frg,
-		(*cpattern)[0:int(pattern.pointer.pointer.patlen)],
-		nerr, true, &buffer)
+	from, to, score := obialign.LocatePattern((*cpattern)[0:int(pattern.pointer.pointer.patlen)], frg)
 
-	nerr = lali - score
-	start = best[0] + int(pattern.pointer.pointer.patlen) - lali
-	end = start + lali
-	log.Debugln("results", score, lali, start, nerr)
+	// olderr := m[2]
+
+	nerr = score
+	start = start + from
+	end = start + to
+	log.Debugln("results", score, start, nerr)
 	return
+}
+
+func (pattern ApatPattern) FilterBestMatch(sequence ApatSequence, begin, length int) (loc [][3]int) {
+	res := pattern.FindAllIndex(sequence, begin, length)
+	filtered := make([][3]int, 0, len(res))
+
+	best := [3]int{0, 0, 10000}
+	for _, m := range res {
+		// log.Warnf("Current : Begin : %d End : %d Err : %d", m[0], m[1], m[2])
+		// log.Warnf("Best    : Begin : %d End : %d Err : %d", best[0], best[1], best[2])
+		if (m[0] - m[2]) < best[1]+best[2] {
+			// match are overlapping
+			// log.Warnln("overlap")
+			if m[2] < best[2] {
+				// log.Warnln("better")
+				best = m
+			}
+		} else if best[2] < 10000 {
+			// no overlap
+			// log.Warnln("no overlap")
+			filtered = append(filtered, best)
+			best = m
+		}
+	}
+
+	if best[2] < 10000 {
+		filtered = append(filtered, best)
+	}
+
+	if len(filtered) == 0 {
+		return nil
+	}
+
+	return filtered
 }
 
 // tagaacaggctcctctag
@@ -392,18 +422,15 @@ func (pattern ApatPattern) BestMatch(sequence ApatSequence, begin, length int) (
 // the match. Following the GO convention the end position is not included in the
 // match. The third value indicates the number of error detected for this occurrence.
 func (pattern ApatPattern) AllMatches(sequence ApatSequence, begin, length int) (loc [][3]int) {
-	res := pattern.FindAllIndex(sequence, begin, length)
-
-	sbuffer := [(int(C.MAX_PAT_LEN) + int(C.MAX_PAT_ERR) + 1) * (int(C.MAX_PAT_LEN) + 1)]uint64{}
-	buffer := sbuffer[:]
+	res := pattern.FilterBestMatch(sequence, begin, length)
 
 	for _, m := range res {
 		// Recompute the start and end position of the match
 		// when the pattern allows for indels
 		if m[2] > 0 && pattern.pointer.pointer.hasIndel {
 			start := m[0] - m[2]
-			end := m[0] + int(pattern.pointer.pointer.patlen) + m[2]
 			start = max(start, 0)
+			end := start + int(pattern.pointer.pointer.patlen) + 2*m[2]
 			end = min(end, sequence.Len())
 			// 1 << 30 = 1,073,741,824 = 1Gb
 			// It's a virtual array mapping the sequence to the pattern
@@ -412,20 +439,18 @@ func (pattern ApatPattern) AllMatches(sequence ApatSequence, begin, length int) 
 			cpattern := (*[1 << 30]byte)(unsafe.Pointer(pattern.pointer.pointer.cpat))
 			frg := sequence.pointer.reference.Sequence()[start:end]
 
-			score, lali := obialign.FastLCSEGFScoreByte(
-				frg,
-				(*cpattern)[0:int(pattern.pointer.pointer.patlen)],
-				m[2], true, &buffer)
+			begin, end, score := obialign.LocatePattern((*cpattern)[0:int(pattern.pointer.pointer.patlen)], frg)
 
-			// log.Debugf("seq[%d] : %s %d, %d", i, sequence.pointer.reference.Id(), score, lali)
-
-			m[2] = lali - score
-			m[0] = m[0] + int(pattern.pointer.pointer.patlen) - lali
-			m[1] = m[0] + lali
+			// olderr := m[2]
+			m[2] = score
+			m[0] = start + begin
+			m[1] = start + end
+			// log.Warnf("seq[%d@%d:%d] %d: %s %d - %s:%s:%s", i, m[0], m[1], olderr, sequence.pointer.reference.Id(), score,
+			// 	frg, (*cpattern)[0:int(pattern.pointer.pointer.patlen)], sequence.pointer.reference.Sequence()[m[0]:m[1]])
 		}
 	}
 
-	log.Debugf("All matches : %v", res)
+	// log.Debugf("All matches : %v", res)
 
 	return res
 }

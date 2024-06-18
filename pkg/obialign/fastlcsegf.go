@@ -52,10 +52,12 @@ func _samenuc(a, b byte) bool {
 // Returns:
 // - The score of the LCS.
 // - The length of the LCS.
-func FastLCSEGFScoreByte(bA, bB []byte, maxError int, endgapfree bool, buffer *[]uint64) (int, int) {
+func FastLCSEGFScoreByte(bA, bB []byte, maxError int, endgapfree bool, buffer *[]uint64) (int, int, int) {
 
 	lA := len(bA)
 	lB := len(bB)
+	end := 0
+	pend := 0
 
 	// Ensure that A is the longest
 	if lA < lB {
@@ -75,7 +77,7 @@ func FastLCSEGFScoreByte(bA, bB []byte, maxError int, endgapfree bool, buffer *[
 
 	// The difference of length is larger the maximum allowed errors
 	if delta > maxError {
-		return -1, -1
+		return -1, -1, -1
 	}
 
 	// // BEGINNING OF DEBUG CODE //
@@ -121,7 +123,7 @@ func FastLCSEGFScoreByte(bA, bB []byte, maxError int, endgapfree bool, buffer *[
 	}
 	previous[extra+even-1] = encodeValues(0, 1, false) // Initialise cell 1,0
 
-	N := lB + ((delta) >> 1)
+	N := lB + (delta >> 1)
 
 	// log.Debugln("N = ", N, " delta = ", delta, " extra = ", extra, " maxError = ", maxError)
 
@@ -147,6 +149,7 @@ func FastLCSEGFScoreByte(bA, bB []byte, maxError int, endgapfree bool, buffer *[
 			switch {
 
 			case i == 0:
+				// We are setting the gaps of the first row
 				Sup = _notavail
 				Sdiag = _notavail
 				if endgapfree {
@@ -155,10 +158,12 @@ func FastLCSEGFScoreByte(bA, bB []byte, maxError int, endgapfree bool, buffer *[
 					Sleft = encodeValues(0, j, false)
 				}
 			case j == 0:
+				// We are setting the gaps of the first column
 				Sup = encodeValues(0, i, false)
 				Sdiag = _notavail
 				Sleft = _notavail
 			default:
+				// We are in the middle of the matrix
 				Sdiag = _incpath(previous[x])
 				if _samenuc(bA[j-1], bB[i-1]) {
 					Sdiag = _incscore(Sdiag)
@@ -187,6 +192,15 @@ func FastLCSEGFScoreByte(bA, bB []byte, maxError int, endgapfree bool, buffer *[
 				score = Sup
 			default:
 				score = Sleft
+
+				if endgapfree && i == lB {
+					_, l, o := decodeValues(Sleft)
+
+					if l > pend && o == false {
+						pend = l
+						end = j
+					}
+				}
 			}
 
 			// I supose the bug was here
@@ -271,6 +285,14 @@ func FastLCSEGFScoreByte(bA, bB []byte, maxError int, endgapfree bool, buffer *[
 				score = Sup
 			default:
 				score = Sleft
+				if endgapfree && i == lB {
+					_, l, o := decodeValues(Sleft)
+
+					if l > pend && o == false {
+						pend = l
+						end = j
+					}
+				}
 			}
 
 			// I supose the bug was here
@@ -331,10 +353,10 @@ func FastLCSEGFScoreByte(bA, bB []byte, maxError int, endgapfree bool, buffer *[
 	// // end OF DEBUG CODE //
 
 	if o {
-		return -1, -1
+		return -1, -1, -1
 	}
 
-	return s, l
+	return s, l, end
 }
 
 // FastLCSEGFScore calculates the score of the longest common subsequence between two bio sequences in end-gap-free mode.
@@ -356,7 +378,7 @@ func FastLCSEGFScoreByte(bA, bB []byte, maxError int, endgapfree bool, buffer *[
 // Returns:
 // - The score of the longest common subsequence.
 // - The length of the shortest alignment corresponding to the LCS.
-func FastLCSEGFScore(seqA, seqB *obiseq.BioSequence, maxError int, buffer *[]uint64) (int, int) {
+func FastLCSEGFScore(seqA, seqB *obiseq.BioSequence, maxError int, buffer *[]uint64) (int, int, int) {
 	return FastLCSEGFScoreByte(seqA.Sequence(), seqB.Sequence(), maxError, true, buffer)
 }
 
@@ -380,5 +402,7 @@ func FastLCSEGFScore(seqA, seqB *obiseq.BioSequence, maxError int, buffer *[]uin
 // - The score of the longest common subsequence.
 // - The length of the shortest alignment corresponding to the LCS.
 func FastLCSScore(seqA, seqB *obiseq.BioSequence, maxError int, buffer *[]uint64) (int, int) {
-	return FastLCSEGFScoreByte(seqA.Sequence(), seqB.Sequence(), maxError, false, buffer)
+	score, alilen, _ := FastLCSEGFScoreByte(seqA.Sequence(), seqB.Sequence(), maxError, false, buffer)
+
+	return score, alilen
 }

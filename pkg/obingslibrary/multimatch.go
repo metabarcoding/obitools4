@@ -110,6 +110,63 @@ func lookForTag(seq string, delimiter byte) string {
 	return seq[begin:end]
 }
 
+func lookForRescueTag(seq string, delimiter byte, taglength, border, indel int) string {
+	// log.Info("lookForRescueTag")
+
+	i := len(seq) - 1
+
+	// Skip the border part not corresponding to the tag delimiter
+	for i >= 0 && seq[i] != delimiter {
+		i--
+	}
+
+	delimlen := 0
+	for i >= 0 && seq[i] == delimiter {
+		i--
+		delimlen++
+	}
+
+	if obiutils.Abs(delimlen-border) > indel {
+		return ""
+	}
+
+	// log.Infof("delimlen: %d", delimlen)
+
+	end := i + 1
+
+	i -= taglength - indel
+
+	for i >= 0 && seq[i] != delimiter {
+		i--
+	}
+
+	delimlen = 0
+	for i >= 0 && seq[i] == delimiter {
+		i--
+		delimlen++
+	}
+
+	if obiutils.Abs(delimlen-border) > indel {
+		return ""
+	}
+
+	delimlen = min(delimlen, border)
+
+	// log.Infof("delimlen: %d", delimlen)
+
+	begin := i + delimlen + 1
+
+	if i < 0 || obiutils.Abs(taglength-end+begin) > indel {
+		return ""
+	}
+
+	// log.Infof("begin: %d, end: %d", begin, end)
+	// log.Infof("seq: %s", seq)
+	// log.Infof("seq[begin:end]: %s", seq[begin:end])
+
+	return seq[begin:end]
+}
+
 func (marker *Marker) beginDelimitedTagExtractor(
 	sequence *obiseq.BioSequence,
 	begin int,
@@ -129,6 +186,33 @@ func (marker *Marker) beginDelimitedTagExtractor(
 	}
 
 	return lookForTag(sequence.String()[fb:begin], delimiter)
+}
+
+func (marker *Marker) beginRescueTagExtractor(
+	sequence *obiseq.BioSequence,
+	begin int,
+	forward bool) string {
+
+	delimiter := marker.Forward_tag_delimiter
+	border := marker.Forward_spacer
+	taglength := marker.Forward_tag_length
+	delta := marker.Forward_tag_indels
+
+	if !forward {
+		taglength = marker.Reverse_tag_length
+		border = marker.Reverse_spacer
+		delimiter = marker.Reverse_tag_delimiter
+		delta = marker.Reverse_tag_indels
+	}
+
+	frglength := border + taglength
+
+	fb := begin - frglength*2
+	if fb < 0 {
+		fb = 0
+	}
+
+	return lookForRescueTag(sequence.String()[fb:begin], delimiter, taglength, border, delta)
 }
 
 func (marker *Marker) beginFixedTagExtractor(
@@ -183,6 +267,43 @@ func (marker *Marker) endDelimitedTagExtractor(
 	return lookForTag(tag_seq.ReverseComplement(true).String(), delimiter)
 }
 
+func (marker *Marker) endRescueTagExtractor(
+	sequence *obiseq.BioSequence,
+	end int,
+	forward bool) string {
+
+	delimiter := marker.Reverse_tag_delimiter
+	border := marker.Reverse_spacer
+	taglength := marker.Reverse_tag_length
+	delta := marker.Reverse_tag_indels
+
+	if !forward {
+		taglength = marker.Forward_tag_length
+		border = marker.Forward_spacer
+		delimiter = marker.Forward_tag_delimiter
+		delta = marker.Forward_tag_indels
+	}
+
+	frglength := border + taglength
+
+	fb := end + frglength*2
+
+	if fb > sequence.Len() {
+		fb = sequence.Len()
+	}
+
+	if end >= fb {
+		return ""
+	}
+
+	tag_seq, err := sequence.Subsequence(end, fb, false)
+
+	if err != nil {
+		log.Fatalf("Cannot extract sequence tag : %v", err)
+	}
+
+	return lookForRescueTag(tag_seq.ReverseComplement(true).String(), delimiter, taglength, border, delta)
+}
 func (marker *Marker) endFixedTagExtractor(
 	sequence *obiseq.BioSequence,
 	end int,
@@ -218,13 +339,23 @@ func (marker *Marker) beginTagExtractor(
 		if marker.Forward_tag_delimiter == 0 {
 			return marker.beginFixedTagExtractor(sequence, begin, forward)
 		} else {
-			return marker.beginDelimitedTagExtractor(sequence, begin, forward)
+			if marker.Forward_tag_indels == 0 {
+				return marker.beginDelimitedTagExtractor(sequence, begin, forward)
+			} else {
+				// log.Warn("Rescue tag for forward primers")
+				return marker.beginRescueTagExtractor(sequence, begin, forward)
+			}
 		}
 	} else {
 		if marker.Reverse_tag_delimiter == 0 {
 			return marker.beginFixedTagExtractor(sequence, begin, forward)
 		} else {
-			return marker.beginDelimitedTagExtractor(sequence, begin, forward)
+			if marker.Reverse_tag_indels == 0 {
+				return marker.beginDelimitedTagExtractor(sequence, begin, forward)
+			} else {
+				// log.Warn("Rescue tag for reverse/complement primers")
+				return marker.beginRescueTagExtractor(sequence, begin, forward)
+			}
 		}
 	}
 }
@@ -237,13 +368,23 @@ func (marker *Marker) endTagExtractor(
 		if marker.Reverse_tag_delimiter == 0 {
 			return marker.endFixedTagExtractor(sequence, end, forward)
 		} else {
-			return marker.endDelimitedTagExtractor(sequence, end, forward)
+			if marker.Reverse_tag_indels == 0 {
+				return marker.endDelimitedTagExtractor(sequence, end, forward)
+			} else {
+				// log.Warn("Rescue tag for reverse primers")
+				return marker.endRescueTagExtractor(sequence, end, forward)
+			}
 		}
 	} else {
 		if marker.Forward_tag_delimiter == 0 {
 			return marker.endFixedTagExtractor(sequence, end, forward)
 		} else {
-			return marker.endDelimitedTagExtractor(sequence, end, forward)
+			if marker.Forward_tag_indels == 0 {
+				return marker.endDelimitedTagExtractor(sequence, end, forward)
+			} else {
+				// log.Warn("Rescue tag for forward/complement primers")
+				return marker.endRescueTagExtractor(sequence, end, forward)
+			}
 		}
 	}
 }
@@ -263,6 +404,10 @@ func (library *NGSLibrary) TagExtractor(
 
 	forward_tag := marker.beginTagExtractor(sequence, begin, forward)
 	reverse_tag := marker.endTagExtractor(sequence, end, forward)
+
+	if !forward {
+		forward_tag, reverse_tag = reverse_tag, forward_tag
+	}
 
 	if forward_tag != "" {
 		annotations["obimultiplex_forward_tag"] = forward_tag
@@ -347,14 +492,12 @@ func (library *NGSLibrary) SampleIdentifier(
 		case "hamming":
 			forward, fdistance = marker.ClosestForwardTag(tags.Forward, Hamming)
 			annotations["obimultiplex_forward_matching"] = "hamming"
-			annotations["obimultiplex_forward_tag_dist"] = fdistance
-			annotations["obimultiplex_forward_proposed_tag"] = forward
 		case "indel":
 			forward, fdistance = marker.ClosestForwardTag(tags.Forward, Levenshtein)
 			annotations["obimultiplex_forward_matching"] = "indel"
-			annotations["obimultiplex_forward_tag_dist"] = fdistance
-			annotations["obimultiplex_forward_proposed_tag"] = forward
 		}
+		annotations["obimultiplex_forward_tag_dist"] = fdistance
+		annotations["obimultiplex_forward_proposed_tag"] = forward
 	}
 
 	if tags.Reverse != "" {
@@ -366,14 +509,12 @@ func (library *NGSLibrary) SampleIdentifier(
 		case "hamming":
 			reverse, rdistance = marker.ClosestReverseTag(tags.Reverse, Hamming)
 			annotations["obimultiplex_reverse_matching"] = "hamming"
-			annotations["obimultiplex_reverse_tag_dist"] = rdistance
-			annotations["obimultiplex_reverse_proposed_tag"] = reverse
 		case "indel":
 			reverse, rdistance = marker.ClosestReverseTag(tags.Reverse, Levenshtein)
 			annotations["obimultiplex_reverse_matching"] = "indel"
-			annotations["obimultiplex_reverse_tag_dist"] = rdistance
-			annotations["obimultiplex_reverse_proposed_tag"] = reverse
 		}
+		annotations["obimultiplex_reverse_tag_dist"] = rdistance
+		annotations["obimultiplex_reverse_proposed_tag"] = reverse
 	}
 
 	proposed := TagPair{forward, reverse}
@@ -492,18 +633,22 @@ func (library *NGSLibrary) ExtractMultiBarcode(sequence *obiseq.BioSequence) (ob
 					annotations["obimultiplex_reverse_primer"] = primerseqs[from.Marker].Reverse
 
 					if from.Forward {
+						// With have a barcode in the orientation from the forward primer to the reverse
+
+						// Try to extract the forward primer match
 						if from.Begin < 0 || from.End > sequence.Len() {
 							barcode_error = true
-							annotations["obimultiplex_error"] = "Cannot extract forward match"
+							annotations["obimultiplex_error"] = "Cannot extract forward primer match"
 						} else {
 							annotations["obimultiplex_forward_match"] = sequence.String()[from.Begin:from.End]
 						}
 
+						// Try to extract the reverse primer match
 						sseq, err := sequence.Subsequence(match.Begin, match.End, false)
 
 						if err != nil {
 							barcode_error = true
-							annotations["obimultiplex_error"] = "Cannot extract reverse match"
+							annotations["obimultiplex_error"] = "Cannot extract reverse primer match"
 						} else {
 							annotations["obimultiplex_reverse_match"] = sseq.ReverseComplement(true).String()
 						}
@@ -511,18 +656,22 @@ func (library *NGSLibrary) ExtractMultiBarcode(sequence *obiseq.BioSequence) (ob
 						annotations["obimultiplex_forward_error"] = from.Mismatches
 						annotations["obimultiplex_reverse_error"] = match.Mismatches
 					} else {
+						// With have a barcode in the orientation from the reverse primer to the forward
+
+						// Try to extract the reverse primer match
 						if from.Begin < 0 || from.End > sequence.Len() {
 							barcode_error = true
-							annotations["obimultiplex_error"] = "Cannot extract reverse match"
+							annotations["obimultiplex_error"] = "Cannot extract reverse primer match"
 						} else {
 							annotations["obimultiplex_reverse_match"] = sequence.String()[from.Begin:from.End]
 						}
 
+						// Try to extract the forward primer match
 						sseq, err := sequence.Subsequence(match.Begin, match.End, false)
 
 						if err != nil {
 							barcode_error = true
-							annotations["obimultiplex_error"] = "Cannot extract forward match"
+							annotations["obimultiplex_error"] = "Cannot extract forward primer match"
 						} else {
 							annotations["obimultiplex_forward_match"] = sseq.ReverseComplement(true).String()
 						}
@@ -531,6 +680,7 @@ func (library *NGSLibrary) ExtractMultiBarcode(sequence *obiseq.BioSequence) (ob
 						annotations["obimultiplex_forward_error"] = match.Mismatches
 					}
 
+					// if we were  able to extract the primer matches we can extract the barcode
 					if !barcode_error {
 						tags := library.TagExtractor(sequence, annotations, primerseqs[from.Marker], from.Begin, match.End, from.Forward)
 
@@ -539,6 +689,8 @@ func (library *NGSLibrary) ExtractMultiBarcode(sequence *obiseq.BioSequence) (ob
 						if err != nil {
 							return nil, fmt.Errorf("%s [%s] : Cannot extract barcode %d : %v", sequence.Id(), sequence.Source(), q, err)
 						}
+
+						annotations["obimultiplex_direction"] = map[bool]string{true: "forward", false: "reverse"}[from.Forward]
 
 						if !match.Forward {
 							barcode = barcode.ReverseComplement(true)

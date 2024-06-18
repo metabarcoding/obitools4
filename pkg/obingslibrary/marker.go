@@ -27,6 +27,8 @@ type Marker struct {
 	Reverse_matching      string
 	Forward_tag_delimiter byte
 	Reverse_tag_delimiter byte
+	Forward_tag_indels    int
+	Reverse_tag_indels    int
 	samples               map[TagPair]*PCR
 }
 
@@ -333,6 +335,19 @@ func (marker *Marker) SetReverseTagDelimiter(delim byte) {
 func (marker *Marker) SetTagDelimiter(delim byte) {
 	marker.SetForwardTagDelimiter(delim)
 	marker.SetReverseTagDelimiter(delim)
+}
+
+func (marker *Marker) SetForwardTagIndels(indels int) {
+	marker.Forward_tag_indels = indels
+}
+
+func (marker *Marker) SetReverseTagIndels(indels int) {
+	marker.Reverse_tag_indels = indels
+}
+
+func (marker *Marker) SetTagIndels(indels int) {
+	marker.SetForwardTagIndels(indels)
+	marker.SetReverseTagIndels(indels)
 }
 
 func (marker *Marker) SetForwardAllowedMismatches(allowed_mismatches int) {

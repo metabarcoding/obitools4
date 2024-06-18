@@ -57,6 +57,8 @@ func (library *NGSLibrary) GetMarker(forward, reverse string) (*Marker, bool) {
 		Reverse_matching:      "strict",
 		Forward_allows_indels: false,
 		Reverse_allows_indels: false,
+		Forward_tag_indels:    0,
+		Reverse_tag_indels:    0,
 		samples:               make(map[TagPair]*PCR, 1000),
 	}
 
@@ -117,6 +119,40 @@ func (library *NGSLibrary) SetTagSpacerFor(primer string, spacer int) {
 				marker.SetForwardTagSpacer(spacer)
 			} else {
 				marker.SetReverseTagSpacer(spacer)
+			}
+		}
+	}
+}
+
+func (library *NGSLibrary) SetForwardTagIndels(indels int) {
+	for _, marker := range library.Markers {
+		marker.SetForwardTagIndels(indels)
+	}
+}
+
+func (library *NGSLibrary) SetReverseTagIndels(indels int) {
+	for _, marker := range library.Markers {
+		marker.SetReverseTagIndels(indels)
+	}
+}
+
+func (library *NGSLibrary) SetTagIndels(indels int) {
+	library.SetForwardTagIndels(indels)
+	library.SetReverseTagIndels(indels)
+}
+
+func (library *NGSLibrary) SetTagIndelsFor(primer string, indels int) {
+	primer = strings.ToLower(primer)
+	primers, ok := library.Primers[primer]
+
+	if ok {
+		marker, ok := library.Markers[primers]
+
+		if ok {
+			if primer == primers.Forward {
+				marker.SetForwardTagIndels(indels)
+			} else {
+				marker.SetReverseTagIndels(indels)
 			}
 		}
 	}
