@@ -108,6 +108,8 @@ func BuildConsensus(seqs obiseq.BioSequenceSlice,
 			sumCount += s.Count()
 		}
 
+		log.Warnf("sumCount : %d", sumCount)
+
 		seq.SetCount(sumCount)
 		seq.SetAttribute("seq_length", seq.Len())
 		seq.SetAttribute("kmer_size", kmer_size)
@@ -288,7 +290,7 @@ func MinionDenoise(graph *obigraph.Graph[*obiseq.BioSequence, Mutation],
 			clean.SetAttribute("obiminion_consensus", false)
 		}
 
-		clean.SetCount(int(graph.VertexWeight(i)))
+		// clean.SetCount(int(graph.VertexWeight(i)))
 		clean.SetAttribute(sample_key, graph.Name)
 
 		denoised[i] = clean
