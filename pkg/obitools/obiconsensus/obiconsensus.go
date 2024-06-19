@@ -108,14 +108,12 @@ func BuildConsensus(seqs obiseq.BioSequenceSlice,
 			sumCount += s.Count()
 		}
 
-		log.Warnf("sumCount : %d", sumCount)
-
-		seq.SetCount(sumCount)
-		seq.SetAttribute("seq_length", seq.Len())
-		seq.SetAttribute("kmer_size", kmer_size)
-		seq.SetAttribute("kmer_max_occur", graph.MaxWeight())
-		seq.SetAttribute("filtered_graph_size", graph.Len())
-		seq.SetAttribute("full_graph_size", total_kmer)
+		seq.SetAttribute("obiconsensus_weight", sumCount)
+		seq.SetAttribute("obiconsensus_seq_length", seq.Len())
+		seq.SetAttribute("obiconsensus_kmer_size", kmer_size)
+		seq.SetAttribute("obiconsensus_kmer_max_occur", graph.MaxWeight())
+		seq.SetAttribute("obiconsensus_filtered_graph_size", graph.Len())
+		seq.SetAttribute("obiconsensus_full_graph_size", total_kmer)
 	}
 	return seq, err
 }
@@ -280,18 +278,22 @@ func MinionDenoise(graph *obigraph.Graph[*obiseq.BioSequence, Mutation],
 			if err != nil {
 				log.Warning(err)
 				clean = (*graph.Vertices)[i]
-				clean.SetAttribute("obiminion_consensus", false)
+				clean.SetAttribute("obiconsensus_consensus", false)
 			} else {
-				clean.SetAttribute("obiminion_consensus", true)
+				clean.SetAttribute("obiconsensus_consensus", true)
 			}
 			pack.Recycle(false)
 		} else {
 			clean = obiseq.NewBioSequence(v.Id(), v.Sequence(), v.Definition())
-			clean.SetAttribute("obiminion_consensus", false)
+			clean.SetAttribute("obiconsensus_consensus", false)
 		}
 
-		// clean.SetCount(int(graph.VertexWeight(i)))
+		clean.SetCount(int(graph.VertexWeight(i)))
 		clean.SetAttribute(sample_key, graph.Name)
+
+		if !clean.HasAttribute("obiconsensus_weight") {
+			clean.SetAttribute("obiconsensus_weight", int(1))
+		}
 
 		denoised[i] = clean
 	}
@@ -376,6 +378,7 @@ func CLIOBIMinion(itertator obiiter.IBioSequence) obiiter.IBioSequence {
 	}()
 
 	obiuniq.AddStatsOn(CLISampleAttribute())
+	obiuniq.AddStatsOn("obiconsensus_weight")
 	obiuniq.SetUniqueInMemory(false)
 	obiuniq.SetNoSingleton(CLINoSingleton())
 	return obiuniq.CLIUnique(newIter).Pipe(obiiter.WorkerPipe(obiannotate.AddSeqLengthWorker(), false))

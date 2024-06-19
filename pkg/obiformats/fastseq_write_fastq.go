@@ -32,17 +32,31 @@ func FormatFastq(seq *obiseq.BioSequence, formater FormatHeader) string {
 		q,
 	)
 
+	if f[0] != '@' {
+		log.Panicln("FormatFastq: FASTQ format error")
+	}
+
 	return f
 }
 
 func FormatFastqBatch(batch obiiter.BioSequenceBatch,
 	formater FormatHeader, skipEmpty bool) []byte {
 	var bs bytes.Buffer
+
 	for _, seq := range batch.Slice() {
 		if seq.Len() > 0 {
 			fs := FormatFastq(seq, formater)
-			bs.WriteString(fs)
+			lb := bs.Len()
+			n, _ := bs.WriteString(fs)
+
+			if n < len(fs) {
+				log.Panicln("FormatFastqBatch: Cannot write all FASTQ sequences")
+			}
 			bs.WriteString("\n")
+
+			if bs.Len()-lb < len(fs)+1 {
+				log.Panicln("FormatFastqBatch: Cannot write all FASTQ sequences correctly")
+			}
 		} else {
 			if skipEmpty {
 				log.Warnf("Sequence %s is empty and skiped in output", seq.Id())
@@ -53,7 +67,15 @@ func FormatFastqBatch(batch obiiter.BioSequenceBatch,
 
 	}
 
-	return bs.Bytes()
+	chunk := bs.Bytes()
+
+	chunk = chunk[:bs.Len()]
+
+	if chunk[0] != '@' {
+		log.Panicln("FormatFastqBatch: FASTQ format error")
+	}
+
+	return chunk
 }
 
 type FileChunck struct {
@@ -118,16 +140,25 @@ func WriteFastq(iterator obiiter.IBioSequence,
 	go func() {
 		for chunk := range chunkchan {
 			if chunk.order == next_to_send {
+				if chunk.text[0] != '@' {
+					log.Panicln("WriteFastq: FASTQ format error")
+				}
 				file.Write(chunk.text)
 				next_to_send++
 				chunk, ok := received[next_to_send]
 				for ok {
+					if chunk.text[0] != '@' {
+						log.Panicln("WriteFastq: FASTQ format error")
+					}
 					file.Write(chunk.text)
 					delete(received, next_to_send)
 					next_to_send++
 					chunk, ok = received[next_to_send]
 				}
 			} else {
+				if _, ok := received[chunk.order]; ok {
+					log.Panicln("WriteFastq: Two chunks with the same number")
+				}
 				received[chunk.order] = chunk
 			}
 
@@ -158,7 +189,10 @@ func WriteFastqToFile(iterator obiiter.IBioSequence,
 
 	if opt.AppendFile() {
 		flags |= os.O_APPEND
+	} else {
+		flags |= os.O_TRUNC
 	}
+
 	file, err := os.OpenFile(filename, flags, 0660)
 
 	if err != nil {

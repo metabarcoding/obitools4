@@ -58,7 +58,10 @@ func WriteSequencesToFile(iterator obiiter.IBioSequence,
 
 	if opt.AppendFile() {
 		flags |= os.O_APPEND
+	} else {
+		flags |= os.O_TRUNC
 	}
+
 	file, err := os.OpenFile(filename, flags, 0660)
 
 	if err != nil {

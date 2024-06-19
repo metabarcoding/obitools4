@@ -2,6 +2,7 @@ package obiseq
 
 import (
 	"fmt"
+	"math"
 	"reflect"
 	"strings"
 
@@ -120,8 +121,14 @@ func (sequence *BioSequence) StatsPlusOne(key string, toAdd *BioSequence, na str
 				uint8, uint16, uint32, uint64,
 				int8, int16, int32, int64, bool:
 				sval = fmt.Sprint(value)
+			case float64:
+				if math.Floor(value) == value {
+					sval = fmt.Sprint(int(value))
+				} else {
+					log.Fatalf("Trying to make stats on a float value (%v : %T)", value, value)
+				}
 			default:
-				log.Fatalf("Trying to make stats on a none string, integer or boolean value (%v)", value)
+				log.Fatalf("Trying to make stats on a none string, integer or boolean value (%v : %T)", value, value)
 			}
 			retval = true
 		}

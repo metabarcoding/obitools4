@@ -112,6 +112,7 @@ func lookForTag(seq string, delimiter byte) string {
 
 func lookForRescueTag(seq string, delimiter byte, taglength, border, indel int) string {
 	// log.Info("lookForRescueTag")
+	// log.Infof("seq: %s", seq)
 
 	i := len(seq) - 1
 
@@ -126,8 +127,12 @@ func lookForRescueTag(seq string, delimiter byte, taglength, border, indel int) 
 		delimlen++
 	}
 
-	if obiutils.Abs(delimlen-border) > indel {
+	if (border - delimlen) > indel {
 		return ""
+	}
+
+	if delimlen > border {
+		i += delimlen - border
 	}
 
 	// log.Infof("delimlen: %d", delimlen)
@@ -146,10 +151,6 @@ func lookForRescueTag(seq string, delimiter byte, taglength, border, indel int) 
 		delimlen++
 	}
 
-	if obiutils.Abs(delimlen-border) > indel {
-		return ""
-	}
-
 	delimlen = min(delimlen, border)
 
 	// log.Infof("delimlen: %d", delimlen)
@@ -161,7 +162,6 @@ func lookForRescueTag(seq string, delimiter byte, taglength, border, indel int) 
 	}
 
 	// log.Infof("begin: %d, end: %d", begin, end)
-	// log.Infof("seq: %s", seq)
 	// log.Infof("seq[begin:end]: %s", seq[begin:end])
 
 	return seq[begin:end]
