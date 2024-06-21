@@ -129,7 +129,7 @@ func SampleWeight(seqs *obiseq.BioSequenceSlice, sample, sample_key string) func
 
 	f := func(i int) float64 {
 
-		stats := (*seqs)[i].StatsOn(sample_key, "NA")
+		stats := (*seqs)[i].StatsOn(obiseq.MakeStatsOnDescription(sample_key), "NA")
 
 		if value, ok := stats[sample]; ok {
 			return float64(value)
@@ -155,7 +155,7 @@ func SeqBySamples(seqs obiseq.BioSequenceSlice, sample_key string) map[string]*o
 
 	for _, s := range seqs {
 		if s.HasStatsOn(sample_key) {
-			stats := s.StatsOn(sample_key, "NA")
+			stats := s.StatsOn(obiseq.MakeStatsOnDescription(sample_key), "NA")
 			for k := range stats {
 				if seqset, ok := samples[k]; ok {
 					*seqset = append(*seqset, s)
@@ -378,7 +378,7 @@ func CLIOBIMinion(itertator obiiter.IBioSequence) obiiter.IBioSequence {
 	}()
 
 	obiuniq.AddStatsOn(CLISampleAttribute())
-	obiuniq.AddStatsOn("obiconsensus_weight")
+	obiuniq.AddStatsOn("sample:obiconsensus_weight")
 	obiuniq.SetUniqueInMemory(false)
 	obiuniq.SetNoSingleton(CLINoSingleton())
 	return obiuniq.CLIUnique(newIter).Pipe(obiiter.WorkerPipe(obiannotate.AddSeqLengthWorker(), false))

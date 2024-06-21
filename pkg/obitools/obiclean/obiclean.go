@@ -34,7 +34,7 @@ func buildSamples(dataset obiseq.BioSequenceSlice,
 	samples := make(map[string]*([]*seqPCR))
 
 	for _, s := range dataset {
-		stats := s.StatsOn(tag, NAValue)
+		stats := s.StatsOn(obiseq.MakeStatsOnDescription(tag), NAValue)
 
 		for k, v := range stats {
 			pcr, ok := samples[k]

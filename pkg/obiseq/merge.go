@@ -11,6 +11,43 @@ import (
 )
 
 type StatsOnValues map[string]int
+type StatsOnWeights func(sequence *BioSequence) int
+type StatsOnDescription struct {
+	Name   string
+	Key    string
+	Weight StatsOnWeights
+}
+type StatsOnDescriptions map[string]StatsOnDescription
+
+func BioseqCount(sequence *BioSequence) int {
+	return sequence.Count()
+}
+
+func MakeStatsOnDescription(descriptor string) StatsOnDescription {
+	parts := strings.SplitN(descriptor, ":", 2)
+	var ff StatsOnWeights
+	switch len(parts) {
+	case 1:
+		ff = func(s *BioSequence) int {
+			return s.Count()
+		}
+
+	case 2:
+		ff = func(s *BioSequence) int {
+			v, ok := s.GetIntAttribute(parts[1])
+			if !ok {
+				return 0
+			}
+			return v
+		}
+	}
+
+	return StatsOnDescription{
+		Name:   descriptor,
+		Key:    parts[0],
+		Weight: ff,
+	}
+}
 
 // StatsOnSlotName returns the name of the slot that summarizes statistics of occurrence for a given attribute.
 //
@@ -50,8 +87,8 @@ func (sequence *BioSequence) HasStatsOn(key string) bool {
 //
 // Return type:
 // - StatsOnValues
-func (sequence *BioSequence) StatsOn(key string, na string) StatsOnValues {
-	mkey := StatsOnSlotName(key)
+func (sequence *BioSequence) StatsOn(desc StatsOnDescription, na string) StatsOnValues {
+	mkey := StatsOnSlotName(desc.Name)
 	annotations := sequence.Annotations()
 	istat, ok := annotations[mkey]
 
@@ -88,8 +125,8 @@ func (sequence *BioSequence) StatsOn(key string, na string) StatsOnValues {
 		newstat = true
 	}
 
-	if newstat && sequence.StatsPlusOne(key, sequence, na) {
-		delete(sequence.Annotations(), key)
+	if newstat && sequence.StatsPlusOne(desc, sequence, na) {
+		delete(sequence.Annotations(), desc.Key)
 	}
 
 	return stats
@@ -103,14 +140,14 @@ func (sequence *BioSequence) StatsOn(key string, na string) StatsOnValues {
 // - na: the value to be used if the attribute is not present
 // Return type:
 // - bool
-func (sequence *BioSequence) StatsPlusOne(key string, toAdd *BioSequence, na string) bool {
+func (sequence *BioSequence) StatsPlusOne(desc StatsOnDescription, toAdd *BioSequence, na string) bool {
 	sval := na
 	annotations := sequence.Annotations()
-	stats := sequence.StatsOn(key, na)
+	stats := sequence.StatsOn(desc, na)
 	retval := false
 
 	if toAdd.HasAnnotation() {
-		value, ok := toAdd.Annotations()[key]
+		value, ok := toAdd.Annotations()[desc.Key]
 
 		if ok {
 
@@ -139,8 +176,8 @@ func (sequence *BioSequence) StatsPlusOne(key string, toAdd *BioSequence, na str
 	if !ok {
 		old = 0
 	}
-	stats[sval] = old + toAdd.Count()
-	annotations[StatsOnSlotName(key)] = stats // TODO: check if this is necessary
+	stats[sval] = old + desc.Weight(toAdd)
+	annotations[StatsOnSlotName(desc.Name)] = stats // TODO: check if this is necessary
 	return retval
 }
 
@@ -170,7 +207,7 @@ func (stats StatsOnValues) Merge(toMerged StatsOnValues) StatsOnValues {
 //
 // Return type:
 // - *BioSequence: the merged sequence (BioSequence)
-func (sequence *BioSequence) Merge(tomerge *BioSequence, na string, inplace bool, statsOn ...string) *BioSequence {
+func (sequence *BioSequence) Merge(tomerge *BioSequence, na string, inplace bool, statsOn StatsOnDescriptions) *BioSequence {
 	if !inplace {
 		sequence = sequence.Copy()
 	}
@@ -183,14 +220,14 @@ func (sequence *BioSequence) Merge(tomerge *BioSequence, na string, inplace bool
 
 	count := sequence.Count() + tomerge.Count()
 
-	for _, key := range statsOn {
+	for key, desc := range statsOn {
 		if tomerge.HasStatsOn(key) {
-			smk := sequence.StatsOn(key, na)
-			mmk := tomerge.StatsOn(key, na)
+			smk := sequence.StatsOn(desc, na)
+			mmk := tomerge.StatsOn(desc, na)
 
 			annotations[StatsOnSlotName(key)] = smk.Merge(mmk)
 		} else {
-			sequence.StatsPlusOne(key, tomerge, na)
+			sequence.StatsPlusOne(desc, tomerge, na)
 		}
 	}
 
@@ -237,19 +274,19 @@ func (sequence *BioSequence) Merge(tomerge *BioSequence, na string, inplace bool
 //
 // Return type:
 // - *BioSequence: the merged sequence (BioSequence)
-func (sequences BioSequenceSlice) Merge(na string, statsOn []string) *BioSequence {
+func (sequences BioSequenceSlice) Merge(na string, statsOn StatsOnDescriptions) *BioSequence {
 	seq := sequences[0]
 	//sequences[0] = nil
 	seq.SetQualities(nil)
 
 	if len(sequences) == 1 {
 		seq.Annotations()["count"] = seq.Count()
-		for _, v := range statsOn {
-			seq.StatsOn(v, na)
+		for _, desc := range statsOn {
+			seq.StatsOn(desc, na)
 		}
 	} else {
 		for k, toMerge := range sequences[1:] {
-			seq.Merge(toMerge, na, true, statsOn...)
+			seq.Merge(toMerge, na, true, statsOn)
 			toMerge.Recycle()
 			sequences[1+k] = nil
 		}

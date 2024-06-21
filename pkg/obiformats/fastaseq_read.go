@@ -50,13 +50,12 @@ func _ParseFastaFile(source string,
 	var identifier string
 	var definition string
 
-	state := 0
-
-	idBytes := new(bytes.Buffer)
-	defBytes := new(bytes.Buffer)
-	seqBytes := new(bytes.Buffer)
+	idBytes := bytes.Buffer{}
+	defBytes := bytes.Buffer{}
+	seqBytes := bytes.Buffer{}
 
 	for chunks := range input {
+		state := 0
 		scanner := bufio.NewReader(chunks.raw)
 		start, _ := scanner.Peek(20)
 		if start[0] != '>' {

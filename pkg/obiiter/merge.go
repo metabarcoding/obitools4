@@ -2,7 +2,7 @@ package obiiter
 
 import "git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 
-func (iterator IBioSequence) IMergeSequenceBatch(na string, statsOn []string, sizes ...int) IBioSequence {
+func (iterator IBioSequence) IMergeSequenceBatch(na string, statsOn obiseq.StatsOnDescriptions, sizes ...int) IBioSequence {
 	batchsize := 100
 
 	if len(sizes) > 0 {
@@ -36,7 +36,7 @@ func (iterator IBioSequence) IMergeSequenceBatch(na string, statsOn []string, si
 	return newIter
 }
 
-func MergePipe(na string, statsOn []string, sizes ...int) Pipeable {
+func MergePipe(na string, statsOn obiseq.StatsOnDescriptions, sizes ...int) Pipeable {
 	f := func(iterator IBioSequence) IBioSequence {
 		return iterator.IMergeSequenceBatch(na, statsOn, sizes...)
 	}

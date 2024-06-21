@@ -129,14 +129,13 @@ func _ParseFastqFile(source string,
 	var identifier string
 	var definition string
 
-	state := 0
-
-	idBytes := new(bytes.Buffer)
-	defBytes := new(bytes.Buffer)
-	qualBytes := new(bytes.Buffer)
-	seqBytes := new(bytes.Buffer)
+	idBytes := bytes.Buffer{}
+	defBytes := bytes.Buffer{}
+	qualBytes := bytes.Buffer{}
+	seqBytes := bytes.Buffer{}
 
 	for chunks := range input {
+		state := 0
 		scanner := bufio.NewReader(chunks.raw)
 		sequences := make(obiseq.BioSequenceSlice, 0, 100)
 		previous := byte(0)
@@ -257,7 +256,7 @@ func _ParseFastqFile(source string,
 				}
 			case 10:
 				if is_end_of_line {
-					_storeSequenceQuality(qualBytes, sequences[len(sequences)-1], quality_shift)
+					_storeSequenceQuality(&qualBytes, sequences[len(sequences)-1], quality_shift)
 
 					if no_order {
 						if len(sequences) == batch_size {
@@ -286,7 +285,7 @@ func _ParseFastqFile(source string,
 
 		if len(sequences) > 0 {
 			if state == 10 {
-				_storeSequenceQuality(qualBytes, sequences[len(sequences)-1], quality_shift)
+				_storeSequenceQuality(&qualBytes, sequences[len(sequences)-1], quality_shift)
 				state = 1
 			}
 

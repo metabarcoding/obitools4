@@ -43,7 +43,7 @@ func (t1 *TaxNode) LCA(t2 *TaxNode) (*TaxNode, error) {
 }
 
 func (taxonomy *Taxonomy) TaxonomicDistribution(sequence *obiseq.BioSequence) map[*TaxNode]int {
-	taxids := sequence.StatsOn("taxid", "na")
+	taxids := sequence.StatsOn(obiseq.MakeStatsOnDescription("taxid"), "na")
 	taxons := make(map[*TaxNode]int, len(taxids))
 
 	for k, v := range taxids {

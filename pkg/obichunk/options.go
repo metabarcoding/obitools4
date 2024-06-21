@@ -1,9 +1,12 @@
 package obichunk
 
-import "git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
+import (
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
+)
 
 type __options__ struct {
-	statsOn         []string
+	statsOn         obiseq.StatsOnDescriptions
 	categories      []string
 	navalue         string
 	cacheOnDisk     bool
@@ -21,7 +24,7 @@ type WithOption func(Options)
 
 func MakeOptions(setters []WithOption) Options {
 	o := __options__{
-		statsOn:         make([]string, 0, 100),
+		statsOn:         make(obiseq.StatsOnDescriptions, 10),
 		categories:      make([]string, 0, 100),
 		navalue:         "NA",
 		cacheOnDisk:     false,
@@ -53,7 +56,7 @@ func (opt Options) PopCategories() string {
 	return ""
 }
 
-func (opt Options) StatsOn() []string {
+func (opt Options) StatsOn() obiseq.StatsOnDescriptions {
 	return opt.pointer.statsOn
 }
 
@@ -114,7 +117,10 @@ func OptionNAValue(na string) WithOption {
 
 func OptionStatOn(keys ...string) WithOption {
 	f := WithOption(func(opt Options) {
-		opt.pointer.statsOn = append(opt.pointer.categories, keys...)
+		for _, k := range keys {
+			d := obiseq.MakeStatsOnDescription(k)
+			opt.pointer.statsOn[d.Name] = d
+		}
 	})
 
 	return f
