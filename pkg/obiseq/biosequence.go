@@ -15,6 +15,7 @@ import (
 	"slices"
 	"sync"
 	"sync/atomic"
+	"unsafe"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
@@ -279,7 +280,8 @@ func (s *BioSequence) QualitiesString() string {
 	quality_shift := obioptions.OutputQualityShift()
 
 	qual := s.Qualities()
-	qual_ascii := GetSlice(len(qual))[0:len(qual)]
+	qual_ascii := make([]byte, len(qual))
+
 	for i := 0; i < len(qual); i++ {
 		quality := qual[i]
 		if quality > 93 {
@@ -287,8 +289,8 @@ func (s *BioSequence) QualitiesString() string {
 		}
 		qual_ascii[i] = quality + quality_shift
 	}
-	qual_sting := string(qual_ascii)
-	RecycleSlice(&qual_ascii)
+
+	qual_sting := unsafe.String(unsafe.SliceData(qual_ascii), len(qual))
 	return qual_sting
 }
 

@@ -1,15 +1,14 @@
 package obialign
 
+import "slices"
+
 func _Backtracking(pathMatrix []int, lseqA, lseqB int, path *[]int) []int {
 
 	needed := (lseqA + lseqB) * 2
-
-	if needed > cap(*path) {
-		*path = make([]int, 0, needed)
-	}
-
-	*path = (*path)[:cap(*path)]
+	(*path) = (*path)[:0]
+	(*path) = slices.Grow((*path), needed)
 	p := cap(*path)
+	*path = (*path)[:p]
 
 	i := lseqA - 1
 	j := lseqB - 1

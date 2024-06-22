@@ -81,11 +81,15 @@ func FormatFastaBatch(batch obiiter.BioSequenceBatch, formater FormatHeader, ski
 	var bs bytes.Buffer
 
 	// Iterate over each sequence in the batch
-	for _, seq := range batch.Slice() {
+	for i, seq := range batch.Slice() {
 		// Check if the sequence is empty
 		if seq.Len() > 0 {
 			// Format the sequence using the provided formater function
 			formattedSeq := FormatFasta(seq, formater)
+
+			if i == 0 {
+				bs.Grow(len(formattedSeq) * len(batch.Slice()) * 5 / 4)
+			}
 
 			// Append the formatted sequence to the buffer
 			bs.WriteString(formattedSeq)

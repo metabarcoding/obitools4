@@ -1,8 +1,10 @@
 package obiformats
 
 import (
+	"bytes"
 	"math"
 	"strings"
+	"unsafe"
 
 	log "github.com/sirupsen/logrus"
 
@@ -85,17 +87,26 @@ func ParseFastSeqJsonHeader(sequence *obiseq.BioSequence) {
 	}
 }
 
-func FormatFastSeqJsonHeader(sequence *obiseq.BioSequence) string {
+func WriteFastSeqJsonHeader(buffer *bytes.Buffer, sequence *obiseq.BioSequence) {
+
 	annotations := sequence.Annotations()
 
 	if len(annotations) > 0 {
-		text, err := obiutils.JsonMarshal(sequence.Annotations())
+		err := obiutils.JsonMarshalByteBuffer(buffer, sequence.Annotations())
 
 		if err != nil {
 			log.Fatal(err)
 		}
+	}
+}
 
-		return string(text)
+func FormatFastSeqJsonHeader(sequence *obiseq.BioSequence) string {
+	annotations := sequence.Annotations()
+	buffer := bytes.Buffer{}
+
+	if len(annotations) > 0 {
+		obiutils.JsonMarshalByteBuffer(&buffer, sequence.Annotations())
+		return unsafe.String(unsafe.SliceData(buffer.Bytes()), len(buffer.Bytes()))
 	}
 
 	return ""

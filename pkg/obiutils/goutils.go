@@ -363,6 +363,16 @@ func AtomicCounter(initial ...int) func() int {
 	return nextCounter
 }
 
+func JsonMarshalByteBuffer(buffer *bytes.Buffer, i interface{}) error {
+	encoder := json.NewEncoder(buffer)
+	encoder.SetEscapeHTML(false)
+	err := encoder.Encode(i)
+	b := buffer.Bytes()
+	b = bytes.TrimRight(b, "\n")
+	buffer.Truncate(len(b))
+	return err
+}
+
 // JsonMarshal marshals an interface into JSON format.
 //
 // JsonMarshal is a UTF-8 friendly marshaler.  Go's json.Marshal is not UTF-8
@@ -375,10 +385,8 @@ func AtomicCounter(initial ...int) func() int {
 // It takes an interface as a parameter and returns a byte slice and an error.
 func JsonMarshal(i interface{}) ([]byte, error) {
 	buffer := &bytes.Buffer{}
-	encoder := json.NewEncoder(buffer)
-	encoder.SetEscapeHTML(false)
-	err := encoder.Encode(i)
-	return bytes.TrimRight(buffer.Bytes(), "\n"), err
+	err := JsonMarshalByteBuffer(buffer, i)
+	return buffer.Bytes(), err
 }
 
 // IsAMap checks if the given value is a map.

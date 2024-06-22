@@ -2,7 +2,6 @@ package obiformats
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 	"os"
 	"sync"
@@ -15,39 +14,52 @@ import (
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 )
 
-// The function FormatFastq takes a BioSequence object, a quality shift value, and a header formatter
-// function as input, and returns a formatted string in FASTQ format.
-func FormatFastq(seq *obiseq.BioSequence, formater FormatHeader) string {
-
-	q := seq.QualitiesString()
+func _formatFastq(buff *bytes.Buffer, seq *obiseq.BioSequence, formater FormatHeader) {
 
 	info := ""
 	if formater != nil {
 		info = formater(seq)
 	}
 
-	f := fmt.Sprintf("@%s %s\n%s\n+\n%s",
-		seq.Id(), info,
-		seq.String(),
-		q,
-	)
+	buff.WriteByte('@')
+	buff.WriteString(seq.Id())
+	buff.WriteByte(' ')
 
-	if f[0] != '@' {
-		log.Panicln("FormatFastq: FASTQ format error")
-	}
+	buff.WriteString(info)
+	buff.WriteByte('\n')
 
-	return f
+	buff.Write(seq.Sequence())
+	buff.WriteString("\n+\n")
+
+	q := seq.QualitiesString()
+	buff.WriteString(q)
+	buff.WriteByte('\n')
+
+}
+
+// The function FormatFastq takes a BioSequence object, a quality shift value, and a header formatter
+// function as input, and returns a formatted string in FASTQ format.
+func FormatFastq(seq *obiseq.BioSequence, formater FormatHeader) string {
+
+	var buff bytes.Buffer
+
+	_formatFastq(&buff, seq, formater)
+
+	return buff.String()
 }
 
 func FormatFastqBatch(batch obiiter.BioSequenceBatch,
 	formater FormatHeader, skipEmpty bool) []byte {
 	var bs bytes.Buffer
 
-	for _, seq := range batch.Slice() {
+	for i, seq := range batch.Slice() {
 		if seq.Len() > 0 {
-			fs := FormatFastq(seq, formater)
-			bs.WriteString(fs)
-			bs.WriteString("\n")
+			_formatFastq(&bs, seq, formater)
+
+			if i == 0 {
+
+				bs.Grow(len(bs.Bytes()) * len(batch.Slice()) * 5 / 4)
+			}
 		} else {
 			if skipEmpty {
 				log.Warnf("Sequence %s is empty and skiped in output", seq.Id())

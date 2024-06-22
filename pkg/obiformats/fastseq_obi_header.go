@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"unsafe"
 
 	log "github.com/sirupsen/logrus"
 
@@ -298,17 +299,18 @@ func ParseFastSeqOBIHeader(sequence *obiseq.BioSequence) {
 	}
 }
 
-func FormatFastSeqOBIHeader(sequence *obiseq.BioSequence) string {
+func WriteFastSeqOBIHeade(buffer *bytes.Buffer, sequence *obiseq.BioSequence) {
+
 	annotations := sequence.Annotations()
 
-	if annotations != nil {
-		var text strings.Builder
+	if len(annotations) > 0 {
 
 		for key, value := range annotations {
 			if key != "definition" {
+
 				switch t := value.(type) {
 				case string:
-					text.WriteString(fmt.Sprintf("%s=%s; ", key, t))
+					buffer.WriteString(fmt.Sprintf("%s=%s; ", key, t))
 				case map[string]int,
 					map[string]string,
 					map[string]interface{},
@@ -318,16 +320,30 @@ func FormatFastSeqOBIHeader(sequence *obiseq.BioSequence) string {
 						log.Fatalf("Cannot convert %v value", value)
 					}
 					tv = bytes.ReplaceAll(tv, []byte(`"`), []byte("'"))
-					text.WriteString(fmt.Sprintf("%s=", key))
-					text.Write(tv)
-					text.WriteString("; ")
+					buffer.WriteString(fmt.Sprintf("%s=", key))
+					buffer.Write(tv)
+					buffer.WriteString("; ")
 				default:
-					text.WriteString(fmt.Sprintf("%s=%v; ", key, value))
+					buffer.WriteString(fmt.Sprintf("%s=%v; ", key, value))
 				}
 			}
 		}
 
-		return text.String() + " " + sequence.Definition()
+		if sequence.HasDefinition() {
+			buffer.WriteByte(' ')
+			buffer.WriteString(sequence.Definition())
+		}
+	}
+
+}
+
+func FormatFastSeqOBIHeader(sequence *obiseq.BioSequence) string {
+	annotations := sequence.Annotations()
+
+	if annotations != nil {
+		var text bytes.Buffer
+		WriteFastSeqOBIHeade(&text, sequence)
+		return unsafe.String(unsafe.SliceData(text.Bytes()), len(text.String()))
 	}
 
 	return ""
