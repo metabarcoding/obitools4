@@ -1,8 +1,6 @@
 package obialign
 
 import (
-	log "github.com/sirupsen/logrus"
-
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obikmer"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 )
@@ -319,7 +317,6 @@ func PELeftAlign(seqA, seqB *obiseq.BioSequence, gap, scale float64,
 	arena PEAlignArena) (int, []int) {
 
 	if !_InitializedDnaScore {
-		log.Println("Initializing the DNA Scoring matrix")
 		_InitDNAScoreMatrix()
 	}
 
@@ -332,18 +329,17 @@ func PELeftAlign(seqA, seqB *obiseq.BioSequence, gap, scale float64,
 		&arena.pointer.scoreMatrix,
 		&arena.pointer.pathMatrix)
 
-	arena.pointer.path = _Backtracking(arena.pointer.pathMatrix,
+	path := _Backtracking(arena.pointer.pathMatrix,
 		seqA.Len(), seqB.Len(),
 		&arena.pointer.path)
 
-	return score, arena.pointer.path
+	return score, path
 }
 
 func PERightAlign(seqA, seqB *obiseq.BioSequence, gap, scale float64,
 	arena PEAlignArena) (int, []int) {
 
 	if !_InitializedDnaScore {
-		log.Println("Initializing the DNA Scoring matrix")
 		_InitDNAScoreMatrix()
 	}
 
@@ -356,11 +352,11 @@ func PERightAlign(seqA, seqB *obiseq.BioSequence, gap, scale float64,
 		&arena.pointer.scoreMatrix,
 		&arena.pointer.pathMatrix)
 
-	arena.pointer.path = _Backtracking(arena.pointer.pathMatrix,
+	path := _Backtracking(arena.pointer.pathMatrix,
 		seqA.Len(), seqB.Len(),
 		&arena.pointer.path)
 
-	return score, arena.pointer.path
+	return score, path
 }
 
 func PEAlign(seqA, seqB *obiseq.BioSequence,
@@ -373,8 +369,9 @@ func PEAlign(seqA, seqB *obiseq.BioSequence,
 	var rawSeqB, qualSeqB []byte
 	var extra5, extra3 int
 
+	var path []int
+
 	if !_InitializedDnaScore {
-		log.Println("Initializing the DNA Scoring matrix")
 		_InitDNAScoreMatrix()
 	}
 
@@ -443,7 +440,7 @@ func PEAlign(seqA, seqB *obiseq.BioSequence,
 					&arena.pointer.pathMatrix)
 			}
 
-			arena.pointer.path = _Backtracking(arena.pointer.pathMatrix,
+			path = _Backtracking(arena.pointer.pathMatrix,
 				len(rawSeqA), len(rawSeqB),
 				&arena.pointer.path)
 
@@ -474,15 +471,16 @@ func PEAlign(seqA, seqB *obiseq.BioSequence,
 				qualB := qualSeqB[i]
 				score += _NucScorePartMatchMatch[qualA][qualB]
 			}
-			arena.pointer.path = arena.pointer.path[:0]
-			arena.pointer.path = append(arena.pointer.path, 0, partLen)
+
+			path = arena.pointer.path[:0]
+			path = append(path, 0, partLen)
 		}
 
-		arena.pointer.path[0] += extra5
-		if arena.pointer.path[len(arena.pointer.path)-1] == 0 {
-			arena.pointer.path[len(arena.pointer.path)-2] += extra3
+		path[0] += extra5
+		if path[len(path)-1] == 0 {
+			path[len(path)-2] += extra3
 		} else {
-			arena.pointer.path = append(arena.pointer.path, extra3, 0)
+			path = append(path, extra3, 0)
 		}
 	} else {
 		//
@@ -499,9 +497,9 @@ func PEAlign(seqA, seqB *obiseq.BioSequence,
 			&arena.pointer.scoreMatrix,
 			&arena.pointer.pathMatrix)
 
-		arena.pointer.path = _Backtracking(arena.pointer.pathMatrix,
+		path = _Backtracking(arena.pointer.pathMatrix,
 			len(rawSeqA), len(rawSeqB),
-			&arena.pointer.path)
+			&(arena.pointer.path))
 
 		scoreL := _FillMatrixPeLeftAlign(
 			rawSeqA, qualSeqA, rawSeqB, qualSeqB, gap, scale,
@@ -509,12 +507,12 @@ func PEAlign(seqA, seqB *obiseq.BioSequence,
 			&arena.pointer.pathMatrix)
 
 		if scoreL > scoreR {
-			arena.pointer.path = _Backtracking(arena.pointer.pathMatrix,
+			path = _Backtracking(arena.pointer.pathMatrix,
 				len(rawSeqA), len(rawSeqB),
-				&arena.pointer.path)
+				&(arena.pointer.path))
 		}
 
 	}
 
-	return score, arena.pointer.path, fastCount, over, fastScore
+	return score, path, fastCount, over, fastScore
 }

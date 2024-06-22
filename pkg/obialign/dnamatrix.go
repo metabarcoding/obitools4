@@ -2,6 +2,9 @@ package obialign
 
 import (
 	"math"
+	"sync"
+
+	log "github.com/sirupsen/logrus"
 )
 
 var _FourBitsCount = []float64{
@@ -28,6 +31,7 @@ var _InitializedDnaScore = false
 var _NucPartMatch [32][32]float64
 var _NucScorePartMatchMatch [100][100]int
 var _NucScorePartMatchMismatch [100][100]int
+var _InitDNAScoreMatrixMutex = &sync.Mutex{}
 
 // _MatchRatio calculates the match ratio between two bytes.
 //
@@ -120,7 +124,11 @@ func _InitNucScorePartMatch() {
 }
 
 func _InitDNAScoreMatrix() {
+	_InitDNAScoreMatrixMutex.Lock()
+	defer _InitDNAScoreMatrixMutex.Unlock()
 	if !_InitializedDnaScore {
+		log.Info("Initializing the DNA Scoring matrix")
+
 		_InitNucPartMatch()
 		_InitNucScorePartMatch()
 		_InitializedDnaScore = true

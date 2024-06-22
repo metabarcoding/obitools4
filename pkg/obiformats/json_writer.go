@@ -3,7 +3,7 @@ package obiformats
 import (
 	"bufio"
 	"bytes"
-	"encoding/json"
+	"github.com/goccy/go-json"
 	"io"
 	"os"
 	"strconv"

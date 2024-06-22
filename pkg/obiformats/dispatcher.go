@@ -1,12 +1,13 @@
 package obiformats
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
+
+	"github.com/goccy/go-json"
 
 	log "github.com/sirupsen/logrus"
 

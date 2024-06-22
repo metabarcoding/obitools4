@@ -3,11 +3,12 @@ package obiutils
 import (
 	"bufio"
 	"bytes"
-	"encoding/json"
 	"io"
 	"os"
 	"reflect"
 	"sync"
+
+	"github.com/bytedance/sonic"
 
 	"github.com/barkimedes/go-deepcopy"
 )
@@ -363,9 +364,12 @@ func AtomicCounter(initial ...int) func() int {
 	return nextCounter
 }
 
+// JsonMarshalByteBuffer marshals an interface into JSON format.
+//
+// It takes a bytes.Buffer as a buffer and an interface{} as i.
+// Returns an error.
 func JsonMarshalByteBuffer(buffer *bytes.Buffer, i interface{}) error {
-	encoder := json.NewEncoder(buffer)
-	encoder.SetEscapeHTML(false)
+	encoder := sonic.ConfigDefault.NewEncoder(buffer)
 	err := encoder.Encode(i)
 	b := buffer.Bytes()
 	b = bytes.TrimRight(b, "\n")

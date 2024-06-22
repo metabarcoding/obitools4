@@ -1,12 +1,19 @@
 package obialign
 
-import "slices"
+import (
+	log "github.com/sirupsen/logrus"
+	"slices"
+)
 
 func _Backtracking(pathMatrix []int, lseqA, lseqB int, path *[]int) []int {
 
 	needed := (lseqA + lseqB) * 2
 	(*path) = (*path)[:0]
+	cp := cap(*path)
 	(*path) = slices.Grow((*path), needed)
+	if cp < cap(*path) {
+		log.Infof("Resized path from %d to %d\n", cp, cap(*path))
+	}
 	p := cap(*path)
 	*path = (*path)[:p]
 
@@ -88,7 +95,5 @@ func _Backtracking(pathMatrix []int, lseqA, lseqB int, path *[]int) []int {
 		(*path)[p] = 0
 	}
 
-	*path = (*path)[p:cap((*path))]
-
-	return *path
+	return (*path)[p:cap((*path))]
 }
