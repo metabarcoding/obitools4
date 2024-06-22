@@ -169,7 +169,9 @@ func _ParseEmblFile(source string, input ChannelSeqFileChunk,
 func ReadEMBL(reader io.Reader, options ...WithOption) obiiter.IBioSequence {
 	opt := MakeOptions(options)
 
-	entry_channel := ReadSeqFileChunk(reader, _EndOfLastEntry)
+	buff := make([]byte, 1024*1024*1024*256)
+
+	entry_channel := ReadSeqFileChunk(reader, buff, _EndOfLastEntry)
 	newIter := obiiter.MakeIBioSequence()
 
 	nworkers := opt.ParallelWorkers()
@@ -179,7 +181,7 @@ func ReadEMBL(reader io.Reader, options ...WithOption) obiiter.IBioSequence {
 		newIter.Add(1)
 		go _ParseEmblFile(opt.Source(), entry_channel, newIter,
 			opt.WithFeatureTable(),
-			opt.BatchSize(), 
+			opt.BatchSize(),
 			opt.TotalSeqSize())
 	}
 

@@ -33,7 +33,9 @@ func main() {
 	// defer trace.Stop()
 
 	obioptions.SetWorkerPerCore(2)
-	obioptions.SetReadWorkerPerCore(0.5)
+	obioptions.SetStrictReadWorker(1)
+	obioptions.SetStrictWriteWorker(1)
+	obioptions.SetBatchSize(10)
 
 	optionParser := obioptions.GenerateOptionParser(obitag.OptionSet)
 

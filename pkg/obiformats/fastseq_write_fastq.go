@@ -46,17 +46,8 @@ func FormatFastqBatch(batch obiiter.BioSequenceBatch,
 	for _, seq := range batch.Slice() {
 		if seq.Len() > 0 {
 			fs := FormatFastq(seq, formater)
-			lb := bs.Len()
-			n, _ := bs.WriteString(fs)
-
-			if n < len(fs) {
-				log.Panicln("FormatFastqBatch: Cannot write all FASTQ sequences")
-			}
+			bs.WriteString(fs)
 			bs.WriteString("\n")
-
-			if bs.Len()-lb < len(fs)+1 {
-				log.Panicln("FormatFastqBatch: Cannot write all FASTQ sequences correctly")
-			}
 		} else {
 			if skipEmpty {
 				log.Warnf("Sequence %s is empty and skiped in output", seq.Id())
@@ -68,12 +59,6 @@ func FormatFastqBatch(batch obiiter.BioSequenceBatch,
 	}
 
 	chunk := bs.Bytes()
-
-	chunk = chunk[:bs.Len()]
-
-	if chunk[0] != '@' {
-		log.Panicln("FormatFastqBatch: FASTQ format error")
-	}
 
 	return chunk
 }

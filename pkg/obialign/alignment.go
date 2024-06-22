@@ -124,25 +124,26 @@ func BuildAlignment(seqA, seqB *obiseq.BioSequence,
 // In that case arenas will be allocated by the function but, they will not
 // be reusable for other alignments and desallocated at the BuildQualityConsensus
 // return.
-func BuildQualityConsensus(seqA, seqB *obiseq.BioSequence, path []int, statOnMismatch bool) (*obiseq.BioSequence, int) {
+func BuildQualityConsensus(seqA, seqB *obiseq.BioSequence, path []int, statOnMismatch bool,
+	arenaAlign PEAlignArena) (*obiseq.BioSequence, int) {
 
-	bufferSA := obiseq.GetSlice(seqA.Len())
-	bufferSB := obiseq.GetSlice(seqB.Len())
-	defer obiseq.RecycleSlice(&bufferSB)
+	bufferSA := arenaAlign.pointer.aligneSeqA
+	bufferSB := arenaAlign.pointer.aligneSeqB
+	//	defer obiseq.RecycleSlice(&bufferSB)
 
-	bufferQA := obiseq.GetSlice(seqA.Len())
-	bufferQB := obiseq.GetSlice(seqB.Len())
-	defer obiseq.RecycleSlice(&bufferQB)
+	bufferQA := arenaAlign.pointer.aligneQualA
+	bufferQB := arenaAlign.pointer.aligneQualB
+	//	defer obiseq.RecycleSlice(&bufferQB)
 
 	_BuildAlignment(seqA.Sequence(), seqB.Sequence(), path, ' ',
-		&bufferSA, &bufferSB)
+		bufferSA, bufferSB)
 
 	// log.Printf("#1 %s--> la : %d,%p lb : %d,%p qa : %d,%p qb : %d,%p\n", stamp,
 	// 	len(*bufferSA), bufferSA, len(*bufferSB), bufferSB,
 	// 	len(*bufferQA), bufferQA, len(*bufferQB), bufferQB)
 
 	_BuildAlignment(seqA.Qualities(), seqB.Qualities(), path, byte(0),
-		&bufferQA, &bufferQB)
+		bufferQA, bufferQB)
 
 	// log.Printf("#2 %s--> la : %d,%p lb : %d,%p qa : %d,%p qb : %d,%p\n", stamp,
 	// 	len(*bufferSA), bufferSA, len(*bufferSB), bufferSB,
@@ -157,10 +158,10 @@ func BuildQualityConsensus(seqA, seqB *obiseq.BioSequence, path []int, statOnMis
 
 	match := 0
 
-	for i, qA = range bufferQA {
-		nA := bufferSA[i]
-		nB := bufferSB[i]
-		qB = bufferQB[i]
+	for i, qA = range *bufferQA {
+		nA := (*bufferSA)[i]
+		nB := (*bufferSB)[i]
+		qB = (*bufferQB)[i]
 
 		if statOnMismatch && nA != nB && nA != ' ' && nB != ' ' {
 			mismatches[strings.ToUpper(fmt.Sprintf("(%c:%02d)->(%c:%02d)", nA, qA, nB, qB))] = i + 1
@@ -171,13 +172,13 @@ func BuildQualityConsensus(seqA, seqB *obiseq.BioSequence, path []int, statOnMis
 			qm = qB
 		}
 		if qB > qA {
-			bufferSA[i] = bufferSB[i]
+			(*bufferSA)[i] = (*bufferSB)[i]
 			qM = qB
 			qm = qA
 		}
 		if qB == qA && nA != nB {
 			nuc := _FourBitsBaseCode[nA&31] | _FourBitsBaseCode[nB&31]
-			bufferSA[i] = _FourBitsBaseDecode[nuc]
+			(*bufferSA)[i] = _FourBitsBaseDecode[nuc]
 		}
 
 		q := qA + qB
@@ -195,15 +196,15 @@ func BuildQualityConsensus(seqA, seqB *obiseq.BioSequence, path []int, statOnMis
 			q = 90
 		}
 
-		bufferQA[i] = q
+		(*bufferQA)[i] = q
 	}
 
 	consSeq := obiseq.NewBioSequence(
 		seqA.Id(),
-		bufferSA,
+		*bufferSA,
 		seqA.Definition(),
 	)
-	consSeq.SetQualities(bufferQA)
+	consSeq.SetQualities(*bufferQA)
 
 	if statOnMismatch && len(mismatches) > 0 {
 		consSeq.SetAttribute("pairing_mismatches", mismatches)

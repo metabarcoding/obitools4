@@ -37,6 +37,7 @@ func IPCRTagPESequencesBatch(iterator obiiter.IBioSequence,
 	f := func(iterator obiiter.IBioSequence, wid int) {
 		arena := obialign.MakePEAlignArena(150, 150)
 		var err error
+		shifts := make(map[int]int)
 
 		for iterator.Next() {
 			batch := iterator.Get()
@@ -46,7 +47,7 @@ func IPCRTagPESequencesBatch(iterator obiiter.IBioSequence,
 					A.Copy(), B.ReverseComplement(false),
 					gap, scale,
 					delta, minOverlap, minIdentity, withStats, true,
-					fastAlign, fastScoreRel, arena,
+					fastAlign, fastScoreRel, arena, &shifts,
 				)
 
 				consensus, err = ngsfilter.ExtractBarcode(consensus, true)

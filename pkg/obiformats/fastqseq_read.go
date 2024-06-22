@@ -112,7 +112,7 @@ func _storeSequenceQuality(bytes *bytes.Buffer, out *obiseq.BioSequence, quality
 	}
 
 	for i := 0; i < len(q); i++ {
-		q[i] = q[i] - quality_shift
+		q[i] -= quality_shift
 	}
 	out.SetQualities(q)
 }
@@ -309,7 +309,9 @@ func ReadFastq(reader io.Reader, options ...WithOption) (obiiter.IBioSequence, e
 	nworker := opt.ParallelWorkers()
 	chunkorder := obiutils.AtomicCounter()
 
-	chkchan := ReadSeqFileChunk(reader, _EndOfLastFastqEntry)
+	buff := make([]byte, 1024*1024*1024)
+
+	chkchan := ReadSeqFileChunk(reader, buff, _EndOfLastFastqEntry)
 
 	for i := 0; i < nworker; i++ {
 		out.Add(1)

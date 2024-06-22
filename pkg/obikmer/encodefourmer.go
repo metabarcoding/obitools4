@@ -99,20 +99,20 @@ func Index4mer(seq *obiseq.BioSequence, index *[][]int, buffer *[]byte) [][]int 
 // FastShiftFourMer runs a Fast algorithm (similar to the one used in FASTA) to compare two sequences.
 // The returned values are two integer values. The shift between both the sequences and the count of
 // matching 4mer when this shift is applied between both the sequences.
-func FastShiftFourMer(index [][]int, lindex int, seq *obiseq.BioSequence, relscore bool, buffer *[]byte) (int, int, float64) {
+func FastShiftFourMer(index [][]int, shifts *map[int]int, lindex int, seq *obiseq.BioSequence, relscore bool, buffer *[]byte) (int, int, float64) {
 
 	iternal_buffer := Encode4mer(seq, buffer)
 
-	shifts := make(map[int]int, 3*seq.Len())
+	//	shifts := make(map[int]int, 3*seq.Len())
 
 	for pos, code := range iternal_buffer {
 		for _, refpos := range index[code] {
 			shift := refpos - pos
-			count, ok := shifts[shift]
+			count, ok := (*shifts)[shift]
 			if ok {
-				shifts[shift] = count + 1
+				(*shifts)[shift] = count + 1
 			} else {
-				shifts[shift] = 1
+				(*shifts)[shift] = 1
 			}
 		}
 	}
@@ -121,7 +121,8 @@ func FastShiftFourMer(index [][]int, lindex int, seq *obiseq.BioSequence, relsco
 	maxcount := 0
 	maxscore := -1.0
 
-	for shift, count := range shifts {
+	for shift, count := range *shifts {
+		delete((*shifts), shift)
 		score := float64(count)
 		if relscore {
 			over := -shift

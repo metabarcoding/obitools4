@@ -228,7 +228,9 @@ func ReadFasta(reader io.Reader, options ...WithOption) (obiiter.IBioSequence, e
 
 	nworker := opt.ParallelWorkers()
 
-	chkchan := ReadSeqFileChunk(reader, _EndOfLastFastaEntry)
+	buff := make([]byte, 1024*1024*1024)
+
+	chkchan := ReadSeqFileChunk(reader, buff, _EndOfLastFastaEntry)
 	chunck_order := obiutils.AtomicCounter()
 
 	for i := 0; i < nworker; i++ {

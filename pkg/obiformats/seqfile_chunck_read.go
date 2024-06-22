@@ -33,10 +33,10 @@ type LastSeqRecord func([]byte) int
 // Returns:
 // None
 func ReadSeqFileChunk(reader io.Reader,
+	buff []byte,
 	splitter LastSeqRecord) ChannelSeqFileChunk {
 	var err error
 	var fullbuff []byte
-	var buff []byte
 
 	chunk_channel := make(ChannelSeqFileChunk)
 
@@ -46,8 +46,7 @@ func ReadSeqFileChunk(reader io.Reader,
 		i := 0
 
 		// Initialize the buffer to the size of a chunk of data
-		fullbuff = make([]byte, _FileChunkSize, _FileChunkSize*2)
-		buff = fullbuff
+		fullbuff = buff
 
 		// Read from the reader until the buffer is full or the end of the file is reached
 		l, err = io.ReadFull(reader, buff)

@@ -233,7 +233,9 @@ func ReadGenbank(reader io.Reader, options ...WithOption) obiiter.IBioSequence {
 	opt := MakeOptions(options)
 	// entry_channel := make(chan _FileChunk)
 
-	entry_channel := ReadSeqFileChunk(reader, _EndOfLastEntry)
+	buff := make([]byte, 1024*1024*1024*256)
+
+	entry_channel := ReadSeqFileChunk(reader, buff, _EndOfLastEntry)
 	newIter := obiiter.MakeIBioSequence()
 
 	nworkers := opt.ParallelWorkers()

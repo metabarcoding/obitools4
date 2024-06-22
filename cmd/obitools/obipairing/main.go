@@ -32,6 +32,9 @@ func main() {
 	optionParser := obioptions.GenerateOptionParser(obipairing.OptionSet)
 
 	optionParser(os.Args)
+
+	obioptions.SetStrictReadWorker(2)
+	obioptions.SetStrictWriteWorker(2)
 	pairs, err := obipairing.CLIPairedSequence()
 
 	if err != nil {

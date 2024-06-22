@@ -35,6 +35,7 @@ func main() {
 
 	_, args := optionParser(os.Args)
 
+	obioptions.SetStrictReadWorker(min(4, obioptions.CLIParallelWorkers()))
 	fs, err := obiconvert.CLIReadBioSequences(args...)
 
 	if err != nil {

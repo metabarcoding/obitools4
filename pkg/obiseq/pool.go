@@ -84,7 +84,7 @@ func CopySlice(src []byte) []byte {
 
 var BioSequenceAnnotationPool = sync.Pool{
 	New: func() interface{} {
-		bs := make(Annotation, 5)
+		bs := make(Annotation, 1)
 		return &bs
 	},
 }
@@ -105,15 +105,17 @@ func RecycleAnnotation(a *Annotation) {
 //
 // It returns an Annotation.
 func GetAnnotation(values ...Annotation) Annotation {
-	a := Annotation(nil)
+	a := (*Annotation)(nil)
 
-	for a == nil {
-		a = *(BioSequenceAnnotationPool.Get().(*Annotation))
+	for a == nil || (*a == nil) {
+		a = BioSequenceAnnotationPool.Get().(*Annotation)
 	}
+
+	annot := *a
 
 	if len(values) > 0 {
-		obiutils.MustFillMap(a, values[0])
+		obiutils.MustFillMap(annot, values[0])
 	}
 
-	return a
+	return annot
 }

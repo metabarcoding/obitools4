@@ -53,10 +53,7 @@ func CLIWriteBioSequences(iterator obiiter.IBioSequence,
 		opts = append(opts, obiformats.OptionsFastSeqHeaderFormat(obiformats.FormatFastSeqJsonHeader))
 	}
 
-	nworkers := obioptions.CLIParallelWorkers() / 4
-	if nworkers < 2 {
-		nworkers = 2
-	}
+	nworkers := obioptions.CLIWriteParallelWorkers()
 
 	opts = append(opts, obiformats.OptionsParallelWorkers(nworkers))
 	opts = append(opts, obiformats.OptionsBatchSize(obioptions.CLIBatchSize()))

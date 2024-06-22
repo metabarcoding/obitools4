@@ -15,11 +15,13 @@ import (
 
 var _Debug = false
 var _WorkerPerCore = 2.0
-var _ReadWorkerPerCore = 1.0
+var _ReadWorkerPerCore = 0.5
+var _WriteWorkerPerCore = 0.25
 var _StrictReadWorker = 0
+var _StrictWriteWorker = 0
 var _ParallelFilesRead = 0
 var _MaxAllowedCPU = runtime.NumCPU()
-var _BatchSize = 5000
+var _BatchSize = 2000
 var _Pprof = false
 var _Quality_Shift_Input = byte(33)
 var _Quality_Shift_Output = byte(33)
@@ -175,9 +177,34 @@ func CLIParallelWorkers() int {
 // Returns an integer representing the number of parallel workers.
 func CLIReadParallelWorkers() int {
 	if StrictReadWorker() == 0 {
-		return int(float64(CLIMaxCPU()) * ReadWorkerPerCore())
+		n := int(float64(CLIMaxCPU()) * ReadWorkerPerCore())
+		if n == 0 {
+			n = 1
+		}
+		return n
 	} else {
 		return StrictReadWorker()
+	}
+}
+
+// CLIWriteParallelWorkers returns the number of parallel workers used for
+// writing files.
+//
+// The number of parallel workers is determined by the command line option
+// --max-cpu|-m and the environment variable OBIMAXCPU. This number is
+// multiplied by the variable _WriteWorkerPerCore.
+//
+// No parameters.
+// Returns an integer representing the number of parallel workers.
+func CLIWriteParallelWorkers() int {
+	if StrictWriteWorker() == 0 {
+		n := int(float64(CLIMaxCPU()) * WriteWorkerPerCore())
+		if n == 0 {
+			n = 1
+		}
+		return n
+	} else {
+		return StrictWriteWorker()
 	}
 }
 
@@ -245,6 +272,15 @@ func WorkerPerCore() float64 {
 // Returns a float64 representing the number of worker per CPU core.
 func ReadWorkerPerCore() float64 {
 	return _ReadWorkerPerCore
+}
+
+// WriteWorkerPerCore returns the number of worker per CPU core for
+// computing the result.
+//
+// No parameters.
+// Returns a float64 representing the number of worker per CPU core.
+func WriteWorkerPerCore() float64 {
+	return _WriteWorkerPerCore
 }
 
 // SetBatchSize sets the size of the sequence batches.
@@ -318,13 +354,33 @@ func StrictReadWorker() int {
 	return _StrictReadWorker
 }
 
+// SetWriteWorker sets the number of workers for writing files.
+//
+// The number of worker dedicated to writing files is determined
+// as the number of allowed CPU cores multiplied by number of write workers per core.
+// Setting the number of write workers using this function allows to decouple the number
+// of write workers from the number of CPU cores.
+//
+// n - an integer representing the number of workers to be set.
+func SetStrictWriteWorker(n int) {
+	_StrictWriteWorker = n
+}
+
+// WriteWorker returns the number of workers for writing files.
+//
+// No parameters.
+// Returns an integer representing the number of workers.
+func StrictWriteWorker() int {
+	return _StrictWriteWorker
+}
+
 // ParallelFilesRead returns the number of files to be read in parallel.
 //
 // No parameters.
 // Returns an integer representing the number of files to be read.
 func ParallelFilesRead() int {
 	if _ParallelFilesRead == 0 {
-		return CLIParallelWorkers()
+		return CLIReadParallelWorkers()
 	} else {
 		return _ParallelFilesRead
 	}

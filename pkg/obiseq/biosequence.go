@@ -12,6 +12,7 @@ package obiseq
 
 import (
 	"crypto/md5"
+	"slices"
 	"sync"
 	"sync/atomic"
 
@@ -418,12 +419,15 @@ func (s *BioSequence) SetFeatures(feature []byte) {
 	s.feature = feature
 }
 
-// Setting the sequence of the BioSequence.
+// SetSequence sets the sequence of the BioSequence.
+//
+// Parameters:
+// - sequence: a byte slice representing the sequence to be set.
 func (s *BioSequence) SetSequence(sequence []byte) {
 	if s.sequence != nil {
 		RecycleSlice(&s.sequence)
 	}
-	s.sequence = CopySlice(obiutils.InPlaceToLower(sequence))
+	s.sequence = obiutils.InPlaceToLower(CopySlice(sequence))
 }
 
 // Setting the qualities of the BioSequence.
@@ -506,4 +510,16 @@ func (s *BioSequence) Composition() map[byte]int {
 	}
 
 	return counts
+}
+
+func (s *BioSequence) Grow(length int) {
+	if s.sequence == nil {
+		s.sequence = GetSlice(length)
+	} else {
+		s.sequence = slices.Grow(s.sequence, length)
+	}
+
+	if s.qualities != nil {
+		s.qualities = slices.Grow(s.qualities, length)
+	}
 }

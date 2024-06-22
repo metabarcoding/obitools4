@@ -13,6 +13,10 @@ type _PeAlignArena struct {
 	path        []int
 	fastIndex   [][]int
 	fastBuffer  []byte
+	aligneSeqA  *[]byte
+	aligneSeqB  *[]byte
+	aligneQualA *[]byte
+	aligneQualB *[]byte
 }
 
 // PEAlignArena defines memory arena usable by the
@@ -30,12 +34,21 @@ var NilPEAlignArena = PEAlignArena{nil}
 // MakePEAlignArena makes a new arena for the alignment of two paired sequences
 // of maximum length indicated by lseqA and lseqB.
 func MakePEAlignArena(lseqA, lseqB int) PEAlignArena {
+	aligneSeqA := make([]byte, 0, lseqA+lseqB)
+	aligneSeqB := make([]byte, 0, lseqA+lseqB)
+	aligneQualA := make([]byte, 0, lseqA+lseqB)
+	aligneQualB := make([]byte, 0, lseqA+lseqB)
+
 	a := _PeAlignArena{
 		scoreMatrix: make([]int, 0, (lseqA+1)*(lseqB+1)),
 		pathMatrix:  make([]int, 0, (lseqA+1)*(lseqB+1)),
 		path:        make([]int, 2*(lseqA+lseqB)),
 		fastIndex:   make([][]int, 256),
 		fastBuffer:  make([]byte, 0, lseqA),
+		aligneSeqA:  &aligneSeqA,
+		aligneSeqB:  &aligneSeqB,
+		aligneQualA: &aligneQualA,
+		aligneQualB: &aligneQualB,
 	}
 
 	return PEAlignArena{&a}
@@ -352,7 +365,7 @@ func PERightAlign(seqA, seqB *obiseq.BioSequence, gap, scale float64,
 
 func PEAlign(seqA, seqB *obiseq.BioSequence,
 	gap, scale float64, fastAlign bool, delta int, fastScoreRel bool,
-	arena PEAlignArena) (int, []int, int, int, float64) {
+	arena PEAlignArena, shift_buff *map[int]int) (int, []int, int, int, float64) {
 	var score, shift int
 	var startA, startB int
 	var partLen, over int
@@ -374,7 +387,7 @@ func PEAlign(seqA, seqB *obiseq.BioSequence,
 			&arena.pointer.fastIndex,
 			&arena.pointer.fastBuffer)
 
-		shift, fastCount, fastScore = obikmer.FastShiftFourMer(index, seqA.Len(), seqB, fastScoreRel, nil)
+		shift, fastCount, fastScore = obikmer.FastShiftFourMer(index, shift_buff, seqA.Len(), seqB, fastScoreRel, nil)
 
 		if shift > 0 {
 			over = seqA.Len() - shift
