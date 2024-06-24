@@ -8,7 +8,7 @@ import (
 	"reflect"
 	"sync"
 
-	"github.com/bytedance/sonic"
+	"github.com/goccy/go-json"
 
 	"github.com/barkimedes/go-deepcopy"
 )
@@ -369,7 +369,8 @@ func AtomicCounter(initial ...int) func() int {
 // It takes a bytes.Buffer as a buffer and an interface{} as i.
 // Returns an error.
 func JsonMarshalByteBuffer(buffer *bytes.Buffer, i interface{}) error {
-	encoder := sonic.ConfigDefault.NewEncoder(buffer)
+	encoder := json.NewEncoder(buffer)
+	encoder.SetEscapeHTML(false)
 	err := encoder.Encode(i)
 	b := buffer.Bytes()
 	b = bytes.TrimRight(b, "\n")
