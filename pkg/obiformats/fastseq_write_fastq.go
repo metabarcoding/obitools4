@@ -66,7 +66,9 @@ func FormatFastqBatch(batch obiiter.BioSequenceBatch,
 			_formatFastq(&bs, seq, formater)
 
 			if first {
-				bs.Grow(lt + (len(bs.Bytes())-seq.Len())*batch.Len()*5/4)
+				growing := lt + (len(bs.Bytes())-2*seq.Len())*batch.Len()*5/4
+				log.Debugf("Grow Fastq block of %d", growing)
+				bs.Grow(growing)
 				first = false
 			}
 

@@ -12,6 +12,9 @@ import (
 )
 
 func main() {
+	obioptions.SetStrictReadWorker(2)
+	obioptions.SetStrictWriteWorker(2)
+
 	optionParser := obioptions.GenerateOptionParser(obiconvert.OptionSet)
 
 	_, args := optionParser(os.Args)
