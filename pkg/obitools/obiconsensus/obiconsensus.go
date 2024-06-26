@@ -378,7 +378,7 @@ func CLIOBIMinion(itertator obiiter.IBioSequence) obiiter.IBioSequence {
 	}()
 
 	obiuniq.AddStatsOn(CLISampleAttribute())
-	obiuniq.AddStatsOn("sample:obiconsensus_weight")
+	// obiuniq.AddStatsOn("sample:obiconsensus_weight")
 	obiuniq.SetUniqueInMemory(false)
 	obiuniq.SetNoSingleton(CLINoSingleton())
 	return obiuniq.CLIUnique(newIter).Pipe(obiiter.WorkerPipe(obiannotate.AddSeqLengthWorker(), false))

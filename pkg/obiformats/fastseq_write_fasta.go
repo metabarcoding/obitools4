@@ -80,15 +80,24 @@ func FormatFastaBatch(batch obiiter.BioSequenceBatch, formater FormatHeader, ski
 	// Create a buffer to store the formatted sequences
 	var bs bytes.Buffer
 
+	lt := 0
+
+	for _, seq := range batch.Slice() {
+		lt += seq.Len()
+	}
+
 	// Iterate over each sequence in the batch
-	for i, seq := range batch.Slice() {
+	log.Debugf("FormatFastaBatch: #%d : %d seqs", batch.Order(), batch.Len())
+	first := true
+	for _, seq := range batch.Slice() {
 		// Check if the sequence is empty
 		if seq.Len() > 0 {
 			// Format the sequence using the provided formater function
 			formattedSeq := FormatFasta(seq, formater)
 
-			if i == 0 {
-				bs.Grow(len(formattedSeq) * len(batch.Slice()) * 5 / 4)
+			if first {
+				bs.Grow(lt + (len(formattedSeq)-seq.Len())*batch.Len()*5/4)
+				first = false
 			}
 
 			// Append the formatted sequence to the buffer
@@ -148,10 +157,14 @@ func WriteFasta(iterator obiiter.IBioSequence,
 
 			batch := iterator.Get()
 
+			log.Debugf("Formating fasta chunk %d", batch.Order())
+
 			chunkchan <- FileChunck{
 				FormatFastaBatch(batch, header_format, opt.SkipEmptySequence()),
 				batch.Order(),
 			}
+			log.Debugf("Fasta chunk %d formated", batch.Order())
+
 			newIter.Push(batch)
 		}
 		newIter.Done()
@@ -171,15 +184,18 @@ func WriteFasta(iterator obiiter.IBioSequence,
 		for chunk := range chunkchan {
 			if chunk.order == next_to_send {
 				file.Write(chunk.text)
+				log.Debugf("Fasta chunk %d written", chunk.order)
 				next_to_send++
 				chunk, ok := received[next_to_send]
 				for ok {
 					file.Write(chunk.text)
+					log.Debugf("Fasta chunk %d written", chunk.order)
 					delete(received, next_to_send)
 					next_to_send++
 					chunk, ok = received[next_to_send]
 				}
 			} else {
+				log.Debugf("Store Fasta chunk %d", chunk.order)
 				received[chunk.order] = chunk
 			}
 

@@ -23,6 +23,8 @@ var _ParallelFilesRead = 0
 var _MaxAllowedCPU = runtime.NumCPU()
 var _BatchSize = 2000
 var _Pprof = false
+var _PprofMudex = 10
+var _PprofGoroutine = 6060
 var _Quality_Shift_Input = byte(33)
 var _Quality_Shift_Output = byte(33)
 
@@ -55,6 +57,14 @@ func GenerateOptionParser(optionset ...func(*getoptions.GetOpt)) ArgumentParser 
 
 	options.BoolVar(&_Pprof, "force-one-cpu", false,
 		options.Description("Force to use only one cpu core for parallel processing"))
+
+	options.IntVar(&_PprofMudex, "pprof-mutex", _PprofMudex,
+		options.GetEnv("OBIPPROFMUTEX"),
+		options.Description("Enable profiling of mutex lock."))
+
+	options.IntVar(&_PprofGoroutine, "pprof-goroutine", _PprofGoroutine,
+		options.GetEnv("OBIPPROFGOROUTINE"),
+		options.Description("Enable profiling of goroutine blocking profile."))
 
 	options.IntVar(&_BatchSize, "batch-size", _BatchSize,
 		options.GetEnv("OBIBATCHSIZE"),
@@ -94,6 +104,24 @@ func GenerateOptionParser(optionset ...func(*getoptions.GetOpt)) ArgumentParser 
 			log.Infof("Start a pprof server at address %s/debug/pprof", url)
 			log.Info("Profil can be followed running concurrently the command :")
 			log.Info("  go tool pprof -http=127.0.0.1:8080 'http://localhost:6060/debug/pprof/profile?seconds=30'")
+		}
+
+		if options.Called("pprof-mutex") {
+			url := "localhost:6060"
+			go http.ListenAndServe(url, nil)
+			runtime.SetMutexProfileFraction(_PprofMudex)
+			log.Infof("Start a pprof server at address %s/debug/pprof", url)
+			log.Info("Profil can be followed running concurrently the command :")
+			log.Info("  go tool pprof -http=127.0.0.1:8080 'http://localhost:6060/debug/pprof/mutex'")
+		}
+
+		if options.Called("pprof-goroutine") {
+			url := "localhost:6060"
+			go http.ListenAndServe(url, nil)
+			runtime.SetBlockProfileRate(_PprofGoroutine)
+			log.Infof("Start a pprof server at address %s/debug/pprof", url)
+			log.Info("Profil can be followed running concurrently the command :")
+			log.Info("  go tool pprof -http=127.0.0.1:8080 'http://localhost:6060/debug/pprof/block'")
 		}
 
 		// Handle user errors

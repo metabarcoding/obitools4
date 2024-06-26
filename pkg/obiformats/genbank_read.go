@@ -146,7 +146,7 @@ func _ParseGenbankFile(source string,
 						log.Warn("Empty id when parsing genbank file")
 					}
 
-					log.Debugf("End of sequence %s: %dbp ", id, seqBytes.Len())
+					// log.Debugf("End of sequence %s: %dbp ", id, seqBytes.Len())
 
 					sequence := obiseq.NewBioSequence(id,
 						seqBytes.Bytes(),
@@ -168,8 +168,9 @@ func _ParseGenbankFile(source string,
 					sumlength += sequence.Len()
 
 					if len(sequences) == batch_size || sumlength > total_seq_size {
-						log.Debugln("Pushing sequences")
-						out.Push(obiiter.MakeBioSequenceBatch(chunck_order(), sequences))
+						oo := chunck_order()
+						log.Debugln("Pushing sequence batch ", oo, " with ", len(sequences), " sequences")
+						out.Push(obiiter.MakeBioSequenceBatch(oo, sequences))
 						sequences = make(obiseq.BioSequenceSlice, 0, 100)
 						sumlength = 0
 					}
@@ -218,13 +219,14 @@ func _ParseGenbankFile(source string,
 
 		}
 
-		log.Debugf("End of chunk %d : %s", chunks.order, line)
 		if len(sequences) > 0 {
-			log.Debugln("Pushing sequences")
-			out.Push(obiiter.MakeBioSequenceBatch(chunck_order(), sequences))
+			oo := chunck_order()
+			log.Debugln("Pushing sequence batch ", oo, " with ", len(sequences), " sequences")
+			out.Push(obiiter.MakeBioSequenceBatch(oo, sequences))
 		}
 	}
 
+	log.Debug("End of the Genbank thread")
 	out.Done()
 
 }
@@ -255,6 +257,7 @@ func ReadGenbank(reader io.Reader, options ...WithOption) obiiter.IBioSequence {
 
 	go func() {
 		newIter.WaitAndClose()
+		log.Debug("End of the genbank file ", opt.Source())
 	}()
 
 	if opt.FullFileBatch() {

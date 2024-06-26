@@ -52,14 +52,24 @@ func FormatFastqBatch(batch obiiter.BioSequenceBatch,
 	formater FormatHeader, skipEmpty bool) []byte {
 	var bs bytes.Buffer
 
-	for i, seq := range batch.Slice() {
+	lt := 0
+
+	for _, seq := range batch.Slice() {
+		lt += seq.Len()
+	}
+
+	// Iterate over each sequence in the batch
+	first := true
+
+	for _, seq := range batch.Slice() {
 		if seq.Len() > 0 {
 			_formatFastq(&bs, seq, formater)
 
-			if i == 0 {
-
-				bs.Grow(len(bs.Bytes()) * len(batch.Slice()) * 5 / 4)
+			if first {
+				bs.Grow(lt + (len(bs.Bytes())-seq.Len())*batch.Len()*5/4)
+				first = false
 			}
+
 		} else {
 			if skipEmpty {
 				log.Warnf("Sequence %s is empty and skiped in output", seq.Id())

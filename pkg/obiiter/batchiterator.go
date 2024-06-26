@@ -437,6 +437,7 @@ func (iterator IBioSequence) Rebatch(size int) IBioSequence {
 				buffer = append(buffer, seqs.Slice()[i:(i+to_push)]...)
 				if len(buffer) == size {
 					newIter.Push(MakeBioSequenceBatch(order, buffer))
+					log.Debugf("Rebatch #%d pushd", order)
 					order++
 					buffer = obiseq.MakeBioSequenceSlice()
 				}
@@ -444,9 +445,10 @@ func (iterator IBioSequence) Rebatch(size int) IBioSequence {
 			}
 			seqs.Recycle(false)
 		}
-
+		log.Debug("End of the rebatch loop")
 		if len(buffer) > 0 {
 			newIter.Push(MakeBioSequenceBatch(order, buffer))
+			log.Debugf("Final Rebatch #%d pushd", order)
 		}
 
 		newIter.Done()
@@ -467,9 +469,11 @@ func (iterator IBioSequence) Recycle() {
 	for iterator.Next() {
 		// iterator.Get()
 		batch := iterator.Get()
-		log.Debugln("Recycling batch #", batch.Order())
+		o := batch.Order()
+		log.Debugln("Recycling batch #", o)
 		recycled += batch.Len()
 		batch.Recycle(true)
+		log.Debugln("Batch #", o, " recycled")
 	}
 	log.Debugf("End of the recycling of %d Bioseq objects", recycled)
 }
