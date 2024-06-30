@@ -686,28 +686,27 @@ func (library *NGSLibrary) ExtractMultiBarcode(sequence *obiseq.BioSequence) (ob
 
 						barcode, err := sequence.Subsequence(from.End, match.Begin, false)
 
-						if err != nil {
-							return nil, fmt.Errorf("%s [%s] : Cannot extract barcode %d : %v", sequence.Id(), sequence.Source(), q, err)
+						if err == nil {
+							annotations["obimultiplex_direction"] = map[bool]string{true: "forward", false: "reverse"}[from.Forward]
+
+							if !match.Forward {
+								barcode = barcode.ReverseComplement(true)
+							}
+
+							if tags != nil {
+								library.SampleIdentifier(primerseqs[from.Marker], tags, annotations)
+							}
+
+							barcode.AnnotationsLock()
+							obiutils.MustFillMap(barcode.Annotations(), annotations)
+							barcode.AnnotationsUnlock()
+
+							if barcode.Len() > 0 {
+								results = append(results, barcode)
+								q++
+							}
 						}
 
-						annotations["obimultiplex_direction"] = map[bool]string{true: "forward", false: "reverse"}[from.Forward]
-
-						if !match.Forward {
-							barcode = barcode.ReverseComplement(true)
-						}
-
-						if tags != nil {
-							library.SampleIdentifier(primerseqs[from.Marker], tags, annotations)
-						}
-
-						barcode.AnnotationsLock()
-						obiutils.MustFillMap(barcode.Annotations(), annotations)
-						barcode.AnnotationsUnlock()
-
-						if barcode.Len() > 0 {
-							results = append(results, barcode)
-							q++
-						}
 					}
 
 					state = 0
@@ -731,6 +730,10 @@ func (library *NGSLibrary) ExtractMultiBarcode(sequence *obiseq.BioSequence) (ob
 		}
 	}
 
+	if len(results) == 0 {
+		log.Fatalf("ExtractMultiBarcode: No barcode found in sequence %s", sequence.Id())
+	}
+
 	return results, nil
 }
 
@@ -748,7 +751,15 @@ func (library *NGSLibrary) ExtractMultiBarcodeSliceWorker(options ...WithOption)
 	library.Compile2()
 
 	worker := func(sequence *obiseq.BioSequence) (obiseq.BioSequenceSlice, error) {
-		return library.ExtractMultiBarcode(sequence)
+		res, err := library.ExtractMultiBarcode(sequence)
+
+		if err != nil {
+			log.Panic(err)
+		}
+		if res.Len() == 0 {
+			log.Panicf("No barcode found in sequence %s", sequence.Id())
+		}
+		return res, err
 	}
 
 	return obiseq.SeqToSliceWorker(worker, true)
