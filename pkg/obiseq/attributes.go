@@ -172,6 +172,26 @@ func (s *BioSequence) GetIntAttribute(key string) (int, bool) {
 	return val, ok
 }
 
+func (s *BioSequence) GetFloatAttribute(key string) (float64, bool) {
+	var val float64
+	var err error
+
+	v, ok := s.GetAttribute(key)
+
+	if ok {
+		val, ok = v.(float64)
+		if !ok {
+			val, err = obiutils.InterfaceToFloat64(v)
+			ok = err == nil
+			if ok {
+				s.SetAttribute(key, val)
+			}
+		}
+	}
+
+	return val, ok
+}
+
 // DeleteAttribute deletes the attribute with the given key from the BioSequence.
 //
 // Parameters:
