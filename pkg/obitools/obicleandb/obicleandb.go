@@ -94,7 +94,7 @@ func SequenceTrustSlice(sequences obiseq.BioSequenceSlice) (obiseq.BioSequenceSl
 		}
 		ngroup = max(0, ngroup)
 		sa.SetAttribute("obicleandb_trusted", 1.0-1.0/float64(ngroup+1))
-		sa.SetAttribute("obicleandb_on", ngroup)
+		sa.SetAttribute("obicleandb_trusted_on", ngroup)
 		sa.SetAttribute("obicleandb_median", scoremed)
 		sa.SetAttribute("obicleandb_ss", ss)
 	}
