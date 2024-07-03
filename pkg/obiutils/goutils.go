@@ -418,6 +418,10 @@ func IsASlice(value interface{}) bool {
 	return reflect.TypeOf(value).Kind() == reflect.Slice
 }
 
+func IsIntegral(val float64) bool {
+	return val == float64(int(val))
+}
+
 // HasLength checks if the given value has a length.
 //
 // value: The value to be checked.

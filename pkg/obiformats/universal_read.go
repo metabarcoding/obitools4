@@ -169,9 +169,6 @@ func ReadSequencesFromFile(filename string,
 	switch mime.String() {
 	case "text/fastq":
 		return ReadFastq(reader, options...)
-		// file.Close()
-		// is, err := ReadFastSeqFromFile(filename, options...)
-		// return is, err
 	case "text/fasta":
 		return ReadFasta(reader, options...)
 	case "text/ecopcr2":
@@ -180,6 +177,8 @@ func ReadSequencesFromFile(filename string,
 		return ReadEMBL(reader, options...), nil
 	case "text/genbank":
 		return ReadGenbank(reader, options...), nil
+	case "text/csv":
+		return ReadCSV(reader, options...)
 	default:
 		log.Fatalf("File %s has guessed format %s which is not yet implemented",
 			filename, mime.String())

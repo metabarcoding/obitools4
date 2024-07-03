@@ -137,6 +137,11 @@ func (s *BioSequence) SetAttribute(key string, value interface{}) {
 		return
 	}
 
+	if key == "qualities" {
+		s.SetQualities(value.([]byte))
+		return
+	}
+
 	annot := s.Annotations()
 
 	defer s.AnnotationsUnlock()

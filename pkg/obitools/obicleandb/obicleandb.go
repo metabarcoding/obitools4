@@ -35,68 +35,73 @@ func diagCoord(x, y, n int) int {
 }
 func SequenceTrustSlice(sequences obiseq.BioSequenceSlice) (obiseq.BioSequenceSlice, error) {
 	n := len(sequences)
-	score := make([]float64, n*(n-1)/2)
-	matrix := make([]uint64, sequences[0].Len()*sequences[0].Len())
 
-	for i, sa := range sequences {
-		for j, sb := range sequences[i+1:] {
-			lca, lali := obialign.FastLCSScore(sa, sb, -1, &matrix)
-			score[diagCoord(i, i+1+j, n)] = float64(lca) / float64(lali)
-		}
-	}
+	if n > 1 {
+		score := make([]float64, n*(n-1)/2)
+		matrix := make([]uint64, sequences[0].Len()*sequences[0].Len())
 
-	for i, sa := range sequences {
-		ss := make([]float64, 0, n-1)
-		for j, _ := range sequences {
-			if i == j {
-				continue
+		for i, sa := range sequences {
+			for j, sb := range sequences[i+1:] {
+				lca, lali := obialign.FastLCSScore(sa, sb, -1, &matrix)
+				score[diagCoord(i, i+1+j, n)] = float64(lca) / float64(lali)
 			}
+		}
 
-			s := score[diagCoord(i, j, n)]
-			if s == 0.0 {
-				log.Panicf("score[%d, %d] == 0.0", i, j)
+		for i, sa := range sequences {
+			ss := make([]float64, 0, n-1)
+			for j, _ := range sequences {
+				if i == j {
+					continue
+				}
+
+				s := score[diagCoord(i, j, n)]
+				if s == 0.0 {
+					log.Panicf("score[%d, %d] == 0.0", i, j)
+				}
+				ss = append(ss, score[diagCoord(i, j, n)])
+
 			}
-			ss = append(ss, score[diagCoord(i, j, n)])
-
+			sa.SetAttribute("obicleandb_dist", ss)
 		}
-		sa.SetAttribute("obicleandb_dist", ss)
-	}
 
-	scoremed := obistats.Median(score)
-	scorethr := 1 - 2*(1-scoremed)
-	mednorm := (scoremed - scorethr) / 2.0
+		scoremed := obistats.Median(score)
+		scorethr := 1 - 3*(1-scoremed)
+		mednorm := (scoremed - scorethr) / 2.0
 
-	for i, s := range score {
-		switch {
-		case s < scorethr:
-			score[i] = -1.0
-		case s < scoremed:
-			score[i] = (s-scorethr)/mednorm - 1.0
-		default:
-			score[i] = 1.0
-		}
-	}
-
-	// Tylos
-	for i, sa := range sequences {
-		ngroup := float64(sa.Count())
-		ss := make([]float64, 0, n-1)
-		sc := sa.Count()
-		for j, sb := range sequences {
-			if i == j {
-				continue
+		for i, s := range score {
+			switch {
+			case s < scorethr:
+				score[i] = -1.0
+			case s < scoremed:
+				score[i] = (s-scorethr)/mednorm - 1.0
+			default:
+				score[i] = 1.0
 			}
-
-			ss = append(ss, score[diagCoord(i, j, n)])
-			sc += sb.Count()
-			nt, _ := sb.GetFloatAttribute("obicleandb_trusted_on")
-			ngroup += score[diagCoord(i, j, n)] * nt
 		}
-		ngroup = max(0, ngroup)
-		sa.SetAttribute("obicleandb_trusted", 1.0-1.0/float64(ngroup+1))
-		sa.SetAttribute("obicleandb_trusted_on", ngroup)
-		sa.SetAttribute("obicleandb_median", scoremed)
-		sa.SetAttribute("obicleandb_ss", ss)
+
+		// Tylos
+		for i, sa := range sequences {
+			ngroup := float64(sa.Count())
+			ss := make(map[string]float64, n-1)
+			sc := sa.Count()
+			for j, sb := range sequences {
+				if i == j {
+					continue
+				}
+
+				ss[sb.Id()] = score[diagCoord(i, j, n)]
+				sc += sb.Count()
+				nt, _ := sb.GetFloatAttribute("obicleandb_trusted_on")
+				ngroup += score[diagCoord(i, j, n)] * nt
+			}
+			ngroup = max(0, ngroup)
+			sa.SetAttribute("obicleandb_trusted", 1.0-1.0/float64(ngroup+1))
+			sa.SetAttribute("obicleandb_trusted_on", ngroup)
+			sa.SetAttribute("obicleandb_median", scoremed)
+			sa.SetAttribute("obicleandb_scores", ss)
+		}
+	} else {
+		sequences[0].SetAttribute("obicleandb_median", 1.0)
 	}
 
 	return sequences, nil
