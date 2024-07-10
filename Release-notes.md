@@ -20,6 +20,24 @@
 
 ### New features
 
+-   Adds a new `obijoin` utility to join information contained in a sequence
+    file with that contained in another sequence or CSV file. The command allows
+    you to specify the names of the keys in the main sequence file and in the
+    secondary data file that will be used to perform the join operation.
+
+-   Adds a new tool `obidemerge` to demerge a `merge_xxx` slot by recreating the 
+    multiple identical sequences having the slot `xxx` recreated with its initial
+    value and the sequence count set to the number of occurences refered in the
+    `merge_xxx` slot. During the operation, the `merge_xxx` slot is removed.
+
+-   Adds CSV as one of the input format for every obitools command. To encode
+    sequence the CSV file must includes a column named `sequence` and another
+    column named `id`. An extra column named `qualities` can be added to specify 
+    the quality scores of the sequence following the same ascii encoding than the
+    fastq format. All the other columns will be considered as annotations and will
+    be interpreted as JSON objects encoding potentially for atomic values. If a 
+    calumn value can not be decoded as JSON it will be considered as a string.
+
 -   A new option **--version** has been added to every obitools command. It will
     print the version of the command.
 

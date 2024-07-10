@@ -1,6 +1,8 @@
 package obicleandb
 
 import (
+	"math/rand"
+
 	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obialign"
@@ -16,6 +18,114 @@ func SequenceTrust(sequence *obiseq.BioSequence) (obiseq.BioSequenceSlice, error
 	sequence.SetAttribute("obicleandb_trusted", 1.0-1.0/float64(sequence.Count()+1))
 	sequence.SetAttribute("obicleandb_trusted_on", float64(sequence.Count()))
 	return obiseq.BioSequenceSlice{sequence}, nil
+}
+
+func MakeSequenceFamilyGenusWorker(references obiseq.BioSequenceSlice) obiseq.SeqWorker {
+
+	genus := make(map[int]*obiseq.BioSequenceSlice)
+	family := make(map[int]*obiseq.BioSequenceSlice)
+
+	for _, ref := range references {
+		g, ok := ref.GetIntAttribute("genus_taxid")
+		f, ok := ref.GetIntAttribute("family_taxid")
+
+		gs, ok := genus[g]
+		if !ok {
+			gs = obiseq.NewBioSequenceSlice(0)
+			genus[g] = gs
+		}
+
+		*gs = append(*gs, ref)
+
+		fs, ok := family[f]
+		if !ok {
+			fs = obiseq.NewBioSequenceSlice(0)
+			family[f] = fs
+		}
+
+		*fs = append(*fs, ref)
+	}
+
+	f := func(sequence *obiseq.BioSequence) (obiseq.BioSequenceSlice, error) {
+		g, _ := sequence.GetIntAttribute("genus_taxid")
+		sequence.SetAttribute("obicleandb_level", "genus")
+
+		gs := genus[g]
+
+		indist := make([]float64, 0, gs.Len())
+		for _, s := range *gs {
+			if s != sequence {
+				lca, lali := obialign.FastLCSScore(sequence, s, -1, nil)
+				indist = append(indist, float64(lali-lca))
+			}
+		}
+		nindist := len(indist)
+
+		pval := 0.0
+
+		f, _ := sequence.GetIntAttribute("family_taxid")
+		fs := family[f]
+
+		if nindist < 5 {
+			sequence.SetAttribute("obicleandb_level", "family")
+
+			for _, s := range *fs {
+				gf, _ := s.GetIntAttribute("genus_taxid")
+				if g != gf {
+					lca, lali := obialign.FastLCSScore(sequence, s, -1, nil)
+					indist = append(indist, float64(lali-lca))
+				}
+			}
+
+			nindist = len(indist)
+		}
+
+		if nindist > 0 {
+
+			next := nindist
+			if next <= 20 {
+				next = 20
+			}
+
+			outdist := make([]float64, 0, nindist)
+			p := rand.Perm(references.Len())
+			i := 0
+			for _, ir := range p {
+				s := references[ir]
+				ff, _ := s.GetIntAttribute("family_taxid")
+
+				if ff != f {
+					lca, lali := obialign.FastLCSScore(sequence, s, -1, nil)
+					outdist = append(outdist, float64(lali-lca))
+					i += 1
+					if i >= next {
+						break
+					}
+				}
+			}
+
+			res, err := obistats.MannWhitneyUTest(outdist, indist, obistats.LocationGreater)
+
+			if err == nil {
+				pval = res.P
+			}
+
+			level, _ := sequence.GetAttribute("obicleandb_level")
+			log.Warnf("%s - level: %v", sequence.Id(), level)
+			log.Warnf("%s - gdist: %v", sequence.Id(), indist)
+			log.Warnf("%s - fdist: %v", sequence.Id(), outdist)
+			log.Warnf("%s - pval: %f", sequence.Id(), pval)
+		} else {
+			sequence.SetAttribute("obicleandb_level", "none")
+		}
+
+		sequence.SetAttribute("obicleandb_trusted", pval)
+
+		return obiseq.BioSequenceSlice{sequence}, nil
+	}
+
+	return f
+
 }
 
 func diagCoord(x, y, n int) int {
@@ -160,19 +270,26 @@ func ICleanDB(itertator obiiter.IBioSequence) obiiter.IBioSequence {
 		obioptions.CLIParallelWorkers(),
 	)
 
-	genera_iterator, err := obichunk.ISequenceChunk(
-		annotated,
-		obiseq.AnnotationClassifier("genus_taxid", "NA"),
-	)
+	references := annotated.Load()
 
-	if err != nil {
-		log.Fatal(err)
-	}
+	mannwithney := MakeSequenceFamilyGenusWorker(references)
 
-	trusted := genera_iterator.MakeISliceWorker(
-		SequenceTrustSlice,
-		false,
-	)
+	partof := obiiter.IBatchOver(references,
+		obioptions.CLIBatchSize()).Speed("Testing belonging to genus")
 
-	return trusted
+	// genera_iterator, err := obichunk.ISequenceChunk(
+	// 	annotated,
+	// 	obiseq.AnnotationClassifier("genus_taxid", "NA"),
+	// )
+
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+
+	// trusted := genera_iterator.MakeISliceWorker(
+	// 	SequenceTrustSlice,
+	// 	false,
+	// )
+
+	return partof.MakeIWorker(mannwithney, true)
 }

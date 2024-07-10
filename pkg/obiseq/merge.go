@@ -49,6 +49,8 @@ func MakeStatsOnDescription(descriptor string) StatsOnDescription {
 	}
 }
 
+var _merge_prefix = "merged_"
+
 // StatsOnSlotName returns the name of the slot that summarizes statistics of occurrence for a given attribute.
 //
 // Parameters:
@@ -57,7 +59,7 @@ func MakeStatsOnDescription(descriptor string) StatsOnDescription {
 // Return type:
 // - string
 func StatsOnSlotName(key string) string {
-	return "merged_" + key
+	return _merge_prefix + key
 }
 
 // HasStatsOn tests if the sequence has already a slot summarizing statistics of occurrence for a given attribute.
@@ -115,12 +117,12 @@ func (sequence *BioSequence) StatsOn(desc StatsOnDescription, na string) StatsOn
 				}
 			}
 		default:
-			stats = make(StatsOnValues, 100)
+			stats = make(StatsOnValues, 10)
 			annotations[mkey] = stats
 			newstat = true
 		}
 	} else {
-		stats = make(StatsOnValues, 100)
+		stats = make(StatsOnValues, 10)
 		annotations[mkey] = stats
 		newstat = true
 	}
@@ -165,7 +167,7 @@ func (sequence *BioSequence) StatsPlusOne(desc StatsOnDescription, toAdd *BioSeq
 					log.Fatalf("Trying to make stats on a float value (%v : %T)", value, value)
 				}
 			default:
-				log.Fatalf("Trying to make stats on a none string, integer or boolean value (%v : %T)", value, value)
+				log.Fatalf("Trying to make stats not on a string, integer or boolean value (%v : %T)", value, value)
 			}
 			retval = true
 		}
@@ -234,7 +236,7 @@ func (sequence *BioSequence) Merge(tomerge *BioSequence, na string, inplace bool
 	if tomerge.HasAnnotation() {
 		ma := tomerge.Annotations()
 		for k, va := range annotations {
-			if !strings.HasPrefix(k, "merged_") {
+			if !strings.HasPrefix(k, _merge_prefix) {
 				vm, ok := ma[k]
 				if ok {
 					switch vm := vm.(type) {
@@ -255,7 +257,7 @@ func (sequence *BioSequence) Merge(tomerge *BioSequence, na string, inplace bool
 		}
 	} else {
 		for k := range annotations {
-			if !strings.HasPrefix(k, "merged_") {
+			if !strings.HasPrefix(k, _merge_prefix) {
 				delete(annotations, k)
 			}
 		}
