@@ -26,8 +26,8 @@ func MakeSequenceFamilyGenusWorker(references obiseq.BioSequenceSlice) obiseq.Se
 	family := make(map[int]*obiseq.BioSequenceSlice)
 
 	for _, ref := range references {
-		g, ok := ref.GetIntAttribute("genus_taxid")
-		f, ok := ref.GetIntAttribute("family_taxid")
+		g, _ := ref.GetIntAttribute("genus_taxid")
+		f, _ := ref.GetIntAttribute("family_taxid")
 
 		gs, ok := genus[g]
 		if !ok {
@@ -47,6 +47,9 @@ func MakeSequenceFamilyGenusWorker(references obiseq.BioSequenceSlice) obiseq.Se
 	}
 
 	f := func(sequence *obiseq.BioSequence) (obiseq.BioSequenceSlice, error) {
+		sequence.SetAttribute("obicleandb_level", "none")
+		pval := 0.0
+
 		g, _ := sequence.GetIntAttribute("genus_taxid")
 		sequence.SetAttribute("obicleandb_level", "genus")
 
@@ -60,8 +63,6 @@ func MakeSequenceFamilyGenusWorker(references obiseq.BioSequenceSlice) obiseq.Se
 			}
 		}
 		nindist := len(indist)
-
-		pval := 0.0
 
 		f, _ := sequence.GetIntAttribute("family_taxid")
 		fs := family[f]
@@ -87,7 +88,7 @@ func MakeSequenceFamilyGenusWorker(references obiseq.BioSequenceSlice) obiseq.Se
 				next = 20
 			}
 
-			outdist := make([]float64, 0, nindist)
+			outdist := make([]float64, 0, next)
 			p := rand.Perm(references.Len())
 			i := 0
 			for _, ir := range p {
@@ -110,13 +111,15 @@ func MakeSequenceFamilyGenusWorker(references obiseq.BioSequenceSlice) obiseq.Se
 				pval = res.P
 			}
 
-			level, _ := sequence.GetAttribute("obicleandb_level")
-			log.Warnf("%s - level: %v", sequence.Id(), level)
-			log.Warnf("%s - gdist: %v", sequence.Id(), indist)
-			log.Warnf("%s - fdist: %v", sequence.Id(), outdist)
-			log.Warnf("%s - pval: %f", sequence.Id(), pval)
-		} else {
-			sequence.SetAttribute("obicleandb_level", "none")
+			// level, _ := sequence.GetAttribute("obicleandb_level")
+			// log.Warnf("%s - level: %v", sequence.Id(), level)
+			// log.Warnf("%s - gdist: %v", sequence.Id(), indist)
+			// log.Warnf("%s - fdist: %v", sequence.Id(), outdist)
+			// log.Warnf("%s - pval: %f", sequence.Id(), pval)
+		}
+
+		if pval < 0.0 {
+			pval = 0.0
 		}
 
 		sequence.SetAttribute("obicleandb_trusted", pval)
@@ -265,10 +268,11 @@ func ICleanDB(itertator obiiter.IBioSequence) obiiter.IBioSequence {
 	).MakeIWorker(taxonomy.MakeSetFamilyWorker(),
 		false,
 		obioptions.CLIParallelWorkers(),
-	).MakeIWorker(SequenceTrust,
-		false,
-		obioptions.CLIParallelWorkers(),
 	)
+	// .MakeIWorker(SequenceTrust,
+	// 	false,
+	// 	obioptions.CLIParallelWorkers(),
+	// )
 
 	references := annotated.Load()
 

@@ -6,16 +6,17 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obicleandb"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obijoin"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 )
 
 func main() {
-	obioptions.SetBatchSize(10)
+	obioptions.SetStrictReadWorker(2)
+	obioptions.SetStrictWriteWorker(2)
 
-	optionParser := obioptions.GenerateOptionParser(obicleandb.OptionSet)
+	optionParser := obioptions.GenerateOptionParser(obijoin.OptionSet)
 
 	_, args := optionParser(os.Args)
 
@@ -26,10 +27,10 @@ func main() {
 		os.Exit(1)
 	}
 
-	cleaned := obicleandb.ICleanDB(fs)
+	joined := obijoin.CLIJoinSequences(fs)
 
-	toconsume, _ := obiconvert.CLIWriteBioSequences(cleaned, false)
-	toconsume.Consume()
+	obiconvert.CLIWriteBioSequences(joined, true)
 
 	obiiter.WaitForLastPipe()
+
 }
