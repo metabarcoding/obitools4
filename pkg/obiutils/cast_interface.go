@@ -42,6 +42,8 @@ func InterfaceToBool(i interface{}) (val bool, err error) {
 	val = false
 
 	switch t := i.(type) {
+	case bool:
+		val = t
 	case int:
 		val = t != 0
 	case int8:

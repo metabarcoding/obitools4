@@ -13,7 +13,7 @@ func CLIWriteCSV(iterator obiiter.IBioSequence,
 	terminalAction bool, filenames ...string) (obiiter.IBioSequence, error) {
 
 	if obiconvert.CLIProgressBar() {
-		iterator = iterator.Speed()
+		iterator = iterator.Speed("Writing CSV")
 	}
 
 	var newIter obiiter.IBioSequence

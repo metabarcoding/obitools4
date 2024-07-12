@@ -8,7 +8,7 @@ import (
 	"github.com/schollz/progressbar/v3"
 )
 
-func (iterator IBioSequence) Speed(message ...string) IBioSequence {
+func (iterator IBioSequence) Speed(message string, size ...int) IBioSequence {
 
 	// If the STDERR is redicted and doesn't end up to a terminal
 	// No progress bar is printed.
@@ -31,19 +31,15 @@ func (iterator IBioSequence) Speed(message ...string) IBioSequence {
 		progressbar.OptionSetWidth(15),
 		progressbar.OptionShowCount(),
 		progressbar.OptionShowIts(),
+		progressbar.OptionSetDescription(message),
 	)
 
-	if len(message) > 0 {
-		pbopt = append(pbopt,
-			progressbar.OptionSetDescription(message[0]),
-		)
-	} else {
-		pbopt = append(pbopt,
-			progressbar.OptionSetDescription("[Sequence Processing]"),
-		)
+	n := -1
+	if len(size) > 0 {
+		n = size[0]
 	}
 
-	bar := progressbar.NewOptions(-1, pbopt...)
+	bar := progressbar.NewOptions(n, pbopt...)
 
 	go func() {
 		c := 0
@@ -68,13 +64,13 @@ func (iterator IBioSequence) Speed(message ...string) IBioSequence {
 	if iterator.IsPaired() {
 		newIter.MarkAsPaired()
 	}
-	
+
 	return newIter
 }
 
-func SpeedPipe(message ...string) Pipeable {
+func SpeedPipe(message string) Pipeable {
 	f := func(iterator IBioSequence) IBioSequence {
-		return iterator.Speed(message...)
+		return iterator.Speed(message)
 	}
 
 	return f

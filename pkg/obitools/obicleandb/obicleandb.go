@@ -279,7 +279,7 @@ func ICleanDB(itertator obiiter.IBioSequence) obiiter.IBioSequence {
 	mannwithney := MakeSequenceFamilyGenusWorker(references)
 
 	partof := obiiter.IBatchOver(references,
-		obioptions.CLIBatchSize()).Speed("Testing belonging to genus")
+		obioptions.CLIBatchSize())
 
 	// genera_iterator, err := obichunk.ISequenceChunk(
 	// 	annotated,
@@ -295,5 +295,5 @@ func ICleanDB(itertator obiiter.IBioSequence) obiiter.IBioSequence {
 	// 	false,
 	// )
 
-	return partof.MakeIWorker(mannwithney, true)
+	return partof.MakeIWorker(mannwithney, true).Speed("Testing belonging", references.Len())
 }

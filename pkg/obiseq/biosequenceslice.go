@@ -195,3 +195,23 @@ func (s BioSequenceSlice) AttributeKeys(skip_map bool) obiutils.Set[string] {
 
 	return keys
 }
+
+func (s *BioSequenceSlice) SortOnCount(reverse bool) {
+	slices.SortFunc(*s, func(a, b *BioSequence) int {
+		if reverse {
+			return b.Count() - a.Count()
+		} else {
+			return a.Count() - b.Count()
+		}
+	})
+}
+
+func (s *BioSequenceSlice) SortOnLength(reverse bool) {
+	slices.SortFunc(*s, func(a, b *BioSequence) int {
+		if reverse {
+			return b.Len() - a.Len()
+		} else {
+			return a.Len() - b.Len()
+		}
+	})
+}

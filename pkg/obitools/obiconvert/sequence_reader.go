@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/goombaio/orderedset"
 	log "github.com/sirupsen/logrus"
-	 "github.com/goombaio/orderedset"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiformats"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
@@ -176,7 +176,7 @@ func CLIReadBioSequences(filenames ...string) (obiiter.IBioSequence, error) {
 	}
 
 	if CLIProgressBar() {
-		iterator = iterator.Speed()
+		iterator = iterator.Speed("Reading sequences")
 	}
 
 	return iterator, nil
