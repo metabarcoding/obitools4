@@ -249,6 +249,7 @@ var library_parameter = map[string]func(library *obingslibrary.NGSLibrary, value
 				log.Fatalln("Invalid value for @spacer parameter")
 			}
 
+			log.Infof("Set global spacer to %d bp", spacer)
 			library.SetTagSpacer(spacer)
 		case 2:
 			primer := values[0]
@@ -258,6 +259,7 @@ var library_parameter = map[string]func(library *obingslibrary.NGSLibrary, value
 				log.Fatalln("Invalid value for @spacer parameter")
 			}
 
+			log.Infof("Set spacer for primer %s to %d bp", primer, spacer)
 			library.SetTagSpacerFor(primer, spacer)
 		default:
 			log.Fatalln("Invalid value for @spacer parameter")
@@ -274,6 +276,7 @@ var library_parameter = map[string]func(library *obingslibrary.NGSLibrary, value
 				log.Fatalln("Invalid value for @forward_spacer parameter")
 			}
 
+			log.Infof("Set spacer for forward primer to %d bp", spacer)
 			library.SetForwardTagSpacer(spacer)
 		default:
 			log.Fatalln("Invalid value for @forward_spacer parameter")
@@ -290,6 +293,7 @@ var library_parameter = map[string]func(library *obingslibrary.NGSLibrary, value
 				log.Fatalln("Invalid value for @reverse_spacer parameter")
 			}
 
+			log.Infof("Set spacer for reverse primer to %d bp", spacer)
 			library.SetReverseTagSpacer(spacer)
 		default:
 			log.Fatalln("Invalid value for @reverse_spacer parameter")
@@ -301,9 +305,13 @@ var library_parameter = map[string]func(library *obingslibrary.NGSLibrary, value
 			log.Fatalln("Missing value for @tag_delimiter parameter")
 		case 1:
 			value := []byte(values[0])[0]
+
+			log.Infof("Set global tag delimiter to %c", value)
 			library.SetTagDelimiter(value)
 		case 2:
 			value := []byte(values[1])[0]
+
+			log.Infof("Set tag delimiter for primer %s to %c", values[0], value)
 			library.SetTagDelimiterFor(values[0], value)
 		default:
 			log.Fatalln("Invalid value for @tag_delimiter parameter")
@@ -315,6 +323,8 @@ var library_parameter = map[string]func(library *obingslibrary.NGSLibrary, value
 			log.Fatalln("Missing value for @forward_tag_delimiter parameter")
 		case 1:
 			value := []byte(values[0])[0]
+
+			log.Infof("Set tag delimiter for forward primer to %c", value)
 			library.SetForwardTagDelimiter(value)
 		default:
 			log.Fatalln("Invalid value for @forward_tag_delimiter parameter")
@@ -326,6 +336,8 @@ var library_parameter = map[string]func(library *obingslibrary.NGSLibrary, value
 			log.Fatalln("Missing value for @reverse_tag_delimiter parameter")
 		case 1:
 			value := []byte(values[0])[0]
+
+			log.Infof("Set tag delimiter for reverse primer to %c", value)
 			library.SetReverseTagDelimiter(value)
 		default:
 			log.Fatalln("Invalid value for @reverse_tag_delimiter parameter")
@@ -339,6 +351,7 @@ var library_parameter = map[string]func(library *obingslibrary.NGSLibrary, value
 			if err := library.SetMatching(values[0]); err != nil {
 				log.Fatalf("Invalid value %s for @matching parameter", values[0])
 			}
+			log.Infof("Set tag matching mode to %s", values[0])
 		default:
 			log.Fatalln("Invalid value for @matching parameter")
 		}
@@ -354,6 +367,7 @@ var library_parameter = map[string]func(library *obingslibrary.NGSLibrary, value
 				log.Fatalf("Invalid value %s for @primer_error parameter", values[0])
 			}
 
+			log.Infof("Set global allowed primer mismatches to %d", dist)
 			library.SetAllowedMismatches(dist)
 		case 2:
 			primer := values[0]
@@ -363,6 +377,7 @@ var library_parameter = map[string]func(library *obingslibrary.NGSLibrary, value
 				log.Fatalf("Invalid value %s for @primer_error parameter", values[1])
 			}
 
+			log.Infof("Set allowed primer mismatches for primer %s to %d", primer, dist)
 			library.SetAllowedMismatchesFor(primer, dist)
 		default:
 			log.Fatalln("Invalid value for @primer_error parameter")
@@ -379,6 +394,7 @@ var library_parameter = map[string]func(library *obingslibrary.NGSLibrary, value
 				log.Fatalf("Invalid value %s for @forward_primer_error parameter", values[0])
 			}
 
+			log.Infof("Set allowed mismatches for forward primer to %d", dist)
 			library.SetForwardAllowedMismatches(dist)
 		default:
 			log.Fatalln("Invalid value for @forward_primer_error parameter")
@@ -395,6 +411,7 @@ var library_parameter = map[string]func(library *obingslibrary.NGSLibrary, value
 				log.Fatalf("Invalid value %s for @reverse_primer_error parameter", values[0])
 			}
 
+			log.Infof("Set allowed mismatches for reverse primer to %d", dist)
 			library.SetReverseAllowedMismatches(dist)
 		default:
 			log.Fatalln("Invalid value for @reverse_primer_error parameter")
@@ -410,6 +427,8 @@ var library_parameter = map[string]func(library *obingslibrary.NGSLibrary, value
 			if err != nil {
 				log.Fatalf("Invalid value %s for @tag_indels parameter", values[0])
 			}
+
+			log.Infof("Set global maximum tag indels to %d", indels)
 			library.SetTagIndels(indels)
 		case 2:
 			indels, err := strconv.Atoi(values[1])
@@ -418,6 +437,7 @@ var library_parameter = map[string]func(library *obingslibrary.NGSLibrary, value
 				log.Fatalf("Invalid value %s for @tag_indels parameter", values[1])
 			}
 
+			log.Infof("Set maximum tag indels for primer %s to %d", values[0], indels)
 			library.SetTagIndelsFor(values[0], indels)
 		}
 	},
@@ -432,6 +452,8 @@ var library_parameter = map[string]func(library *obingslibrary.NGSLibrary, value
 			if err != nil {
 				log.Fatalf("Invalid value %s for @forward_tag_indels parameter", values[0])
 			}
+
+			log.Infof("Set maximum tag indels for forward primer to %d", indels)
 			library.SetForwardTagIndels(indels)
 		default:
 			log.Fatalln("Invalid value for @forward_tag_indels parameter")
@@ -447,6 +469,8 @@ var library_parameter = map[string]func(library *obingslibrary.NGSLibrary, value
 			if err != nil {
 				log.Fatalf("Invalid value %s for @reverse_tag_indels parameter", values[0])
 			}
+
+			log.Infof("Set maximum tag indels for reverse primer to %d", indels)
 			library.SetReverseTagIndels(indels)
 		default:
 			log.Fatalln("Invalid value for @reverse_tag_indels parameter")
@@ -457,8 +481,22 @@ var library_parameter = map[string]func(library *obingslibrary.NGSLibrary, value
 		case 0:
 			log.Fatalln("Missing value for @indels parameter")
 		case 1:
+
+			if values[0] == "true" {
+				log.Info("Allows indels for primer matching")
+			} else {
+				log.Info("Disallows indels for primer matching")
+			}
+
 			library.SetAllowsIndels(values[0] == "true")
 		case 2:
+
+			if values[1] == "true" {
+				log.Infof("Allows indels for primer matching %s", values[0])
+			} else {
+				log.Infof("Disallows indels for primer matching %s", values[0])
+			}
+
 			library.SetAllowsIndelsFor(values[0], values[1] == "true")
 		default:
 			log.Fatalln("Invalid value for @indels parameter")
@@ -470,6 +508,12 @@ var library_parameter = map[string]func(library *obingslibrary.NGSLibrary, value
 		case 0:
 			log.Fatalln("Missing value for @forward_indels parameter")
 		case 1:
+			if values[0] == "true" {
+				log.Info("Allows indels for forward primer matching")
+			} else {
+				log.Info("Disallows indels for forward primer matching")
+			}
+
 			library.SetForwardAllowsIndels(values[0] == "true")
 		default:
 			log.Fatalln("Invalid value for @forward_indels parameter")
@@ -480,6 +524,11 @@ var library_parameter = map[string]func(library *obingslibrary.NGSLibrary, value
 		case 0:
 			log.Fatalln("Missing value for @reverse_indels parameter")
 		case 1:
+			if values[0] == "true" {
+				log.Info("Allows indels for reverse primer matching")
+			} else {
+				log.Info("Disallows indels for reverse primer matching")
+			}
 			library.SetReverseAllowsIndels(values[0] == "true")
 		default:
 			log.Fatalln("Invalid value for @reverse_indels parameter")

@@ -52,7 +52,7 @@ func BuildConsensus(seqs obiseq.BioSequenceSlice,
 
 	}
 
-	log.Printf("Number of reads : %d\n", len(seqs))
+	log.Debugf("Number of reads : %d\n", len(seqs))
 
 	if kmer_size < 0 {
 		longest := make([]int, len(seqs))
@@ -64,7 +64,7 @@ func BuildConsensus(seqs obiseq.BioSequenceSlice,
 		}
 
 		kmer_size = slices.Max(longest) + 1
-		log.Printf("estimated kmer size : %d", kmer_size)
+		log.Debugf("estimated kmer size : %d", kmer_size)
 	}
 
 	var graph *obikmer.DeBruijnGraph
@@ -80,7 +80,7 @@ func BuildConsensus(seqs obiseq.BioSequenceSlice,
 		}
 
 		kmer_size++
-		log.Infof("Cycle detected, increasing kmer size to %d\n", kmer_size)
+		log.Debugf("Cycle detected, increasing kmer size to %d\n", kmer_size)
 	}
 
 	if save_graph {
@@ -96,7 +96,7 @@ func BuildConsensus(seqs obiseq.BioSequenceSlice,
 		}
 	}
 
-	log.Printf("Graph size : %d\n", graph.Len())
+	log.Debugf("Graph size : %d\n", graph.Len())
 	total_kmer := graph.Len()
 
 	seq, err := graph.LongestConsensus(consensus_id)
@@ -260,6 +260,21 @@ func MinionDenoise(graph *obigraph.Graph[*obiseq.BioSequence, Mutation],
 	sample_key string, kmer_size int) obiseq.BioSequenceSlice {
 	denoised := obiseq.MakeBioSequenceSlice(len(*graph.Vertices))
 
+	bar := (*progressbar.ProgressBar)(nil)
+	if obiconvert.CLIProgressBar() {
+
+		pbopt := make([]progressbar.Option, 0, 5)
+		pbopt = append(pbopt,
+			progressbar.OptionSetWriter(os.Stderr),
+			progressbar.OptionSetWidth(15),
+			progressbar.OptionShowIts(),
+			progressbar.OptionSetPredictTime(true),
+			progressbar.OptionSetDescription(fmt.Sprintf("[Build consensus] on %s", graph.Name)),
+		)
+
+		bar = progressbar.NewOptions(len(*graph.Vertices), pbopt...)
+	}
+
 	for i, v := range *graph.Vertices {
 		var err error
 		var clean *obiseq.BioSequence
@@ -283,6 +298,7 @@ func MinionDenoise(graph *obigraph.Graph[*obiseq.BioSequence, Mutation],
 				clean.SetAttribute("obiconsensus_consensus", true)
 			}
 			pack.Recycle(false)
+
 		} else {
 			clean = obiseq.NewBioSequence(v.Id(), v.Sequence(), v.Definition())
 			clean.SetAttribute("obiconsensus_consensus", false)
@@ -295,7 +311,20 @@ func MinionDenoise(graph *obigraph.Graph[*obiseq.BioSequence, Mutation],
 			clean.SetAttribute("obiconsensus_weight", int(1))
 		}
 
+		annotations := v.Annotations()
+
+		for k, v := range annotations {
+			if !clean.HasAttribute(k) {
+				clean.SetAttribute(k, v)
+			}
+		}
+
 		denoised[i] = clean
+
+		if bar != nil {
+			bar.Add(1)
+		}
+
 	}
 
 	return denoised

@@ -202,4 +202,8 @@ var OBILang = gval.NewLanguage(
 			scomp[string(k)] = float64(v)
 		}
 		return scomp, nil
-	}))
+	}),
+	gval.Function("replace", func(args ...interface{}) (interface{}, error) {
+		return strings.ReplaceAll(args[0].(string), args[1].(string), args[2].(string)), nil
+	}),
+)

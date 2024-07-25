@@ -2,6 +2,8 @@ package obitax
 
 import (
 	"fmt"
+	"regexp"
+	"strconv"
 )
 
 type TaxName struct {
@@ -54,11 +56,43 @@ func (taxonomy *Taxonomy) AddNewTaxa(taxid, parent int, rank string, replace boo
 	return n, nil
 }
 
-func (taxonomy *Taxonomy) Taxon(taxid int) (*TaxNode, error) {
-	t, ok := (*taxonomy.nodes)[taxid]
+// func (taxonomy *Taxonomy) Taxon(taxid int) (*TaxNode, error) {
+// 	t, ok := (*taxonomy.nodes)[taxid]
+
+// 	if !ok {
+// 		a, aok := taxonomy.alias[taxid]
+// 		if !aok {
+// 			return nil, fmt.Errorf("Taxid %d is not part of the taxonomy", taxid)
+// 		}
+// 		t = a
+// 	}
+// 	return t, nil
+// }
+
+func (taxonomy *Taxonomy) Taxon(taxid interface{}) (*TaxNode, error) {
+	var itaxid int
+	var err error
+
+	switch v := taxid.(type) {
+	case int:
+		itaxid = v
+	case string:
+		itaxid, err = strconv.Atoi(v)
+
+		if err != nil {
+			re := regexp.MustCompile(`TX:(\d+)`)
+			parts := re.FindStringSubmatch(v)
+			if len(parts) != 2 {
+				return nil, fmt.Errorf("I cannot parse taxid from %s", v)
+			}
+			itaxid, _ = strconv.Atoi(parts[1])
+		}
+	}
+
+	t, ok := (*taxonomy.nodes)[itaxid]
 
 	if !ok {
-		a, aok := taxonomy.alias[taxid]
+		a, aok := taxonomy.alias[itaxid]
 		if !aok {
 			return nil, fmt.Errorf("Taxid %d is not part of the taxonomy", taxid)
 		}
@@ -66,7 +100,6 @@ func (taxonomy *Taxonomy) Taxon(taxid int) (*TaxNode, error) {
 	}
 	return t, nil
 }
-
 func (taxonomy *Taxonomy) AddNewName(taxid int, name, nameclass *string) error {
 	node, node_err := taxonomy.Taxon(taxid)
 	if node_err != nil {

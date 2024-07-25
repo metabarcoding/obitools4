@@ -66,3 +66,27 @@ func (taxonomy *Taxonomy) SetPath(sequence *obiseq.BioSequence) string {
 
 	return tpath
 }
+
+func (taxonomy *Taxonomy) SetScientificName(sequence *obiseq.BioSequence) string {
+	taxid, err := taxonomy.Taxon(sequence.Taxid())
+
+	if err != nil {
+		log.Fatalf("Taxid %d not defined in the current taxonomy", sequence.Taxid())
+	}
+
+	sequence.SetAttribute("scienctific_name", taxid.ScientificName())
+
+	return taxid.ScientificName()
+}
+
+func (taxonomy *Taxonomy) SetTaxonomicRank(sequence *obiseq.BioSequence) string {
+	taxid, err := taxonomy.Taxon(sequence.Taxid())
+
+	if err != nil {
+		log.Fatalf("Taxid %d not defined in the current taxonomy", sequence.Taxid())
+	}
+
+	sequence.SetAttribute("taxonomic_rank", taxid.Rank())
+
+	return taxid.Rank()
+}

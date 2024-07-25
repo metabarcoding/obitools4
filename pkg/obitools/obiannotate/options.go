@@ -32,6 +32,8 @@ var _lcaError = 0.0
 var _setId = ""
 var _cut = ""
 var _taxonomicPath = false
+var _withRank = false
+var _withScientificName = false
 
 func SequenceAnnotationOptionSet(options *getoptions.GetOpt) {
 	// options.BoolVar(&_addRank, "seq-rank", _addRank,
@@ -116,6 +118,12 @@ func SequenceAnnotationOptionSet(options *getoptions.GetOpt) {
 
 	options.BoolVar(&_taxonomicPath, "taxonomic-path", _taxonomicPath,
 		options.Description("Annotate the sequence with its taxonomic path"))
+
+	options.BoolVar(&_withRank, "taxonomic-rank", _withRank,
+		options.Description("Annotate the sequence with its taxonomic rank"))
+
+	options.BoolVar(&_withScientificName, "scientific-name", _withScientificName,
+		options.Description("Annotate the sequence with its scientific name"))
 
 	// options.StringVar(&_tagList, "tag-list", _tagList,
 	// 	options.ArgName("FILENAME"),
@@ -306,4 +314,12 @@ func CLIPatternInDels() bool {
 
 func CLISetTaxonomicPath() bool {
 	return _taxonomicPath
+}
+
+func CLISetTaxonomicRank() bool {
+	return _withRank
+}
+
+func CLISetScientificName() bool {
+	return _withScientificName
 }

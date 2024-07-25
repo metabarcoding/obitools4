@@ -12,21 +12,32 @@ import (
 
 type IndexedSequenceSlice struct {
 	Sequences obiseq.BioSequenceSlice
-	Indices   []map[interface{}]*obiutils.Set[int]
+	Indices   []map[string]*obiutils.Set[int]
 }
 
 func (s IndexedSequenceSlice) Len() int {
 	return len(s.Sequences)
 }
 
-func (s IndexedSequenceSlice) Get(keys ...interface{}) *obiseq.BioSequenceSlice {
+func (s IndexedSequenceSlice) Get(keys ...string) *obiseq.BioSequenceSlice {
 	var keeps obiutils.Set[int]
 
 	for i, v := range s.Indices {
+
 		if i == 0 {
-			keeps = *v[keys[0]]
+			p, ok := v[keys[0]]
+			if !ok {
+				keeps = obiutils.MakeSet[int]()
+				break
+			}
+			keeps = *p
 		} else {
-			keeps = keeps.Intersection(*v[keys[i]])
+			p, ok := v[keys[i]]
+			if !ok {
+				keeps = obiutils.MakeSet[int]()
+				break
+			}
+			keeps = keeps.Intersection(*p)
 		}
 	}
 
@@ -39,14 +50,14 @@ func (s IndexedSequenceSlice) Get(keys ...interface{}) *obiseq.BioSequenceSlice 
 }
 
 func BuildIndexedSequenceSlice(seqs obiseq.BioSequenceSlice, keys []string) IndexedSequenceSlice {
-	indices := make([]map[interface{}]*obiutils.Set[int], len(keys))
+	indices := make([]map[string]*obiutils.Set[int], len(keys))
 
 	for i, k := range keys {
-		idx := make(map[interface{}]*obiutils.Set[int])
+		idx := make(map[string]*obiutils.Set[int])
 
 		for j, seq := range seqs {
 
-			if value, ok := seq.GetAttribute(k); ok {
+			if value, ok := seq.GetStringAttribute(k); ok {
 				goods, ok := idx[value]
 				if !ok {
 					goods = obiutils.NewSet[int]()
@@ -67,10 +78,10 @@ func MakeJoinWorker(by []string, index IndexedSequenceSlice, updateId, updateSeq
 	f := func(sequence *obiseq.BioSequence) (obiseq.BioSequenceSlice, error) {
 		var ok bool
 
-		keys := make([]interface{}, len(by))
+		keys := make([]string, len(by))
 
 		for i, v := range by {
-			keys[i], ok = sequence.GetAttribute(v)
+			keys[i], ok = sequence.GetStringAttribute(v)
 			if !ok {
 				return obiseq.BioSequenceSlice{sequence}, nil
 			}

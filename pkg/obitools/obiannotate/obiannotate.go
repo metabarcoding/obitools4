@@ -215,6 +215,24 @@ func AddTaxonAtRankWorker(taxonomy *obitax.Taxonomy, ranks ...string) obiseq.Seq
 	return f
 }
 
+func AddTaxonRankWorker(taxonomy *obitax.Taxonomy) obiseq.SeqWorker {
+	f := func(s *obiseq.BioSequence) (obiseq.BioSequenceSlice, error) {
+		taxonomy.SetTaxonomicRank(s)
+		return obiseq.BioSequenceSlice{s}, nil
+	}
+
+	return f
+}
+
+func AddScientificNameWorker(taxonomy *obitax.Taxonomy) obiseq.SeqWorker {
+	f := func(s *obiseq.BioSequence) (obiseq.BioSequenceSlice, error) {
+		taxonomy.SetScientificName(s)
+		return obiseq.BioSequenceSlice{s}, nil
+	}
+
+	return f
+}
+
 func AddSeqLengthWorker() obiseq.SeqWorker {
 	f := func(s *obiseq.BioSequence) (obiseq.BioSequenceSlice, error) {
 		s.SetAttribute("seq_length", s.Len())
@@ -263,6 +281,18 @@ func CLIAnnotationWorker() obiseq.SeqWorker {
 	if CLISetTaxonomicPath() {
 		taxo := obigrep.CLILoadSelectedTaxonomy()
 		w := taxo.MakeSetPathWorker()
+		annotator = annotator.ChainWorkers(w)
+	}
+
+	if CLISetTaxonomicRank() {
+		taxo := obigrep.CLILoadSelectedTaxonomy()
+		w := AddTaxonRankWorker(taxo)
+		annotator = annotator.ChainWorkers(w)
+	}
+
+	if CLISetScientificName() {
+		taxo := obigrep.CLILoadSelectedTaxonomy()
+		w := AddScientificNameWorker(taxo)
 		annotator = annotator.ChainWorkers(w)
 	}
 

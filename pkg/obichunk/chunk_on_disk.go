@@ -2,7 +2,6 @@ package obichunk
 
 import (
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -14,7 +13,7 @@ import (
 )
 
 func tempDir() (string, error) {
-	dir, err := ioutil.TempDir(os.TempDir(), "obiseq_chunks_")
+	dir, err := os.MkdirTemp(os.TempDir(), "obiseq_chunks_")
 	if err != nil {
 		return "", err
 	}

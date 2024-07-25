@@ -1,6 +1,7 @@
 package obigrep
 
 import (
+	"strconv"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -13,7 +14,7 @@ import (
 	"github.com/DavidGamba/go-getoptions"
 )
 
-var _BelongTaxa = make([]int, 0)
+var _BelongTaxa = make([]string, 0)
 var _NotBelongTaxa = make([]int, 0)
 var _RequiredRanks = make([]string, 0)
 
@@ -48,7 +49,7 @@ func TaxonomySelectionOptionSet(options *getoptions.GetOpt) {
 		options.Alias("t"),
 		options.Description("Points to the directory containing the NCBI Taxonomy database dump."))
 
-	options.IntSliceVar(&_BelongTaxa, "restrict-to-taxon", 1, 1,
+	options.StringSliceVar(&_BelongTaxa, "restrict-to-taxon", 1, 1,
 		options.Alias("r"),
 		options.ArgName("TAXID"),
 		options.Description("Require that the actual taxon of the sequence belongs the provided taxid."))
@@ -231,13 +232,27 @@ func CLILoadSelectedTaxonomy() *obitax.Taxonomy {
 }
 
 func CLIRestrictTaxonomyPredicate() obiseq.SequencePredicate {
+	var p obiseq.SequencePredicate
+	var p2 obiseq.SequencePredicate
 
 	if len(_BelongTaxa) > 0 {
 		taxonomy := CLILoadSelectedTaxonomy()
-		p := taxonomy.IsSubCladeOf(_BelongTaxa[0])
 
-		for _, taxid := range _BelongTaxa[1:] {
-			p = p.Or(taxonomy.IsSubCladeOf(taxid))
+		taxid, err := strconv.Atoi(_BelongTaxa[0])
+		if err != nil {
+			p = taxonomy.IsSubCladeOfSlot(_BelongTaxa[0])
+		} else {
+			p = taxonomy.IsSubCladeOf(taxid)
+		}
+		for _, staxid := range _BelongTaxa[1:] {
+			taxid, err := strconv.Atoi(staxid)
+			if err != nil {
+				p2 = taxonomy.IsSubCladeOfSlot(staxid)
+			} else {
+				p2 = taxonomy.IsSubCladeOf(taxid)
+			}
+
+			p = p.Or(p2)
 		}
 
 		return p

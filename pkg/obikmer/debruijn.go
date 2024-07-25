@@ -607,7 +607,7 @@ func (g *DeBruijnGraph) HaviestPath() []uint64 {
 		}
 	}
 
-	log.Infof("Heaviest node: %d [%v]", heaviestNode, heaviestWeight)
+	log.Debugf("Heaviest node: %d [%v]", heaviestNode, heaviestWeight)
 	// Reconstruct the path from the start node to the heaviest node found
 	heaviestPath := make([]uint64, 0)
 	currentNode := heaviestNode

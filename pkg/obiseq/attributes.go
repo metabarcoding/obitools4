@@ -415,11 +415,16 @@ func (s *BioSequence) SetTaxid(taxid int) {
 	s.SetAttribute("taxid", taxid)
 }
 
-func (s *BioSequence) OBITagRefIndex() map[int]string {
+func (s *BioSequence) OBITagRefIndex(slot ...string) map[int]string {
+	key := "obitag_ref_index"
+
+	if len(slot) > 0 {
+		key = slot[0]
+	}
 
 	var val map[int]string
 
-	i, ok := s.GetAttribute("obitag_ref_index")
+	i, ok := s.GetAttribute(key)
 
 	if !ok {
 		return nil

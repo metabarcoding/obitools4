@@ -57,6 +57,23 @@ func (taxonomy *Taxonomy) IsSubCladeOf(taxid int) obiseq.SequencePredicate {
 	return f
 }
 
+func (taxonomy *Taxonomy) IsSubCladeOfSlot(key string) obiseq.SequencePredicate {
+
+	f := func(sequence *obiseq.BioSequence) bool {
+		val, ok := sequence.GetStringAttribute(key)
+
+		if ok {
+			parent, err1 := taxonomy.Taxon(val)
+			taxon, err2 := taxonomy.Taxon(sequence.Taxid())
+			return err1 == nil && err2 == nil && taxon.IsSubCladeOf(parent)
+		}
+
+		return false
+	}
+
+	return f
+}
+
 func (taxonomy *Taxonomy) HasRequiredRank(rank string) obiseq.SequencePredicate {
 
 	if !obiutils.Contains(taxonomy.RankList(), rank) {
