@@ -1,38 +1,46 @@
 package main
 
 import (
-	"os"
+	"fmt"
 
-	log "github.com/sirupsen/logrus"
-
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
-
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiblackboard"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 )
 
-func main() {
-	optionParser := obioptions.GenerateOptionParser(obiconvert.OptionSet)
+func MakeCounter(n int) func(*obiblackboard.Task) *obiblackboard.Task {
+	count := obiutils.AtomicCounter()
 
-	_, args := optionParser(os.Args)
-
-	fs, err := obiconvert.CLIReadBioSequences(args...)
-
-	if err != nil {
-		log.Errorf("Cannot open file (%v)", err)
-		os.Exit(1)
+	r1 := func(task *obiblackboard.Task) *obiblackboard.Task {
+		val := count()
+		if val < n {
+			nt := task.GetNext()
+			nt.Body = val
+			return nt
+		}
+		return nil
 	}
 
-	frags := obiiter.IFragments(
-		1000,
-		100,
-		10,
-		100,
-		obioptions.CLIParallelWorkers(),
-	)
+	return r1
+}
 
-	obiconvert.CLIWriteBioSequences(fs.Pipe(frags), true)
+func r2(task *obiblackboard.Task) *obiblackboard.Task {
+	fmt.Printf("value : %v\n", task.Body)
+	return obiblackboard.NewInitialTask()
+}
 
-	obiiter.WaitForLastPipe()
+func rmul(task *obiblackboard.Task) *obiblackboard.Task {
+	nt := task.GetNext()
+	nt.Body = task.Body.(int) * 2
+	return nt
+}
 
+func main() {
+
+	black := obiblackboard.NewBlackBoard(20)
+
+	black.RegisterRunner("todisplay", "initial", r2)
+	black.RegisterRunner("multiply", "todisplay", rmul)
+	black.RegisterRunner("initial", "multiply", MakeCounter(1000))
+
+	black.Run()
 }
