@@ -4,7 +4,7 @@ INSTALL_DIR="/usr/local"
 OBITOOLS_PREFIX=""
 # default values
 URL="https://go.dev/dl/"
-OBIURL4="https://git.metabarcoding.org/obitools/obitools4/obitools4/-/archive/master/obitools4-master.tar.gz"
+OBIURL4="https://github.com/metabarcoding/obitools4/archive/refs/heads/master.zip"
 INSTALL_DIR="/usr/local"
 OBITOOLS_PREFIX=""
 
@@ -106,8 +106,10 @@ curl "$GOURL" \
 PATH="$(pwd)/go/bin:$PATH"
 export PATH
 
-curl -L "$OBIURL4" \
-    | tar zxf - 
+curl -L "$OBIURL4" > master.zip
+unzip master.zip
+
+echo "Install OBITOOLS from : $OBIURL4"
 
 cd obitools4-master || exit
 
