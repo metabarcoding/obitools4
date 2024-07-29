@@ -7,17 +7,28 @@ import (
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 )
 
+type DoTask func(*Blackboard, *Task) *Task
+
 type Runner struct {
-	Run func(*Task) *Task
+	Run DoTask
 	To  string
 }
 
 type Blackboard struct {
-	Board     map[int]Queue
-	BoardLock *sync.Mutex
-	Runners   map[string]Runner
-	Running   *obiutils.Counter
-	Size      int
+	Board      map[int]Queue
+	BoardLock  *sync.Mutex
+	Runners    map[string]Runner
+	Running    *obiutils.Counter
+	TargetSize int
+	Size       int
+}
+
+func doFinal(bb *Blackboard, task *Task) *Task {
+	if bb.Len() > bb.TargetSize {
+		return nil
+	}
+
+	return NewInitialTask()
 }
 
 func NewBlackBoard(size int) *Blackboard {
@@ -29,24 +40,28 @@ func NewBlackBoard(size int) *Blackboard {
 	}
 
 	bb := &Blackboard{
-		Board:     board,
-		BoardLock: &sync.Mutex{},
-		Runners:   runners,
-		Running:   obiutils.NewCounter(),
-		Size:      size,
+		Board:      board,
+		BoardLock:  &sync.Mutex{},
+		Runners:    runners,
+		Running:    obiutils.NewCounter(),
+		TargetSize: size,
+		Size:       0,
 	}
 
 	for i := 0; i < size; i++ {
 		bb.PushTask(NewInitialTask())
 	}
 
+	bb.RegisterRunner("final", "initial", doFinal)
+
 	return bb
 }
 
-func (bb *Blackboard) RegisterRunner(from, to string, runner func(*Task) *Task) {
+func (bb *Blackboard) RegisterRunner(from, to string, runner DoTask) {
 	bb.Runners[from] = Runner{
 		Run: runner,
-		To:  to}
+		To:  to,
+	}
 }
 
 func (bb *Blackboard) MaxQueue() Queue {
@@ -73,6 +88,7 @@ func (bb *Blackboard) PopTask() *Task {
 		if len(*q) == 0 {
 			delete(bb.Board, next_task.Priority)
 		}
+		bb.Size--
 		return next_task
 	}
 
@@ -94,6 +110,8 @@ func (bb *Blackboard) PushTask(task *Task) {
 
 		*queue = slices.Grow(*queue, 1)
 		*queue = append((*queue), task)
+
+		bb.Size++
 	}
 }
 
@@ -107,7 +125,7 @@ func (bb *Blackboard) Run() {
 			runner, ok := bb.Runners[task.Role]
 
 			if ok {
-				task = runner.Run(task)
+				task = runner.Run(bb, task)
 				if task != nil {
 					task.Role = runner.To
 				}
@@ -120,7 +138,7 @@ func (bb *Blackboard) Run() {
 		lock.Done()
 	}
 
-	parallel := bb.Size - 1
+	parallel := bb.TargetSize - 1
 	lock.Add(parallel)
 
 	for i := 0; i < parallel; i++ {
@@ -148,4 +166,8 @@ func (bb *Blackboard) Run() {
 	}()
 
 	lock.Wait()
+}
+
+func (bb *Blackboard) Len() int {
+	return bb.Size
 }
