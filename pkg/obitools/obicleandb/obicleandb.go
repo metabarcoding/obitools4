@@ -274,11 +274,11 @@ func ICleanDB(itertator obiiter.IBioSequence) obiiter.IBioSequence {
 	// 	obioptions.CLIParallelWorkers(),
 	// )
 
-	references := annotated.Load()
+	source, references := annotated.Load()
 
 	mannwithney := MakeSequenceFamilyGenusWorker(references)
 
-	partof := obiiter.IBatchOver(references,
+	partof := obiiter.IBatchOver(source, references,
 		obioptions.CLIBatchSize())
 
 	// genera_iterator, err := obichunk.ISequenceChunk(

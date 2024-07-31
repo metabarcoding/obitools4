@@ -46,7 +46,12 @@ func BuildConsensus(seqs obiseq.BioSequenceSlice,
 
 		if err == nil {
 			defer fasta.Close()
-			fasta.Write(obiformats.FormatFastaBatch(obiiter.MakeBioSequenceBatch(0, seqs), obiformats.FormatFastSeqJsonHeader, false))
+			fasta.Write(obiformats.FormatFastaBatch(obiiter.MakeBioSequenceBatch(
+				fmt.Sprintf("%s_consensus", consensus_id),
+				0,
+				seqs,
+			),
+				obiformats.FormatFastSeqJsonHeader, false))
 			fasta.Close()
 		}
 
@@ -333,7 +338,7 @@ func CLIOBIMinion(itertator obiiter.IBioSequence) obiiter.IBioSequence {
 	dirname := CLIGraphFilesDirectory()
 	newIter := obiiter.MakeIBioSequence()
 
-	db := itertator.Load()
+	source, db := itertator.Load()
 
 	log.Infof("Sequence dataset of %d sequeences loaded\n", len(db))
 
@@ -394,7 +399,7 @@ func CLIOBIMinion(itertator obiiter.IBioSequence) obiiter.IBioSequence {
 				CLISampleAttribute(),
 				CLIKmerSize())
 
-			newIter.Push(obiiter.MakeBioSequenceBatch(sample_order, denoised))
+			newIter.Push(obiiter.MakeBioSequenceBatch(source, sample_order, denoised))
 
 			sample_order++
 		}

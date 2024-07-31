@@ -129,7 +129,7 @@ func CLIJoinSequences(iterator obiiter.IBioSequence) obiiter.IBioSequence {
 		log.Fatalf("Cannot read the data file to merge with: %s %v", CLIJoinWith(), err)
 	}
 
-	data := data_iter.Load()
+	_, data := data_iter.Load()
 
 	keys := CLIBy()
 

@@ -15,7 +15,7 @@ import (
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 )
 
-// _EndOfLastEntry finds the index of the last entry in the given byte slice 'buff'
+// EndOfLastFlatFileEntry finds the index of the last entry in the given byte slice 'buff'
 // using a pattern match of the form:
 // <CR>?<LF>//<CR>?<LF>
 // where <CR> and <LF> are the ASCII codes for carriage return and line feed,
@@ -27,7 +27,7 @@ import (
 //
 // Returns:
 // int - the index of the end of the last entry or -1 if no match is found.
-func _EndOfLastEntry(buff []byte) int {
+func EndOfLastFlatFileEntry(buff []byte) int {
 	//  6    5  43 2    1
 	// <CR>?<LF>//<CR>?<LF>
 	var i int
@@ -87,15 +87,9 @@ func _EndOfLastEntry(buff []byte) int {
 	return -1
 }
 
-func _ParseEmblFile(source string, input ChannelSeqFileChunk,
-	out obiiter.IBioSequence,
-	withFeatureTable bool,
-	batch_size int,
-	total_seq_size int) {
-
-	for chunks := range input {
-		scanner := bufio.NewScanner(chunks.raw)
-		order := chunks.order
+func EmblChunkParser(withFeatureTable bool) func(string, io.Reader) (obiseq.BioSequenceSlice, error) {
+	parser := func(source string, input io.Reader) (obiseq.BioSequenceSlice, error) {
+		scanner := bufio.NewScanner(input)
 		sequences := make(obiseq.BioSequenceSlice, 0, 100)
 		id := ""
 		scientificName := ""
@@ -156,7 +150,31 @@ func _ParseEmblFile(source string, input ChannelSeqFileChunk,
 				seqBytes = new(bytes.Buffer)
 			}
 		}
-		out.Push(obiiter.MakeBioSequenceBatch(order, sequences))
+
+		return sequences, nil
+
+	}
+
+	return parser
+}
+
+func _ParseEmblFile(
+	input ChannelSeqFileChunk,
+	out obiiter.IBioSequence,
+	withFeatureTable bool,
+) {
+
+	parser := EmblChunkParser(withFeatureTable)
+
+	for chunks := range input {
+		order := chunks.Order
+		sequences, err := parser(chunks.Source, chunks.Raw)
+
+		if err != nil {
+			log.Fatalf("%s : Cannot parse the embl file : %v", chunks.Source, err)
+		}
+
+		out.Push(obiiter.MakeBioSequenceBatch(chunks.Source, order, sequences))
 	}
 
 	out.Done()
@@ -166,12 +184,18 @@ func _ParseEmblFile(source string, input ChannelSeqFileChunk,
 //	6    5  43 2    1
 //
 // <CR>?<LF>//<CR>?<LF>
-func ReadEMBL(reader io.Reader, options ...WithOption) obiiter.IBioSequence {
+func ReadEMBL(reader io.Reader, options ...WithOption) (obiiter.IBioSequence, error) {
 	opt := MakeOptions(options)
 
 	buff := make([]byte, 1024*1024*1024*256)
 
-	entry_channel := ReadSeqFileChunk(reader, buff, _EndOfLastEntry)
+	entry_channel := ReadSeqFileChunk(
+		opt.Source(),
+		reader,
+		buff,
+		EndOfLastFlatFileEntry,
+	)
+
 	newIter := obiiter.MakeIBioSequence()
 
 	nworkers := opt.ParallelWorkers()
@@ -179,10 +203,11 @@ func ReadEMBL(reader io.Reader, options ...WithOption) obiiter.IBioSequence {
 	// for j := 0; j < opt.ParallelWorkers(); j++ {
 	for j := 0; j < nworkers; j++ {
 		newIter.Add(1)
-		go _ParseEmblFile(opt.Source(), entry_channel, newIter,
+		go _ParseEmblFile(
+			entry_channel,
+			newIter,
 			opt.WithFeatureTable(),
-			opt.BatchSize(),
-			opt.TotalSeqSize())
+		)
 	}
 
 	go func() {
@@ -193,7 +218,7 @@ func ReadEMBL(reader io.Reader, options ...WithOption) obiiter.IBioSequence {
 		newIter = newIter.CompleteFileIterator()
 	}
 
-	return newIter
+	return newIter, nil
 }
 
 func ReadEMBLFromFile(filename string, options ...WithOption) (obiiter.IBioSequence, error) {
@@ -214,5 +239,5 @@ func ReadEMBLFromFile(filename string, options ...WithOption) (obiiter.IBioSeque
 		return obiiter.NilIBioSequence, err
 	}
 
-	return ReadEMBL(reader, options...), nil
+	return ReadEMBL(reader, options...)
 }

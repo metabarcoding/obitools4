@@ -5,14 +5,18 @@ import (
 	"io"
 	"slices"
 
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	log "github.com/sirupsen/logrus"
 )
 
-var _FileChunkSize = 1 << 28
+var _FileChunkSize = 1024 * 1024 * 10
+
+type SeqFileChunkParser func(string, io.Reader) (obiseq.BioSequenceSlice, error)
 
 type SeqFileChunk struct {
-	raw   io.Reader
-	order int
+	Source string
+	Raw    io.Reader
+	Order  int
 }
 
 type ChannelSeqFileChunk chan SeqFileChunk
@@ -32,7 +36,9 @@ type LastSeqRecord func([]byte) int
 //
 // Returns:
 // None
-func ReadSeqFileChunk(reader io.Reader,
+func ReadSeqFileChunk(
+	source string,
+	reader io.Reader,
 	buff []byte,
 	splitter LastSeqRecord) ChannelSeqFileChunk {
 	var err error
@@ -88,7 +94,7 @@ func ReadSeqFileChunk(reader io.Reader,
 
 				if len(buff) > 0 {
 					io := bytes.NewBuffer(slices.Clone(buff))
-					chunk_channel <- SeqFileChunk{io, i}
+					chunk_channel <- SeqFileChunk{source, io, i}
 					i++
 				}
 
@@ -112,7 +118,7 @@ func ReadSeqFileChunk(reader io.Reader,
 		// Send the last chunk to the channel
 		if len(buff) > 0 {
 			io := bytes.NewBuffer(slices.Clone(buff))
-			chunk_channel <- SeqFileChunk{io, i}
+			chunk_channel <- SeqFileChunk{source, io, i}
 		}
 
 		// Close the readers channel when the end of the file is reached

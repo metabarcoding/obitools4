@@ -73,9 +73,9 @@ func ISequenceChunkOnDisk(iterator obiiter.IBioSequence,
 				panic(err)
 			}
 
-			chunck := iseq.Load()
+			source, chunck := iseq.Load()
 
-			newIter.Push(obiiter.MakeBioSequenceBatch(order, chunck))
+			newIter.Push(obiiter.MakeBioSequenceBatch(source, order, chunck))
 			log.Infof("Start processing of batch %d/%d : %d sequences",
 				order, nbatch, len(chunck))
 

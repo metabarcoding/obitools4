@@ -15,6 +15,8 @@ import (
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 )
 
+type SequenceReader func(reader io.Reader, options ...WithOption) (obiiter.IBioSequence, error)
+
 // OBIMimeTypeGuesser is a function that takes an io.Reader as input and guesses the MIME type of the data.
 // It uses several detectors to identify specific file formats, such as FASTA, FASTQ, ecoPCR2, GenBank, and EMBL.
 // The function reads data from the input stream and analyzes it using the mimetype library.
@@ -172,11 +174,11 @@ func ReadSequencesFromFile(filename string,
 	case "text/fasta":
 		return ReadFasta(reader, options...)
 	case "text/ecopcr2":
-		return ReadEcoPCR(reader, options...), nil
+		return ReadEcoPCR(reader, options...)
 	case "text/embl":
-		return ReadEMBL(reader, options...), nil
+		return ReadEMBL(reader, options...)
 	case "text/genbank":
-		return ReadGenbank(reader, options...), nil
+		return ReadGenbank(reader, options...)
 	case "text/csv":
 		return ReadCSV(reader, options...)
 	default:

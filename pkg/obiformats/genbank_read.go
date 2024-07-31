@@ -29,27 +29,11 @@ const (
 
 var _seqlenght_rx = regexp.MustCompile(" +([0-9]+) bp")
 
-func _ParseGenbankFile(source string,
-	input ChannelSeqFileChunk,
-	out obiiter.IBioSequence,
-	chunck_order func() int,
-	withFeatureTable bool,
-	batch_size int,
-	total_seq_size int) {
-	state := inHeader
-	previous_chunk := -1
-
-	for chunks := range input {
-
-		if state != inHeader {
-			log.Fatalf("Unexpected state %d starting new chunk (id = %d, previous_chunk = %d)",
-				state, chunks.order, previous_chunk)
-		}
-
-		previous_chunk = chunks.order
-		scanner := bufio.NewReader(chunks.raw)
-		sequences := make(obiseq.BioSequenceSlice, 0, 100)
-		sumlength := 0
+func GenbankChunkParser(withFeatureTable bool) func(string, io.Reader) (obiseq.BioSequenceSlice, error) {
+	return func(source string, input io.Reader) (obiseq.BioSequenceSlice, error) {
+		state := inHeader
+		scanner := bufio.NewReader(input)
+		sequences := obiseq.MakeBioSequenceSlice(100)[:0]
 		id := ""
 		lseq := -1
 		scientificName := ""
@@ -64,7 +48,7 @@ func _ParseGenbankFile(source string,
 			nl++
 			line = string(bline)
 			if is_prefix || len(line) > 100 {
-				log.Fatalf("Chunk %d : Line too long: %s", chunks.order, line)
+				log.Fatalf("From %s:Line too long: %s", source, line)
 			}
 			processed := false
 			for !processed {
@@ -165,15 +149,6 @@ func _ParseGenbankFile(source string,
 					//	sequence.Len(), seqBytes.Len())
 
 					sequences = append(sequences, sequence)
-					sumlength += sequence.Len()
-
-					if len(sequences) == batch_size || sumlength > total_seq_size {
-						oo := chunck_order()
-						log.Debugln("Pushing sequence batch ", oo, " with ", len(sequences), " sequences")
-						out.Push(obiiter.MakeBioSequenceBatch(oo, sequences))
-						sequences = make(obiseq.BioSequenceSlice, 0, 100)
-						sumlength = 0
-					}
 
 					defBytes = bytes.NewBuffer(obiseq.GetSlice(200))
 					featBytes = new(bytes.Buffer)
@@ -219,11 +194,24 @@ func _ParseGenbankFile(source string,
 
 		}
 
-		if len(sequences) > 0 {
-			oo := chunck_order()
-			log.Debugln("Pushing sequence batch ", oo, " with ", len(sequences), " sequences")
-			out.Push(obiiter.MakeBioSequenceBatch(oo, sequences))
+		return sequences, nil
+	}
+}
+
+func _ParseGenbankFile(input ChannelSeqFileChunk,
+	out obiiter.IBioSequence,
+	withFeatureTable bool) {
+
+	parser := GenbankChunkParser(withFeatureTable)
+
+	for chunks := range input {
+		sequences, err := parser(chunks.Source, chunks.Raw)
+
+		if err != nil {
+			log.Fatalf("File %s : Cannot parse the genbank file : %v", chunks.Source, err)
 		}
+
+		out.Push(obiiter.MakeBioSequenceBatch(chunks.Source, chunks.Order, sequences))
 	}
 
 	log.Debug("End of the Genbank thread")
@@ -231,26 +219,31 @@ func _ParseGenbankFile(source string,
 
 }
 
-func ReadGenbank(reader io.Reader, options ...WithOption) obiiter.IBioSequence {
+func ReadGenbank(reader io.Reader, options ...WithOption) (obiiter.IBioSequence, error) {
 	opt := MakeOptions(options)
 	// entry_channel := make(chan _FileChunk)
 
 	buff := make([]byte, 1024*1024*1024*256)
 
-	entry_channel := ReadSeqFileChunk(reader, buff, _EndOfLastEntry)
+	entry_channel := ReadSeqFileChunk(
+		opt.Source(),
+		reader,
+		buff,
+		EndOfLastFlatFileEntry,
+	)
+
 	newIter := obiiter.MakeIBioSequence()
 
 	nworkers := opt.ParallelWorkers()
-	chunck_order := obiutils.AtomicCounter()
 
 	// for j := 0; j < opt.ParallelWorkers(); j++ {
 	for j := 0; j < nworkers; j++ {
 		newIter.Add(1)
-		go _ParseGenbankFile(opt.Source(),
-			entry_channel, newIter, chunck_order,
+		go _ParseGenbankFile(
+			entry_channel,
+			newIter,
 			opt.WithFeatureTable(),
-			opt.BatchSize(),
-			opt.TotalSeqSize())
+		)
 	}
 
 	// go _ReadFlatFileChunk(reader, entry_channel)
@@ -264,7 +257,7 @@ func ReadGenbank(reader io.Reader, options ...WithOption) obiiter.IBioSequence {
 		newIter = newIter.CompleteFileIterator()
 	}
 
-	return newIter
+	return newIter, nil
 }
 
 func ReadGenbankFromFile(filename string, options ...WithOption) (obiiter.IBioSequence, error) {
@@ -285,5 +278,5 @@ func ReadGenbankFromFile(filename string, options ...WithOption) (obiiter.IBioSe
 		return obiiter.NilIBioSequence, err
 	}
 
-	return ReadGenbank(reader, options...), nil
+	return ReadGenbank(reader, options...)
 }

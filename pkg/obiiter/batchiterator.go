@@ -424,9 +424,11 @@ func (iterator IBioSequence) Rebatch(size int) IBioSequence {
 		order := 0
 		iterator = iterator.SortBatches()
 		buffer := obiseq.MakeBioSequenceSlice()
+		source := ""
 
 		for iterator.Next() {
 			seqs := iterator.Get()
+			source = seqs.Source()
 			lc := seqs.Len()
 			remains := lc
 			i := 0
@@ -436,7 +438,7 @@ func (iterator IBioSequence) Rebatch(size int) IBioSequence {
 				remains = lc - to_push - i
 				buffer = append(buffer, seqs.Slice()[i:(i+to_push)]...)
 				if len(buffer) == size {
-					newIter.Push(MakeBioSequenceBatch(order, buffer))
+					newIter.Push(MakeBioSequenceBatch(source, order, buffer))
 					log.Debugf("Rebatch #%d pushd", order)
 					order++
 					buffer = obiseq.MakeBioSequenceSlice()
@@ -447,7 +449,7 @@ func (iterator IBioSequence) Rebatch(size int) IBioSequence {
 		}
 		log.Debug("End of the rebatch loop")
 		if len(buffer) > 0 {
-			newIter.Push(MakeBioSequenceBatch(order, buffer))
+			newIter.Push(MakeBioSequenceBatch(source, order, buffer))
 			log.Debugf("Final Rebatch #%d pushd", order)
 		}
 
@@ -526,12 +528,14 @@ func (iterator IBioSequence) DivideOn(predicate obiseq.SequencePredicate,
 		trueOrder := 0
 		falseOrder := 0
 		iterator = iterator.SortBatches()
+		source := ""
 
 		trueSlice := obiseq.MakeBioSequenceSlice()
 		falseSlice := obiseq.MakeBioSequenceSlice()
 
 		for iterator.Next() {
 			seqs := iterator.Get()
+			source = seqs.Source()
 			for _, s := range seqs.slice {
 				if predicate(s) {
 					trueSlice = append(trueSlice, s)
@@ -540,13 +544,13 @@ func (iterator IBioSequence) DivideOn(predicate obiseq.SequencePredicate,
 				}
 
 				if len(trueSlice) == size {
-					trueIter.Push(MakeBioSequenceBatch(trueOrder, trueSlice))
+					trueIter.Push(MakeBioSequenceBatch(source, trueOrder, trueSlice))
 					trueOrder++
 					trueSlice = obiseq.MakeBioSequenceSlice()
 				}
 
 				if len(falseSlice) == size {
-					falseIter.Push(MakeBioSequenceBatch(falseOrder, falseSlice))
+					falseIter.Push(MakeBioSequenceBatch(source, falseOrder, falseSlice))
 					falseOrder++
 					falseSlice = obiseq.MakeBioSequenceSlice()
 				}
@@ -555,11 +559,11 @@ func (iterator IBioSequence) DivideOn(predicate obiseq.SequencePredicate,
 		}
 
 		if len(trueSlice) > 0 {
-			trueIter.Push(MakeBioSequenceBatch(trueOrder, trueSlice))
+			trueIter.Push(MakeBioSequenceBatch(source, trueOrder, trueSlice))
 		}
 
 		if len(falseSlice) > 0 {
-			falseIter.Push(MakeBioSequenceBatch(falseOrder, falseSlice))
+			falseIter.Push(MakeBioSequenceBatch(source, falseOrder, falseSlice))
 		}
 
 		trueIter.Done()
@@ -686,17 +690,22 @@ func (iterator IBioSequence) FilterAnd(predicate obiseq.SequencePredicate,
 
 // Load all sequences availables from an IBioSequenceBatch iterator into
 // a large obiseq.BioSequenceSlice.
-func (iterator IBioSequence) Load() obiseq.BioSequenceSlice {
+func (iterator IBioSequence) Load() (string, obiseq.BioSequenceSlice) {
 
 	chunck := obiseq.MakeBioSequenceSlice()
+	source := ""
+
 	for iterator.Next() {
 		b := iterator.Get()
+		if source == "" {
+			source = b.Source()
+		}
 		log.Debugf("append %d sequences", b.Len())
 		chunck = append(chunck, b.Slice()...)
 		b.Recycle(false)
 	}
 
-	return chunck
+	return source, chunck
 }
 
 // CompleteFileIterator generates a new iterator for reading a complete file.
@@ -718,10 +727,10 @@ func (iterator IBioSequence) CompleteFileIterator() IBioSequence {
 	}()
 
 	go func() {
-		slice := iterator.Load()
+		source, slice := iterator.Load()
 		log.Printf("A batch of  %d sequence is read", len(slice))
 		if len(slice) > 0 {
-			newIter.Push(MakeBioSequenceBatch(0, slice))
+			newIter.Push(MakeBioSequenceBatch(source, 0, slice))
 		}
 		newIter.Done()
 	}()
@@ -735,7 +744,7 @@ func (iterator IBioSequence) CompleteFileIterator() IBioSequence {
 
 // It takes a slice of BioSequence objects, and returns an iterator that will return batches of
 // BioSequence objects
-func IBatchOver(data obiseq.BioSequenceSlice,
+func IBatchOver(source string, data obiseq.BioSequenceSlice,
 	size int, sizes ...int) IBioSequence {
 
 	newIter := MakeIBioSequence()
@@ -755,7 +764,7 @@ func IBatchOver(data obiseq.BioSequenceSlice,
 			if next > ldata {
 				next = ldata
 			}
-			newIter.Push(MakeBioSequenceBatch(batchid, data[i:next]))
+			newIter.Push(MakeBioSequenceBatch(source, batchid, data[i:next]))
 			batchid++
 		}
 

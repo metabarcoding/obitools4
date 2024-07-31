@@ -3,29 +3,25 @@ package obiblackboard
 import (
 	"slices"
 	"sync"
+	"time"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 )
 
 type DoTask func(*Blackboard, *Task) *Task
 
-type Runner struct {
-	Run DoTask
-	To  string
-}
-
 type Blackboard struct {
 	Board      map[int]Queue
 	BoardLock  *sync.Mutex
-	Runners    map[string]Runner
+	Runners    map[string]DoTask
 	Running    *obiutils.Counter
 	TargetSize int
 	Size       int
 }
 
 func doFinal(bb *Blackboard, task *Task) *Task {
-	if bb.Len() > bb.TargetSize {
-		return nil
+	if task.SavedTask != nil {
+		return task.SavedTask
 	}
 
 	return NewInitialTask()
@@ -33,7 +29,7 @@ func doFinal(bb *Blackboard, task *Task) *Task {
 
 func NewBlackBoard(size int) *Blackboard {
 	board := make(map[int]Queue, 0)
-	runners := make(map[string]Runner, 0)
+	runners := make(map[string]DoTask, 0)
 
 	if size < 2 {
 		size = 2
@@ -52,16 +48,13 @@ func NewBlackBoard(size int) *Blackboard {
 		bb.PushTask(NewInitialTask())
 	}
 
-	bb.RegisterRunner("final", "initial", doFinal)
+	bb.RegisterRunner("final", doFinal)
 
 	return bb
 }
 
-func (bb *Blackboard) RegisterRunner(from, to string, runner DoTask) {
-	bb.Runners[from] = Runner{
-		Run: runner,
-		To:  to,
-	}
+func (bb *Blackboard) RegisterRunner(target string, runner DoTask) {
+	bb.Runners[target] = runner
 }
 
 func (bb *Blackboard) MaxQueue() Queue {
@@ -125,10 +118,7 @@ func (bb *Blackboard) Run() {
 			runner, ok := bb.Runners[task.Role]
 
 			if ok {
-				task = runner.Run(bb, task)
-				if task != nil {
-					task.Role = runner.To
-				}
+				task = runner(bb, task)
 			}
 
 			bb.PushTask(task)
@@ -155,9 +145,10 @@ func (bb *Blackboard) Run() {
 				ctask <- task
 			} else {
 				bb.Running.Dec()
-				if bb.Running.Value() <= 0 {
+				if bb.Running.Value()+bb.Len() <= 0 {
 					break
 				}
+				time.Sleep(time.Millisecond)
 			}
 
 		}
@@ -168,6 +159,46 @@ func (bb *Blackboard) Run() {
 	lock.Wait()
 }
 
+// func (bb *Blackboard) Run() {
+// 	lock := &sync.WaitGroup{}
+
+// 	launcher := func(runner DoTask, task *Task) {
+// 		task = runner(bb, task)
+
+// 		if task != nil {
+// 			for bb.Len() > bb.TargetSize {
+// 				time.Sleep(time.Millisecond)
+// 			}
+// 			bb.PushTask(task)
+// 		}
+
+// 		bb.Running.Dec()
+// 		lock.Done()
+// 	}
+
+// 	lock.Add(1)
+
+// 	func() {
+// 		for bb.Len()+bb.Running.Value() > 0 {
+// 			bb.Running.Inc()
+// 			task := bb.PopTask()
+
+// 			if task != nil {
+// 				lock.Add(1)
+// 				go launcher(bb.Runners[task.Role], task)
+// 			} else {
+// 				bb.Running.Dec()
+// 			}
+// 		}
+
+// 		lock.Done()
+// 	}()
+
+// 	lock.Wait()
+// }
+
 func (bb *Blackboard) Len() int {
 	return bb.Size
 }
+
+// 151431044 151431044 15083822152

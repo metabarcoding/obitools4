@@ -122,7 +122,7 @@ func __read_ecopcr_bioseq__(file *__ecopcr_file__) (*obiseq.BioSequence, error) 
 	return bseq, nil
 }
 
-func ReadEcoPCR(reader io.Reader, options ...WithOption) obiiter.IBioSequence {
+func ReadEcoPCR(reader io.Reader, options ...WithOption) (obiiter.IBioSequence, error) {
 	tag := make([]byte, 11)
 	n, _ := reader.Read(tag)
 
@@ -187,7 +187,7 @@ func ReadEcoPCR(reader io.Reader, options ...WithOption) obiiter.IBioSequence {
 			slice = append(slice, seq)
 			ii++
 			if ii >= opt.BatchSize() {
-				newIter.Push(obiiter.MakeBioSequenceBatch(i, slice))
+				newIter.Push(obiiter.MakeBioSequenceBatch(opt.Source(), i, slice))
 				slice = obiseq.MakeBioSequenceSlice()
 				i++
 				ii = 0
@@ -198,7 +198,7 @@ func ReadEcoPCR(reader io.Reader, options ...WithOption) obiiter.IBioSequence {
 		}
 
 		if len(slice) > 0 {
-			newIter.Push(obiiter.MakeBioSequenceBatch(i, slice))
+			newIter.Push(obiiter.MakeBioSequenceBatch(opt.Source(), i, slice))
 		}
 
 		newIter.Done()
@@ -213,7 +213,7 @@ func ReadEcoPCR(reader io.Reader, options ...WithOption) obiiter.IBioSequence {
 		newIter = newIter.CompleteFileIterator()
 	}
 
-	return newIter
+	return newIter, nil
 }
 
 func ReadEcoPCRFromFile(filename string, options ...WithOption) (obiiter.IBioSequence, error) {
@@ -235,5 +235,5 @@ func ReadEcoPCRFromFile(filename string, options ...WithOption) (obiiter.IBioSeq
 		reader = greader
 	}
 
-	return ReadEcoPCR(reader, options...), nil
+	return ReadEcoPCR(reader, options...)
 }

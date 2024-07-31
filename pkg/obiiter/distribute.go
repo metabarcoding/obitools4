@@ -61,9 +61,12 @@ func (iterator IBioSequence) Distribute(class *obiseq.BioSequenceClassifier, siz
 
 	go func() {
 		iterator = iterator.SortBatches()
+		source := ""
 
 		for iterator.Next() {
 			seqs := iterator.Get()
+			source = seqs.Source()
+
 			for _, s := range seqs.Slice() {
 				key := class.Code(s)
 				slice, ok := slices[key]
@@ -84,7 +87,7 @@ func (iterator IBioSequence) Distribute(class *obiseq.BioSequenceClassifier, siz
 				*slice = append(*slice, s)
 
 				if len(*slice) == batchsize {
-					outputs[key].Push(MakeBioSequenceBatch(orders[key], *slice))
+					outputs[key].Push(MakeBioSequenceBatch(source, orders[key], *slice))
 					orders[key]++
 					s := obiseq.MakeBioSequenceSlice()
 					slices[key] = &s
@@ -95,7 +98,7 @@ func (iterator IBioSequence) Distribute(class *obiseq.BioSequenceClassifier, siz
 
 		for key, slice := range slices {
 			if len(*slice) > 0 {
-				outputs[key].Push(MakeBioSequenceBatch(orders[key], *slice))
+				outputs[key].Push(MakeBioSequenceBatch(source, orders[key], *slice))
 			}
 		}
 

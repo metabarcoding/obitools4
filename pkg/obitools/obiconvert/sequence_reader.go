@@ -14,7 +14,7 @@ import (
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 )
 
-func _ExpandListOfFiles(check_ext bool, filenames ...string) ([]string, error) {
+func ExpandListOfFiles(check_ext bool, filenames ...string) ([]string, error) {
 	var err error
 	list_of_files := orderedset.NewOrderedSet()
 	for _, fn := range filenames {
@@ -39,7 +39,7 @@ func _ExpandListOfFiles(check_ext bool, filenames ...string) ([]string, error) {
 
 				if info.IsDir() {
 					if path != fn {
-						subdir, e := _ExpandListOfFiles(true, path)
+						subdir, e := ExpandListOfFiles(true, path)
 						if e != nil {
 							return e
 						}
@@ -113,19 +113,26 @@ func CLIReadBioSequences(filenames ...string) (obiiter.IBioSequence, error) {
 		log.Printf("Reading sequences from stdin in %s\n", CLIInputFormat())
 		opts = append(opts, obiformats.OptionsSource("stdin"))
 
+		var err error
+
 		switch CLIInputFormat() {
 		case "ecopcr":
-			iterator = obiformats.ReadEcoPCR(os.Stdin, opts...)
+			iterator, err = obiformats.ReadEcoPCR(os.Stdin, opts...)
 		case "embl":
-			iterator = obiformats.ReadEMBL(os.Stdin, opts...)
+			iterator, err = obiformats.ReadEMBL(os.Stdin, opts...)
 		case "genbank":
-			iterator = obiformats.ReadGenbank(os.Stdin, opts...)
+			iterator, err = obiformats.ReadGenbank(os.Stdin, opts...)
 		default:
 			iterator = obiformats.ReadFastSeqFromStdin(opts...)
 		}
+
+		if err != nil {
+			return obiiter.NilIBioSequence, err
+		}
+
 	} else {
 
-		list_of_files, err := _ExpandListOfFiles(false, filenames...)
+		list_of_files, err := ExpandListOfFiles(false, filenames...)
 		if err != nil {
 			return obiiter.NilIBioSequence, err
 		}

@@ -9,9 +9,11 @@ func (b BioSequenceBatch) IsPaired() bool {
 }
 
 func (b BioSequenceBatch) PairedWith() BioSequenceBatch {
-	return MakeBioSequenceBatch(b.order,
-		*b.slice.PairedWith())
-
+	return MakeBioSequenceBatch(
+		b.Source(),
+		b.order,
+		*b.slice.PairedWith(),
+	)
 }
 
 func (b *BioSequenceBatch) PairTo(p *BioSequenceBatch) {

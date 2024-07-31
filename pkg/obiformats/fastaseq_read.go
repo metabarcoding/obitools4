@@ -14,7 +14,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func _EndOfLastFastaEntry(buffer []byte) int {
+func EndOfLastFastaEntry(buffer []byte) int {
 	var i int
 
 	imax := len(buffer)
@@ -39,24 +39,18 @@ func _EndOfLastFastaEntry(buffer []byte) int {
 	return last
 }
 
-func _ParseFastaFile(source string,
-	input ChannelSeqFileChunk,
-	out obiiter.IBioSequence,
-	no_order bool,
-	batch_size int,
-	chunck_order func() int,
-) {
+func FastaChunkParser() func(string, io.Reader) (obiseq.BioSequenceSlice, error) {
 
-	var identifier string
-	var definition string
+	parser := func(source string, input io.Reader) (obiseq.BioSequenceSlice, error) {
+		var identifier string
+		var definition string
 
-	idBytes := bytes.Buffer{}
-	defBytes := bytes.Buffer{}
-	seqBytes := bytes.Buffer{}
+		idBytes := bytes.Buffer{}
+		defBytes := bytes.Buffer{}
+		seqBytes := bytes.Buffer{}
 
-	for chunks := range input {
 		state := 0
-		scanner := bufio.NewReader(chunks.raw)
+		scanner := bufio.NewReader(input)
 		start, _ := scanner.Peek(20)
 		if start[0] != '>' {
 			log.Fatalf("%s : first character is not '>'", string(start))
@@ -64,7 +58,8 @@ func _ParseFastaFile(source string,
 		if start[1] == ' ' {
 			log.Fatalf("%s :Strange", string(start))
 		}
-		sequences := make(obiseq.BioSequenceSlice, 0, batch_size)
+
+		sequences := obiseq.MakeBioSequenceSlice(100)[:0]
 
 		previous := byte(0)
 
@@ -160,12 +155,6 @@ func _ParseFastaFile(source string,
 						s := obiseq.NewBioSequence(identifier, rawseq, definition)
 						s.SetSource(source)
 						sequences = append(sequences, s)
-						if no_order {
-							if len(sequences) == batch_size {
-								out.Push(obiiter.MakeBioSequenceBatch(chunck_order(), sequences))
-								sequences = make(obiseq.BioSequenceSlice, 0, batch_size)
-							}
-						}
 						state = 1
 					} else {
 						// Error
@@ -209,13 +198,28 @@ func _ParseFastaFile(source string,
 			sequences = append(sequences, s)
 		}
 
-		if len(sequences) > 0 {
-			co := chunks.order
-			if no_order {
-				co = chunck_order()
-			}
-			out.Push(obiiter.MakeBioSequenceBatch(co, sequences))
+		return sequences, nil
+	}
+
+	return parser
+}
+
+func _ParseFastaFile(
+	input ChannelSeqFileChunk,
+	out obiiter.IBioSequence,
+) {
+
+	parser := FastaChunkParser()
+
+	for chunks := range input {
+		sequences, err := parser(chunks.Source, chunks.Raw)
+
+		if err != nil {
+			log.Fatalf("File %s : Cannot parse the fasta file : %v", chunks.Source, err)
 		}
+
+		out.Push(obiiter.MakeBioSequenceBatch(chunks.Source, chunks.Order, sequences))
+
 	}
 
 	out.Done()
@@ -230,17 +234,16 @@ func ReadFasta(reader io.Reader, options ...WithOption) (obiiter.IBioSequence, e
 
 	buff := make([]byte, 1024*1024*1024)
 
-	chkchan := ReadSeqFileChunk(reader, buff, _EndOfLastFastaEntry)
-	chunck_order := obiutils.AtomicCounter()
+	chkchan := ReadSeqFileChunk(
+		opt.Source(),
+		reader,
+		buff,
+		EndOfLastFastaEntry,
+	)
 
 	for i := 0; i < nworker; i++ {
 		out.Add(1)
-		go _ParseFastaFile(opt.Source(),
-			chkchan,
-			out,
-			opt.NoOrder(),
-			opt.BatchSize(),
-			chunck_order)
+		go _ParseFastaFile(chkchan, out)
 	}
 
 	go func() {
@@ -282,7 +285,7 @@ func ReadFastaFromFile(filename string, options ...WithOption) (obiiter.IBioSequ
 }
 
 func ReadFastaFromStdin(reader io.Reader, options ...WithOption) (obiiter.IBioSequence, error) {
-	options = append(options, OptionsSource(obiutils.RemoveAllExt("stdin")))
+	options = append(options, OptionsSource("stdin"))
 	input, err := Buf(os.Stdin)
 
 	if err == ErrNoContent {

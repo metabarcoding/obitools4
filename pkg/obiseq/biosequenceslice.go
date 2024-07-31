@@ -186,6 +186,21 @@ func (s BioSequenceSlice) Size() int {
 	return size
 }
 
+// Count calculates the total count of all BioSequence elements in the BioSequenceSlice.
+//
+// It iterates over each BioSequence in the slice and adds the count of each BioSequence to the total count.
+//
+// Returns the total count as an integer.
+func (s BioSequenceSlice) Count() int {
+	size := 0
+
+	for _, s := range s {
+		size += s.Count()
+	}
+
+	return size
+}
+
 func (s BioSequenceSlice) AttributeKeys(skip_map bool) obiutils.Set[string] {
 	keys := obiutils.MakeSet[string]()
 

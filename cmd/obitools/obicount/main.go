@@ -4,8 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	log "github.com/sirupsen/logrus"
-
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiblackboard"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obicount"
 
@@ -35,26 +34,27 @@ func main() {
 
 	_, args := optionParser(os.Args)
 
-	obioptions.SetStrictReadWorker(min(4, obioptions.CLIParallelWorkers()))
-	fs, err := obiconvert.CLIReadBioSequences(args...)
+	black := obiblackboard.NewBlackBoard(obioptions.CLIParallelWorkers())
 
-	if err != nil {
-		log.Errorf("Cannot open file (%v)", err)
-		os.Exit(1)
-	}
+	black.ReadSequences(args)
 
-	nvariant, nread, nsymbol := fs.Count(true)
+	counter := obiblackboard.CountSequenceAggregator("to_delete")
+
+	black.RegisterRunner("sequences", counter.Runner)
+	black.RegisterRunner("to_delete", obiblackboard.RecycleSequences(true, "final"))
+
+	black.Run()
 
 	if obicount.CLIIsPrintingVariantCount() {
-		fmt.Printf(" %d", nvariant)
+		fmt.Printf(" %d", counter.Variants)
 	}
 
 	if obicount.CLIIsPrintingReadCount() {
-		fmt.Printf(" %d", nread)
+		fmt.Printf(" %d", counter.Reads)
 	}
 
 	if obicount.CLIIsPrintingSymbolCount() {
-		fmt.Printf(" %d", nsymbol)
+		fmt.Printf(" %d", counter.Nucleotides)
 	}
 
 	fmt.Printf("\n")

@@ -225,7 +225,7 @@ func LuaProcessor(iterator obiiter.IBioSequence, name, program string, breakOnEr
 				}
 			}
 
-			newIter.Push(obiiter.MakeBioSequenceBatch(seqs.Order(), ns))
+			newIter.Push(obiiter.MakeBioSequenceBatch(seqs.Source(), seqs.Order(), ns))
 			seqs.Recycle(false)
 		}
 
