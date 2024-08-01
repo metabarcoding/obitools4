@@ -7,7 +7,7 @@ import (
 // TODO: The version number is extracted from git. This induces that the version
 // corresponds to the last commit, and not the one when the file will be
 // commited
-var _Commit = "dfe2fc3"
+var _Commit = "776b8f7"
 var _Version = ""
 
 // Version returns the version of the obitools package.

@@ -15,7 +15,7 @@ type SeqFileChunkParser func(string, io.Reader) (obiseq.BioSequenceSlice, error)
 
 type SeqFileChunk struct {
 	Source string
-	Raw    io.Reader
+	Raw    *bytes.Buffer
 	Order  int
 }
 
