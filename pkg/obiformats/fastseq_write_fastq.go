@@ -87,7 +87,7 @@ func FormatFastqBatch(batch obiiter.BioSequenceBatch,
 	return chunk
 }
 
-type FileChunck struct {
+type FileChunk struct {
 	text  []byte
 	order int
 }
@@ -106,7 +106,7 @@ func WriteFastq(iterator obiiter.IBioSequence,
 	nwriters := opt.ParallelWorkers()
 
 	obiiter.RegisterAPipe()
-	chunkchan := make(chan FileChunck)
+	chunkchan := make(chan FileChunk)
 
 	header_format := opt.FormatFastSeqHeader()
 
@@ -126,7 +126,7 @@ func WriteFastq(iterator obiiter.IBioSequence,
 	ff := func(iterator obiiter.IBioSequence) {
 		for iterator.Next() {
 			batch := iterator.Get()
-			chunk := FileChunck{
+			chunk := FileChunk{
 				FormatFastqBatch(batch, header_format, opt.SkipEmptySequence()),
 				batch.Order(),
 			}
@@ -143,7 +143,7 @@ func WriteFastq(iterator obiiter.IBioSequence,
 	}
 
 	next_to_send := 0
-	received := make(map[int]FileChunck, 100)
+	received := make(map[int]FileChunk, 100)
 
 	waitWriter.Add(1)
 	go func() {

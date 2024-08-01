@@ -692,7 +692,7 @@ func (iterator IBioSequence) FilterAnd(predicate obiseq.SequencePredicate,
 // a large obiseq.BioSequenceSlice.
 func (iterator IBioSequence) Load() (string, obiseq.BioSequenceSlice) {
 
-	chunck := obiseq.MakeBioSequenceSlice()
+	chunk := obiseq.MakeBioSequenceSlice()
 	source := ""
 
 	for iterator.Next() {
@@ -701,11 +701,11 @@ func (iterator IBioSequence) Load() (string, obiseq.BioSequenceSlice) {
 			source = b.Source()
 		}
 		log.Debugf("append %d sequences", b.Len())
-		chunck = append(chunck, b.Slice()...)
+		chunk = append(chunk, b.Slice()...)
 		b.Recycle(false)
 	}
 
-	return source, chunck
+	return source, chunk
 }
 
 // CompleteFileIterator generates a new iterator for reading a complete file.

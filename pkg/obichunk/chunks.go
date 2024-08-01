@@ -63,10 +63,10 @@ func ISequenceChunk(iterator obiiter.IBioSequence,
 		jobDone.Wait()
 		order := 0
 
-		for i, chunck := range chunks {
+		for i, chunk := range chunks {
 
-			if len(*chunck) > 0 {
-				newIter.Push(obiiter.MakeBioSequenceBatch(sources[i], order, *chunck))
+			if len(*chunk) > 0 {
+				newIter.Push(obiiter.MakeBioSequenceBatch(sources[i], order, *chunk))
 				order++
 			}
 

@@ -136,7 +136,7 @@ func WriteFasta(iterator obiiter.IBioSequence,
 	nwriters := opt.ParallelWorkers()
 
 	obiiter.RegisterAPipe()
-	chunkchan := make(chan FileChunck)
+	chunkchan := make(chan FileChunk)
 
 	header_format := opt.FormatFastSeqHeader()
 
@@ -159,7 +159,7 @@ func WriteFasta(iterator obiiter.IBioSequence,
 
 			log.Debugf("Formating fasta chunk %d", batch.Order())
 
-			chunkchan <- FileChunck{
+			chunkchan <- FileChunk{
 				FormatFastaBatch(batch, header_format, opt.SkipEmptySequence()),
 				batch.Order(),
 			}
@@ -177,7 +177,7 @@ func WriteFasta(iterator obiiter.IBioSequence,
 	}
 
 	next_to_send := 0
-	received := make(map[int]FileChunck, 100)
+	received := make(map[int]FileChunk, 100)
 
 	waitWriter.Add(1)
 	go func() {

@@ -102,7 +102,7 @@ func ReadSeqFileChunk(
 					buff = fullbuff[0:lremain]
 					lcp := copy(buff, fullbuff[pnext:])
 					if lcp < lremain {
-						log.Fatalf("Error copying remaining data of chunck %d : %d < %d", i, lcp, lremain)
+						log.Fatalf("Error copying remaining data of chunk %d : %d < %d", i, lcp, lremain)
 					}
 				} else {
 					buff = buff[:0]
