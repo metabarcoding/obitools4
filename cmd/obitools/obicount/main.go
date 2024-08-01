@@ -45,17 +45,17 @@ func main() {
 
 	black.Run()
 
+	fmt.Print("entity,n\n")
+
 	if obicount.CLIIsPrintingVariantCount() {
-		fmt.Printf(" %d", counter.Variants)
+		fmt.Printf("variants,%d\n", counter.Variants)
 	}
 
 	if obicount.CLIIsPrintingReadCount() {
-		fmt.Printf(" %d", counter.Reads)
+		fmt.Printf("reads,%d\n", counter.Reads)
 	}
 
 	if obicount.CLIIsPrintingSymbolCount() {
-		fmt.Printf(" %d", counter.Nucleotides)
+		fmt.Printf("nucleotides,%d\n", counter.Nucleotides)
 	}
-
-	fmt.Printf("\n")
 }
