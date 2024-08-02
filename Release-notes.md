@@ -4,6 +4,24 @@
 
 ## August 2nd, 2024. Release 4.3.0
 
+### Change of git repositiory
+
+-   The OBITools4 git repository has been moved to the github repository. 
+    The new address is: https://github.com/metabarcoding/obitools4.
+    Take care for using the new install script for retrieving the new version.
+
+    ```bash
+    curl -L https://raw.githubusercontent.com/metabarcoding/obitools4/master/install_obitools.sh \
+      | bash
+    ```
+
+    or with options:
+
+    ```bash
+    curl -L https://raw.githubusercontent.com/metabarcoding/obitools4/master/install_obitools.sh \
+      | bash -s -- --install-dir test_install --obitools-prefix k
+    ```
+    
 ### CPU limitation
 
 -   By default, *OBITools4* tries to use all the computing power available on
