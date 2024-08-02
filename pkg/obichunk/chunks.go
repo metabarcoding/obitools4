@@ -28,6 +28,7 @@ func ISequenceChunk(iterator obiiter.IBioSequence,
 
 		jobDone := sync.WaitGroup{}
 		chunks := make(map[int]*obiseq.BioSequenceSlice, 1000)
+		sources := make(map[int]string, 1000)
 
 		for newflux := range dispatcher.News() {
 			jobDone.Add(1)
@@ -43,11 +44,17 @@ func ISequenceChunk(iterator obiiter.IBioSequence,
 				chunks[newflux] = chunk
 				lock.Unlock()
 
+				source := ""
 				for data.Next() {
 					b := data.Get()
+					source = b.Source()
 					*chunk = append(*chunk, b.Slice()...)
 					b.Recycle(false)
 				}
+
+				lock.Lock()
+				sources[newflux] = source
+				lock.Unlock()
 
 				jobDone.Done()
 			}(newflux)
@@ -56,10 +63,10 @@ func ISequenceChunk(iterator obiiter.IBioSequence,
 		jobDone.Wait()
 		order := 0
 
-		for _, chunck := range chunks {
+		for i, chunk := range chunks {
 
-			if len(*chunck) > 0 {
-				newIter.Push(obiiter.MakeBioSequenceBatch(order, *chunck))
+			if len(*chunk) > 0 {
+				newIter.Push(obiiter.MakeBioSequenceBatch(sources[i], order, *chunk))
 				order++
 			}
 

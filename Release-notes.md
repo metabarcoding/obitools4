@@ -20,6 +20,37 @@
 
 ### New features
 
+-   The output of the obitools will evolve to produce results only in standard
+    formats such as fasta and fastq. For non-sequential data, the output will be
+    in CSV format, with the separator `,`, the decimal separator `.`, and a
+    header line with the column names. It is more convenient to use the output
+    in other programs. For example, you can use the `csvtomd` command to
+    reformat the csv output into a markdown table. The first command to initiate
+    this change is `obicount`, which now produces a 3-line CSV output.
+
+    ```bash
+    obicount data.csv | csvtomd 
+    ```
+
+-   Adds the new experimental `obicleandb` utility to clean up reference
+    database files created with `obipcr`. An easy way to create a reference
+    database for `obitag` is to use `obipcr` on a local copy of Genbank or EMBL.
+    However, these sequence databases are known to contain many taxonomic
+    errors, such as bacterial sequences annotated with the taxid of their host
+    species. obicleandb tries to detect these errors. To do this, it first keeps
+    only sequences annotated with the taxid to which a species, genus, and
+    family taxid can be assigned. Then, for each sequence, it compares the
+    distance of the sequence to the other sequences belonging to the same genus
+    to the same number of distances between the considered sequence and a
+    randomly selected set of sequences belonging to another family using a
+    Mann-Whitney U test. The alternative hypothesis is that out-of-family
+    distances are greater than intrageneric distances. Sequences are annotated
+    with the p-value of the Mann-Whitney U test in the **obicleandb_trusted**
+    slot. Later, the distribution of this p-value can be analyzed to determine a
+    threshold. Empirically, a threshold of 0.05 is a good compromise and allows
+    to filter out less than 1‰ of the sequences. These sequences can then be
+    removed using `obigrep`.
+
 -   Adds a new `obijoin` utility to join information contained in a sequence
     file with that contained in another sequence or CSV file. The command allows
     you to specify the names of the keys in the main sequence file and in the

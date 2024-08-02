@@ -103,7 +103,7 @@ func MapOnLandmarkSequences(library obiseq.BioSequenceSlice, landmark_idx []int,
 //     which landmark it corresponds.
 func CLISelectLandmarkSequences(iterator obiiter.IBioSequence) obiiter.IBioSequence {
 
-	library := iterator.Load()
+	source, library := iterator.Load()
 
 	library_size := len(library)
 	n_landmark := CLINCenter()
@@ -191,6 +191,6 @@ func CLISelectLandmarkSequences(iterator obiiter.IBioSequence) obiiter.IBioSeque
 		}
 	}
 
-	return obiiter.IBatchOver(library, obioptions.CLIBatchSize())
+	return obiiter.IBatchOver(source, library, obioptions.CLIBatchSize())
 
 }

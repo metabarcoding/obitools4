@@ -125,7 +125,7 @@ func IndexSequence(seqidx int,
 func IndexReferenceDB(iterator obiiter.IBioSequence) obiiter.IBioSequence {
 
 	log.Infoln("Loading database...")
-	references := iterator.Load()
+	source, references := iterator.Load()
 	log.Infof("Done. Database contains %d sequences", len(references))
 
 	taxo, error := obifind.CLILoadSelectedTaxonomy()
@@ -204,7 +204,7 @@ func IndexReferenceDB(iterator obiiter.IBioSequence) obiiter.IBioSequence {
 				sl = append(sl, iref)
 				bar.Add(1)
 			}
-			indexed.Push(obiiter.MakeBioSequenceBatch(l[0]/10, sl))
+			indexed.Push(obiiter.MakeBioSequenceBatch(source, l[0]/10, sl))
 		}
 
 		indexed.Done()

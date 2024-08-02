@@ -130,7 +130,7 @@ func MakeIndexingSliceWorker(indexslot, idslot string,
 func IndexFamilyDB(iterator obiiter.IBioSequence) obiiter.IBioSequence {
 	log.Infoln("Family level reference database indexing...")
 	log.Infoln("Loading database...")
-	references := iterator.Load()
+	source, references := iterator.Load()
 	nref := len(references)
 	log.Infof("Done. Database contains %d sequences", nref)
 
@@ -154,7 +154,7 @@ func IndexFamilyDB(iterator obiiter.IBioSequence) obiiter.IBioSequence {
 
 	log.Info("done")
 
-	partof := obiiter.IBatchOver(references,
+	partof := obiiter.IBatchOver(source, references,
 		obioptions.CLIBatchSize()).MakeIWorker(taxonomy.MakeSetSpeciesWorker(),
 		false,
 		obioptions.CLIParallelWorkers(),
@@ -243,7 +243,7 @@ func IndexFamilyDB(iterator obiiter.IBioSequence) obiiter.IBioSequence {
 
 	waiting.Wait()
 
-	results := obiiter.IBatchOver(references,
+	results := obiiter.IBatchOver(source, references,
 		obioptions.CLIBatchSize()).Speed("Writing db", nref)
 
 	return results

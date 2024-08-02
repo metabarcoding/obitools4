@@ -90,7 +90,7 @@ func ISequenceSubChunk(iterator obiiter.IBioSequence,
 		for iterator.Next() {
 
 			batch := iterator.Get()
-
+			source := batch.Source()
 			if batch.Len() > 1 {
 				classifier.Reset()
 
@@ -117,7 +117,7 @@ func ISequenceSubChunk(iterator obiiter.IBioSequence,
 				ss := obiseq.MakeBioSequenceSlice()
 				for i, v := range ordered {
 					if v.code != last {
-						newIter.Push(obiiter.MakeBioSequenceBatch(nextOrder(), ss))
+						newIter.Push(obiiter.MakeBioSequenceBatch(source, nextOrder(), ss))
 						ss = obiseq.MakeBioSequenceSlice()
 						last = v.code
 					}
@@ -127,7 +127,7 @@ func ISequenceSubChunk(iterator obiiter.IBioSequence,
 				}
 
 				if len(ss) > 0 {
-					newIter.Push(obiiter.MakeBioSequenceBatch(nextOrder(), ss))
+					newIter.Push(obiiter.MakeBioSequenceBatch(source, nextOrder(), ss))
 				}
 			} else {
 				newIter.Push(batch.Reorder(nextOrder()))

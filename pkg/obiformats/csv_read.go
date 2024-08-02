@@ -111,14 +111,14 @@ func _ParseCsvFile(source string,
 
 		slice = append(slice, sequence)
 		if len(slice) >= batchSize {
-			out.Push(obiiter.MakeBioSequenceBatch(o, slice))
+			out.Push(obiiter.MakeBioSequenceBatch(source, o, slice))
 			o++
 			slice = obiseq.MakeBioSequenceSlice()
 		}
 	}
 
 	if len(slice) > 0 {
-		out.Push(obiiter.MakeBioSequenceBatch(o, slice))
+		out.Push(obiiter.MakeBioSequenceBatch(source, o, slice))
 	}
 
 	out.Done()

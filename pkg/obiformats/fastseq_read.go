@@ -69,7 +69,7 @@ func _FastseqReader(source string,
 		slice = append(slice, rep)
 		ii++
 		if ii >= batch_size {
-			iterator.Push(obiiter.MakeBioSequenceBatch(i, slice))
+			iterator.Push(obiiter.MakeBioSequenceBatch(source, i, slice))
 			slice = obiseq.MakeBioSequenceSlice()
 			i++
 			ii = 0
@@ -77,7 +77,7 @@ func _FastseqReader(source string,
 
 	}
 	if len(slice) > 0 {
-		iterator.Push(obiiter.MakeBioSequenceBatch(i, slice))
+		iterator.Push(obiiter.MakeBioSequenceBatch(source, i, slice))
 	}
 	iterator.Done()
 

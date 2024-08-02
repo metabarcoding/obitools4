@@ -3,13 +3,14 @@ package obiformats
 import (
 	"bufio"
 	"bytes"
-	"github.com/goccy/go-json"
 	"io"
 	"os"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/goccy/go-json"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
@@ -87,7 +88,7 @@ func WriteJSON(iterator obiiter.IBioSequence,
 	nwriters := opt.ParallelWorkers()
 
 	obiiter.RegisterAPipe()
-	chunkchan := make(chan FileChunck)
+	chunkchan := make(chan FileChunk)
 
 	newIter.Add(nwriters)
 	var waitWriter sync.WaitGroup
@@ -106,7 +107,7 @@ func WriteJSON(iterator obiiter.IBioSequence,
 
 			batch := iterator.Get()
 
-			chunkchan <- FileChunck{
+			chunkchan <- FileChunk{
 				FormatJSONBatch(batch),
 				batch.Order(),
 			}
@@ -116,7 +117,7 @@ func WriteJSON(iterator obiiter.IBioSequence,
 	}
 
 	next_to_send := 0
-	received := make(map[int]FileChunck, 100)
+	received := make(map[int]FileChunk, 100)
 
 	waitWriter.Add(1)
 	go func() {

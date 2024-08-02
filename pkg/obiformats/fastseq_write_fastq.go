@@ -14,6 +14,8 @@ import (
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 )
 
+type FormatSeqBatch func(batch obiiter.BioSequenceBatch, formater FormatHeader, skipEmpty bool) *bytes.Buffer
+
 func _formatFastq(buff *bytes.Buffer, seq *obiseq.BioSequence, formater FormatHeader) {
 
 	info := ""
@@ -49,7 +51,7 @@ func FormatFastq(seq *obiseq.BioSequence, formater FormatHeader) string {
 }
 
 func FormatFastqBatch(batch obiiter.BioSequenceBatch,
-	formater FormatHeader, skipEmpty bool) []byte {
+	formater FormatHeader, skipEmpty bool) *bytes.Buffer {
 	var bs bytes.Buffer
 
 	lt := 0
@@ -82,12 +84,10 @@ func FormatFastqBatch(batch obiiter.BioSequenceBatch,
 
 	}
 
-	chunk := bs.Bytes()
-
-	return chunk
+	return &bs
 }
 
-type FileChunck struct {
+type FileChunk struct {
 	text  []byte
 	order int
 }
@@ -105,8 +105,7 @@ func WriteFastq(iterator obiiter.IBioSequence,
 
 	nwriters := opt.ParallelWorkers()
 
-	obiiter.RegisterAPipe()
-	chunkchan := make(chan FileChunck)
+	chunkchan := WriteSeqFileChunk(file, opt.CloseFile())
 
 	header_format := opt.FormatFastSeqHeader()
 
@@ -126,9 +125,10 @@ func WriteFastq(iterator obiiter.IBioSequence,
 	ff := func(iterator obiiter.IBioSequence) {
 		for iterator.Next() {
 			batch := iterator.Get()
-			chunk := FileChunck{
-				FormatFastqBatch(batch, header_format, opt.SkipEmptySequence()),
-				batch.Order(),
+			chunk := SeqFileChunk{
+				Source: batch.Source(),
+				Raw:    FormatFastqBatch(batch, header_format, opt.SkipEmptySequence()),
+				Order:  batch.Order(),
 			}
 			chunkchan <- chunk
 			newIter.Push(batch)
@@ -141,44 +141,6 @@ func WriteFastq(iterator obiiter.IBioSequence,
 	for i := 0; i < nwriters-1; i++ {
 		go ff(iterator.Split())
 	}
-
-	next_to_send := 0
-	received := make(map[int]FileChunck, 100)
-
-	waitWriter.Add(1)
-	go func() {
-		for chunk := range chunkchan {
-			if chunk.order == next_to_send {
-				if chunk.text[0] != '@' {
-					log.Panicln("WriteFastq: FASTQ format error")
-				}
-				file.Write(chunk.text)
-				next_to_send++
-				chunk, ok := received[next_to_send]
-				for ok {
-					if chunk.text[0] != '@' {
-						log.Panicln("WriteFastq: FASTQ format error")
-					}
-					file.Write(chunk.text)
-					delete(received, next_to_send)
-					next_to_send++
-					chunk, ok = received[next_to_send]
-				}
-			} else {
-				if _, ok := received[chunk.order]; ok {
-					log.Panicln("WriteFastq: Two chunks with the same number")
-				}
-				received[chunk.order] = chunk
-			}
-
-		}
-
-		file.Close()
-
-		log.Debugln("End of the fastq file writing")
-		obiiter.UnregisterPipe()
-		waitWriter.Done()
-	}()
 
 	return newIter, nil
 }

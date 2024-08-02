@@ -7,7 +7,8 @@ import (
 
 type __options__ struct {
 	fastseq_header_parser obiseq.SeqAnnotator
-	fastseq_header_writer func(*obiseq.BioSequence) string
+	fastseq_header_writer BioSequenceFormater
+	seqBatchFormater      FormatSeqBatch
 	with_progress_bar     bool
 	buffer_size           int
 	batch_size            int
@@ -44,6 +45,7 @@ func MakeOptions(setters []WithOption) Options {
 	o := __options__{
 		fastseq_header_parser: ParseGuessedFastSeqHeader,
 		fastseq_header_writer: FormatFastSeqJsonHeader,
+		seqBatchFormater:      nil,
 		with_progress_bar:     false,
 		buffer_size:           2,
 		parallel_workers:      obioptions.CLIReadParallelWorkers(),
@@ -101,6 +103,10 @@ func (opt Options) ParseFastSeqHeader() obiseq.SeqAnnotator {
 
 func (opt Options) FormatFastSeqHeader() func(*obiseq.BioSequence) string {
 	return opt.pointer.fastseq_header_writer
+}
+
+func (opt Options) SequenceFormater() FormatSeqBatch {
+	return opt.pointer.seqBatchFormater
 }
 
 func (opt Options) NoOrder() bool {
@@ -219,8 +225,6 @@ func OptionNoOrder(no_order bool) WithOption {
 	return f
 }
 
-
-
 func OptionsCompressed(compressed bool) WithOption {
 	f := WithOption(func(opt Options) {
 		opt.pointer.compressed = compressed
@@ -266,6 +270,14 @@ func OptionsFastSeqDefaultHeaderParser() WithOption {
 func OptionsFastSeqHeaderFormat(format func(*obiseq.BioSequence) string) WithOption {
 	f := WithOption(func(opt Options) {
 		opt.pointer.fastseq_header_writer = format
+	})
+
+	return f
+}
+
+func OptionsSequenceFormater(formater FormatSeqBatch) WithOption {
+	f := WithOption(func(opt Options) {
+		opt.pointer.seqBatchFormater = formater
 	})
 
 	return f

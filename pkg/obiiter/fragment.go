@@ -20,9 +20,11 @@ func IFragments(minsize, length, overlap, size, nworkers int) Pipeable {
 		}()
 
 		f := func(iterator IBioSequence, id int) {
+			source := ""
 			for iterator.Next() {
 				news := obiseq.MakeBioSequenceSlice()
 				sl := iterator.Get()
+				source = sl.Source()
 				for _, s := range sl.Slice() {
 
 					if s.Len() <= minsize {
@@ -52,7 +54,7 @@ func IFragments(minsize, length, overlap, size, nworkers int) Pipeable {
 						s.Recycle()
 					}
 				} // End of the slice loop
-				newiter.Push(MakeBioSequenceBatch(sl.Order(), news))
+				newiter.Push(MakeBioSequenceBatch(source, sl.Order(), news))
 				sl.Recycle(false)
 			} // End of the iterator loop
 

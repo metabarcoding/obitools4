@@ -7,8 +7,6 @@ import (
 	"io"
 	"os"
 	"strings"
-	"sync"
-	"time"
 
 	log "github.com/sirupsen/logrus"
 
@@ -76,7 +74,7 @@ func FormatFasta(seq *obiseq.BioSequence, formater FormatHeader) string {
 // - skipEmpty: a boolean indicating whether empty sequences should be skipped or not.
 //
 // It returns a byte array containing the formatted sequences.
-func FormatFastaBatch(batch obiiter.BioSequenceBatch, formater FormatHeader, skipEmpty bool) []byte {
+func FormatFastaBatch(batch obiiter.BioSequenceBatch, formater FormatHeader, skipEmpty bool) *bytes.Buffer {
 	// Create a buffer to store the formatted sequences
 	var bs bytes.Buffer
 
@@ -116,7 +114,7 @@ func FormatFastaBatch(batch obiiter.BioSequenceBatch, formater FormatHeader, ski
 	}
 
 	// Return the byte array representation of the buffer
-	return bs.Bytes()
+	return &bs
 }
 
 // WriteFasta writes a given iterator of bio sequences to a file in FASTA format.
@@ -135,21 +133,16 @@ func WriteFasta(iterator obiiter.IBioSequence,
 
 	nwriters := opt.ParallelWorkers()
 
-	obiiter.RegisterAPipe()
-	chunkchan := make(chan FileChunck)
+	chunkchan := WriteSeqFileChunk(file, opt.CloseFile())
 
 	header_format := opt.FormatFastSeqHeader()
 
 	newIter.Add(nwriters)
-	var waitWriter sync.WaitGroup
 
 	go func() {
 		newIter.WaitAndClose()
-		for len(chunkchan) > 0 {
-			time.Sleep(time.Millisecond)
-		}
 		close(chunkchan)
-		waitWriter.Wait()
+		log.Warnf("Writing fasta file done")
 	}()
 
 	ff := func(iterator obiiter.IBioSequence) {
@@ -159,10 +152,12 @@ func WriteFasta(iterator obiiter.IBioSequence,
 
 			log.Debugf("Formating fasta chunk %d", batch.Order())
 
-			chunkchan <- FileChunck{
-				FormatFastaBatch(batch, header_format, opt.SkipEmptySequence()),
-				batch.Order(),
+			chunkchan <- SeqFileChunk{
+				Source: batch.Source(),
+				Raw:    FormatFastaBatch(batch, header_format, opt.SkipEmptySequence()),
+				Order:  batch.Order(),
 			}
+
 			log.Debugf("Fasta chunk %d formated", batch.Order())
 
 			newIter.Push(batch)
@@ -175,39 +170,6 @@ func WriteFasta(iterator obiiter.IBioSequence,
 	for i := 0; i < nwriters-1; i++ {
 		go ff(iterator.Split())
 	}
-
-	next_to_send := 0
-	received := make(map[int]FileChunck, 100)
-
-	waitWriter.Add(1)
-	go func() {
-		for chunk := range chunkchan {
-			if chunk.order == next_to_send {
-				file.Write(chunk.text)
-				log.Debugf("Fasta chunk %d written", chunk.order)
-				next_to_send++
-				chunk, ok := received[next_to_send]
-				for ok {
-					file.Write(chunk.text)
-					log.Debugf("Fasta chunk %d written", chunk.order)
-					delete(received, next_to_send)
-					next_to_send++
-					chunk, ok = received[next_to_send]
-				}
-			} else {
-				log.Debugf("Store Fasta chunk %d", chunk.order)
-				received[chunk.order] = chunk
-			}
-
-		}
-
-		file.Close()
-
-		log.Debugln("End of the fasta file writing")
-		obiiter.UnregisterPipe()
-		waitWriter.Done()
-
-	}()
 
 	return newIter, nil
 }

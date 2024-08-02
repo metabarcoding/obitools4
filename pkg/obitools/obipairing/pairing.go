@@ -255,6 +255,7 @@ func IAssemblePESequencesBatch(iterator obiiter.IBioSequence,
 					delta, minOverlap, minIdentity, withStats, true, fastAlign, fastModeRel, arena, &shifts)
 			}
 			newIter.Push(obiiter.MakeBioSequenceBatch(
+				batch.Source(),
 				batch.Order(),
 				cons,
 			))

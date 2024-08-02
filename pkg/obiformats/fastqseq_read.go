@@ -14,7 +14,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func _EndOfLastFastqEntry(buffer []byte) int {
+func EndOfLastFastqEntry(buffer []byte) int {
 	var i int
 
 	imax := len(buffer)
@@ -117,27 +117,20 @@ func _storeSequenceQuality(bytes *bytes.Buffer, out *obiseq.BioSequence, quality
 	out.SetQualities(q)
 }
 
-func _ParseFastqFile(source string,
-	input ChannelSeqFileChunk,
-	out obiiter.IBioSequence,
-	quality_shift byte,
-	no_order bool,
-	batch_size int,
-	chunck_order func() int,
-) {
+func FastqChunkParser(quality_shift byte) func(string, io.Reader) (obiseq.BioSequenceSlice, error) {
+	parser := func(source string, input io.Reader) (obiseq.BioSequenceSlice, error) {
 
-	var identifier string
-	var definition string
+		var identifier string
+		var definition string
 
-	idBytes := bytes.Buffer{}
-	defBytes := bytes.Buffer{}
-	qualBytes := bytes.Buffer{}
-	seqBytes := bytes.Buffer{}
+		idBytes := bytes.Buffer{}
+		defBytes := bytes.Buffer{}
+		qualBytes := bytes.Buffer{}
+		seqBytes := bytes.Buffer{}
 
-	for chunks := range input {
 		state := 0
-		scanner := bufio.NewReader(chunks.raw)
-		sequences := make(obiseq.BioSequenceSlice, 0, 100)
+		scanner := bufio.NewReader(input)
+		sequences := obiseq.MakeBioSequenceSlice(100)[:0]
 		previous := byte(0)
 
 		for C, err := scanner.ReadByte(); err != io.EOF; C, err = scanner.ReadByte() {
@@ -257,14 +250,6 @@ func _ParseFastqFile(source string,
 			case 10:
 				if is_end_of_line {
 					_storeSequenceQuality(&qualBytes, sequences[len(sequences)-1], quality_shift)
-
-					if no_order {
-						if len(sequences) == batch_size {
-							out.Push(obiiter.MakeBioSequenceBatch(chunck_order(), sequences))
-							sequences = make(obiseq.BioSequenceSlice, 0, batch_size)
-						}
-					}
-
 					state = 11
 				} else {
 					qualBytes.WriteByte(C)
@@ -288,13 +273,30 @@ func _ParseFastqFile(source string,
 				_storeSequenceQuality(&qualBytes, sequences[len(sequences)-1], quality_shift)
 				state = 1
 			}
-
-			co := chunks.order
-			if no_order {
-				co = chunck_order()
-			}
-			out.Push(obiiter.MakeBioSequenceBatch(co, sequences))
 		}
+
+		return sequences, nil
+	}
+
+	return parser
+}
+
+func _ParseFastqFile(
+	input ChannelSeqFileChunk,
+	out obiiter.IBioSequence,
+	quality_shift byte,
+) {
+
+	parser := FastqChunkParser(quality_shift)
+
+	for chunks := range input {
+		sequences, err := parser(chunks.Source, chunks.Raw)
+
+		if err != nil {
+			log.Fatalf("File %s : Cannot parse the fastq file : %v", chunks.Source, err)
+		}
+
+		out.Push(obiiter.MakeBioSequenceBatch(chunks.Source, chunks.Order, sequences))
 
 	}
 
@@ -307,21 +309,23 @@ func ReadFastq(reader io.Reader, options ...WithOption) (obiiter.IBioSequence, e
 	out := obiiter.MakeIBioSequence()
 
 	nworker := opt.ParallelWorkers()
-	chunkorder := obiutils.AtomicCounter()
 
 	buff := make([]byte, 1024*1024*1024)
 
-	chkchan := ReadSeqFileChunk(reader, buff, _EndOfLastFastqEntry)
+	chkchan := ReadSeqFileChunk(
+		opt.Source(),
+		reader,
+		buff,
+		EndOfLastFastqEntry,
+	)
 
 	for i := 0; i < nworker; i++ {
 		out.Add(1)
-		go _ParseFastqFile(opt.Source(),
+		go _ParseFastqFile(
 			chkchan,
 			out,
 			byte(obioptions.InputQualityShift()),
-			opt.NoOrder(),
-			opt.BatchSize(),
-			chunkorder)
+		)
 	}
 
 	go func() {

@@ -57,7 +57,9 @@ func CLIRefDB() obiseq.BioSequenceSlice {
 		log.Panicf("Cannot open the reference library file : %s\n", _RefDB)
 	}
 
-	return refdb.Load()
+	_, db := refdb.Load()
+
+	return db
 }
 
 func CLIGeometricMode() bool {
@@ -70,7 +72,7 @@ func CLIShouldISaveRefDB() bool {
 
 func CLISaveRefetenceDB(db obiseq.BioSequenceSlice) {
 	if CLIShouldISaveRefDB() {
-		idb := obiiter.IBatchOver(db, 1000)
+		idb := obiiter.IBatchOver("", db, 1000)
 
 		var newIter obiiter.IBioSequence
 

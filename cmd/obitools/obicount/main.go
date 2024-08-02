@@ -45,17 +45,18 @@ func main() {
 
 	nvariant, nread, nsymbol := fs.Count(true)
 
+	fmt.Print("entites,n\n")
+
 	if obicount.CLIIsPrintingVariantCount() {
-		fmt.Printf(" %d", nvariant)
+		fmt.Printf("variants,%d\n", nvariant)
 	}
 
 	if obicount.CLIIsPrintingReadCount() {
-		fmt.Printf(" %d", nread)
+		fmt.Printf("reads,%d\n", nread)
 	}
 
 	if obicount.CLIIsPrintingSymbolCount() {
-		fmt.Printf(" %d", nsymbol)
+		fmt.Printf("symbols,%d\n", nsymbol)
 	}
 
-	fmt.Printf("\n")
 }

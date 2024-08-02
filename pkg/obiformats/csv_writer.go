@@ -142,7 +142,7 @@ func WriteCSV(iterator obiiter.IBioSequence,
 	nwriters := opt.ParallelWorkers()
 
 	obiiter.RegisterAPipe()
-	chunkchan := make(chan FileChunck)
+	chunkchan := make(chan FileChunk)
 
 	newIter.Add(nwriters)
 	var waitWriter sync.WaitGroup
@@ -161,7 +161,7 @@ func WriteCSV(iterator obiiter.IBioSequence,
 
 			batch := iterator.Get()
 
-			chunkchan <- FileChunck{
+			chunkchan <- FileChunk{
 				FormatCVSBatch(batch, opt),
 				batch.Order(),
 			}
@@ -171,7 +171,7 @@ func WriteCSV(iterator obiiter.IBioSequence,
 	}
 
 	next_to_send := 0
-	received := make(map[int]FileChunck, 100)
+	received := make(map[int]FileChunk, 100)
 
 	waitWriter.Add(1)
 	go func() {
