@@ -2,6 +2,8 @@
 
 ## Latest changes
 
+## August 2nd, 2024. Release 4.3.0
+
 ### CPU limitation
 
 -   By default, *OBITools4* tries to use all the computing power available on
