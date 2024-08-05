@@ -132,7 +132,7 @@ func FindClosests(sequence *obiseq.BioSequence,
 		lcs, alilength := -1, -1
 		switch maxe {
 		case 0:
-			if obiutils.UnsafeStringFreomBytes(sequence.Sequence()) == obiutils.UnsafeStringFreomBytes(references[order].Sequence()) {
+			if obiutils.UnsafeStringFromBytes(sequence.Sequence()) == obiutils.UnsafeStringFromBytes(references[order].Sequence()) {
 				score = 0
 				alilength = sequence.Len()
 				lcs = alilength
@@ -279,7 +279,7 @@ func Identify(sequence *obiseq.BioSequence,
 	var bestmatch string
 	var taxon *obitax.TaxNode
 
-	exacttaxon, ok := (*db.ExactTaxid)[obiutils.UnsafeStringFreomBytes(sequence.Sequence())]
+	exacttaxon, ok := (*db.ExactTaxid)[obiutils.UnsafeStringFromBytes(sequence.Sequence())]
 	if ok {
 		taxon = exacttaxon.Taxon
 		bestmatch = exacttaxon.Id
@@ -399,7 +399,7 @@ func CLIAssignTaxonomy(iterator obiiter.IBioSequence,
 
 		ft[len(ft)] = taxa[i]
 
-		seqstr := obiutils.UnsafeStringFreomBytes(seq.Sequence())
+		seqstr := obiutils.UnsafeStringFromBytes(seq.Sequence())
 		em, ok := exactmatch[seqstr]
 
 		if !ok {

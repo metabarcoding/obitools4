@@ -39,6 +39,25 @@ var iupac = map[byte][]uint64{
 	'n': {0, 1, 2, 3},
 }
 
+var revcompnuc = map[byte]byte{
+	'a': 't',
+	'c': 'g',
+	'g': 'c',
+	't': 'a',
+	'u': 'a',
+	'r': 'y',
+	'y': 'r',
+	's': 's',
+	'w': 'w',
+	'k': 'm',
+	'm': 'k',
+	'b': 'v',
+	'd': 'h',
+	'h': 'd',
+	'v': 'b',
+	'n': 'n',
+}
+
 var decode = map[uint64]byte{
 	0: 'a',
 	1: 'c',

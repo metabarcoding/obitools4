@@ -525,3 +525,11 @@ func (s *BioSequence) Grow(length int) {
 		s.qualities = slices.Grow(s.qualities, length)
 	}
 }
+
+// SameAs checks if the sequence of the current BioSequence is the same as the sequence of the other BioSequence.
+//
+// other: a pointer to the other BioSequence.
+// Returns a boolean indicating whether the sequences are the same.
+func (s *BioSequence) SameAs(other *BioSequence) bool {
+	return obiutils.UnsafeStringFromBytes(s.sequence) == obiutils.UnsafeStringFromBytes(other.sequence)
+}
