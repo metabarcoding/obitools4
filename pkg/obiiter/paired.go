@@ -1,6 +1,7 @@
 package obiiter
 
 import (
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -40,8 +41,8 @@ func (iter IBioSequence) PairTo(p IBioSequence) IBioSequence {
 
 	newIter := MakeIBioSequence()
 
-	iter = iter.SortBatches()
-	p = p.SortBatches()
+	iter = iter.SortBatches().Rebatch(obioptions.CLIBatchSize())
+	p = p.SortBatches().Rebatch(obioptions.CLIBatchSize())
 
 	newIter.Add(1)
 

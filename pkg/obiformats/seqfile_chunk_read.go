@@ -46,6 +46,8 @@ func ReadSeqFileChunk(
 
 	chunk_channel := make(ChannelSeqFileChunk)
 
+	_FileChunkSize := len(buff)
+
 	go func() {
 		size := 0
 		l := 0

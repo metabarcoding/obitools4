@@ -97,7 +97,7 @@ func WriteFastq(iterator obiiter.IBioSequence,
 	options ...WithOption) (obiiter.IBioSequence, error) {
 
 	opt := MakeOptions(options)
-	iterator = iterator.Rebatch(opt.BatchSize())
+	iterator = iterator
 
 	file, _ = obiutils.CompressStream(file, opt.CompressedFile(), opt.CloseFile())
 

@@ -464,6 +464,39 @@ func (iterator IBioSequence) Rebatch(size int) IBioSequence {
 	return newIter
 }
 
+func (iterator IBioSequence) FilterEmpty() IBioSequence {
+
+	newIter := MakeIBioSequence()
+
+	newIter.Add(1)
+
+	go func() {
+		newIter.WaitAndClose()
+	}()
+
+	go func() {
+		order := 0
+		iterator = iterator.SortBatches()
+
+		for iterator.Next() {
+			seqs := iterator.Get()
+			lc := seqs.Len()
+
+			if lc > 0 {
+				newIter.Push(seqs.Reorder(order))
+				order++
+			}
+		}
+
+		newIter.Done()
+	}()
+
+	if iterator.IsPaired() {
+		newIter.MarkAsPaired()
+	}
+
+	return newIter
+}
 func (iterator IBioSequence) Recycle() {
 
 	log.Debugln("Start recycling of Bioseq objects")

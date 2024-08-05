@@ -310,7 +310,7 @@ func ReadFastq(reader io.Reader, options ...WithOption) (obiiter.IBioSequence, e
 
 	nworker := opt.ParallelWorkers()
 
-	buff := make([]byte, 1024*1024*1024)
+	buff := make([]byte, 1024*1024)
 
 	chkchan := ReadSeqFileChunk(
 		opt.Source(),
@@ -332,7 +332,7 @@ func ReadFastq(reader io.Reader, options ...WithOption) (obiiter.IBioSequence, e
 		out.WaitAndClose()
 	}()
 
-	newIter := out.SortBatches().Rebatch(opt.BatchSize())
+	newIter := out.SortBatches()
 
 	log.Debugln("Full file batch mode : ", opt.FullFileBatch())
 

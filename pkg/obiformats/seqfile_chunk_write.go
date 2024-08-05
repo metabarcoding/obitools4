@@ -44,7 +44,7 @@ func WriteSeqFileChunk(
 		}
 
 		obiiter.UnregisterPipe()
-		log.Warnf("The writer has been closed")
+		log.Debugf("The writer has been closed")
 	}()
 
 	return chunk_channel
