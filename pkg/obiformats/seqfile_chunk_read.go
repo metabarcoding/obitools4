@@ -9,8 +9,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var _FileChunkSize = 1024 * 1024 * 10
-
 type SeqFileChunkParser func(string, io.Reader) (obiseq.BioSequenceSlice, error)
 
 type SeqFileChunk struct {
@@ -46,7 +44,7 @@ func ReadSeqFileChunk(
 
 	chunk_channel := make(ChannelSeqFileChunk)
 
-	_FileChunkSize := len(buff)
+	fileChunkSize := len(buff)
 
 	go func() {
 		size := 0
@@ -73,9 +71,9 @@ func ReadSeqFileChunk(
 			// Read from the reader in 1 MB increments until the end of the last entry is found
 			for end = splitter(buff); err == nil && end < 0; end = splitter(buff) {
 				ic++
-				buff = slices.Grow(buff, _FileChunkSize)
+				buff = slices.Grow(buff, fileChunkSize)
 				l := len(buff)
-				extbuff := buff[l:(l + _FileChunkSize - 1)]
+				extbuff := buff[l:(l + fileChunkSize - 1)]
 				size, err = io.ReadFull(reader, extbuff)
 				buff = buff[0:(l + size)]
 			}
