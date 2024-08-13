@@ -45,7 +45,8 @@ func WriteSequence(iterator obiiter.IBioSequence,
 
 func WriteSequencesToStdout(iterator obiiter.IBioSequence,
 	options ...WithOption) (obiiter.IBioSequence, error) {
-	options = append(options, OptionDontCloseFile())
+	// options = append(options, OptionDontCloseFile())
+	options = append(options, OptionCloseFile())
 	return WriteSequence(iterator, os.Stdout, options...)
 }
 

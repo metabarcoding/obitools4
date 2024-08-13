@@ -3,8 +3,6 @@ package main
 import (
 	"os"
 
-	log "github.com/sirupsen/logrus"
-
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
@@ -37,11 +35,8 @@ func main() {
 	_, args := optionParser(os.Args)
 
 	sequences, err := obiconvert.CLIReadBioSequences(args...)
+	obiconvert.OpenSequenceDataErrorMessage(args, err)
 
-	if err != nil {
-		log.Errorf("Cannot open file (%v)", err)
-		os.Exit(1)
-	}
 	selected := obigrep.CLIFilterSequence(sequences)
 	obiconvert.CLIWriteBioSequences(selected, true)
 	obiiter.WaitForLastPipe()

@@ -183,7 +183,8 @@ func WriteFasta(iterator obiiter.IBioSequence,
 // The function returns the same bio sequence iterator and an error if any occurred.
 func WriteFastaToStdout(iterator obiiter.IBioSequence,
 	options ...WithOption) (obiiter.IBioSequence, error) {
-	options = append(options, OptionDontCloseFile())
+	// options = append(options, OptionDontCloseFile())
+	options = append(options, OptionCloseFile())
 	return WriteFasta(iterator, os.Stdout, options...)
 }
 

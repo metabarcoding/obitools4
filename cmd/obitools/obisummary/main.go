@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 
-	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
@@ -39,11 +38,7 @@ func main() {
 	_, args := optionParser(os.Args)
 
 	fs, err := obiconvert.CLIReadBioSequences(args...)
-
-	if err != nil {
-		log.Errorf("Cannot open file (%v)", err)
-		os.Exit(1)
-	}
+	obiconvert.OpenSequenceDataErrorMessage(args, err)
 
 	summary := obisummary.ISummary(fs, obisummary.CLIMapSummary())
 

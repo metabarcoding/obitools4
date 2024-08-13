@@ -43,11 +43,8 @@ func main() {
 	}
 
 	sequences, err := obiconvert.CLIReadBioSequences(args...)
+	obiconvert.OpenSequenceDataErrorMessage(args, err)
 
-	if err != nil {
-		log.Errorf("Cannot open file (%v)", err)
-		os.Exit(1)
-	}
 	amplicons, _ := obimultiplex.IExtractBarcode(sequences)
 	obiconvert.CLIWriteBioSequences(amplicons, true)
 	amplicons.Wait()

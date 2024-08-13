@@ -1,13 +1,14 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"os"
 
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obimatrix"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obikmersim"
 )
 
 func main() {
@@ -30,21 +31,28 @@ func main() {
 	// trace.Start(ftrace)
 	// defer trace.Stop()
 
-	optionParser := obioptions.GenerateOptionParser(
-		obimatrix.OptionSet,
-	)
+	optionParser := obioptions.GenerateOptionParser(obikmersim.CountOptionSet)
 
 	_, args := optionParser(os.Args)
 
-	fs, err := obiconvert.CLIReadBioSequences(args...)
+	var err error
+	sequences := obiiter.NilIBioSequence
+
+	if !obikmersim.CLISelf() {
+		sequences, err = obiconvert.CLIReadBioSequences(args...)
+	}
+
 	obiconvert.OpenSequenceDataErrorMessage(args, err)
 
-	matrix := obimatrix.IMatrix(fs)
+	selected := obikmersim.CLILookForSharedKmers(sequences)
+	topull, err := obiconvert.CLIWriteBioSequences(selected, false)
 
-	if obimatrix.CLIOutFormat() == "matrix" {
-		obimatrix.CLIWriteCSVToStdout(matrix)
-	} else {
-		obimatrix.CLIWriteThreeColumnsToStdout(matrix)
+	if err == nil {
+		log.Panic(err)
 	}
-	fmt.Printf("\n")
+
+	topull.Consume()
+
+	obiiter.WaitForLastPipe()
+
 }

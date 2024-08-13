@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"os"
 
-	log "github.com/sirupsen/logrus"
-
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obicount"
 
@@ -37,11 +35,7 @@ func main() {
 
 	obioptions.SetStrictReadWorker(min(4, obioptions.CLIParallelWorkers()))
 	fs, err := obiconvert.CLIReadBioSequences(args...)
-
-	if err != nil {
-		log.Errorf("Cannot open file (%v)", err)
-		os.Exit(1)
-	}
+	obiconvert.OpenSequenceDataErrorMessage(args, err)
 
 	nvariant, nread, nsymbol := fs.Count(true)
 

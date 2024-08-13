@@ -97,7 +97,6 @@ func WriteFastq(iterator obiiter.IBioSequence,
 	options ...WithOption) (obiiter.IBioSequence, error) {
 
 	opt := MakeOptions(options)
-	iterator = iterator
 
 	file, _ = obiutils.CompressStream(file, opt.CompressedFile(), opt.CloseFile())
 
@@ -147,7 +146,9 @@ func WriteFastq(iterator obiiter.IBioSequence,
 
 func WriteFastqToStdout(iterator obiiter.IBioSequence,
 	options ...WithOption) (obiiter.IBioSequence, error) {
-	options = append(options, OptionDontCloseFile())
+	//	options = append(options, OptionDontCloseFile())
+	options = append(options, OptionCloseFile())
+
 	return WriteFastq(iterator, os.Stdout, options...)
 }
 

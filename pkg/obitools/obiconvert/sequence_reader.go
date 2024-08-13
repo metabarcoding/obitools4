@@ -188,3 +188,17 @@ func CLIReadBioSequences(filenames ...string) (obiiter.IBioSequence, error) {
 
 	return iterator, nil
 }
+
+func OpenSequenceDataErrorMessage(args []string, err error) {
+	if err != nil {
+		switch len(args) {
+		case 0:
+			log.Errorf("Cannot open stdin (%v)", err)
+		case 1:
+			log.Errorf("Cannot open file %s: %v", args[0], err)
+		default:
+			log.Errorf("Cannot open one of the data files: %v", err)
+		}
+		os.Exit(1)
+	}
+}

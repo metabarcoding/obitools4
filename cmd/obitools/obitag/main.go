@@ -42,11 +42,7 @@ func main() {
 	_, args := optionParser(os.Args)
 
 	fs, err := obiconvert.CLIReadBioSequences(args...)
-
-	if err != nil {
-		log.Errorf("Cannot open file (%v)", err)
-		os.Exit(1)
-	}
+	obiconvert.OpenSequenceDataErrorMessage(args, err)
 
 	taxo, error := obifind.CLILoadSelectedTaxonomy()
 	if error != nil {
