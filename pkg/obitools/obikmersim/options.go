@@ -18,6 +18,7 @@ var _Delta = 5
 var _PenalityScale = 1.0
 var _GapPenality = 2.0
 var _FastScoreAbs = false
+var _KmerMaxOccur = -1
 
 // PCROptionSet defines every options related to a simulated PCR.
 //
@@ -45,6 +46,10 @@ func KmerSimCountOptionSet(options *getoptions.GetOpt) {
 	options.IntVar(&_MinSharedKmers, "min-shared-kmers", _MinSharedKmers,
 		options.Alias("m"),
 		options.Description("Minimum number of shared kmers between two sequences."))
+
+	options.IntVar(&_KmerMaxOccur, "max-kmers", _KmerMaxOccur,
+		options.Alias("M"),
+		options.Description("Maximum number of occurrence of a kmer."))
 
 	options.BoolVar(&_Self, "self", _Self,
 		options.Alias("s"),
@@ -137,4 +142,8 @@ func CLIGap() float64 {
 
 func CLIFastRelativeScore() bool {
 	return !_FastScoreAbs
+}
+
+func CLIMaxKmerOccurs() int {
+	return _KmerMaxOccur
 }

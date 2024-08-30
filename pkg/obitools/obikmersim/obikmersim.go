@@ -27,6 +27,7 @@ func MakeCountMatchWorker[T obifp.FPUint[T]](k *obikmer.KmerMap[T], minKmerCount
 		sequence.SetAttribute("obikmer_match_count", n)
 		sequence.SetAttribute("obikmer_kmer_size", k.Kmersize)
 		sequence.SetAttribute("obikmer_sparse_kmer", k.SparseAt >= 0)
+
 		return obiseq.BioSequenceSlice{sequence}, nil
 	}
 }
@@ -46,17 +47,19 @@ func MakeKmerAlignWorker[T obifp.FPUint[T]](
 		slice := obiseq.NewBioSequenceSlice(matches.Len())
 		*slice = (*slice)[:0]
 
-		for _, seq := range matches.Sequences() {
+		candidates := matches.Sequences()
+		n := candidates.Len()
+		for _, seq := range candidates {
 			idmatched_id := seq.Id()
 
-			score, path, fastcount, over, fastscore, reverse := obialign.ReadAlign(
+			score, path, fastcount, over, fastscore, directAlignment := obialign.ReadAlign(
 				sequence, seq,
 				gap, scale, delta,
 				fastScoreRel,
 				arena, &shifts,
 			)
 
-			if reverse {
+			if !directAlignment {
 				idmatched_id = idmatched_id + "-rev"
 				seq = seq.ReverseComplement(false)
 			}
@@ -75,17 +78,19 @@ func MakeKmerAlignWorker[T obifp.FPUint[T]](
 				identity = 0
 			}
 
-			rep := sequence.Copy()
+			rep := cons
 
+			rep.SetAttribute("obikmer_match_count", n)
 			rep.SetAttribute("obikmer_match_id", idmatched_id)
 			rep.SetAttribute("obikmer_fast_count", fastcount)
 			rep.SetAttribute("obikmer_fast_overlap", over)
 			rep.SetAttribute("obikmer_fast_score", math.Round(fastscore*1000)/1000)
+			rep.SetAttribute("seq_length", cons.Len())
 
-			if reverse {
-				rep.SetAttribute("obikmer_orientation", "reverse")
-			} else {
+			if directAlignment {
 				rep.SetAttribute("obikmer_orientation", "forward")
+			} else {
+				rep.SetAttribute("obikmer_orientation", "reverse")
 			}
 
 			if aliLength >= int(k.KmerSize()) && identity >= minIdentity {
@@ -137,15 +142,20 @@ func CLILookForSharedKmers(iterator obiiter.IBioSequence) obiiter.IBioSequence {
 		iterator = obiiter.IBatchOver(source, references, obioptions.CLIBatchSize())
 	}
 
-	kmerMatch := obikmer.NewKmerMap[obifp.Uint64](references, uint(CLIKmerSize()), CLISparseMode())
+	if CLISelf() {
+		iterator = iterator.Speed("Counting similar reads", references.Len())
+	} else {
+		iterator = iterator.Speed("Counting similar reads")
+	}
+
+	kmerMatch := obikmer.NewKmerMap[obifp.Uint128](
+		references,
+		uint(CLIKmerSize()),
+		CLISparseMode(),
+		CLIMaxKmerOccurs())
+
 	worker := MakeCountMatchWorker(kmerMatch, CLIMinSharedKmers())
 	newIter = iterator.MakeIWorker(worker, false, obioptions.CLIParallelWorkers())
-
-	if CLISelf() {
-		newIter = newIter.Speed("Counting similar reads", references.Len())
-	} else {
-		newIter = newIter.Speed("Counting similar reads")
-	}
 
 	return newIter.FilterEmpty()
 }
@@ -164,7 +174,11 @@ func CLIAlignSequences(iterator obiiter.IBioSequence) obiiter.IBioSequence {
 	} else {
 		iterator = iterator.Speed("Aligning reads")
 	}
-	kmerMatch := obikmer.NewKmerMap[obifp.Uint64](references, uint(CLIKmerSize()), CLISparseMode())
+	kmerMatch := obikmer.NewKmerMap[obifp.Uint128](
+		references,
+		uint(CLIKmerSize()),
+		CLISparseMode(),
+		CLIMaxKmerOccurs())
 	worker := MakeKmerAlignWorker(kmerMatch, CLIMinSharedKmers(), CLIGap(), CLIScale(), CLIDelta(), CLIFastRelativeScore(), 0.8, true)
 	newIter = iterator.MakeIWorker(worker, false, obioptions.CLIParallelWorkers())
 

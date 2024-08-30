@@ -145,7 +145,7 @@ func (u Uint128) Mul(v Uint128) Uint128 {
 	p2, p3 := bits.Mul64(u.w0, v.w1)
 	hi, c0 := bits.Add64(hi, p1, 0)
 	hi, c1 := bits.Add64(hi, p3, c0)
-	if (u.w1 != 0 && v.w1 != 0) || p0 != 0 || p2 != 0 || c1 != 0 {
+	if p0 != 0 || p2 != 0 || c1 != 0 {
 		log.Panicf("Uint128 overflow at Mul(%v, %v)", u, v)
 	}
 	return Uint128{w1: hi, w0: lo}

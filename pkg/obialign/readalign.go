@@ -43,16 +43,25 @@ func ReadAlign(seqA, seqB *obiseq.BioSequence,
 		directAlignment = false
 	}
 
-	if shift > 0 {
+	// Compute the overlapping region length
+	switch {
+	case shift > 0:
 		over = seqA.Len() - shift
-	} else {
+	case shift < 0:
 		over = seqB.Len() + shift
+	default:
+		over = min(seqA.Len(), seqB.Len())
 	}
+
+	// log.Warnf("fw/fw: %v shift=%d fastCount=%d/over=%d fastScore=%f",
+	// 	directAlignment, shift, fastCount, over, fastScore)
+
+	// log.Warnf(("seqA: %s\nseqB: %s\n"), seqA.String(), seqB.String())
 
 	// At least one mismatch exists in the overlaping region
 	if fastCount+3 < over {
 
-		if shift > 0 {
+		if shift > 0 || (shift == 0 && seqB.Len() >= seqA.Len()) {
 			startA = shift - delta
 			if startA < 0 {
 				startA = 0
@@ -105,7 +114,7 @@ func ReadAlign(seqA, seqB *obiseq.BioSequence,
 
 		// Both overlaping regions are identicals
 
-		if shift > 0 {
+		if shift > 0 || (shift == 0 && seqB.Len() >= seqA.Len()) {
 			startA = shift
 			startB = 0
 			extra5 = -startA
@@ -123,6 +132,7 @@ func ReadAlign(seqA, seqB *obiseq.BioSequence,
 			extra3 = partLen - seqA.Len()
 			qualSeqA = seqA.Qualities()[:partLen]
 		}
+
 		score = 0
 		for i, qualA := range qualSeqA {
 			qualB := qualSeqB[i]

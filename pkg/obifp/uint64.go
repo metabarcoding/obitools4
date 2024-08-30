@@ -94,11 +94,14 @@ func (u Uint64) LeftShift64(n uint, carryIn uint64) (value, carry uint64) {
 
 	case n == 64:
 		return carryIn, u.w0
+
+	case n < 128:
+		return carryIn, u.w0 << (n - 64)
+
 	}
 
 	log.Warnf("Uint64 overflow at LeftShift64(%v, %v)", u, n)
 	return 0, 0
-
 }
 
 // RightShift64 performs a right shift operation on the Uint64 value by n bits, with carry-out to carry.
@@ -117,10 +120,13 @@ func (u Uint64) RightShift64(n uint, carryIn uint64) (value, carry uint64) {
 		return u.w0, 0
 
 	case n < 64:
-		return u.w0>>n | (carryIn & ^((1 << (64 - n)) - 1)), u.w0 << (n - 64)
+		return u.w0>>n | (carryIn & ^((1 << (64 - n)) - 1)), u.w0 << (64 - n)
 
 	case n == 64:
 		return carryIn, u.w0
+
+	case n < 128:
+		return carryIn, u.w0 >> (n - 64)
 	}
 
 	log.Warnf("Uint64 overflow at RightShift64(%v, %v)", u, n)

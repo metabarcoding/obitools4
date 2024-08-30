@@ -2,6 +2,8 @@ package obikmer
 
 import (
 	"os"
+	"sort"
+	"unsafe"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obifp"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
@@ -55,7 +57,12 @@ func (k *KmerMap[T]) KmerAsString(kmer T) string {
 
 func (k *KmerMap[T]) NormalizedKmerSlice(sequence *obiseq.BioSequence, buff *[]T) []T {
 
+	if sequence.Len() < int(k.Kmersize) {
+		return nil
+	}
+
 	makeSparseAt := func(kmer T) T {
+
 		if k.SparseAt == -1 {
 			return kmer
 		}
@@ -65,10 +72,8 @@ func (k *KmerMap[T]) NormalizedKmerSlice(sequence *obiseq.BioSequence, buff *[]T
 
 	normalizedKmer := func(fw, rv T) T {
 
-		if k.SparseAt >= 0 {
-			fw = makeSparseAt(fw)
-			rv = makeSparseAt(rv)
-		}
+		fw = makeSparseAt(fw)
+		rv = makeSparseAt(rv)
 
 		if fw.LessThan(rv) {
 			return fw
@@ -118,33 +123,60 @@ func (k *KmerMap[T]) NormalizedKmerSlice(sequence *obiseq.BioSequence, buff *[]T
 			rep = append(rep, kmer)
 			size--
 		}
+
 	}
 
 	return rep
 }
 
-func (k *KmerMap[T]) Push(sequence *obiseq.BioSequence) {
+func (k *KmerMap[T]) Push(sequence *obiseq.BioSequence, maxocc ...int) {
+	maxoccurs := -1
+	if len(maxocc) > 0 {
+		maxoccurs = maxocc[0]
+	}
 	kmers := k.NormalizedKmerSlice(sequence, nil)
 	for _, kmer := range kmers {
-		k.index[kmer] = append(k.index[kmer], sequence)
+		seqs := k.index[kmer]
+		if maxoccurs == -1 || len(seqs) <= maxoccurs {
+			seqs = append(seqs, sequence)
+			k.index[kmer] = seqs
+		}
 	}
 }
 
 func (k *KmerMap[T]) Query(sequence *obiseq.BioSequence) KmerMatch {
 	kmers := k.NormalizedKmerSlice(sequence, nil)
+	seqs := make([]*obiseq.BioSequence, 0)
 	rep := make(KmerMatch)
 
 	for _, kmer := range kmers {
-		if _, ok := k.index[kmer]; ok {
-			for _, seq := range k.index[kmer] {
-				if seq != sequence {
-					if _, ok := rep[seq]; !ok {
-						rep[seq] = 0
-					}
-					rep[seq]++
-				}
-			}
+		if candidates, ok := k.index[kmer]; ok {
+			seqs = append(seqs, candidates...)
 		}
+	}
+
+	sort.Slice(seqs,
+		func(i, j int) bool {
+			return uintptr(unsafe.Pointer(seqs[i])) < uintptr(unsafe.Pointer(seqs[j]))
+		})
+
+	prevseq := (*obiseq.BioSequence)(nil)
+	n := 0
+	for _, seq := range seqs {
+
+		if seq != prevseq {
+			if prevseq != nil && prevseq != sequence {
+				rep[prevseq] = n
+			}
+			n = 1
+			prevseq = seq
+		}
+
+		n++
+	}
+
+	if prevseq != nil {
+		rep[prevseq] = n
 	}
 
 	return rep
@@ -187,7 +219,8 @@ func (k *KmerMatch) Max() *obiseq.BioSequence {
 func NewKmerMap[T obifp.FPUint[T]](
 	sequences obiseq.BioSequenceSlice,
 	kmersize uint,
-	sparse bool) *KmerMap[T] {
+	sparse bool,
+	maxoccurs int) *KmerMap[T] {
 	idx := make(map[T][]*obiseq.BioSequence)
 
 	sparseAt := -1
@@ -246,9 +279,17 @@ func NewKmerMap[T obifp.FPUint[T]](
 	bar := progressbar.NewOptions(n, pbopt...)
 
 	for i, sequence := range sequences {
-		kmap.Push(sequence)
+		kmap.Push(sequence, maxoccurs)
 		if i%100 == 0 {
 			bar.Add(100)
+		}
+	}
+
+	if maxoccurs >= 0 {
+		for k, s := range kmap.index {
+			if len(s) >= maxoccurs {
+				delete(kmap.index, k)
+			}
 		}
 	}
 

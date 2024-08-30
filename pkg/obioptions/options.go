@@ -14,8 +14,8 @@ import (
 )
 
 var _Debug = false
-var _WorkerPerCore = 2.0
-var _ReadWorkerPerCore = 0.5
+var _WorkerPerCore = 1.0
+var _ReadWorkerPerCore = 0.25
 var _WriteWorkerPerCore = 0.25
 var _StrictReadWorker = 0
 var _StrictWriteWorker = 0

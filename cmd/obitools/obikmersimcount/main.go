@@ -44,10 +44,10 @@ func main() {
 
 	obiconvert.OpenSequenceDataErrorMessage(args, err)
 
-	selected := obikmersim.CLILookForSharedKmers(sequences)
-	topull, err := obiconvert.CLIWriteBioSequences(selected, false)
+	counted := obikmersim.CLILookForSharedKmers(sequences)
+	topull, err := obiconvert.CLIWriteBioSequences(counted, false)
 
-	if err == nil {
+	if err != nil {
 		log.Panic(err)
 	}
 
