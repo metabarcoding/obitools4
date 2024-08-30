@@ -10,6 +10,9 @@ import (
 var _MinUnitLength = 1
 var _MaxUnitLength = 6
 var _MinUnitCount = 5
+var _MinLength = 20
+var _MinFlankLength = 0
+var _NotReoriented = false
 
 // PCROptionSet defines every options related to a simulated PCR.
 //
@@ -31,6 +34,18 @@ func MicroSatelliteOptionSet(options *getoptions.GetOpt) {
 
 	options.IntVar(&_MinUnitCount, "min-unit-count", _MinUnitCount,
 		options.Description("Minumum number of repeated units."))
+
+	options.IntVar(&_MinLength, "min-length", _MinLength,
+		options.Alias("l"),
+		options.Description("Minimum length of a microsatellite."))
+
+	options.IntVar(&_MinFlankLength, "min-flank-length", _MinFlankLength,
+		options.Alias("f"),
+		options.Description("Minimum length of the flanking sequences."))
+
+	options.BoolVar(&_NotReoriented, "not-reoriented", _NotReoriented,
+		options.Alias("n"),
+		options.Description("Do not reorient the microsatellites."))
 }
 
 func OptionSet(options *getoptions.GetOpt) {
@@ -52,4 +67,16 @@ func CLIMinUnitCount() int {
 
 func CLIMicroSatRegex() string {
 	return fmt.Sprintf("([acgt]{%d,%d})\\1{%d}", _MinUnitLength, _MaxUnitLength, _MinUnitCount-1)
+}
+
+func CLIMinLength() int {
+	return _MinLength
+}
+
+func CLIMinFlankLength() int {
+	return _MinFlankLength
+}
+
+func CLIReoriented() bool {
+	return !_NotReoriented
 }
