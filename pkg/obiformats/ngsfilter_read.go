@@ -642,6 +642,8 @@ func ReadCSVNGSFilter(reader io.Reader) (*obingslibrary.NGSLibrary, error) {
 
 	}
 
+	ngsfilter.CheckPrimerUnicity()
+
 	for i := 0; i < len(params); i++ {
 		param := params[i][1]
 		if len(params[i]) < 3 {

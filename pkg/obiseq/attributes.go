@@ -72,8 +72,8 @@ func (s *BioSequence) HasAttribute(key string) bool {
 	ok := s.annotations != nil
 
 	if ok {
-		defer s.AnnotationsUnlock()
 		s.AnnotationsLock()
+		defer s.AnnotationsUnlock()
 		_, ok = s.annotations[key]
 	}
 
@@ -112,8 +112,8 @@ func (s *BioSequence) GetAttribute(key string) (interface{}, bool) {
 	ok := s.annotations != nil
 
 	if ok {
-		defer s.AnnotationsUnlock()
 		s.AnnotationsLock()
+		defer s.AnnotationsUnlock()
 		val, ok = s.annotations[key]
 	}
 
@@ -144,8 +144,8 @@ func (s *BioSequence) SetAttribute(key string, value interface{}) {
 
 	annot := s.Annotations()
 
-	defer s.AnnotationsUnlock()
 	s.AnnotationsLock()
+	defer s.AnnotationsUnlock()
 	annot[key] = value
 }
 
@@ -205,8 +205,8 @@ func (s *BioSequence) GetFloatAttribute(key string) (float64, bool) {
 // No return value.
 func (s *BioSequence) DeleteAttribute(key string) {
 	if s.annotations != nil {
-		defer s.AnnotationsUnlock()
 		s.AnnotationsLock()
+		defer s.AnnotationsUnlock()
 		delete(s.annotations, key)
 	}
 }

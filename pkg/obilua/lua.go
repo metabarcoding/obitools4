@@ -20,6 +20,8 @@ import (
 func NewInterpreter() *lua.LState {
 	lua := lua.NewState()
 
+	registerMutexType(lua)
+
 	RegisterObilib(lua)
 	RegisterObiContext(lua)
 
@@ -117,7 +119,7 @@ func LuaWorker(proto *lua.FunctionProto) obiseq.SeqWorker {
 				case *obiseq.BioSequenceSlice:
 					return *val, err
 				default:
-					return nil, fmt.Errorf("worker function doesn't return the correct type")
+					return nil, fmt.Errorf("worker function doesn't return the correct type %T", val)
 				}
 			}
 

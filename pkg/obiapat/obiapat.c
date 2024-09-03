@@ -137,6 +137,28 @@ char *reverseSequence(char *str,char isPattern)
         return str;
 }
 
+/* -------------------------------------------- */
+/* lowercase sequence                           */
+/* -------------------------------------------- */
+
+#define IS_UPPER(c) (((c) >= 'A') && ((c) <= 'A'))
+#define TO_LOWER(c) ((c) - 'A' + 'a')
+
+char *LowerSequence(char *seq)
+{
+        char *cseq;
+
+        for (cseq = seq ; *cseq ; cseq++) 
+            if (IS_UPPER(*cseq))
+                *cseq = TO_LOWER(*cseq);
+
+		return seq;
+}
+ 
+#undef IS_UPPER
+#undef TO_LOWER
+
+
 char *ecoComplementPattern(char *nucAcSeq)
 {
     return reverseSequence(LXBioSeqComplement(nucAcSeq),1);
@@ -161,6 +183,7 @@ void UpperSequence(char *seq)
  
 #undef IS_LOWER
 #undef TO_UPPER
+
 
 
 

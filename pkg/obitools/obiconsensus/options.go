@@ -8,8 +8,6 @@ import (
 var _distStepMax = 1
 var _sampleAttribute = "sample"
 
-var _ratioMax = 1.0
-
 var _clusterMode = false
 var _onlyHead = false
 
@@ -19,6 +17,10 @@ var _NoSingleton = false
 
 var _saveGraph = "__@@NOSAVE@@__"
 var _saveRatio = "__@@NOSAVE@@__"
+
+var _lowCoverage = 0.0
+
+var _unique = false
 
 // ObiminionOptionSet sets the options for obiminion.
 //
@@ -50,6 +52,19 @@ func ObiminionOptionSet(options *getoptions.GetOpt) {
 	options.BoolVar(&_NoSingleton, "no-singleton", _NoSingleton,
 		options.Description("If set, sequences occurring a single time in the data set are discarded."))
 
+	options.BoolVar(&_clusterMode, "cluster", _clusterMode,
+		options.Alias("C"),
+		options.Description("Switch obiconsensus into its clustering mode."),
+	)
+
+	options.BoolVar(&_unique, "unique", _unique,
+		options.Alias("U"),
+		options.Description("If set, sequences are dereplicated on the output (obiuniq)."),
+	)
+
+	options.Float64Var(&_lowCoverage, "low-coverage", _lowCoverage,
+		options.Description("If the coverage of a sample is lower than this value, it will be discarded."),
+	)
 }
 
 // OptionSet sets up the options for the obiminion package.
@@ -129,4 +144,16 @@ func CLIKmerSize() int {
 // Returns a boolean value indicating whether or not singleton sequences should be discarded.
 func CLINoSingleton() bool {
 	return _NoSingleton
+}
+
+func CLICluterDenoise() bool {
+	return _clusterMode
+}
+
+func CLIUnique() bool {
+	return _unique
+}
+
+func CLILowCoverage() float64 {
+	return _lowCoverage
 }

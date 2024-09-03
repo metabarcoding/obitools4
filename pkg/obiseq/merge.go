@@ -91,8 +91,7 @@ func (sequence *BioSequence) HasStatsOn(key string) bool {
 // - StatsOnValues
 func (sequence *BioSequence) StatsOn(desc StatsOnDescription, na string) StatsOnValues {
 	mkey := StatsOnSlotName(desc.Name)
-	annotations := sequence.Annotations()
-	istat, ok := annotations[mkey]
+	istat, ok := sequence.GetAttribute(mkey)
 
 	var stats StatsOnValues
 	var newstat bool
@@ -117,39 +116,40 @@ func (sequence *BioSequence) StatsOn(desc StatsOnDescription, na string) StatsOn
 				}
 			}
 		default:
-			stats = make(StatsOnValues, 10)
-			annotations[mkey] = stats
+			stats = make(StatsOnValues)
+			sequence.SetAttribute(mkey, stats)
 			newstat = true
 		}
 	} else {
-		stats = make(StatsOnValues, 10)
-		annotations[mkey] = stats
+		stats = make(StatsOnValues)
+		sequence.SetAttribute(mkey, stats)
 		newstat = true
 	}
 
-	if newstat && sequence.StatsPlusOne(desc, sequence, na) {
-		delete(sequence.Annotations(), desc.Key)
+	if newstat {
+		sequence.StatsPlusOne(desc, sequence, na)
 	}
 
 	return stats
 }
 
-// StatsPlusOne adds the count of the sequence toAdd to the count of the key in the stats.
+// StatsPlusOne updates the statistics on the given attribute (desc) on the receiver BioSequence
+// with the value of the attribute on the toAdd BioSequence.
 //
 // Parameters:
-// - key: the attribute key (string) to be summarized
-// - toAdd: the BioSequence to add to the stats
+// - desc: StatsOnDescription of the attribute to be updated
+// - toAdd: the BioSequence containing the attribute to be updated
 // - na: the value to be used if the attribute is not present
+//
 // Return type:
-// - bool
+// - bool: true if the update was successful, false otherwise
 func (sequence *BioSequence) StatsPlusOne(desc StatsOnDescription, toAdd *BioSequence, na string) bool {
 	sval := na
-	annotations := sequence.Annotations()
 	stats := sequence.StatsOn(desc, na)
 	retval := false
 
 	if toAdd.HasAnnotation() {
-		value, ok := toAdd.Annotations()[desc.Key]
+		value, ok := toAdd.GetAttribute(desc.Key)
 
 		if ok {
 
@@ -178,8 +178,9 @@ func (sequence *BioSequence) StatsPlusOne(desc StatsOnDescription, toAdd *BioSeq
 	if !ok {
 		old = 0
 	}
+
 	stats[sval] = old + desc.Weight(toAdd)
-	annotations[StatsOnSlotName(desc.Name)] = stats // TODO: check if this is necessary
+	sequence.SetAttribute(StatsOnSlotName(desc.Name), stats) // TODO: check if this is necessary
 	return retval
 }
 
@@ -263,7 +264,7 @@ func (sequence *BioSequence) Merge(tomerge *BioSequence, na string, inplace bool
 		}
 	}
 
-	annotations["count"] = count
+	sequence.SetCount(count)
 	return sequence
 }
 
@@ -282,7 +283,7 @@ func (sequences BioSequenceSlice) Merge(na string, statsOn StatsOnDescriptions) 
 	seq.SetQualities(nil)
 
 	if len(sequences) == 1 {
-		seq.Annotations()["count"] = seq.Count()
+		seq.SetCount(seq.Count())
 		for _, desc := range statsOn {
 			seq.StatsOn(desc, na)
 		}
@@ -296,5 +297,4 @@ func (sequences BioSequenceSlice) Merge(na string, statsOn StatsOnDescriptions) 
 
 	sequences.Recycle(false)
 	return seq
-
 }

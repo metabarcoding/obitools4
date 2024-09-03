@@ -9,6 +9,7 @@ import "C"
 import (
 	"errors"
 	"runtime"
+	"strings"
 	"unsafe"
 
 	log "github.com/sirupsen/logrus"
@@ -114,7 +115,7 @@ func (pattern ApatPattern) ReverseComplement() (ApatPattern, error) {
 		C.free(unsafe.Pointer(errmsg))
 		return ApatPattern{nil}, errors.New(message)
 	}
-	spat := C.GoString(apc.cpat)
+	spat := strings.ToLower(C.GoString(apc.cpat))
 	ap := _ApatPattern{apc, spat}
 
 	runtime.SetFinalizer(&ap, func(p *_ApatPattern) {
@@ -366,6 +367,18 @@ func (pattern ApatPattern) BestMatch(sequence ApatSequence, begin, length int) (
 	return
 }
 
+// FilterBestMatch filters the best non overlapping matches of a given pattern in a sequence.
+//
+// It takes the following parameters:
+// - pattern: the pattern to search for (ApatPattern).
+// - sequence: the sequence to search in (ApatSequence).
+// - begin: the starting index of the search (int).
+// - length: the length of the search (int).
+//
+// It returns a slice of [3]int representing the locations of all non-overlapping matches in the sequence.
+// The two firsts values of the [3]int indicate respectively the start and the end position of
+// the match. Following the GO convention the end position is not included in the
+// match. The third value indicates the number of error detected for this occurrence.
 func (pattern ApatPattern) FilterBestMatch(sequence ApatSequence, begin, length int) (loc [][3]int) {
 	res := pattern.FindAllIndex(sequence, begin, length)
 	filtered := make([][3]int, 0, len(res))
@@ -424,13 +437,15 @@ func (pattern ApatPattern) FilterBestMatch(sequence ApatSequence, begin, length 
 func (pattern ApatPattern) AllMatches(sequence ApatSequence, begin, length int) (loc [][3]int) {
 	res := pattern.FilterBestMatch(sequence, begin, length)
 
+	j := 0
 	for _, m := range res {
 		// Recompute the start and end position of the match
 		// when the pattern allows for indels
 		if m[2] > 0 && pattern.pointer.pointer.hasIndel {
-			start := m[0] - m[2]
+			// log.Warnf("Locating indel on sequence %s[%s]", sequence.pointer.reference.Id(), pattern.String())
+			start := m[0] - m[2]*2
 			start = max(start, 0)
-			end := start + int(pattern.pointer.pointer.patlen) + 2*m[2]
+			end := start + int(pattern.pointer.pointer.patlen) + 4*m[2]
 			end = min(end, sequence.Len())
 			// 1 << 30 = 1,073,741,824 = 1Gb
 			// It's a virtual array mapping the sequence to the pattern
@@ -439,18 +454,21 @@ func (pattern ApatPattern) AllMatches(sequence ApatSequence, begin, length int) 
 			cpattern := (*[1 << 30]byte)(unsafe.Pointer(pattern.pointer.pointer.cpat))
 			frg := sequence.pointer.reference.Sequence()[start:end]
 
-			begin, end, score := obialign.LocatePattern((*cpattern)[0:int(pattern.pointer.pointer.patlen)], frg)
+			pb, pe, score := obialign.LocatePattern((*cpattern)[0:int(pattern.pointer.pointer.patlen)], frg)
 
 			// olderr := m[2]
 			m[2] = score
-			m[0] = start + begin
-			m[1] = start + end
+			m[0] = start + pb
+			m[1] = start + pe
+
 			// log.Warnf("seq[%d@%d:%d] %d: %s %d - %s:%s:%s", i, m[0], m[1], olderr, sequence.pointer.reference.Id(), score,
 			// 	frg, (*cpattern)[0:int(pattern.pointer.pointer.patlen)], sequence.pointer.reference.Sequence()[m[0]:m[1]])
 		}
+
+		if int(pattern.pointer.pointer.maxerr) >= m[2] {
+			res[j] = m
+			j++
+		}
 	}
-
-	// log.Debugf("All matches : %v", res)
-
-	return res
+	return res[0:j]
 }

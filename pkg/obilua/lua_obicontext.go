@@ -36,6 +36,8 @@ func obicontextGetSet(interpreter *lua.LState) int {
 			__lua_obicontext.Store(key, float64(val))
 		case lua.LString:
 			__lua_obicontext.Store(key, string(val))
+		case *lua.LUserData:
+			__lua_obicontext.Store(key, val.Value)
 		case *lua.LTable:
 			__lua_obicontext.Store(key, Table2Interface(interpreter, val))
 		default:

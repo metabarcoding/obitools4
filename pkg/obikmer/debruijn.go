@@ -10,6 +10,7 @@ import (
 	"slices"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obistats"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -312,10 +313,48 @@ func (g *DeBruijnGraph) LongestPath(max_length int) []uint64 {
 	return path
 }
 
-func (g *DeBruijnGraph) LongestConsensus(id string) (*obiseq.BioSequence, error) {
+func (g *DeBruijnGraph) LongestConsensus(id string, min_cov float64) (*obiseq.BioSequence, error) {
+	if g.Len() == 0 {
+		return nil, fmt.Errorf("graph is empty")
+	}
 	//path := g.LongestPath(max_length)
 	path := g.HaviestPath()
-	s := g.DecodePath(path)
+
+	spath := path
+
+	if min_cov > 0 {
+		wp := make([]uint, len(path))
+
+		for i, n := range path {
+			wp[i] = g.graph[n]
+		}
+
+		mp := uint(float64(obistats.Mode(wp))*min_cov + 0.5)
+
+		from := 0
+		for i, n := range path {
+			if g.graph[n] < mp {
+				from = i + 1
+			} else {
+				break
+			}
+		}
+
+		to := len(path)
+
+		for i := len(path) - 1; i >= 0; i-- {
+			n := path[i]
+			if g.graph[n] < mp {
+				to = i
+			} else {
+				break
+			}
+		}
+
+		spath = path[from:to]
+	}
+
+	s := g.DecodePath(spath)
 
 	if len(s) > 0 {
 		seq := obiseq.NewBioSequence(
@@ -385,6 +424,48 @@ func (g *DeBruijnGraph) Weight(index uint64) int {
 		val = 0
 	}
 	return int(val)
+}
+
+// WeightMode returns the mode weight of the nodes in the DeBruijnGraph.
+//
+// It iterates over each count in the graph map and updates the max value if the current count is greater.
+// Finally, it returns the mode weight as an integer.
+//
+// Returns:
+// - int: the mode weight value.
+func (g *DeBruijnGraph) WeightMode() int {
+	dist := make(map[uint]int)
+
+	for _, w := range g.graph {
+		dist[w]++
+	}
+
+	maxi := 0
+	wmax := uint(0)
+
+	for k, v := range dist {
+		if v > maxi && k > 1 {
+			maxi = v
+			wmax = k
+		}
+	}
+
+	return int(wmax)
+}
+
+// WeightMean returns the mean weight of the nodes in the DeBruijnGraph.
+//
+// Returns:
+// - float64: the mean weight of the nodes in the graph.
+func (g *DeBruijnGraph) WeightMean() float64 {
+	sum := 0
+
+	for _, w := range g.graph {
+		i := int(w)
+		sum += i
+	}
+
+	return float64(sum) / float64(len(g.graph))
 }
 
 // append appends a sequence of nucleotides to the DeBruijnGraph.
@@ -637,7 +718,7 @@ func (g *DeBruijnGraph) HaviestPath() []uint64 {
 	}
 
 	if slices.Contains(heaviestPath, currentNode) {
-		log.Fatalf("Cycle detected %v -> %v (%v) len(%v)", heaviestPath, currentNode, startNodes, len(heaviestPath))
+		log.Panicf("Cycle detected %v -> %v (%v) len(%v), graph: %v", heaviestPath, currentNode, startNodes, len(heaviestPath), g.Len())
 		return nil
 	}
 

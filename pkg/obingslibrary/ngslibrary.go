@@ -36,8 +36,9 @@ func MakeNGSLibrary() NGSLibrary {
 }
 
 func (library *NGSLibrary) GetMarker(forward, reverse string) (*Marker, bool) {
-	pair := PrimerPair{strings.ToLower(forward),
-		strings.ToLower(reverse)}
+	forward = strings.ToLower(forward)
+	reverse = strings.ToLower(reverse)
+	pair := PrimerPair{forward, reverse}
 	marker, ok := (library.Markers)[pair]
 
 	if ok {

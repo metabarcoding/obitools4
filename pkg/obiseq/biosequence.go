@@ -65,7 +65,7 @@ type BioSequence struct {
 	feature     []byte
 	paired      *BioSequence // A pointer to the paired sequence
 	annotations Annotation
-	annot_lock  sync.Mutex
+	annot_lock  *sync.Mutex
 }
 
 // NewEmptyBioSequence creates a new BioSequence object with an empty sequence.
@@ -90,7 +90,7 @@ func NewEmptyBioSequence(preallocate int) *BioSequence {
 		feature:     nil,
 		paired:      nil,
 		annotations: nil,
-		annot_lock:  sync.Mutex{},
+		annot_lock:  &sync.Mutex{},
 	}
 }
 

@@ -3,7 +3,7 @@ package obingslibrary
 import (
 	"fmt"
 	"math"
-	"sort"
+	"slices"
 
 	log "github.com/sirupsen/logrus"
 
@@ -87,6 +87,8 @@ func lookForTag(seq string, delimiter byte) string {
 
 	i := len(seq) - 1
 
+	// log.Warnf("Provided fragment : %s", string(seq))
+
 	for i >= 0 && seq[i] != delimiter {
 		i--
 	}
@@ -107,6 +109,7 @@ func lookForTag(seq string, delimiter byte) string {
 		return ""
 	}
 
+	// log.Warnf("extracted : %s", string(seq[begin:end]))
 	return seq[begin:end]
 }
 
@@ -172,11 +175,12 @@ func (marker *Marker) beginDelimitedTagExtractor(
 	begin int,
 	forward bool) string {
 
-	taglength := marker.Forward_spacer + marker.Forward_tag_length
+	// log.Warn("beginDelimitedTagExtractor")
+	taglength := 2*marker.Forward_spacer + marker.Forward_tag_length
 	delimiter := marker.Forward_tag_delimiter
 
 	if !forward {
-		taglength = marker.Reverse_spacer + marker.Reverse_tag_length
+		taglength = 2*marker.Reverse_spacer + marker.Reverse_tag_length
 		delimiter = marker.Reverse_tag_delimiter
 	}
 
@@ -240,6 +244,7 @@ func (marker *Marker) endDelimitedTagExtractor(
 	sequence *obiseq.BioSequence,
 	end int,
 	forward bool) string {
+	// log.Warn("endDelimitedTagExtractor")
 
 	taglength := marker.Reverse_spacer + marker.Reverse_tag_length
 	delimiter := marker.Reverse_tag_delimiter
@@ -335,14 +340,17 @@ func (marker *Marker) beginTagExtractor(
 	sequence *obiseq.BioSequence,
 	begin int,
 	forward bool) string {
+	// log.Warnf("Forward : %v -> %d %c", forward, marker.Forward_spacer, marker.Forward_tag_delimiter)
+	// log.Warnf("Forward : %v -> %d %c", forward, marker.Reverse_spacer, marker.Reverse_tag_delimiter)
 	if forward {
 		if marker.Forward_tag_delimiter == 0 {
 			return marker.beginFixedTagExtractor(sequence, begin, forward)
 		} else {
 			if marker.Forward_tag_indels == 0 {
+				// log.Warnf("Delimited tag for forward primers %s", marker.forward.String())
 				return marker.beginDelimitedTagExtractor(sequence, begin, forward)
 			} else {
-				// log.Warn("Rescue tag for forward primers")
+				// log.Warnf("Rescue tag for forward primers %s", marker.forward.String())
 				return marker.beginRescueTagExtractor(sequence, begin, forward)
 			}
 		}
@@ -351,9 +359,10 @@ func (marker *Marker) beginTagExtractor(
 			return marker.beginFixedTagExtractor(sequence, begin, forward)
 		} else {
 			if marker.Reverse_tag_indels == 0 {
+				// log.Warnf("Delimited tag for reverse/complement primers %s", marker.creverse.String())
 				return marker.beginDelimitedTagExtractor(sequence, begin, forward)
 			} else {
-				// log.Warn("Rescue tag for reverse/complement primers")
+				// log.Warnf("Rescue tag for reverse/complement primers %s", marker.creverse.String())
 				return marker.beginRescueTagExtractor(sequence, begin, forward)
 			}
 		}
@@ -369,9 +378,10 @@ func (marker *Marker) endTagExtractor(
 			return marker.endFixedTagExtractor(sequence, end, forward)
 		} else {
 			if marker.Reverse_tag_indels == 0 {
+				// log.Warnf("Delimited tag for reverse primers %s", marker.reverse.String())
 				return marker.endDelimitedTagExtractor(sequence, end, forward)
 			} else {
-				// log.Warn("Rescue tag for reverse primers")
+				// log.Warnf("Rescue tag for reverse primers %s", marker.reverse.String())
 				return marker.endRescueTagExtractor(sequence, end, forward)
 			}
 		}
@@ -380,9 +390,10 @@ func (marker *Marker) endTagExtractor(
 			return marker.endFixedTagExtractor(sequence, end, forward)
 		} else {
 			if marker.Forward_tag_indels == 0 {
+				// log.Warnf("Delimited tag for forward/complement primers %s", marker.cforward.String())
 				return marker.endDelimitedTagExtractor(sequence, end, forward)
 			} else {
-				// log.Warn("Rescue tag for forward/complement primers")
+				// log.Warnf("Rescue tag for forward/complement primers %s", marker.cforward.String())
 				return marker.endRescueTagExtractor(sequence, end, forward)
 			}
 		}
@@ -609,9 +620,7 @@ func (library *NGSLibrary) ExtractMultiBarcode(sequence *obiseq.BioSequence) (ob
 	}
 
 	if len(matches) > 0 {
-		sort.Slice(matches, func(i, j int) bool {
-			return matches[i].Begin < matches[j].Begin
-		})
+		slices.SortFunc(matches, func(a, b PrimerMatch) int { return a.Begin - b.Begin })
 
 		state := 0
 		var from PrimerMatch

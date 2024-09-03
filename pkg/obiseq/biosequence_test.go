@@ -187,7 +187,7 @@ func TestCopy(t *testing.T) {
 			"annotation1": "value1",
 			"annotation2": "value2",
 		},
-		annot_lock: sync.Mutex{},
+		annot_lock: &sync.Mutex{},
 	}
 
 	newSeq := seq.Copy()

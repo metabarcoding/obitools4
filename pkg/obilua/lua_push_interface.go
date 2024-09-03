@@ -1,6 +1,8 @@
 package obilua
 
 import (
+	"sync"
+
 	log "github.com/sirupsen/logrus"
 
 	lua "github.com/yuin/gopher-lua"
@@ -46,6 +48,8 @@ func pushInterfaceToLua(L *lua.LState, val interface{}) {
 		pushSliceBoolToLua(L, v)
 	case nil:
 		L.Push(lua.LNil)
+	case *sync.Mutex:
+		pushMutexToLua(L, v)
 	default:
 		log.Fatalf("Cannot deal with value (%T) : %v", val, val)
 	}
