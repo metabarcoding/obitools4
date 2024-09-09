@@ -209,7 +209,6 @@ func IsSequenceMatch(pattern string) SequencePredicate {
 
 	return f
 }
-
 func IsDefinitionMatch(pattern string) SequencePredicate {
 	pat, err := regexp.Compile(pattern)
 

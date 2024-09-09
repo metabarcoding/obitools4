@@ -138,6 +138,10 @@ func CLIReadBioSequences(filenames ...string) (obiiter.IBioSequence, error) {
 		}
 
 		switch CLIInputFormat() {
+		case "fastq":
+			reader = obiformats.ReadFastqFromFile
+		case "fasta":
+			reader = obiformats.ReadFastaFromFile
 		case "ecopcr":
 			reader = obiformats.ReadEcoPCRFromFile
 		case "embl":

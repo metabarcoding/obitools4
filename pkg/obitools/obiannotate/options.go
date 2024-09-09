@@ -24,8 +24,6 @@ var _setSeqLength = false
 var _uniqueID = false
 var _ahoCorazick = ""
 var _pattern = ""
-var _pattern_error = 0
-var _pattern_indel = false
 var _pattern_name = "pattern"
 var _lcaSlot = ""
 var _lcaError = 0.0
@@ -60,14 +58,6 @@ func SequenceAnnotationOptionSet(options *getoptions.GetOpt) {
 
 	options.StringVar(&_pattern_name, "pattern-name", _pattern_name,
 		options.Description("specify the name to use as prefix for the slots reporting the match"),
-	)
-
-	options.IntVar(&_pattern_error, "pattern-error", _pattern_error,
-		options.Description("Maximum number of allowed error during pattern matching"),
-	)
-
-	options.BoolVar(&_pattern_indel, "allows-indels", _pattern_indel,
-		options.Description("Allows for indel during pattern matching"),
 	)
 
 	options.StringVar(&_lcaSlot, "add-lca-in", _lcaSlot,
@@ -302,14 +292,6 @@ func CLIHasPattern() bool {
 
 func CLIHasPatternName() string {
 	return _pattern_name
-}
-
-func CLIPatternError() int {
-	return _pattern_error
-}
-
-func CLIPatternInDels() bool {
-	return _pattern_indel
 }
 
 func CLISetTaxonomicPath() bool {

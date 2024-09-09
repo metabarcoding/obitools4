@@ -25,7 +25,7 @@ func DeleteAttributesWorker(toBeDeleted []string) obiseq.SeqWorker {
 	return f
 }
 
-func MatchPatternWorker(pattern, name string, errormax int, allowsIndel bool) obiseq.SeqWorker {
+func MatchPatternWorker(pattern, name string, errormax int, bothStrand, allowsIndel bool) obiseq.SeqWorker {
 	pat, err := obiapat.MakeApatPattern(pattern, errormax, allowsIndel)
 	if err != nil {
 		log.Fatalf("error in compiling pattern (%s) : %v", pattern, err)
@@ -56,7 +56,7 @@ func MatchPatternWorker(pattern, name string, errormax int, allowsIndel bool) ob
 
 		start, end, nerr, matched := pat.BestMatch(apats, 0, s.Len())
 
-		if matched {
+		if matched && start >= 0 && end <= s.Len() {
 			annot := s.Annotations()
 			annot[slot] = pattern
 
@@ -75,7 +75,7 @@ func MatchPatternWorker(pattern, name string, errormax int, allowsIndel bool) ob
 		} else {
 			start, end, nerr, matched := cpat.BestMatch(apats, 0, s.Len())
 
-			if matched {
+			if matched && start >= 0 && end <= s.Len() {
 				annot := s.Annotations()
 				annot[slot] = pattern
 				match, err := s.Subsequence(start, end, false)
@@ -328,9 +328,10 @@ func CLIAnnotationWorker() obiseq.SeqWorker {
 	}
 
 	if CLIHasPattern() {
-		log.Infof("Match pattern %s with %d error", CLIPattern(), CLIPatternError())
+		log.Infof("Match pattern %s with %d error", CLIPattern(), obigrep.CLIPatternError())
 		w := MatchPatternWorker(CLIPattern(), CLIHasPatternName(),
-			CLIPatternError(), CLIPatternInDels())
+			obigrep.CLIPatternError(), obigrep.CLIPatternBothStrand(),
+			obigrep.CLIPatternInDels())
 
 		annotator = annotator.ChainWorkers(w)
 	}

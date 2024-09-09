@@ -19,6 +19,8 @@ var __input_fastobi_format__ = false
 var __input_ecopcr_format__ = false
 var __input_embl_format__ = false
 var __input_genbank_format__ = false
+var __input_fastq_format__ = false
+var __input_fasta_format__ = false
 
 var __output_in_fasta__ = false
 var __output_in_fastq__ = false
@@ -55,6 +57,12 @@ func InputOptionSet(options *getoptions.GetOpt) {
 
 	options.BoolVar(&__input_genbank_format__, "genbank", __input_genbank_format__,
 		options.Description("Read data following the Genbank flatfile format."))
+
+	options.BoolVar(&__input_fastq_format__, "fastq", __input_fastq_format__,
+		options.Description("Read data following the fastq format."))
+
+	options.BoolVar(&__input_fasta_format__, "fasta", __input_fasta_format__,
+		options.Description("Read data following the fasta format."))
 
 	options.BoolVar(&__no_ordered_input__, "no-order", __no_ordered_input__,
 		options.Description("When several input files are provided, "+
@@ -116,6 +124,10 @@ func OptionSet(options *getoptions.GetOpt) {
 // file has to be printed.
 func CLIInputFormat() string {
 	switch {
+	case __input_fasta_format__:
+		return "fasta"
+	case __input_fastq_format__:
+		return "fastq"
 	case __input_ecopcr_format__:
 		return "ecopcr"
 	case __input_embl_format__:

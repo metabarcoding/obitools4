@@ -297,6 +297,24 @@ func (pattern ApatPattern) FindAllIndex(sequence ApatSequence, begin, length int
 	return loc
 }
 
+func (pattern ApatPattern) IsMatching(sequence ApatSequence, begin, length int) bool {
+	if begin < 0 {
+		begin = 0
+	}
+
+	if length < 0 {
+		length = sequence.Len()
+	}
+
+	nhits := int(C.ManberAll(sequence.pointer.pointer,
+		pattern.pointer.pointer,
+		0,
+		C.int32_t(begin),
+		C.int32_t(length+C.MAX_PAT_LEN)))
+
+	return nhits > 0
+}
+
 // BestMatch finds the best match of a given pattern in a sequence.
 //
 // THe function identify the first occurrence of the pattern in the sequence.
@@ -336,6 +354,11 @@ func (pattern ApatPattern) BestMatch(sequence ApatSequence, begin, length int) (
 	nerr = best[2]
 	end = best[1]
 
+	if best[0] < 0 || best[1] > sequence.Len() {
+		matched = false
+		return
+	}
+
 	if nerr == 0 || !pattern.pointer.pointer.hasIndel {
 		start = best[0]
 		log.Debugln("No nws ", start, nerr)
@@ -356,14 +379,16 @@ func (pattern ApatPattern) BestMatch(sequence ApatSequence, begin, length int) (
 		best[0], nerr, int(pattern.pointer.pointer.patlen),
 		sequence.Len(), start, end)
 
-	from, to, score := obialign.LocatePattern((*cpattern)[0:int(pattern.pointer.pointer.patlen)], frg)
+	from, to, score := obialign.LocatePattern(sequence.pointer.reference.Id(),
+		(*cpattern)[0:int(pattern.pointer.pointer.patlen)],
+		frg)
 
 	// olderr := m[2]
 
 	nerr = score
 	start = start + from
 	end = start + to
-	log.Debugln("results", score, start, nerr)
+	log.Debugf("BestMatch on %s : score=%d [%d..%d]", sequence.pointer.reference.Id(), score, start, nerr)
 	return
 }
 
@@ -454,7 +479,10 @@ func (pattern ApatPattern) AllMatches(sequence ApatSequence, begin, length int) 
 			cpattern := (*[1 << 30]byte)(unsafe.Pointer(pattern.pointer.pointer.cpat))
 			frg := sequence.pointer.reference.Sequence()[start:end]
 
-			pb, pe, score := obialign.LocatePattern((*cpattern)[0:int(pattern.pointer.pointer.patlen)], frg)
+			pb, pe, score := obialign.LocatePattern(
+				sequence.pointer.reference.Id(),
+				(*cpattern)[0:int(pattern.pointer.pointer.patlen)],
+				frg)
 
 			// olderr := m[2]
 			m[2] = score

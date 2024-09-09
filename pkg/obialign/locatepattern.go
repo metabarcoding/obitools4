@@ -25,16 +25,17 @@ func buffIndex(i, j, width int) int {
 //
 // The function returns the start and end positions of the best
 // match, as well as the number of errors in the best match.
-func LocatePattern(pattern, sequence []byte) (int, int, int) {
+func LocatePattern(id string, pattern, sequence []byte) (int, int, int) {
+
+	if len(pattern) >= len(sequence) {
+		log.Panicf("Sequence %s:Pattern %s must be shorter than sequence %s", id, pattern, sequence)
+	}
+
 	// Pattern spreads over the columns
 	// Sequence spreads over the rows
 	width := len(pattern) + 1
 	buffsize := (len(pattern) + 1) * (len(sequence) + 1)
 	buffer := make([]int, buffsize)
-
-	if len(pattern) >= len(sequence) {
-		log.Panicf("Pattern %s must be shorter than sequence %s", pattern, sequence)
-	}
 
 	// The path matrix keeps track of the best path through the matrix
 	//  0 : indicate the diagonal path

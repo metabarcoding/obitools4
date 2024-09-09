@@ -107,7 +107,7 @@ func OBIMimeTypeGuesser(stream io.Reader) (*mimetype.MIME, io.Reader, error) {
 	mimetype.Lookup("application/octet-stream").Extend(csv, "text/csv", ".csv")
 
 	// Create a buffer to store the read data
-	buf := make([]byte, 1024*128)
+	buf := make([]byte, 1024*1024)
 	n, err := io.ReadFull(stream, buf)
 
 	if err != nil && err != io.ErrUnexpectedEOF {

@@ -6,6 +6,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiapat"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiformats/ncbitaxdump"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
@@ -42,6 +43,11 @@ var _InvertMatch = false
 var _SaveRejected = ""
 
 var _PairedMode = "forward"
+
+var _approx_pattern = make([]string, 0)
+var _pattern_error = 0
+var _pattern_indel = false
+var _pattern_only_forward = false
 
 func TaxonomySelectionOptionSet(options *getoptions.GetOpt) {
 
@@ -143,6 +149,23 @@ func SequenceSelectionOptionSet(options *getoptions.GetOpt) {
 		options.Description("If paired reads are passed to obibrep, that option determines how the conditions "+
 			"are applied to both reads."),
 	)
+
+	options.StringSliceVar(&_approx_pattern, "approx-pattern", 1, 1,
+		options.ArgName("PATTERN"),
+		options.Description("Regular expression pattern to be tested against the sequence itself. The pattern is case insensitive."))
+
+	options.IntVar(&_pattern_error, "pattern-error", _pattern_error,
+		options.Description("Maximum number of allowed error during pattern matching"),
+	)
+
+	options.BoolVar(&_pattern_indel, "allows-indels", _pattern_indel,
+		options.Description("Allows for indel during pattern matching"),
+	)
+
+	options.BoolVar(&_pattern_only_forward, "only-forward", _pattern_only_forward,
+		options.Description("Look for pattern only on forward strand"),
+	)
+
 }
 
 // OptionSet adds to the basic option set every options declared for
@@ -210,6 +233,18 @@ func CLISequenceCountPredicate() obiseq.SequencePredicate {
 
 func CLISelectedNCBITaxDump() string {
 	return _Taxdump
+}
+
+func CLIPatternError() int {
+	return _pattern_error
+}
+
+func CLIPatternInDels() bool {
+	return _pattern_indel
+}
+
+func CLIPatternBothStrand() bool {
+	return !_pattern_only_forward
 }
 
 func CLILoadSelectedTaxonomy() *obitax.Taxonomy {
@@ -327,6 +362,30 @@ func CLISequencePatternPredicate() obiseq.SequencePredicate {
 	return nil
 }
 
+func CLISequenceAgrep() obiseq.SequencePredicate {
+	if len(_approx_pattern) > 0 {
+		p := obiapat.IsPatternMatchSequence(
+			_approx_pattern[0],
+			CLIPatternError(),
+			CLIPatternBothStrand(),
+			CLIPatternInDels(),
+		)
+
+		for _, pattern := range _approx_pattern[1:] {
+			p = p.And(obiapat.IsPatternMatchSequence(
+				pattern,
+				CLIPatternError(),
+				CLIPatternBothStrand(),
+				CLIPatternInDels(),
+			))
+		}
+
+		return p
+	}
+
+	return nil
+}
+
 func CLIDefinitionPatternPredicate() obiseq.SequencePredicate {
 
 	if len(_DefinitionPatterns) > 0 {
@@ -419,6 +478,7 @@ func CLISequenceSelectionPredicate() obiseq.SequencePredicate {
 	p = p.And(CLIIdListPredicate())
 	p = p.And(CLIHasAttibutePredicate())
 	p = p.And(CLIIsAttibuteMatchPredicate())
+	p = p.And(CLISequenceAgrep())
 
 	if _InvertMatch {
 		p = p.Not()

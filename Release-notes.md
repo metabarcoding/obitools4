@@ -2,6 +2,12 @@
 
 ## Latest changes
 
+### New features
+
+-   Most of the time obitools identify automatically sequence file format. But
+    it fails sometimes. Two new option **--fasta** and **--fastq** are added to
+    allow the processing of the rare fasta and fastq files not recognized.
+
 ## August 2nd, 2024. Release 4.3.0
 
 ### Change of git repositiory
