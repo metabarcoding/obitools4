@@ -64,6 +64,7 @@ type BioSequence struct {
 	qualities   []byte // The quality scores of the sequence.
 	feature     []byte
 	paired      *BioSequence // A pointer to the paired sequence
+	revcomp     *BioSequence // A pointer to the reverse complemented sequence
 	annotations Annotation
 	annot_lock  *sync.Mutex
 }
@@ -78,7 +79,8 @@ func NewEmptyBioSequence(preallocate int) *BioSequence {
 
 	seq := []byte(nil)
 	if preallocate > 0 {
-		seq = GetSlice(preallocate)
+		//	seq = GetSlice(preallocate)
+		seq = make([]byte, 0, preallocate)
 	}
 
 	return &BioSequence{
@@ -89,6 +91,7 @@ func NewEmptyBioSequence(preallocate int) *BioSequence {
 		qualities:   nil,
 		feature:     nil,
 		paired:      nil,
+		revcomp:     nil,
 		annotations: nil,
 		annot_lock:  &sync.Mutex{},
 	}
@@ -426,9 +429,6 @@ func (s *BioSequence) SetFeatures(feature []byte) {
 // Parameters:
 // - sequence: a byte slice representing the sequence to be set.
 func (s *BioSequence) SetSequence(sequence []byte) {
-	if s.sequence != nil {
-		RecycleSlice(&s.sequence)
-	}
 	s.sequence = obiutils.InPlaceToLower(CopySlice(sequence))
 }
 

@@ -108,14 +108,3 @@ func (batch BioSequenceBatch) Pop0() *obiseq.BioSequence {
 func (batch BioSequenceBatch) IsNil() bool {
 	return batch.slice == nil
 }
-
-// Recycle cleans up the BioSequenceBatch by recycling its elements and resetting its slice.
-//
-// If including_seq is true, each element of the BioSequenceBatch's slice is recycled using the Recycle method,
-// and then set to nil. If including_seq is false, each element is simply set to nil.
-//
-// This function does not return anything.
-func (batch BioSequenceBatch) Recycle(including_seq bool) {
-	batch.slice.Recycle(including_seq)
-	batch.slice = nil
-}

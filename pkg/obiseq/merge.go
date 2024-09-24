@@ -295,6 +295,5 @@ func (sequences BioSequenceSlice) Merge(na string, statsOn StatsOnDescriptions) 
 		}
 	}
 
-	sequences.Recycle(false)
 	return seq
 }

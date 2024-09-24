@@ -172,7 +172,6 @@ func ISummary(iterator obiiter.IBioSequence, summarise []string) map[string]inte
 			for _, seq := range batch.Slice() {
 				summary.Update(seq)
 			}
-			batch.Recycle(true)
 		}
 		waiter.Done()
 	}

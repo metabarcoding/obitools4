@@ -317,8 +317,6 @@ func MinionDenoise(graph *obigraph.Graph[*obiseq.BioSequence, Mutation],
 
 			}
 
-			pack.Recycle(false)
-
 		} else {
 			clean = obiseq.NewBioSequence(v.Id(), v.Sequence(), v.Definition())
 			clean.SetAttribute("obiconsensus_consensus", false)
@@ -403,7 +401,6 @@ func MinionClusterDenoise(graph *obigraph.Graph[*obiseq.BioSequence, Mutation],
 				clean = (*graph.Vertices)[i].Copy()
 				clean.SetAttribute("obiconsensus_consensus", false)
 			}
-			pack.Recycle(false)
 
 			clean.SetAttribute(sample_key, graph.Name)
 
@@ -436,7 +433,6 @@ func CLIOBIMinion(itertator obiiter.IBioSequence) obiiter.IBioSequence {
 	log.Infof("Sequence dataset of %d sequeences loaded\n", len(db))
 
 	samples := SeqBySamples(db, CLISampleAttribute())
-	db.Recycle(false)
 
 	log.Infof("Dataset composed of %d samples\n", len(samples))
 

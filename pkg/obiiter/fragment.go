@@ -55,7 +55,6 @@ func IFragments(minsize, length, overlap, size, nworkers int) Pipeable {
 					}
 				} // End of the slice loop
 				newiter.Push(MakeBioSequenceBatch(source, sl.Order(), news))
-				sl.Recycle(false)
 			} // End of the iterator loop
 
 			// if len(news) > 0 {

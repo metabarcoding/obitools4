@@ -1,8 +1,6 @@
 package obiseq
 
 import (
-	"sync"
-
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/exp/slices"
@@ -14,13 +12,6 @@ import (
 // a memory pool of BioSequenceSlice is managed to limit allocations.
 type BioSequenceSlice []*BioSequence
 
-var _BioSequenceSlicePool = sync.Pool{
-	New: func() interface{} {
-		bs := make(BioSequenceSlice, 0, 10)
-		return &bs
-	},
-}
-
 // NewBioSequenceSlice returns a new BioSequenceSlice with the specified size.
 //
 // The size parameter is optional. If provided, the returned slice will be
@@ -28,13 +19,14 @@ var _BioSequenceSlicePool = sync.Pool{
 //
 // Returns a pointer to the newly created BioSequenceSlice.
 func NewBioSequenceSlice(size ...int) *BioSequenceSlice {
-	slice := _BioSequenceSlicePool.Get().(*BioSequenceSlice)
+	capacity := 0
 	if len(size) > 0 {
-		s := size[0]
-		slice = slice.EnsureCapacity(s)
-		(*slice) = (*slice)[0:s]
+		capacity = size[0]
 	}
-	return slice
+
+	slice := make(BioSequenceSlice, capacity)
+
+	return &slice
 }
 
 // MakeBioSequenceSlice creates a new BioSequenceSlice with the specified size(s).
@@ -46,34 +38,6 @@ func NewBioSequenceSlice(size ...int) *BioSequenceSlice {
 // A new BioSequenceSlice with the specified size(s).
 func MakeBioSequenceSlice(size ...int) BioSequenceSlice {
 	return *NewBioSequenceSlice(size...)
-}
-
-// Recycle cleans up the BioSequenceSlice by recycling its elements and resetting its length.
-//
-// If including_seq is true, each element of the BioSequenceSlice is recycled using the Recycle method,
-// and then set to nil. If including_seq is false, each element is simply set to nil.
-//
-// The function does not return anything.
-func (s *BioSequenceSlice) Recycle(including_seq bool) {
-	if s == nil {
-		log.Panicln("Trying too recycle a nil pointer")
-	}
-
-	// Code added to potentially limit memory leaks
-	if including_seq {
-		for i := range *s {
-			(*s)[i].Recycle()
-			(*s)[i] = nil
-		}
-
-	} else {
-		for i := range *s {
-			(*s)[i] = nil
-		}
-	}
-
-	*s = (*s)[:0]
-	_BioSequenceSlicePool.Put(s)
 }
 
 // EnsureCapacity ensures that the BioSequenceSlice has a minimum capacity
