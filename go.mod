@@ -1,6 +1,6 @@
 module git.metabarcoding.org/obitools/obitools4/obitools4
 
-go 1.22.1
+go 1.23.1
 
 require (
 	github.com/DavidGamba/go-getoptions v0.28.0
