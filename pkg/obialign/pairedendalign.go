@@ -1,6 +1,8 @@
 package obialign
 
 import (
+	"log"
+
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obikmer"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 )
@@ -313,6 +315,105 @@ func _FillMatrixPeRightAlign(seqA, qualA, seqB, qualB []byte, gap, scale float64
 
 }
 
+// Gaps at the beginning and at the end of seqA are free
+// With seqA spanning over lines and seqB over columns
+//
+// SeqA must be the longer sequence. If that constraint is not
+// respected, the function will panic.
+//
+// TO BE FINISHED
+//   - First column gap = 0
+//   - Last column gaps = 0
+//
+// Paths are encoded :
+//   - 0  :  for diagonal
+//   - -1 :  for top
+//   - +1 :  for left
+func _FillMatrixPeCenterAlign(seqA, qualA, seqB, qualB []byte, gap, scale float64,
+	scoreMatrix, pathMatrix *[]int) int {
+
+	la := len(seqA)
+	lb := len(seqB)
+
+	if len(seqA) < len(seqB) {
+		log.Panicf("len(seqA) < len(seqB) : %d < %d", len(seqA), len(seqB))
+	}
+
+	// The actual gap score is the gap score times the mismatch between
+	// two bases with a score of 40
+	gapPenalty := int(scale*gap*float64(_NucScorePartMatchMismatch[40][40]) + 0.5)
+
+	needed := (la + 1) * (lb + 1)
+
+	if needed > cap(*scoreMatrix) {
+		*scoreMatrix = make([]int, needed)
+	}
+
+	if needed > cap(*pathMatrix) {
+		*pathMatrix = make([]int, needed)
+	}
+
+	*scoreMatrix = (*scoreMatrix)[:needed]
+	*pathMatrix = (*pathMatrix)[:needed]
+
+	// Sets the first position of the matrix with 0 score
+	_SetMatrices(scoreMatrix, pathMatrix, la, -1, -1, 0, 0)
+
+	// Fills the first column with score 0
+	for i := 0; i < la; i++ {
+		_SetMatrices(scoreMatrix, pathMatrix, la, i, -1, 0, -1)
+	}
+
+	// la1 := la - 1 // Except the last line (gaps are free on it)
+	lb1 := lb - 1 // Except the last column (gaps are free on it)
+
+	for j := 0; j < lb1; j++ {
+
+		// Fill the first line with scores corresponding to a set of gaps
+		_SetMatrices(scoreMatrix, pathMatrix, la, -1, j, (j+1)*gapPenalty, 1)
+
+		for i := 0; i < la; i++ {
+			left, diag, top := _GetMatrixFrom(scoreMatrix, la, i, j)
+			// log.Infof("LA: i : %d j : %d left : %d diag : %d top : %d\n", i, j, left, diag, top)
+
+			diag += _PairingScorePeAlign(seqA[i], qualA[i], seqB[j], qualB[j], scale)
+			left += gapPenalty
+			top += gapPenalty
+
+			switch {
+			case diag >= left && diag >= top:
+				_SetMatrices(scoreMatrix, pathMatrix, la, i, j, diag, 0)
+			case left >= diag && left >= top:
+				_SetMatrices(scoreMatrix, pathMatrix, la, i, j, left, +1)
+			default:
+				_SetMatrices(scoreMatrix, pathMatrix, la, i, j, top, -1)
+			}
+			// log.Infof("LA: i : %d j : %d left : %d diag : %d top : %d [%d]\n", i, j, left, diag, top, _GetMatrix(scoreMatrix, la, i, j))
+		}
+
+	}
+
+	for i := 0; i < la; i++ {
+		left, diag, top := _GetMatrixFrom(scoreMatrix, la, i, lb1)
+		// log.Infof("LA: i : %d j : %d left : %d diag : %d top : %d\n", i, j, left, diag, top)
+
+		diag += _PairingScorePeAlign(seqA[i], qualA[i], seqB[lb1], qualB[lb1], scale)
+		left += gapPenalty
+
+		switch {
+		case diag >= left && diag >= top:
+			_SetMatrices(scoreMatrix, pathMatrix, la, i, lb1, diag, 0)
+		case left >= diag && left >= top:
+			_SetMatrices(scoreMatrix, pathMatrix, la, i, lb1, left, +1)
+		default:
+			_SetMatrices(scoreMatrix, pathMatrix, la, i, lb1, top, -1)
+		}
+		// log.Infof("LA: i : %d j : %d left : %d diag : %d top : %d [%d]\n", i, j, left, diag, top, _GetMatrix(scoreMatrix, la, i, j))
+	}
+
+	return _GetMatrix(scoreMatrix, la, la-1, lb1)
+}
+
 func PELeftAlign(seqA, seqB *obiseq.BioSequence, gap, scale float64,
 	arena PEAlignArena) (int, []int) {
 
@@ -348,6 +449,29 @@ func PERightAlign(seqA, seqB *obiseq.BioSequence, gap, scale float64,
 	}
 
 	score := _FillMatrixPeRightAlign(seqA.Sequence(), seqA.Qualities(),
+		seqB.Sequence(), seqB.Qualities(), gap, scale,
+		&arena.pointer.scoreMatrix,
+		&arena.pointer.pathMatrix)
+
+	path := _Backtracking(arena.pointer.pathMatrix,
+		seqA.Len(), seqB.Len(),
+		&arena.pointer.path)
+
+	return score, path
+}
+
+func PECenterAlign(seqA, seqB *obiseq.BioSequence, gap, scale float64,
+	arena PEAlignArena) (int, []int) {
+
+	if !_InitializedDnaScore {
+		_InitDNAScoreMatrix()
+	}
+
+	if arena.pointer == nil {
+		arena = MakePEAlignArena(seqA.Len(), seqB.Len())
+	}
+
+	score := _FillMatrixPeCenterAlign(seqA.Sequence(), seqA.Qualities(),
 		seqB.Sequence(), seqB.Qualities(), gap, scale,
 		&arena.pointer.scoreMatrix,
 		&arena.pointer.pathMatrix)

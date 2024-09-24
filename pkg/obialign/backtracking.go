@@ -12,7 +12,7 @@ func _Backtracking(pathMatrix []int, lseqA, lseqB int, path *[]int) []int {
 	cp := cap(*path)
 	(*path) = slices.Grow((*path), needed)
 	if cp < cap(*path) {
-		log.Infof("Resized path from %d to %d\n", cp, cap(*path))
+		log.Debugf("Resized path from %d to %d\n", cp, cap(*path))
 	}
 	p := cap(*path)
 	*path = (*path)[:p]

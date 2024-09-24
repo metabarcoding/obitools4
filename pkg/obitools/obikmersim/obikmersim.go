@@ -48,6 +48,11 @@ func MakeKmerAlignWorker[T obifp.FPUint[T]](
 		*slice = (*slice)[:0]
 
 		candidates := matches.Sequences()
+		ks := k.Kmersize
+		if k.SparseAt >= 0 {
+			ks--
+		}
+
 		n := candidates.Len()
 		for _, seq := range candidates {
 			idmatched_id := seq.Id()
@@ -74,6 +79,7 @@ func MakeKmerAlignWorker[T obifp.FPUint[T]](
 			lcons := cons.Len()
 			aliLength := lcons - _Abs(left) - _Abs(right)
 			identity := float64(match) / float64(aliLength)
+			residual := float64(match-int(ks)) / float64(aliLength-int(ks))
 			if aliLength == 0 {
 				identity = 0
 			}
@@ -93,7 +99,7 @@ func MakeKmerAlignWorker[T obifp.FPUint[T]](
 				rep.SetAttribute("obikmer_orientation", "reverse")
 			}
 
-			if aliLength >= int(k.KmerSize()) && identity >= minIdentity {
+			if aliLength >= int(k.KmerSize()) && residual >= minIdentity {
 				if withStats {
 					if left < 0 {
 						rep.SetAttribute("seq_a_single", -left)
@@ -110,6 +116,8 @@ func MakeKmerAlignWorker[T obifp.FPUint[T]](
 						rep.SetAttribute("seq_b_single", right)
 					}
 					rep.SetAttribute("obikmer_score", score)
+					rep.SetAttribute("obikmer_identity", identity)
+					rep.SetAttribute("obikmer_residual_id", residual)
 					scoreNorm := float64(0)
 					if aliLength > 0 {
 						scoreNorm = math.Round(float64(match)/float64(aliLength)*1000) / 1000
