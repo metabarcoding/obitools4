@@ -43,12 +43,21 @@ func nucComplement(n byte) byte {
 // The function returns the reverse complemented BioSequence.
 func (sequence *BioSequence) ReverseComplement(inplace bool) *BioSequence {
 
+	original := (*BioSequence)(nil)
+
 	if sequence == nil {
 		return nil
 	}
 
+	if sequence.revcomp != nil {
+		return sequence.revcomp
+	}
+
 	if !inplace {
-		sequence = sequence.Copy()
+		original = sequence
+		sequence.revcomp = sequence.Copy()
+		sequence = sequence.revcomp
+		sequence.revcomp = original
 	}
 
 	s := sequence.sequence

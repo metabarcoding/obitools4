@@ -107,7 +107,6 @@ func IMatrix(iterator obiiter.IBioSequence) *MatrixData {
 			for _, seq := range batch.Slice() {
 				summary.Update(seq, mapAttribute)
 			}
-			batch.Recycle(true)
 		}
 		waiter.Done()
 	}

@@ -529,7 +529,6 @@ func PCRSliceWorker(options ...WithOption) obiseq.SeqSliceWorker {
 	opt := MakeOptions(options)
 	worker := func(sequences obiseq.BioSequenceSlice) (obiseq.BioSequenceSlice, error) {
 		result := _PCRSlice(sequences, opt)
-		sequences.Recycle(true)
 		return result, nil
 	}
 

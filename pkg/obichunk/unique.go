@@ -95,10 +95,7 @@ func IUniqueSequence(iterator obiiter.IBioSequence,
 
 			if icat < 0 || len(batch.Slice()) == 1 {
 				// No more sub classification of sequence or only a single sequence
-				if opts.NoSingleton() && len(batch.Slice()) == 1 && batch.Slice()[0].Count() == 1 {
-					// We remove singleton from output
-					batch.Recycle(true)
-				} else {
+				if !(opts.NoSingleton() && len(batch.Slice()) == 1 && batch.Slice()[0].Count() == 1) {
 					iUnique.Push(batch.Reorder(nextOrder()))
 				}
 			} else {

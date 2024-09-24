@@ -49,7 +49,6 @@ func ISequenceChunk(iterator obiiter.IBioSequence,
 					b := data.Get()
 					source = b.Source()
 					*chunk = append(*chunk, b.Slice()...)
-					b.Recycle(false)
 				}
 
 				lock.Lock()
