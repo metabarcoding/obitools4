@@ -1,38 +1,35 @@
 package main
 
 import (
-	"os"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obifp"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obikmer"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 
 	log "github.com/sirupsen/logrus"
-
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
-
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 )
 
 func main() {
-	optionParser := obioptions.GenerateOptionParser(obiconvert.OptionSet)
 
-	_, args := optionParser(os.Args)
+	one := obifp.OneUint[obifp.Uint128]()
+	a, b := obifp.OneUint[obifp.Uint64]().LeftShift64(66, 0)
+	log.Infof("one: %v, %v", a, b)
+	shift := one.LeftShift(66)
+	log.Infof("one: %v", shift)
 
-	fs, err := obiconvert.CLIReadBioSequences(args...)
+	seq := obiseq.NewBioSequence("test", []byte("atcgggttccaacc"), "")
 
-	if err != nil {
-		log.Errorf("Cannot open file (%v)", err)
-		os.Exit(1)
-	}
-
-	frags := obiiter.IFragments(
-		1000,
-		100,
-		10,
-		100,
-		obioptions.CLIParallelWorkers(),
+	kmermap := obikmer.NewKmerMap[obifp.Uint128](
+		obiseq.BioSequenceSlice{
+			seq,
+		},
+		7,
+		true,
 	)
 
-	obiconvert.CLIWriteBioSequences(fs.Pipe(frags), true)
+	kmers := kmermap.NormalizedKmerSlice(seq, nil)
 
-	obiiter.WaitForLastPipe()
+	for _, kmer := range kmers {
+		println(kmermap.KmerAsString(kmer))
+	}
 
 }
