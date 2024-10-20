@@ -76,6 +76,8 @@ func ReadSeqFileChunk(
 				extbuff := buff[l:(l + fileChunkSize - 1)]
 				size, err = io.ReadFull(reader, extbuff)
 				buff = buff[0:(l + size)]
+				// log.Warnf("Splitter not found, attempting %d to read in %d B increments : len(buff) = %d/%d", ic, fileChunkSize, len(extbuff), len(buff))
+
 			}
 
 			fullbuff = buff

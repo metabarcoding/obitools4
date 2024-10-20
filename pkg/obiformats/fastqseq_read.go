@@ -17,6 +17,7 @@ import (
 func EndOfLastFastqEntry(buffer []byte) int {
 	var i int
 
+	// log.Warnf("EndOfLastFastqEntry(%d): %s", len(buffer), string(buffer[0:20]))
 	imax := len(buffer)
 	state := 0
 	restart := imax - 1
@@ -32,39 +33,48 @@ func EndOfLastFastqEntry(buffer []byte) int {
 		case 0:
 			if C == '+' {
 				// Potential start of quality part step 1
+				// log.Warn("Potential start of quality part step 1 - +")
 				state = 1
 				restart = i
 			}
 		case 1:
 			if is_end_of_line {
 				// Potential start of quality part step 2
+				// log.Warn("Potential start of quality part step 2 - +/end of line")
 				state = 2
 			} else {
 				// it was not the start of quality part
+				// log.Warn("it was not the start of quality part")
 				state = 0
 				i = restart
 			}
 		case 2:
 			if is_sep {
 				// Potential start of quality part step 2 (stay in the same state)
+				// log.Warn("Potential start of quality part step 2 - skipping separator")
 				state = 2
 			} else if (C >= 'a' && C <= 'z') || (C >= 'A' && C <= 'Z') || C == '-' || C == '.' || C == '[' || C == ']' {
-				// End of the sequence
+				// progressing along of the sequence
+				// log.Warn("Detected the end of the sequence switching to state 3")
 				state = 3
 			} else {
 				// it was not the start of quality part
+				// log.Warn("it was not the start of quality part because is not preceded by sequence")
 				state = 0
 				i = restart
 			}
 		case 3:
 			if is_end_of_line {
 				// Entrering in the header line
+				// log.Warn("Potentially entrering in the header line")
 				state = 4
 			} else if (C >= 'a' && C <= 'z') || (C >= 'A' && C <= 'Z') || C == '-' || C == '.' || C == '[' || C == ']' {
 				// progressing along of the sequence
+				// log.Warn("Progressing along of the sequence")
 				state = 3
 			} else {
 				// it was not the sequence part
+				// log.Warnf("it was not the sequence part : %c", C)
 				state = 0
 				i = restart
 			}
@@ -72,6 +82,7 @@ func EndOfLastFastqEntry(buffer []byte) int {
 			if is_end_of_line {
 				state = 4
 			} else {
+
 				state = 5
 			}
 		case 5:
@@ -80,15 +91,18 @@ func EndOfLastFastqEntry(buffer []byte) int {
 				state = 0
 				i = restart
 			} else if C == '@' {
+				// It was the header line
+				// log.Warn("It was the header line")
 				state = 6
 				cut = i
 			}
 		case 6:
 			if is_end_of_line {
+				// log.Warn("====> End of the last sequence")
 				state = 7
 			} else {
-				state = 0
-				i = restart
+				// log.Warnf("%s: Strange it was not the end of the last sequence : %c : %s", string(buffer[0:40]), C, string(buffer[i-20:i+5]))
+				state = 5
 			}
 		}
 	}
