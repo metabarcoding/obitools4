@@ -343,6 +343,10 @@ func (marker *Marker) beginTagExtractor(
 	// log.Warnf("Forward : %v -> %d %c", forward, marker.Forward_spacer, marker.Forward_tag_delimiter)
 	// log.Warnf("Forward : %v -> %d %c", forward, marker.Reverse_spacer, marker.Reverse_tag_delimiter)
 	if forward {
+		if marker.Forward_tag_length == 0 {
+			return ""
+		}
+
 		if marker.Forward_tag_delimiter == 0 {
 			return marker.beginFixedTagExtractor(sequence, begin, forward)
 		} else {
@@ -355,6 +359,10 @@ func (marker *Marker) beginTagExtractor(
 			}
 		}
 	} else {
+		if marker.Reverse_tag_length == 0 {
+			return ""
+		}
+
 		if marker.Reverse_tag_delimiter == 0 {
 			return marker.beginFixedTagExtractor(sequence, begin, forward)
 		} else {
@@ -374,6 +382,10 @@ func (marker *Marker) endTagExtractor(
 	end int,
 	forward bool) string {
 	if forward {
+		if marker.Reverse_tag_length == 0 {
+			return ""
+		}
+
 		if marker.Reverse_tag_delimiter == 0 {
 			return marker.endFixedTagExtractor(sequence, end, forward)
 		} else {
@@ -386,6 +398,10 @@ func (marker *Marker) endTagExtractor(
 			}
 		}
 	} else {
+		if marker.Forward_tag_length == 0 {
+			return ""
+		}
+
 		if marker.Forward_tag_delimiter == 0 {
 			return marker.endFixedTagExtractor(sequence, end, forward)
 		} else {

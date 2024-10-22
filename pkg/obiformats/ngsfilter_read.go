@@ -536,6 +536,24 @@ var library_parameter = map[string]func(library *obingslibrary.NGSLibrary, value
 	},
 }
 
+// ReadCSVNGSFilter reads an NGS filter configuration from a CSV file and returns
+// an NGSLibrary. The CSV file must include columns for 'experiment', 'sample',
+// 'sample_tag', 'forward_primer', and 'reverse_primer'. Additional columns are
+// used to annotate PCR samples.
+//
+// Parameters:
+//   - reader: an io.Reader providing the CSV input.
+//
+// Returns:
+//   - A pointer to an NGSLibrary populated with the data from the CSV file.
+//   - An error if the CSV is malformed or required columns are missing.
+//
+// The function processes both data records and parameter lines starting with
+// '@param'. Parameter lines configure various aspects of the library.
+//
+// Each row in the CSV is validated to ensure it has the correct number of columns.
+// Duplicate tag pairs for the same marker result in an error. Primer unicity is
+// checked, and any unknown parameters are logged as warnings.
 func ReadCSVNGSFilter(reader io.Reader) (*obingslibrary.NGSLibrary, error) {
 	ngsfilter := obingslibrary.MakeNGSLibrary()
 	file := csv.NewReader(reader)
@@ -576,6 +594,7 @@ func ReadCSVNGSFilter(reader io.Reader) (*obingslibrary.NGSLibrary, error) {
 	extraColumns := make([]int, 0)
 
 	for i, colName := range header {
+
 		switch colName {
 		case "experiment":
 			experimentColIndex = i
