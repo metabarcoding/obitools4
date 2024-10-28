@@ -22,21 +22,27 @@ func IPCRTagPESequencesBatch(iterator obiiter.IBioSequence,
 	}
 
 	nworkers := obioptions.CLIParallelWorkers()
-
 	ngsfilter, err := obimultiplex.CLINGSFIlter()
+
 	if err != nil {
 		log.Fatalf("%v", err)
 	}
 
-	ngsfilter.Compile(obimultiplex.CLIAllowedMismatch(),
-		obimultiplex.CLIAllowsIndel())
+	if obimultiplex.CLIAllowsIndel() {
+		ngsfilter.SetAllowsIndels(true)
+	}
+
+	if obimultiplex.CLIAllowedMismatch() > 0 {
+		ngsfilter.SetAllowedMismatches(obimultiplex.CLIAllowedMismatch())
+	}
+
+	ngsfilter.Compile2()
 
 	newIter := obiiter.MakeIBioSequence()
 	newIter.MarkAsPaired()
 
 	f := func(iterator obiiter.IBioSequence, wid int) {
 		arena := obialign.MakePEAlignArena(150, 150)
-		var err error
 		shifts := make(map[int]int)
 
 		for iterator.Next() {
@@ -50,52 +56,49 @@ func IPCRTagPESequencesBatch(iterator obiiter.IBioSequence,
 					fastAlign, fastScoreRel, arena, &shifts,
 				)
 
-				consensus, err = ngsfilter.ExtractBarcode(consensus, true)
+				barcodes, err := ngsfilter.ExtractMultiBarcode(consensus)
 
-				// log.Println("@@ ",wid," Error : ",err)
-				// log.Println("@@ ",wid," SEQA : ",*A)
-				// log.Println("@@ ",wid," SEQB : ",*B)
-				// log.Println("@@ ",wid," consensus : ",*consensus)
+				if len(barcodes) == 1 && !barcodes[0].HasAttribute("obimultiplex_error") && err == nil {
+					consensus = barcodes[0]
 
-				if err == nil {
 					annot := consensus.Annotations()
-					direction := annot["direction"].(string)
+					direction := annot["obimultiplex_direction"].(string)
 
-					forward_match := annot["forward_match"].(string)
-					forward_mismatches := annot["forward_error"].(int)
-					forward_tag := annot["forward_tag"].(string)
+					forward_match := annot["obimultiplex_forward_match"].(string)
+					forward_mismatches := annot["obimultiplex_forward_error"].(int)
+					forward_tag := annot["obimultiplex_forward_tag"].(string)
 
-					reverse_match := annot["reverse_match"].(string)
-					reverse_mismatches := annot["reverse_error"].(int)
-					reverse_tag := annot["reverse_tag"].(string)
+					reverse_match := annot["obimultiplex_reverse_match"].(string)
+					reverse_mismatches := annot["obimultiplex_reverse_error"].(int)
+					reverse_tag := annot["obimultiplex_reverse_tag"].(string)
 
 					sample := annot["sample"].(string)
 					experiment := annot["experiment"].(string)
 
 					aanot := A.Annotations()
-					aanot["direction"] = direction
+					aanot["obimultiplex_direction"] = direction
 
-					aanot["forward_match"] = forward_match
-					aanot["forward_mismatches"] = forward_mismatches
-					aanot["forward_tag"] = forward_tag
+					aanot["obimultiplex_forward_match"] = forward_match
+					aanot["obimultiplex_forward_mismatches"] = forward_mismatches
+					aanot["obimultiplex_forward_tag"] = forward_tag
 
-					aanot["reverse_match"] = reverse_match
-					aanot["reverse_mismatches"] = reverse_mismatches
-					aanot["reverse_tag"] = reverse_tag
+					aanot["obimultiplex_reverse_match"] = reverse_match
+					aanot["obimultiplex_reverse_mismatches"] = reverse_mismatches
+					aanot["obimultiplex_reverse_tag"] = reverse_tag
 
 					aanot["sample"] = sample
 					aanot["experiment"] = experiment
 
 					banot := B.Annotations()
-					banot["direction"] = direction
+					banot["obimultiplex_direction"] = direction
 
-					banot["forward_match"] = forward_match
-					banot["forward_mismatches"] = forward_mismatches
-					banot["forward_tag"] = forward_tag
+					banot["obimultiplex_forward_match"] = forward_match
+					banot["obimultiplex_forward_mismatches"] = forward_mismatches
+					banot["obimultiplex_forward_tag"] = forward_tag
 
-					banot["reverse_match"] = reverse_match
-					banot["reverse_mismatches"] = reverse_mismatches
-					banot["reverse_tag"] = reverse_tag
+					banot["obimultiplex_reverse_match"] = reverse_match
+					banot["obimultiplex_reverse_mismatches"] = reverse_mismatches
+					banot["obimultiplex_reverse_tag"] = reverse_tag
 
 					banot["sample"] = sample
 					banot["experiment"] = experiment
@@ -107,14 +110,25 @@ func IPCRTagPESequencesBatch(iterator obiiter.IBioSequence,
 						batch.Slice()[i] = B
 					}
 				} else {
-					demultiplex_error := consensus.Annotations()["demultiplex_error"]
-					if demultiplex_error != nil {
-						A.Annotations()["demultiplex_error"] = demultiplex_error.(string)
-						B.Annotations()["demultiplex_error"] = demultiplex_error.(string)
-					} else {
-						log.Panicln("@@ ", wid, "Error : ", err, consensus.Id())
+					demultiplex_error := "Cannot demultiplex"
+					if len(barcodes) > 0 {
+						var ok bool
+						consensus = barcodes[0]
+						demultiplex_error, ok = consensus.GetStringAttribute("obimultiplex_error")
+						if !ok {
+							demultiplex_error = "Cannot demultiplex"
+						}
 					}
+					A.Annotations()["obimultiplex_error"] = demultiplex_error
+					B.Annotations()["obimultiplex_error"] = demultiplex_error
+
 				}
+
+				// log.Println("@@ ",wid," Error : ",err)
+				// log.Println("@@ ",wid," SEQA : ",*A)
+				// log.Println("@@ ",wid," SEQB : ",*B)
+				// log.Println("@@ ",wid," consensus : ",*consensus)
+
 			}
 			newIter.Push(batch)
 		}
@@ -138,13 +152,13 @@ func IPCRTagPESequencesBatch(iterator obiiter.IBioSequence,
 
 	if !obimultiplex.CLIConservedErrors() {
 		log.Println("Discards unassigned sequences")
-		iout = iout.FilterOn(obiseq.HasAttribute("demultiplex_error").Not(), obioptions.CLIBatchSize())
+		iout = iout.FilterOn(obiseq.HasAttribute("obimultiplex_error").Not(), obioptions.CLIBatchSize())
 	}
 
 	var unidentified obiiter.IBioSequence
 	if obimultiplex.CLIUnidentifiedFileName() != "" {
 		log.Printf("Unassigned sequences saved in file: %s\n", obimultiplex.CLIUnidentifiedFileName())
-		unidentified, iout = iout.DivideOn(obiseq.HasAttribute("demultiplex_error"),
+		unidentified, iout = iout.DivideOn(obiseq.HasAttribute("obimultiplex_error"),
 			obioptions.CLIBatchSize())
 
 		go func() {
