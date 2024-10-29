@@ -12,6 +12,29 @@ import (
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obipairing"
 )
 
+// IPCRTagPESequencesBatch performs paired-end sequence demultiplexing and tagging.
+// It takes an iterator of paired-end biosequences, and various parameters to control
+// the demultiplexing and tagging process. It returns a new iterator with the
+// demultiplexed and tagged sequences.
+//
+// The function first checks if the input iterator contains paired-end sequences.
+// It then creates a new iterator to hold the processed sequences, and launches
+// a number of worker goroutines to process the input sequences in parallel.
+//
+// For each sequence pair, the function attempts to assemble the paired-end
+// sequences into a consensus sequence, and then extracts the barcodes and
+// other metadata from the consensus. The extracted information is then
+// added as annotations to the original sequence pair.
+//
+// If the CLI option to reorient the sequences is enabled, the function will
+// reverse-complement the sequences as needed to ensure the forward and reverse
+// tags are correctly oriented.
+//
+// If the CLI option to conserve unassigned sequences is disabled, the function
+// will filter out any sequences that could not be demultiplexed.
+//
+// If the CLI option to save unassigned sequences is enabled, the function will
+// write those sequences to a separate file.
 func IPCRTagPESequencesBatch(iterator obiiter.IBioSequence,
 	gap, scale float64, delta, minOverlap int,
 	minIdentity float64, fastAlign, fastScoreRel,
