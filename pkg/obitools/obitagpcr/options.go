@@ -9,7 +9,7 @@ import (
 var _reorientate = false
 
 func TagPCROptionSet(options *getoptions.GetOpt) {
-	options.BoolVar(&_reorientate, "reference-db", _reorientate,
+	options.BoolVar(&_reorientate, "reorientate", _reorientate,
 		options.Description("Reverse complemente reads if needed to store all the sequences in "+
 			"the same orientation respectively to forward and reverse primers"))
 
