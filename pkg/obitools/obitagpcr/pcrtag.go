@@ -64,7 +64,7 @@ func IPCRTagPESequencesBatch(iterator obiiter.IBioSequence,
 	newIter := obiiter.MakeIBioSequence()
 	newIter.MarkAsPaired()
 
-	f := func(iterator obiiter.IBioSequence, wid int) {
+	f := func(iterator obiiter.IBioSequence) {
 		arena := obialign.MakePEAlignArena(150, 150)
 		shifts := make(map[int]int)
 
@@ -89,39 +89,46 @@ func IPCRTagPESequencesBatch(iterator obiiter.IBioSequence,
 
 					forward_match := annot["obimultiplex_forward_match"].(string)
 					forward_mismatches := annot["obimultiplex_forward_error"].(int)
-					forward_tag := annot["obimultiplex_forward_tag"].(string)
 
 					reverse_match := annot["obimultiplex_reverse_match"].(string)
 					reverse_mismatches := annot["obimultiplex_reverse_error"].(int)
-					reverse_tag := annot["obimultiplex_reverse_tag"].(string)
 
 					sample := annot["sample"].(string)
 					experiment := annot["experiment"].(string)
 
 					aanot := A.Annotations()
+					banot := B.Annotations()
+
+					if value, ok := annot["obimultiplex_forward_tag"]; ok {
+						forward_tag := value.(string)
+						aanot["obimultiplex_forward_tag"] = forward_tag
+						banot["obimultiplex_forward_tag"] = forward_tag
+					}
+
+					if value, ok := annot["obimultiplex_reverse_tag"]; ok {
+						reverse_tag := value.(string)
+						aanot["obimultiplex_reverse_tag"] = reverse_tag
+						banot["obimultiplex_reverse_tag"] = reverse_tag
+					}
+
 					aanot["obimultiplex_direction"] = direction
 
 					aanot["obimultiplex_forward_match"] = forward_match
 					aanot["obimultiplex_forward_mismatches"] = forward_mismatches
-					aanot["obimultiplex_forward_tag"] = forward_tag
 
 					aanot["obimultiplex_reverse_match"] = reverse_match
 					aanot["obimultiplex_reverse_mismatches"] = reverse_mismatches
-					aanot["obimultiplex_reverse_tag"] = reverse_tag
 
 					aanot["sample"] = sample
 					aanot["experiment"] = experiment
 
-					banot := B.Annotations()
 					banot["obimultiplex_direction"] = direction
 
 					banot["obimultiplex_forward_match"] = forward_match
 					banot["obimultiplex_forward_mismatches"] = forward_mismatches
-					banot["obimultiplex_forward_tag"] = forward_tag
 
 					banot["obimultiplex_reverse_match"] = reverse_match
 					banot["obimultiplex_reverse_mismatches"] = reverse_mismatches
-					banot["obimultiplex_reverse_tag"] = reverse_tag
 
 					banot["sample"] = sample
 					banot["experiment"] = experiment
@@ -162,9 +169,9 @@ func IPCRTagPESequencesBatch(iterator obiiter.IBioSequence,
 
 	newIter.Add(nworkers)
 	for i := 1; i < nworkers; i++ {
-		go f(iterator.Split(), i)
+		go f(iterator.Split())
 	}
-	go f(iterator, 0)
+	go f(iterator)
 
 	go func() {
 		newIter.WaitAndClose()
