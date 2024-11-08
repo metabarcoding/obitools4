@@ -1,21 +1,22 @@
 package obitax
 
-func (taxon *TaxNode) IsSubCladeOf(parent *TaxNode) bool {
+import "log"
 
-	for taxon.taxid != parent.taxid && taxon.parent != taxon.taxid {
-		taxon = taxon.pparent
+func (taxon *Taxon) IsSubCladeOf(parent *Taxon) bool {
+
+	if taxon.Taxonomy != parent.Taxonomy {
+		log.Fatalf(
+			"Both taxa %s and %s must belong to the same taxonomy",
+			taxon.String(),
+			parent.String(),
+		)
 	}
 
-	return taxon.taxid == parent.taxid
-}
-
-func (taxon *TaxNode) IsBelongingSubclades(clades *TaxonSet) bool {
-	_, ok := (*clades)[taxon.taxid]
-
-	for !ok && taxon.parent != taxon.taxid {
-		taxon = taxon.pparent
-		_, ok = (*clades)[taxon.taxid]
+	for t := range taxon.IPath() {
+		if t.Node.Id() == parent.Node.Id() {
+			return true
+		}
 	}
 
-	return ok
+	return false
 }

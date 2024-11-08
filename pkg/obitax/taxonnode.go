@@ -1,0 +1,169 @@
+package obitax
+
+import (
+	"fmt"
+	"regexp"
+)
+
+// TaxNode represents a single taxon in a taxonomy.
+// It holds information about the taxon's identifier, parent taxon, rank,
+// scientific name, and alternate names.
+//
+// Fields:
+//   - id: The unique identifier of the taxon of type T.
+//   - parent: The identifier of the parent taxon of type T.
+//   - rank: The rank of the taxon (e.g., species, genus).
+//   - scientificname: A pointer to a string representing the scientific name of the taxon.
+//   - alternatenames: A pointer to a map of alternate names for the taxon, where the key is
+//     a string representing the class name and the value is a pointer to a string
+//     representing the name.
+type TaxNode struct {
+	id             string
+	parent         string
+	rank           string
+	scientificname *string
+	alternatenames *map[string]*string
+}
+
+// String returns a string representation of the TaxNode, including the taxonomy code,
+// the node ID, and the scientific name. The output format is "taxonomyCode:id [scientificName]".
+//
+// Parameters:
+//   - taxonomyCode: A string representing the code of the taxonomy to which the node belongs.
+//
+// Returns:
+//   - A formatted string representing the TaxNode in the form "taxonomyCode:id [scientificName]".
+func (node *TaxNode) String(taxonomyCode string) string {
+	return fmt.Sprintf("%s:%v [%s]",
+		taxonomyCode,
+		node.id,
+		node.ScientificName())
+}
+
+// Id returns the unique identifier of the TaxNode.
+// It retrieves the identifier of type T associated with the taxon node.
+//
+// Returns:
+//   - The unique identifier of the taxon node of type T.
+func (node *TaxNode) Id() string {
+	return node.id
+}
+
+// ParentId returns the identifier of the parent taxon of the TaxNode.
+// It retrieves the parent identifier of type T associated with the taxon node.
+//
+// Returns:
+//   - The identifier of the parent taxon of type T.
+func (node *TaxNode) ParentId() string {
+	return node.parent
+}
+
+// ScientificName returns the scientific name of the TaxNode.
+// It dereferences the pointer to the scientific name string associated with the taxon node.
+//
+// Returns:
+//   - The scientific name of the taxon as a string.
+//   - Note: This method assumes that scientificname is not nil;
+//     if it may be nil, additional error handling should be implemented.
+func (node *TaxNode) ScientificName() string {
+	return *node.scientificname
+}
+
+// Name retrieves the name of the TaxNode based on the specified class.
+// If the class is "scientificname", it returns the scientific name of the taxon.
+// If the class corresponds to an alternate name, it retrieves that name from the alternatenames map.
+// If the class is not recognized or if no alternate names exist, it returns an empty string.
+//
+// Parameters:
+//   - class: A string representing the class of name to retrieve (e.g., "scientificname" or an alternate name class).
+//
+// Returns:
+//   - The name of the taxon as a string. If the class is not recognized or if no name is available,
+//     an empty string is returned.
+func (node *TaxNode) Name(class string) string {
+	if class == "scientificname" {
+		return *node.scientificname
+	}
+
+	if node.alternatenames == nil {
+		return ""
+	}
+
+	if val, ok := (*node.alternatenames)[class]; ok {
+		if val != nil {
+			return *val
+		}
+	}
+
+	return ""
+}
+
+func (node *TaxNode) SetName(name, class string) {
+	if class == "scientificname" {
+		node.scientificname = &name
+		return
+	}
+
+	if node.alternatenames == nil {
+		node.alternatenames = &map[string]*string{}
+	}
+
+	(*node.alternatenames)[class] = &name
+}
+
+// Rank returns the rank of the TaxNode.
+// It retrieves the rank associated with the taxon node, which indicates its level in the taxonomy hierarchy.
+//
+// Returns:
+//   - The rank of the taxon as a string (e.g., species, genus, family).
+func (node *TaxNode) Rank() string {
+	return node.rank
+}
+
+// IsNameEqual checks if the provided name matches the scientific name or any alternate names
+// associated with the TaxNode. It returns true if there is a match; otherwise, it returns false.
+//
+// Parameters:
+//   - name: A string representing the name to compare against the scientific name and alternate names.
+//
+// Returns:
+//   - A boolean indicating whether the provided name is equal to the scientific name or exists
+//     as an alternate name for the taxon.
+func (node *TaxNode) IsNameEqual(name string) bool {
+	if *(node.scientificname) == name {
+		return true
+	}
+	if node.alternatenames != nil {
+		for _, n := range *node.alternatenames {
+			if n != nil && *n == name {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// IsNameMatching checks if the scientific name or any alternate names of the TaxNode match
+// the provided regular expression pattern. It returns true if there is a match; otherwise, it returns false.
+//
+// Parameters:
+//   - pattern: A pointer to a regexp.Regexp object representing the pattern to match against
+//     the scientific name and alternate names.
+//
+// Returns:
+//   - A boolean indicating whether the scientific name or any alternate names match the
+//     provided regular expression pattern.
+func (node *TaxNode) IsNameMatching(pattern *regexp.Regexp) bool {
+	if pattern.MatchString(*(node.scientificname)) {
+		return true
+	}
+	if node.alternatenames != nil {
+		for _, n := range *node.alternatenames {
+			if n != nil && pattern.MatchString(*n) {
+				return true
+			}
+		}
+	}
+
+	return false
+}

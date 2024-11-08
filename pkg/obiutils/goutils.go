@@ -396,28 +396,55 @@ func JsonMarshal(i interface{}) ([]byte, error) {
 
 // IsAMap checks if the given value is a map.
 //
-// value: the value to be checked.
-// returns: a boolean indicating if the value is a map.
+// Parameters:
+//   - value: The value to be checked.
+//
+// Returns:
+//   - A boolean indicating if the value is a map.
 func IsAMap(value interface{}) bool {
 	return reflect.TypeOf(value).Kind() == reflect.Map
 }
 
 // IsAnArray checks if the given value is an array.
 //
-// value: The value to be checked.
-// Returns: true if the value is an array, false otherwise.
+// Parameters:
+//   - value: The value to be checked.
+//
+// Returns:
+//   - A boolean indicating if the value is an array.
 func IsAnArray(value interface{}) bool {
 	return reflect.TypeOf(value).Kind() == reflect.Array
 }
 
 // IsASlice determines if the given value is a slice.
 //
-// value: the value to check.
-// bool: true if the value is a slice, false otherwise.
+// Parameters:
+//   - value: The value to check.
+//
+// Returns:
+//   - A boolean indicating if the value is a slice.
 func IsASlice(value interface{}) bool {
 	return reflect.TypeOf(value).Kind() == reflect.Slice
 }
 
+// IsAContainer checks if the given value is a map, array, or slice.
+//
+// Parameters:
+//   - value: The value to check.
+//
+// Returns:
+//   - A boolean indicating if the value is a container (map, array, or slice).
+func IsAContainer(value interface{}) bool {
+	return IsAMap(value) || IsAnArray(value) || IsASlice(value)
+}
+
+// IsIntegral checks if the given float64 value is an integral number.
+//
+// Parameters:
+//   - val: The float64 value to check.
+//
+// Returns:
+//   - A boolean indicating if the value is integral (no fractional part).
 func IsIntegral(val float64) bool {
 	return val == float64(int(val))
 }

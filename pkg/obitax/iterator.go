@@ -17,7 +17,7 @@ func (set *TaxonSet) Iterator() *ITaxonSet {
 	i := NewITaxonSet()
 
 	go func() {
-		for _, t := range *set {
+		for _, t := range set.set {
 			i.source <- t
 		}
 		close(i.source)
@@ -30,7 +30,7 @@ func (set *TaxonSlice) Iterator() *ITaxonSet {
 	i := NewITaxonSet()
 
 	go func() {
-		for _, t := range *set {
+		for _, t := range set.slice {
 			i.source <- t
 		}
 		close(i.source)
@@ -83,7 +83,7 @@ func (iterator *ITaxonSet) TaxonSet() *TaxonSet {
 
 	for iterator.Next() {
 		taxon := iterator.Get()
-		set[taxon.taxid] = taxon
+		set[taxon.id] = taxon
 	}
 	return &set
 }
