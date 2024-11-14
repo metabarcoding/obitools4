@@ -21,12 +21,14 @@ import (
 type Taxonomy struct {
 	name        string
 	code        string
+	ids         *InnerString
 	ranks       *InnerString
 	nameclasses *InnerString
+	names       *InnerString
 	nodes       *TaxonSet
 	root        *TaxNode
 	matcher     *regexp.Regexp
-	index       map[string]*TaxonSet
+	index       map[*string]*TaxonSet
 }
 
 // NewTaxonomy creates and initializes a new Taxonomy instance with the specified name and code.
@@ -39,7 +41,7 @@ type Taxonomy struct {
 // Returns:
 //   - A pointer to the newly created Taxonomy instance.
 func NewTaxonomy(name, code, codeCharacters string) *Taxonomy {
-	set := make(map[string]*TaxNode)
+	set := make(map[*string]*TaxNode)
 
 	// 	codeCharacters := "[[:alnum:]]" // [[:digit:]]
 
@@ -48,12 +50,14 @@ func NewTaxonomy(name, code, codeCharacters string) *Taxonomy {
 	taxonomy := &Taxonomy{
 		name:        name,
 		code:        code,
+		ids:         NewInnerString(),
 		ranks:       NewInnerString(),
 		nameclasses: NewInnerString(),
+		names:       NewInnerString(),
 		nodes:       &TaxonSet{set: set},
 		root:        nil,
 		matcher:     matcher,
-		index:       make(map[string]*TaxonSet),
+		index:       make(map[*string]*TaxonSet),
 	}
 
 	taxonomy.nodes.taxonomy = taxonomy
@@ -69,16 +73,16 @@ func NewTaxonomy(name, code, codeCharacters string) *Taxonomy {
 //   - taxid: A string representation of the taxon identifier to be converted.
 //
 // Returns:
-//   - The taxon identifier of type T corresponding to the provided taxid.
+//   - The taxon identifier as a *string corresponding to the provided taxid.
 //   - An error if the taxid is not valid or cannot be converted.
-func (taxonomy *Taxonomy) Id(taxid string) (string, error) {
+func (taxonomy *Taxonomy) Id(taxid string) (*string, error) {
 	matches := taxonomy.matcher.FindStringSubmatch(taxid)
 
 	if matches == nil {
-		return "", fmt.Errorf("Taxid %s is not a valid taxid", taxid)
+		return nil, fmt.Errorf("taxid %s is not a valid taxid", taxid)
 	}
 
-	return matches[2], nil
+	return taxonomy.ids.Innerize(matches[2]), nil
 }
 
 // TaxidSting retrieves the string representation of a taxon node identified by the given ID.
@@ -92,11 +96,19 @@ func (taxonomy *Taxonomy) Id(taxid string) (string, error) {
 //   - A string representing the taxon node in the format "taxonomyCode:id [scientificName]",
 //     or an error if the taxon node with the specified ID does not exist in the taxonomy.
 func (taxonomy *Taxonomy) TaxidSting(id string) (string, error) {
-	node := taxonomy.nodes.Get(id)
-	if node == nil {
-		return "", fmt.Errorf("Taxid %d is part of the taxonomy", id)
+	pid, err := taxonomy.Id(id)
+
+	if err != nil {
+		return "", err
 	}
-	return node.String(taxonomy.code), nil
+
+	taxon := taxonomy.nodes.Get(pid)
+
+	if taxon == nil {
+		return "", fmt.Errorf("taxid %s is not part of the taxonomy", id)
+	}
+
+	return taxon.String(), nil
 }
 
 // Taxon retrieves the Taxon associated with the given taxid string.
@@ -113,19 +125,18 @@ func (taxonomy *Taxonomy) Taxon(taxid string) *Taxon {
 	id, err := taxonomy.Id(taxid)
 
 	if err != nil {
-		log.Fatalf("Taxid %s is not a valid taxid", taxid)
+		log.Fatalf("Taxid %s: %v", taxid, err)
 	}
 
-	node := taxonomy.nodes.Get(id)
+	taxon := taxonomy.nodes.Get(id)
 
-	if node == nil {
-		log.Fatalf("Taxid %s is an unknown taxid", taxid)
+	if taxon == nil {
+		log.Fatalf("Taxid %s is not part of the taxonomy %s",
+			taxid,
+			taxonomy.name)
 	}
 
-	return &Taxon{
-		Taxonomy: taxonomy,
-		Node:     node,
-	}
+	return taxon
 }
 
 // TaxonSet returns the set of taxon nodes contained within the Taxonomy.
@@ -133,7 +144,7 @@ func (taxonomy *Taxonomy) Taxon(taxid string) *Taxon {
 //
 // Returns:
 //   - A pointer to the TaxonSet[T] representing the collection of taxon nodes in the taxonomy.
-func (taxonomy *Taxonomy) TaxonSet() *TaxonSet {
+func (taxonomy *Taxonomy) AsTaxonSet() *TaxonSet {
 	return taxonomy.nodes
 }
 
@@ -160,13 +171,25 @@ func (taxonomy *Taxonomy) Len() int {
 //   - A pointer to the newly created Taxon[T] instance.
 //   - An error if the taxon cannot be added (e.g., it already exists and replace is false).
 func (taxonomy *Taxonomy) AddTaxon(taxid, parent string, rank string, isRoot bool, replace bool) (*Taxon, error) {
-	if !replace && taxonomy.nodes.Contains(taxid) {
-		return nil, fmt.Errorf("trying to add taxon %d already present in the taxonomy", taxid)
+
+	parentid, perr := taxonomy.Id(parent)
+	id, err := taxonomy.Id(taxid)
+
+	if perr != nil {
+		return nil, fmt.Errorf("error in parsing parent taxid %s: %v", parent, perr)
 	}
 
-	rank = taxonomy.ranks.Innerize(rank)
+	if err != nil {
+		return nil, fmt.Errorf("error in parsing taxid %s: %v", taxid, err)
+	}
 
-	n := &TaxNode{taxid, parent, rank, nil, nil}
+	if !replace && taxonomy.nodes.Contains(id) {
+		return nil, fmt.Errorf("trying to add taxon %s already present in the taxonomy", taxid)
+	}
+
+	prank := taxonomy.ranks.Innerize(rank)
+
+	n := &TaxNode{id, parentid, prank, nil, nil}
 
 	taxonomy.nodes.Insert(n)
 
@@ -197,18 +220,15 @@ func (taxonomy *Taxonomy) AddAlias(newtaxid, oldtaxid string, replace bool) (*Ta
 		return nil, fmt.Errorf("trying to add alias %s already present in the taxonomy", newtaxid)
 	}
 
-	n := taxonomy.nodes.Get(oldid)
+	t := taxonomy.nodes.Get(oldid)
 
-	if n == nil {
+	if t == nil {
 		return nil, fmt.Errorf("trying to add alias %s to a taxon that does not exist", oldtaxid)
 	}
 
-	taxonomy.nodes.Alias(newid, n)
+	taxonomy.nodes.Alias(newid, t)
 
-	return &Taxon{
-		Taxonomy: taxonomy,
-		Node:     n,
-	}, nil
+	return t, nil
 }
 
 // RankList returns a slice of strings representing the ranks of the taxa
@@ -221,19 +241,14 @@ func (taxonomy *Taxonomy) RankList() []string {
 	return taxonomy.ranks.Slice()
 }
 
-// func (taxonomy *Taxonomy) Taxon(taxid int) (*TaxNode, error) {
-// 	t, ok := (*taxonomy.nodes)[taxid]
-
-// 	if !ok {
-// 		a, aok := taxonomy.alias[taxid]
-// 		if !aok {
-// 			return nil, fmt.Errorf("Taxid %d is not part of the taxonomy", taxid)
-// 		}
-// 		t = a
-// 	}
-// 	return t, nil
-// }
-
-func (taxonomy *Taxonomy) Index() *map[string]*TaxonSet {
+func (taxonomy *Taxonomy) Index() *map[*string]*TaxonSet {
 	return &(taxonomy.index)
+}
+
+func (taxonomy *Taxonomy) Name() string {
+	return taxonomy.name
+}
+
+func (taxonomy *Taxonomy) Code() string {
+	return taxonomy.code
 }

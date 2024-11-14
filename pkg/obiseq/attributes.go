@@ -9,17 +9,18 @@ import (
 )
 
 // AttributeKeys returns the keys of the attributes in the BioSequence.
+// It optionally skips keys associated with container values based on the skip_container parameter.
 //
-// It does not take any parameters.
+// Parameters:
+//   - skip_container: A boolean indicating whether to skip keys associated with a container value.
 //
 // Returns:
-//
-//	[]string: The keys of the BioSequence.
-func (s *BioSequence) AttributeKeys(skip_map bool) obiutils.Set[string] {
+//   - A set of strings containing the keys of the BioSequence attributes.
+func (s *BioSequence) AttributeKeys(skip_container bool) obiutils.Set[string] {
 	keys := obiutils.MakeSet[string]()
 
 	for k, v := range s.Annotations() {
-		if !skip_map || !obiutils.IsAMap(v) {
+		if !skip_container || !obiutils.IsAContainer(v) {
 			keys.Add(k)
 		}
 	}
@@ -27,17 +28,18 @@ func (s *BioSequence) AttributeKeys(skip_map bool) obiutils.Set[string] {
 	return keys
 }
 
-// Keys returns the keys of the BioSequence.
+// Keys returns the keys of the BioSequence, including standard keys and attribute keys.
 //
-// It returns a slice of strings containing the keys of the BioSequence.
-// The keys include "id", "sequence", "qualities", and the attribute keys
-// of the BioSequence.
+// It returns a set of strings containing the keys of the BioSequence.
+// The keys include "id", "sequence", "qualities", and the attribute keys of the BioSequence.
+//
+// Parameters:
+//   - skip_container: A boolean indicating whether to skip keys associated with container values.
 //
 // Returns:
-//
-//	[]string: The keys of the BioSequence.
-func (s *BioSequence) Keys(skip_map bool) obiutils.Set[string] {
-	keys := s.AttributeKeys(skip_map)
+//   - A set of strings containing the keys of the BioSequence.
+func (s *BioSequence) Keys(skip_container bool) obiutils.Set[string] {
+	keys := s.AttributeKeys(skip_container)
 	keys.Add("id")
 
 	if s.HasSequence() {
@@ -53,10 +55,10 @@ func (s *BioSequence) Keys(skip_map bool) obiutils.Set[string] {
 // HasAttribute checks if the BioSequence has the specified attribute.
 //
 // Parameters:
-// - key: a string representing the attribute key to check.
+//   - key: A string representing the attribute key to check.
 //
 // Returns:
-// - a boolean indicating whether the BioSequence has the attribute.
+//   - A boolean indicating whether the BioSequence has the attribute.
 func (s *BioSequence) HasAttribute(key string) bool {
 	if key == "id" {
 		return true
@@ -386,31 +388,14 @@ func (s *BioSequence) SetCount(count int) {
 	s.SetAttribute("count", count)
 }
 
-// Taxid returns the taxonomic ID associated with the BioSequence.
-//
-// It retrieves the "taxid" attribute from the BioSequence's attributes map.
-// If the attribute is not found, the function returns 1 as the default taxonomic ID.
-// The taxid 1 corresponds to the root taxonomic level.
-//
-// The function returns an integer representing the taxonomic ID.
-func (s *BioSequence) Taxid() int {
-	taxid, ok := s.GetIntAttribute("taxid")
-
-	if !ok {
-		taxid = 1
-	}
-
-	return taxid
-}
-
 // SetTaxid sets the taxid for the BioSequence.
 //
 // Parameters:
 //
 //	taxid - the taxid to set.
-func (s *BioSequence) SetTaxid(taxid int) {
-	if taxid < 1 {
-		taxid = 1
+func (s *BioSequence) SetTaxid(taxid string) {
+	if taxid == "" {
+		taxid = "NA"
 	}
 	s.SetAttribute("taxid", taxid)
 }

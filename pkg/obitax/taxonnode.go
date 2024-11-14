@@ -2,6 +2,7 @@ package obitax
 
 import (
 	"fmt"
+	"log"
 	"regexp"
 )
 
@@ -18,11 +19,11 @@ import (
 //     a string representing the class name and the value is a pointer to a string
 //     representing the name.
 type TaxNode struct {
-	id             string
-	parent         string
-	rank           string
+	id             *string
+	parent         *string
+	rank           *string
 	scientificname *string
-	alternatenames *map[string]*string
+	alternatenames *map[*string]*string
 }
 
 // String returns a string representation of the TaxNode, including the taxonomy code,
@@ -36,7 +37,7 @@ type TaxNode struct {
 func (node *TaxNode) String(taxonomyCode string) string {
 	return fmt.Sprintf("%s:%v [%s]",
 		taxonomyCode,
-		node.id,
+		*node.id,
 		node.ScientificName())
 }
 
@@ -45,7 +46,7 @@ func (node *TaxNode) String(taxonomyCode string) string {
 //
 // Returns:
 //   - The unique identifier of the taxon node of type T.
-func (node *TaxNode) Id() string {
+func (node *TaxNode) Id() *string {
 	return node.id
 }
 
@@ -54,7 +55,7 @@ func (node *TaxNode) Id() string {
 //
 // Returns:
 //   - The identifier of the parent taxon of type T.
-func (node *TaxNode) ParentId() string {
+func (node *TaxNode) ParentId() *string {
 	return node.parent
 }
 
@@ -66,6 +67,12 @@ func (node *TaxNode) ParentId() string {
 //   - Note: This method assumes that scientificname is not nil;
 //     if it may be nil, additional error handling should be implemented.
 func (node *TaxNode) ScientificName() string {
+	if node == nil {
+		return "NA"
+	}
+	if node.scientificname == nil {
+		return "NA"
+	}
 	return *node.scientificname
 }
 
@@ -80,8 +87,9 @@ func (node *TaxNode) ScientificName() string {
 // Returns:
 //   - The name of the taxon as a string. If the class is not recognized or if no name is available,
 //     an empty string is returned.
-func (node *TaxNode) Name(class string) string {
-	if class == "scientificname" {
+func (node *TaxNode) Name(class *string) string {
+
+	if *class == "scientific name" {
 		return *node.scientificname
 	}
 
@@ -98,17 +106,21 @@ func (node *TaxNode) Name(class string) string {
 	return ""
 }
 
-func (node *TaxNode) SetName(name, class string) {
-	if class == "scientificname" {
-		node.scientificname = &name
+func (node *TaxNode) SetName(name, class *string) {
+	if node == nil {
+		log.Panic("Cannot set name of nil TaxNode")
+	}
+
+	if *class == "scientific name" {
+		node.scientificname = name
 		return
 	}
 
 	if node.alternatenames == nil {
-		node.alternatenames = &map[string]*string{}
+		node.alternatenames = &map[*string]*string{}
 	}
 
-	(*node.alternatenames)[class] = &name
+	(*node.alternatenames)[class] = name
 }
 
 // Rank returns the rank of the TaxNode.
@@ -117,7 +129,7 @@ func (node *TaxNode) SetName(name, class string) {
 // Returns:
 //   - The rank of the taxon as a string (e.g., species, genus, family).
 func (node *TaxNode) Rank() string {
-	return node.rank
+	return *node.rank
 }
 
 // IsNameEqual checks if the provided name matches the scientific name or any alternate names
@@ -154,9 +166,14 @@ func (node *TaxNode) IsNameEqual(name string) bool {
 //   - A boolean indicating whether the scientific name or any alternate names match the
 //     provided regular expression pattern.
 func (node *TaxNode) IsNameMatching(pattern *regexp.Regexp) bool {
-	if pattern.MatchString(*(node.scientificname)) {
+	if node == nil {
+		return false
+	}
+
+	if node.scientificname != nil && pattern.MatchString(*(node.scientificname)) {
 		return true
 	}
+
 	if node.alternatenames != nil {
 		for _, n := range *node.alternatenames {
 			if n != nil && pattern.MatchString(*n) {

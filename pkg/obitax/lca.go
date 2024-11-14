@@ -4,7 +4,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func (t1 *TaxNode) LCA(t2 *TaxNode) (*TaxNode, error) {
+func (t1 *Taxon) LCA(t2 *Taxon) (*Taxon, error) {
 	if t1 == nil {
 		log.Panicf("Try to get LCA of nil taxon")
 	}
@@ -13,25 +13,19 @@ func (t1 *TaxNode) LCA(t2 *TaxNode) (*TaxNode, error) {
 		log.Panicf("Try to get LCA of nil taxon")
 	}
 
-	p1, err1 := t1.Path()
+	p1 := t1.Path()
+	p2 := t2.Path()
 
-	if err1 != nil {
-		return nil, err1
-	}
+	i1 := p1.Len() - 1
+	i2 := p2.Len() - 1
 
-	p2, err2 := t2.Path()
-
-	if err2 != nil {
-		return nil, err2
-	}
-
-	i1 := len(*p1) - 1
-	i2 := len(*p2) - 1
-
-	for i1 >= 0 && i2 >= 0 && (*p1)[i1].taxid == (*p2)[i2].taxid {
+	for i1 >= 0 && i2 >= 0 && p1.slice[i1].id == p2.slice[i2].id {
 		i1--
 		i2--
 	}
 
-	return (*p1)[i1+1], nil
+	return &Taxon{
+		Taxonomy: t1.Taxonomy,
+		Node:     p1.slice[i1+1],
+	}, nil
 }

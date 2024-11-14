@@ -1,24 +1,31 @@
 package obitax
 
-type ITaxonSet struct {
-	source     chan *TaxNode
-	current    *TaxNode
+type ITaxon struct {
+	source     chan *Taxon
+	current    *Taxon
 	finished   bool
 	p_finished *bool
 }
 
-func NewITaxonSet() *ITaxonSet {
-	i := ITaxonSet{make(chan *TaxNode), nil, false, nil}
+func NewITaxon() *ITaxon {
+	i := ITaxon{
+		source:     make(chan *Taxon),
+		current:    nil,
+		finished:   false,
+		p_finished: nil}
 	i.p_finished = &i.finished
 	return &i
 }
 
-func (set *TaxonSet) Iterator() *ITaxonSet {
-	i := NewITaxonSet()
+func (set *TaxonSet) Iterator() *ITaxon {
+	i := NewITaxon()
 
 	go func() {
 		for _, t := range set.set {
-			i.source <- t
+			i.source <- &Taxon{
+				Taxonomy: set.taxonomy,
+				Node:     t,
+			}
 		}
 		close(i.source)
 	}()
@@ -26,12 +33,15 @@ func (set *TaxonSet) Iterator() *ITaxonSet {
 	return i
 }
 
-func (set *TaxonSlice) Iterator() *ITaxonSet {
-	i := NewITaxonSet()
+func (set *TaxonSlice) Iterator() *ITaxon {
+	i := NewITaxon()
 
 	go func() {
 		for _, t := range set.slice {
-			i.source <- t
+			i.source <- &Taxon{
+				Taxonomy: set.taxonomy,
+				Node:     t,
+			}
 		}
 		close(i.source)
 	}()
@@ -39,11 +49,11 @@ func (set *TaxonSlice) Iterator() *ITaxonSet {
 	return i
 }
 
-func (taxonmy *Taxonomy) Iterator() *ITaxonSet {
+func (taxonmy *Taxonomy) Iterator() *ITaxon {
 	return taxonmy.nodes.Iterator()
 }
 
-func (iterator *ITaxonSet) Next() bool {
+func (iterator *ITaxon) Next() bool {
 	if *(iterator.p_finished) {
 		return false
 	}
@@ -63,37 +73,21 @@ func (iterator *ITaxonSet) Next() bool {
 // currently pointed by the iterator. You have to use the
 // 'Next' method to move to the next entry before calling
 // 'Get' to retreive the following instance.
-func (iterator *ITaxonSet) Get() *TaxNode {
+func (iterator *ITaxon) Get() *Taxon {
 	return iterator.current
 }
 
 // Finished returns 'true' value if no more data is available
 // from the iterator.
-func (iterator *ITaxonSet) Finished() bool {
+func (iterator *ITaxon) Finished() bool {
 	return *iterator.p_finished
 }
 
-func (iterator *ITaxonSet) Split() *ITaxonSet {
-	newIter := ITaxonSet{iterator.source, nil, false, iterator.p_finished}
-	return &newIter
-}
-
-func (iterator *ITaxonSet) TaxonSet() *TaxonSet {
-	set := make(TaxonSet)
-
-	for iterator.Next() {
-		taxon := iterator.Get()
-		set[taxon.id] = taxon
+func (iterator *ITaxon) Split() *ITaxon {
+	return &ITaxon{
+		source:     iterator.source,
+		current:    nil,
+		finished:   false,
+		p_finished: iterator.p_finished,
 	}
-	return &set
-}
-
-func (iterator *ITaxonSet) TaxonSlice() *TaxonSlice {
-	slice := make(TaxonSlice, 0)
-
-	for iterator.Next() {
-		taxon := iterator.Get()
-		slice = append(slice, taxon)
-	}
-	return &slice
 }

@@ -12,12 +12,12 @@ var __taxdump__ = ""
 var __alternative_name__ = false
 var __rank_list__ = false
 var __selected_taxonomy__ = (*obitax.Taxonomy)(nil)
-var __taxonomical_restriction__ = make([]int, 0)
+var __taxonomical_restriction__ = make([]string, 0)
 
 var __fixed_pattern__ = false
 var __with_path__ = false
-var __taxid_path__ = -1
-var __taxid_sons__ = -1
+var __taxid_path__ = "NA"
+var __taxid_sons__ = "NA"
 var __restrict_rank__ = ""
 
 func LoadTaxonomyOptionSet(options *getoptions.GetOpt, required, alternatiive bool) {
@@ -43,7 +43,7 @@ func FilterTaxonomyOptionSet(options *getoptions.GetOpt) {
 		options.Alias("l"),
 		options.Description("List every taxonomic rank available in the taxonomy."))
 
-	options.IntSliceVar(&__taxonomical_restriction__, "restrict-to-taxon", 1, 1,
+	options.StringSliceVar(&__taxonomical_restriction__, "restrict-to-taxon", 1, 1,
 		options.Alias("r"),
 		options.Description("Restrict output to some subclades."))
 }
@@ -67,18 +67,18 @@ func CLITaxonomicalRestrictions() (*obitax.TaxonSet, error) {
 		return nil, err
 	}
 
-	ts := make(obitax.TaxonSet)
+	ts := taxonomy.NewTaxonSet()
 	for _, taxid := range __taxonomical_restriction__ {
-		tx, err := taxonomy.Taxon(taxid)
+		tx := taxonomy.Taxon(taxid)
 
 		if err != nil {
 			return nil, err
 		}
 
-		ts.Inserts(tx)
+		ts.InsertTaxon(tx)
 	}
 
-	return &ts, nil
+	return ts, nil
 }
 
 func CLILoadSelectedTaxonomy() (*obitax.Taxonomy, error) {
@@ -106,17 +106,17 @@ func OptionSet(options *getoptions.GetOpt) {
 	options.BoolVar(&__with_path__, "with-path", false,
 		options.Alias("P"),
 		options.Description("Adds a column containing the full path for each displayed taxon."))
-	options.IntVar(&__taxid_path__, "parents", -1,
+	options.StringVar(&__taxid_path__, "parents", "NA",
 		options.Alias("p"),
 		options.Description("Displays every parental tree's information for the provided taxid."))
 	options.StringVar(&__restrict_rank__, "rank", "",
 		options.Description("Restrict to the given taxonomic rank."))
 }
 
-func CLIRequestsPathForTaxid() int {
+func CLIRequestsPathForTaxid() string {
 	return __taxid_path__
 }
 
-func CLIRequestsSonsForTaxid() int {
+func CLIRequestsSonsForTaxid() string {
 	return __taxid_sons__
 }

@@ -18,6 +18,7 @@ import (
 	"unsafe"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 	log "github.com/sirupsen/logrus"
 )
@@ -63,6 +64,7 @@ type BioSequence struct {
 	sequence    []byte // The sequence itself, it is accessible by the methode Sequence
 	qualities   []byte // The quality scores of the sequence.
 	feature     []byte
+	taxon       *obitax.Taxon
 	paired      *BioSequence // A pointer to the paired sequence
 	revcomp     *BioSequence // A pointer to the reverse complemented sequence
 	annotations Annotation
@@ -90,6 +92,7 @@ func NewEmptyBioSequence(preallocate int) *BioSequence {
 		sequence:    seq,
 		qualities:   nil,
 		feature:     nil,
+		taxon:       nil,
 		paired:      nil,
 		revcomp:     nil,
 		annotations: nil,
@@ -223,7 +226,7 @@ func (s *BioSequence) HasDefinition() bool {
 // No parameters.
 // Returns a boolean.
 func (s *BioSequence) HasSequence() bool {
-	return s.sequence != nil && len(s.sequence) > 0
+	return len(s.sequence) > 0
 }
 
 // Sequence returns the sequence of the BioSequence.
@@ -258,7 +261,7 @@ func (s *BioSequence) Len() int {
 // This function does not have any parameters.
 // It returns a boolean value indicating whether the BioSequence has qualities.
 func (s *BioSequence) HasQualities() bool {
-	return s.qualities != nil && len(s.qualities) > 0
+	return len(s.qualities) > 0
 }
 
 // Qualities returns the sequence quality scores of the BioSequence.

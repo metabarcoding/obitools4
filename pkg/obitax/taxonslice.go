@@ -3,6 +3,8 @@ package obitax
 import (
 	"bytes"
 	"fmt"
+
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 )
 
 // TaxonSlice represents a slice of TaxNode[T] instances within a taxonomy.
@@ -16,6 +18,13 @@ type TaxonSlice struct {
 	taxonomy *Taxonomy
 }
 
+func (taxonomy *Taxonomy) NewTaxonSlice(size, capacity int) *TaxonSlice {
+	return &TaxonSlice{
+		slice:    make([]*TaxNode, size, capacity),
+		taxonomy: taxonomy,
+	}
+}
+
 // Get retrieves the TaxNode[T] at the specified index from the TaxonSlice.
 // It returns the taxon node corresponding to the provided index.
 //
@@ -25,6 +34,9 @@ type TaxonSlice struct {
 // Returns:
 //   - A pointer to the TaxNode[T] at the specified index in the slice.
 func (slice *TaxonSlice) Get(i int) *TaxNode {
+	if slice == nil {
+		return nil
+	}
 	return slice.slice[i]
 }
 
@@ -34,6 +46,9 @@ func (slice *TaxonSlice) Get(i int) *TaxNode {
 // Returns:
 //   - An integer representing the total number of taxon nodes in the TaxonSlice.
 func (slice *TaxonSlice) Len() int {
+	if slice == nil {
+		return 0
+	}
 	return len(slice.slice)
 }
 
@@ -64,4 +79,20 @@ func (path *TaxonSlice) String() string {
 	}
 
 	return buffer.String()
+}
+
+func (slice *TaxonSlice) Reverse(inplace bool) *TaxonSlice {
+	if slice == nil {
+		return nil
+	}
+
+	rep := obiutils.Reverse(slice.slice, inplace)
+	if inplace {
+		return slice
+	}
+
+	return &TaxonSlice{
+		taxonomy: slice.taxonomy,
+		slice:    rep,
+	}
 }

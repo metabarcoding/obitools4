@@ -147,10 +147,10 @@ func bioSequenceGetSetCount(luaState *lua.LState) int {
 func bioSequenceGetSetTaxid(luaState *lua.LState) int {
 	s := checkBioSequence(luaState)
 	if luaState.GetTop() == 2 {
-		s.SetTaxid(luaState.CheckInt(2))
+		s.SetTaxid(luaState.CheckString(2))
 		return 0
 	}
-	luaState.Push(lua.LNumber(s.Taxid()))
+	luaState.Push(lua.LString(s.Taxid()))
 	return 1
 }
 

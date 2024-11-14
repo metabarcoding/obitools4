@@ -5,7 +5,7 @@ import "sync"
 // InnerString is a struct that holds a map of strings and a read-write lock for concurrent access.
 // The index map is used to store key-value pairs of strings.
 type InnerString struct {
-	index map[string]string
+	index map[string]*string
 	lock  sync.RWMutex
 }
 
@@ -13,7 +13,7 @@ type InnerString struct {
 // The lock is set to false.
 func NewInnerString() *InnerString {
 	return &InnerString{
-		index: make(map[string]string),
+		index: make(map[string]*string),
 	}
 }
 
@@ -26,13 +26,13 @@ func NewInnerString() *InnerString {
 //
 // Returns:
 //   - The string value associated with the key.
-func (i *InnerString) Innerize(value string) string {
+func (i *InnerString) Innerize(value string) *string {
 	i.lock.Lock()
 	defer i.lock.Unlock()
 	s, ok := i.index[value]
 	if !ok {
-		i.index[value] = value
-		s = value
+		s = &value
+		i.index[value] = s
 	}
 
 	return s
@@ -42,7 +42,7 @@ func (i *InnerString) Slice() []string {
 	rep := make([]string, len(i.index))
 	j := 0
 	for _, v := range i.index {
-		rep[j] = v
+		rep[j] = *v
 		j++
 	}
 	return rep

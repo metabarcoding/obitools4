@@ -1,6 +1,6 @@
 package obitax
 
-import "log"
+import log "github.com/sirupsen/logrus"
 
 func (taxon *Taxon) IsSubCladeOf(parent *Taxon) bool {
 
@@ -19,4 +19,19 @@ func (taxon *Taxon) IsSubCladeOf(parent *Taxon) bool {
 	}
 
 	return false
+}
+
+func (taxon *Taxon) IsBelongingSubclades(clades *TaxonSet) bool {
+	ok := clades.Contains(taxon.Node.id)
+
+	for !ok && !taxon.IsRoot() {
+		taxon = taxon.Parent()
+		ok = clades.Contains(taxon.Node.id)
+	}
+
+	if taxon.IsRoot() {
+		ok = clades.Contains(taxon.Node.id)
+	}
+
+	return ok
 }

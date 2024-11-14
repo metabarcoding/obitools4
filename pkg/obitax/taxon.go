@@ -24,6 +24,9 @@ type Taxon struct {
 // Returns:
 //   - A formatted string representing the Taxon in the form "taxonomy_code:taxon_id [scientific_name]".
 func (taxon *Taxon) String() string {
+	if taxon == nil {
+		return "NA"
+	}
 	return taxon.Node.String(taxon.Taxonomy.code)
 }
 
@@ -33,24 +36,52 @@ func (taxon *Taxon) String() string {
 // Returns:
 //   - The scientific name of the taxon as a string.
 func (taxon *Taxon) ScientificName() string {
+	if taxon == nil {
+		return "NA"
+	}
 	return taxon.Node.ScientificName()
 }
 
 func (taxon *Taxon) Name(class string) string {
-	return taxon.Node.Name(class)
+	if taxon == nil {
+		return "NA"
+	}
+	pclass := taxon.Taxonomy.nameclasses.Innerize(class)
+	return taxon.Node.Name(pclass)
 }
 
 func (taxon *Taxon) IsNameEqual(name string) bool {
+	if taxon == nil {
+		return false
+	}
+
 	return taxon.Node.IsNameEqual(name)
 }
 
 func (taxon *Taxon) IsNameMatching(pattern *regexp.Regexp) bool {
+	if taxon == nil {
+		return false
+	}
+
 	return taxon.Node.IsNameMatching(pattern)
 }
 
 func (taxon *Taxon) SetName(name, class string) {
-	class = taxon.Taxonomy.nameclasses.Innerize(class)
-	taxon.Node.SetName(name, class)
+	if taxon == nil {
+		log.Panicf("nil taxon pointer for name %s [%s]", name, class)
+	}
+
+	pclass := taxon.Taxonomy.nameclasses.Innerize(class)
+	pname := taxon.Taxonomy.names.Innerize(name)
+	taxon.Node.SetName(pname, pclass)
+}
+
+func (taxon *Taxon) IsRoot() bool {
+	if taxon == nil {
+		return true
+	}
+
+	return taxon.Taxonomy.root == taxon.Node
 }
 
 // Rank returns the rank of the Taxon.
@@ -59,6 +90,9 @@ func (taxon *Taxon) SetName(name, class string) {
 // Returns:
 //   - The rank of the taxon as a string (e.g., species, genus, family).
 func (taxon *Taxon) Rank() string {
+	if taxon == nil {
+		return "NA"
+	}
 	return taxon.Node.Rank()
 }
 
@@ -70,9 +104,12 @@ func (taxon *Taxon) Rank() string {
 //   - A pointer to the parent Taxon[T]. If the parent does not exist, it returns
 //     a Taxon with a nil Node.
 func (taxon *Taxon) Parent() *Taxon {
+	if taxon == nil {
+		return nil
+	}
+
 	pid := taxon.Node.ParentId()
-	return &Taxon{taxon.Taxonomy,
-		taxon.Taxonomy.nodes.Get(pid)}
+	return taxon.Taxonomy.nodes.Get(pid)
 }
 
 // IPath returns an iterator that yields the path from the current Taxon to the root Taxon
@@ -83,12 +120,13 @@ func (taxon *Taxon) Parent() *Taxon {
 //     is called with each Taxon in the path from the current taxon to the root. If the
 //     taxonomy has no root node, the method logs a fatal error and terminates the program.
 func (taxon *Taxon) IPath() iter.Seq[*Taxon] {
+
 	if taxon.Taxonomy.root == nil {
 		log.Fatalf("Taxon[%v].IPath(): Taxonomy has no root node", taxon.Taxonomy.name)
 	}
 
 	return func(yield func(*Taxon) bool) {
-		for taxon.Node.parent != taxon.Taxonomy.root.id {
+		for !taxon.IsRoot() {
 			if !yield(taxon) {
 				return
 			}
@@ -96,8 +134,9 @@ func (taxon *Taxon) IPath() iter.Seq[*Taxon] {
 			taxon = taxon.Parent()
 		}
 
-		yield(taxon)
-
+		if taxon != nil {
+			yield(taxon)
+		}
 	}
 }
 
@@ -109,6 +148,10 @@ func (taxon *Taxon) IPath() iter.Seq[*Taxon] {
 //   - A pointer to a TaxonSlice[T] containing the TaxNode[T] instances in the path
 //     from the current taxon to the root.
 func (taxon *Taxon) Path() *TaxonSlice {
+	if taxon == nil {
+		return nil
+	}
+
 	s := make([]*TaxNode, 0, 10)
 
 	for t := range taxon.IPath() {
@@ -131,8 +174,13 @@ func (taxon *Taxon) Path() *TaxonSlice {
 // Returns:
 //   - A boolean indicating whether any taxon in the path has the specified rank defined.
 func (taxon *Taxon) HasRankDefined(rank string) bool {
+	if taxon == nil {
+		return false
+	}
+
+	prank := taxon.Taxonomy.ranks.Innerize(rank)
 	for t := range taxon.IPath() {
-		if t.Node.Rank() == rank {
+		if t.Node.rank == prank {
 			return true
 		}
 	}
@@ -151,8 +199,14 @@ func (taxon *Taxon) HasRankDefined(rank string) bool {
 //   - A pointer to the Taxon[T] that matches the specified rank, or nil if no such taxon exists
 //     in the path to the root.
 func (taxon *Taxon) TaxonAtRank(rank string) *Taxon {
+	if taxon == nil {
+		return nil
+	}
+
+	prank := taxon.Taxonomy.ranks.Innerize(rank)
+
 	for t := range taxon.IPath() {
-		if t.Node.Rank() == rank {
+		if t.Node.rank == prank {
 			return t
 		}
 	}

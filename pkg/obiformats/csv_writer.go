@@ -30,14 +30,10 @@ func CSVRecord(sequence *obiseq.BioSequence, opt Options) []string {
 
 	if opt.CSVTaxon() {
 		taxid := sequence.Taxid()
-		sn, ok := sequence.GetAttribute("scientific_name")
+		sn, ok := sequence.GetStringAttribute("scientific_name")
 
 		if !ok {
-			if taxid == 1 {
-				sn = "root"
-			} else {
-				sn = opt.CSVNAValue()
-			}
+			sn = opt.CSVNAValue()
 		}
 
 		record = append(record, fmt.Sprint(taxid), fmt.Sprint(sn))

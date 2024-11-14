@@ -1,0 +1,106 @@
+package obiseq
+
+import (
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
+)
+
+func (s *BioSequence) Taxon(taxonomy *obitax.Taxonomy) *obitax.Taxon {
+	taxid := s.Taxid()
+	if taxid == "NA" {
+		return nil
+	}
+	return taxonomy.Taxon(taxid)
+}
+
+// Taxid returns the taxonomic ID associated with the BioSequence.
+//
+// It retrieves the "taxid" attribute from the BioSequence's attributes map.
+// If the attribute is not found, the function returns 1 as the default taxonomic ID.
+// The taxid 1 corresponds to the root taxonomic level.
+//
+// The function returns an integer representing the taxonomic ID.
+func (s *BioSequence) Taxid() (taxid string) {
+	var ok bool
+	if s.taxon != nil {
+		taxid = s.taxon.String()
+		ok = true
+	} else {
+		taxid, ok = s.GetStringAttribute("taxid")
+	}
+
+	if !ok {
+		taxid = "NA"
+	}
+
+	return taxid
+}
+
+// Setting the taxon at a given rank for a given sequence.
+//
+// Two attributes are added to the sequence. One named by the rank name stores
+// the taxid, a second named by the rank name suffixed with '_name' contains the
+// Scientific name of the genus.
+// If the taxon at the given rank doesn't exist for the taxonomy annotation
+// of the sequence, nothing happens.
+func (sequence *BioSequence) SetTaxonAtRank(taxonomy *obitax.Taxonomy, rank string) *obitax.Taxon {
+	var taxonAtRank *obitax.Taxon
+
+	taxon := sequence.Taxon(taxonomy)
+	taxonAtRank = nil
+	if taxon != nil {
+		taxonAtRank = taxon.TaxonAtRank(rank)
+		if taxonAtRank != nil {
+			// log.Printf("Taxid: %d  Rank: %s --> proposed : %d (%s)", taxid, rank, taxonAtRank.taxid, *(taxonAtRank.scientificname))
+			sequence.SetAttribute(rank+"_taxid", taxonAtRank.String())
+			sequence.SetAttribute(rank+"_name", taxonAtRank.ScientificName())
+		} else {
+			sequence.SetAttribute(rank+"_taxid", "NA")
+			sequence.SetAttribute(rank+"_name", "NA")
+		}
+	}
+
+	return taxonAtRank
+}
+
+// Setting the species of a sequence.
+func (sequence *BioSequence) SetSpecies(taxonomy *obitax.Taxonomy) *obitax.Taxon {
+	return sequence.SetTaxonAtRank(taxonomy, "species")
+}
+
+// Setting the genus of a sequence.
+func (sequence *BioSequence) SetGenus(taxonomy *obitax.Taxonomy) *obitax.Taxon {
+	return sequence.SetTaxonAtRank(taxonomy, "genus")
+}
+
+// Setting the family of a sequence.
+func (sequence *BioSequence) SetFamily(taxonomy *obitax.Taxonomy) *obitax.Taxon {
+	return sequence.SetTaxonAtRank(taxonomy, "family")
+}
+
+func (sequence *BioSequence) SetPath(taxonomy *obitax.Taxonomy) string {
+	taxon := sequence.Taxon(taxonomy)
+	path := taxon.Path()
+
+	tpath := path.String()
+	sequence.SetAttribute("taxonomic_path", tpath)
+
+	return tpath
+}
+
+func (sequence *BioSequence) SetScientificName(taxonomy *obitax.Taxonomy) string {
+	taxon := sequence.Taxon(taxonomy)
+	name := taxon.ScientificName()
+
+	sequence.SetAttribute("scienctific_name", name)
+
+	return name
+}
+
+func (sequence *BioSequence) SetTaxonomicRank(taxonomy *obitax.Taxonomy) string {
+	taxon := sequence.Taxon(taxonomy)
+	rank := taxon.Rank()
+
+	sequence.SetAttribute("taxonomic_rank", rank)
+
+	return rank
+}

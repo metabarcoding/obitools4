@@ -7,7 +7,6 @@ import (
 	"io"
 	"os"
 	"path"
-	"strconv"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -26,24 +25,16 @@ func loadNodeTable(reader io.Reader, taxonomy *obitax.Taxonomy) {
 
 	for record, err := file.Read(); err == nil; record, err = file.Read() {
 		n++
-		taxid, err := strconv.Atoi(strings.TrimSpace(record[0]))
-
-		if err != nil {
-			log.Panicf("Cannot read taxon taxid at line %d: %v", n, err)
-		}
-
-		parent, err := strconv.Atoi(strings.TrimSpace(record[1]))
-
-		if err != nil {
-			log.Panicf("Cannot read taxon parent taxid at line %d: %v", n, err)
-		}
-
+		taxid := strings.TrimSpace(record[0])
+		parent := strings.TrimSpace(record[1])
 		rank := strings.TrimSpace(record[2])
 
-		taxonomy.AddNewTaxa(taxid, parent, rank, true, true)
-	}
+		_, err := taxonomy.AddTaxon(taxid, parent, rank, taxid == "1", false)
 
-	taxonomy.ReindexParent()
+		if err != nil {
+			log.Fatalf("Error adding taxon %s: %v\n", taxid, err)
+		}
+	}
 }
 
 func loadNameTable(reader io.Reader, taxonomy *obitax.Taxonomy, onlysn bool) int {
@@ -65,18 +56,14 @@ func loadNameTable(reader io.Reader, taxonomy *obitax.Taxonomy, onlysn bool) int
 		}
 
 		record := strings.Split(string(line), "|")
-		taxid, err := strconv.Atoi(strings.TrimSpace(record[0]))
-
-		if err != nil {
-			log.Panicf("Cannot read taxon name taxid at line %d: %v", l, err)
-		}
+		taxid := strings.TrimSpace(record[0])
 
 		name := strings.TrimSpace(record[1])
 		classname := strings.TrimSpace(record[3])
 
 		if !onlysn || classname == "scientific name" {
 			n++
-			taxonomy.AddNewName(taxid, &name, &classname)
+			taxonomy.Taxon(taxid).SetName(name, classname)
 		}
 	}
 
@@ -94,18 +81,10 @@ func loadMergedTable(reader io.Reader, taxonomy *obitax.Taxonomy) int {
 
 	for record, err := file.Read(); err == nil; record, err = file.Read() {
 		n++
-		oldtaxid, err := strconv.Atoi(strings.TrimSpace(record[0]))
+		oldtaxid := strings.TrimSpace(record[0])
+		newtaxid := strings.TrimSpace(record[1])
 
-		if err != nil {
-			log.Panicf("Cannot read alias taxid at line %d: %v", n, err)
-		}
-		newtaxid, err := strconv.Atoi(strings.TrimSpace(record[1]))
-
-		if err != nil {
-			log.Panicf("Cannot read alias new taxid at line %d: %v", n, err)
-		}
-
-		taxonomy.AddNewAlias(newtaxid, oldtaxid)
+		taxonomy.AddAlias(newtaxid, oldtaxid, false)
 	}
 
 	return n
@@ -113,7 +92,7 @@ func loadMergedTable(reader io.Reader, taxonomy *obitax.Taxonomy) int {
 
 func LoadNCBITaxDump(directory string, onlysn bool) (*obitax.Taxonomy, error) {
 
-	taxonomy := obitax.NewTaxonomy()
+	taxonomy := obitax.NewTaxonomy("NCBI Taxonomy", "taxon", "[[:digit:]]")
 
 	//
 	// Load the Taxonomy nodes

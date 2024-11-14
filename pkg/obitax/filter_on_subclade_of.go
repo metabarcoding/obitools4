@@ -1,9 +1,7 @@
 package obitax
 
-import "reflect"
-
-func (iterator *ITaxonSet) IFilterOnSubcladeOf(taxon *TaxNode) *ITaxonSet {
-	newIter := NewITaxonSet()
+func (iterator *ITaxon) IFilterOnSubcladeOf(taxon *Taxon) *ITaxon {
+	newIter := NewITaxon()
 
 	go func() {
 		for iterator.Next() {
@@ -18,32 +16,36 @@ func (iterator *ITaxonSet) IFilterOnSubcladeOf(taxon *TaxNode) *ITaxonSet {
 	return newIter
 }
 
-func (set *TaxonSet) IFilterOnSubcladeOf(taxon *TaxNode) *ITaxonSet {
+func (set *TaxonSet) IFilterOnSubcladeOf(taxon *Taxon) *ITaxon {
 	return set.Iterator().IFilterOnSubcladeOf(taxon)
 }
 
-func (slice *TaxonSlice) IFilterOnSubcladeOf(taxon *TaxNode) *ITaxonSet {
+func (slice *TaxonSlice) IFilterOnSubcladeOf(taxon *Taxon) *ITaxon {
 	return slice.Iterator().IFilterOnSubcladeOf(taxon)
 }
 
-func (taxonomy *Taxonomy) IFilterOnSubcladeOf(taxon *TaxNode) *ITaxonSet {
+func (taxonomy *Taxonomy) IFilterOnSubcladeOf(taxon *Taxon) *ITaxon {
 	return taxonomy.Iterator().IFilterOnSubcladeOf(taxon)
 }
 
-func (iterator *ITaxonSet) IFilterBelongingSubclades(clades *TaxonSet) *ITaxonSet {
+func (iterator *ITaxon) IFilterBelongingSubclades(clades *TaxonSet) *ITaxon {
 
-	if len(*clades) == 0 {
+	if clades.Len() == 0 {
 		return iterator
 	}
 
 	// Considers the second simplest case when only
 	// a single subclase is provided
-	if len(*clades) == 1 {
-		keys := reflect.ValueOf(*clades).MapKeys()
-		return iterator.IFilterOnSubcladeOf((*clades)[int(keys[0].Int())])
+	if clades.Len() == 1 {
+		keys := make([]*string, 0, len(clades.set))
+		for k := range clades.set {
+			keys = append(keys, k)
+		}
+
+		return iterator.IFilterOnSubcladeOf(clades.Get(keys[0]))
 	}
 
-	newIter := NewITaxonSet()
+	newIter := NewITaxon()
 
 	go func() {
 		for iterator.Next() {
