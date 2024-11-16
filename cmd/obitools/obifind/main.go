@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obifind"
 )
 
@@ -23,12 +24,8 @@ func main() {
 
 	switch {
 	case obifind.CLIRequestsPathForTaxid() != "NA":
-		taxonomy, err := obifind.CLILoadSelectedTaxonomy()
-		if err != nil {
-			fmt.Printf("%+v", err)
-		}
 
-		taxon := taxonomy.Taxon(obifind.CLIRequestsPathForTaxid())
+		taxon := obitax.DefaultTaxonomy().Taxon(obifind.CLIRequestsPathForTaxid())
 
 		if taxon == nil {
 			fmt.Printf("%+v", err)
@@ -44,11 +41,7 @@ func main() {
 			fmt.Sprintf("path:%s", taxon.String()))
 
 	case len(args) == 0:
-		taxonomy, err := obifind.CLILoadSelectedTaxonomy()
-		if err != nil {
-			fmt.Printf("%+v", err)
-		}
-
+		taxonomy := obitax.DefaultTaxonomy()
 		obifind.TaxonWriter(restrictions(taxonomy.Iterator()), "")
 
 	default:
