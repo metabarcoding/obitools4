@@ -90,6 +90,17 @@ func loadMergedTable(reader io.Reader, taxonomy *obitax.Taxonomy) int {
 	return n
 }
 
+// LoadNCBITaxDump loads the NCBI taxonomy data from the specified directory.
+// It reads the taxonomy nodes, taxon names, and merged taxa from the corresponding files
+// and constructs a Taxonomy object.
+//
+// Parameters:
+//   - directory: A string representing the path to the directory containing the NCBI taxonomy dump files.
+//   - onlysn: A boolean indicating whether to load only scientific names (true) or all names (false).
+//
+// Returns:
+//   - A pointer to the obitax.Taxonomy object containing the loaded taxonomy data, or an error
+//     if any of the files cannot be opened or read.
 func LoadNCBITaxDump(directory string, onlysn bool) (*obitax.Taxonomy, error) {
 
 	taxonomy := obitax.NewTaxonomy("NCBI Taxonomy", "taxon", "[[:digit:]]")
@@ -143,6 +154,9 @@ func LoadNCBITaxDump(directory string, onlysn bool) (*obitax.Taxonomy, error) {
 	buffered = bufio.NewReader(aliasfile)
 	n = loadMergedTable(buffered, taxonomy)
 	log.Printf("%d merged taxa read\n", n)
+
+	root := taxonomy.Taxon("1")
+	taxonomy.SetRoot(root)
 
 	return taxonomy, nil
 }
