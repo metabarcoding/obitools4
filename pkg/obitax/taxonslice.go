@@ -40,7 +40,7 @@ type TaxonSlice struct {
 func (taxonomy *Taxonomy) NewTaxonSlice(size, capacity int) *TaxonSlice {
 	return &TaxonSlice{
 		slice:    make([]*TaxNode, size, capacity),
-		taxonomy: taxonomy,
+		taxonomy: taxonomy.OrDefault(true),
 	}
 }
 

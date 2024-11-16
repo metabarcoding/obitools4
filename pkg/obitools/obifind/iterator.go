@@ -1,7 +1,6 @@
 package obifind
 
 import (
-	"bytes"
 	"fmt"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
@@ -22,11 +21,7 @@ func IFilterRankRestriction() func(*obitax.ITaxon) *obitax.ITaxon {
 }
 
 func ITaxonNameMatcher() (func(string) *obitax.ITaxon, error) {
-	taxonomy, err := CLILoadSelectedTaxonomy()
-
-	if err != nil {
-		return nil, err
-	}
+	taxonomy := obitax.DefaultTaxonomy()
 
 	fun := func(name string) *obitax.ITaxon {
 		return taxonomy.IFilterOnName(name, __fixed_pattern__)
@@ -53,27 +48,25 @@ func ITaxonRestrictions() (func(*obitax.ITaxon) *obitax.ITaxon, error) {
 }
 
 func TaxonAsString(taxon *obitax.Taxon, pattern string) string {
-	text := taxon.ScientificName()
+	// var text string
+	// if __with_path__ {
+	// 	var bf bytes.Buffer
+	// 	path := taxon.Path()
 
-	if __with_path__ {
-		var bf bytes.Buffer
-		path := taxon.Path()
+	// 	bf.WriteString(path.Get(path.Len() - 1).ScientificName())
 
-		bf.WriteString(path.Get(path.Len() - 1).ScientificName())
+	// 	for i := path.Len() - 2; i >= 0; i-- {
+	// 		fmt.Fprintf(&bf, ":%s", path.Get(i).ScientificName())
+	// 	}
 
-		for i := path.Len() - 2; i >= 0; i-- {
-			fmt.Fprintf(&bf, ":%s", path.Get(i).ScientificName())
-		}
+	// 	text = bf.String()
+	// }
 
-		text = bf.String()
-	}
-
-	return fmt.Sprintf("%-20s | %10s | %10s | %-20s | %s",
+	return fmt.Sprintf("%-20s | %10s | %10s | %-20s",
 		pattern,
 		taxon.String(),
 		taxon.Parent().String(),
-		taxon.Rank(),
-		text)
+		taxon.Rank())
 }
 
 func TaxonWriter(itaxa *obitax.ITaxon, pattern string) {

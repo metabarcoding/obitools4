@@ -118,3 +118,12 @@ doc/book/wolf_data/Release-253/ncbitaxo/readme.txt
 doc/book/results/toto.tasta
 sample/.DS_Store
 GO
+ncbitaxo/citations.dmp
+ncbitaxo/delnodes.dmp
+ncbitaxo/division.dmp
+ncbitaxo/gc.prt
+ncbitaxo/gencode.dmp
+ncbitaxo/merged.dmp
+ncbitaxo/names.dmp
+ncbitaxo/nodes.dmp
+ncbitaxo/readme.txt

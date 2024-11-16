@@ -35,10 +35,17 @@ type TaxNode struct {
 // Returns:
 //   - A formatted string representing the TaxNode in the form "taxonomyCode:id [scientificName]".
 func (node *TaxNode) String(taxonomyCode string) string {
-	return fmt.Sprintf("%s:%v [%s]",
+	if node.HasScientificName() {
+		return fmt.Sprintf("%s:%v [%s]",
+			taxonomyCode,
+			*node.id,
+			node.ScientificName())
+	}
+
+	return fmt.Sprintf("%s:%v",
 		taxonomyCode,
-		*node.id,
-		node.ScientificName())
+		*node.id)
+
 }
 
 // Id returns the unique identifier of the TaxNode.
@@ -57,6 +64,10 @@ func (node *TaxNode) Id() *string {
 //   - A pointer to the identifier of the parent taxon of type T.
 func (node *TaxNode) ParentId() *string {
 	return node.parent
+}
+
+func (node *TaxNode) HasScientificName() bool {
+	return node != nil && node.scientificname != nil
 }
 
 // ScientificName returns the scientific name of the TaxNode.

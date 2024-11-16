@@ -86,6 +86,12 @@ func NewTaxonomy(name, code, codeCharacters string) *Taxonomy {
 //   - The taxon identifier as a *string corresponding to the provided taxid.
 //   - An error if the taxid is not valid or cannot be converted.
 func (taxonomy *Taxonomy) Id(taxid string) (*string, error) {
+	taxonomy = taxonomy.OrDefault(false)
+
+	if taxonomy == nil {
+		return nil, fmt.Errorf("Cannot extract Id from nil Taxonomy")
+	}
+
 	matches := taxonomy.matcher.FindStringSubmatch(taxid)
 
 	if matches == nil {
@@ -106,6 +112,8 @@ func (taxonomy *Taxonomy) Id(taxid string) (*string, error) {
 //   - A string representing the taxon node in the format "taxonomyCode:id [scientificName]",
 //     or an error if the taxon node with the specified ID does not exist in the taxonomy.
 func (taxonomy *Taxonomy) TaxidSting(id string) (string, error) {
+	taxonomy = taxonomy.OrDefault(false)
+
 	pid, err := taxonomy.Id(id)
 
 	if err != nil {
@@ -132,6 +140,8 @@ func (taxonomy *Taxonomy) TaxidSting(id string) (string, error) {
 //   - A pointer to the Taxon instance associated with the provided taxid.
 //   - If the taxid is unknown, the method will log a fatal error.
 func (taxonomy *Taxonomy) Taxon(taxid string) *Taxon {
+	taxonomy = taxonomy.OrDefault(false)
+
 	id, err := taxonomy.Id(taxid)
 
 	if err != nil {
@@ -155,6 +165,12 @@ func (taxonomy *Taxonomy) Taxon(taxid string) *Taxon {
 // Returns:
 //   - A pointer to the TaxonSet representing the collection of taxon nodes in the taxonomy.
 func (taxonomy *Taxonomy) AsTaxonSet() *TaxonSet {
+	taxonomy = taxonomy.OrDefault(false)
+
+	if taxonomy == nil {
+		return nil
+	}
+
 	return taxonomy.nodes
 }
 
@@ -164,6 +180,12 @@ func (taxonomy *Taxonomy) AsTaxonSet() *TaxonSet {
 // Returns:
 //   - An integer representing the total count of taxa in the taxonomy.
 func (taxonomy *Taxonomy) Len() int {
+	taxonomy = taxonomy.OrDefault(false)
+
+	if taxonomy == nil {
+		return 0
+	}
+
 	return taxonomy.nodes.Len()
 }
 
@@ -181,14 +203,14 @@ func (taxonomy *Taxonomy) Len() int {
 //   - A pointer to the newly created Taxon instance.
 //   - An error if the taxon cannot be added (e.g., it already exists and replace is false).
 func (taxonomy *Taxonomy) AddTaxon(taxid, parent string, rank string, isRoot bool, replace bool) (*Taxon, error) {
+	taxonomy = taxonomy.OrDefault(false)
 
 	parentid, perr := taxonomy.Id(parent)
-	id, err := taxonomy.Id(taxid)
-
 	if perr != nil {
 		return nil, fmt.Errorf("error in parsing parent taxid %s: %v", parent, perr)
 	}
 
+	id, err := taxonomy.Id(taxid)
 	if err != nil {
 		return nil, fmt.Errorf("error in parsing taxid %s: %v", taxid, err)
 	}
@@ -228,6 +250,8 @@ func (taxonomy *Taxonomy) AddTaxon(taxid, parent string, rank string, isRoot boo
 //   - A pointer to the Taxon associated with the oldtaxid.
 //   - An error if the alias cannot be added (e.g., the old taxon does not exist).
 func (taxonomy *Taxonomy) AddAlias(newtaxid, oldtaxid string, replace bool) (*Taxon, error) {
+	taxonomy = taxonomy.OrDefault(false)
+
 	newid, err := taxonomy.Id(newtaxid)
 
 	if err != nil {
@@ -261,6 +285,12 @@ func (taxonomy *Taxonomy) AddAlias(newtaxid, oldtaxid string, replace bool) (*Ta
 // Returns:
 //   - A slice of strings containing the ranks of the taxa.
 func (taxonomy *Taxonomy) RankList() []string {
+	taxonomy = taxonomy.OrDefault(false)
+
+	if taxonomy == nil {
+		return make([]string, 0)
+	}
+
 	return taxonomy.ranks.Slice()
 }
 
@@ -270,6 +300,12 @@ func (taxonomy *Taxonomy) RankList() []string {
 // Returns:
 //   - A pointer to the map that indexes taxa in the taxonomy.
 func (taxonomy *Taxonomy) Index() *map[*string]*TaxonSet {
+	taxonomy = taxonomy.OrDefault(false)
+
+	if taxonomy == nil {
+		return nil
+	}
+
 	return &(taxonomy.index)
 }
 
@@ -278,6 +314,7 @@ func (taxonomy *Taxonomy) Index() *map[*string]*TaxonSet {
 // Returns:
 //   - A string representing the name of the taxonomy.
 func (taxonomy *Taxonomy) Name() string {
+	taxonomy = taxonomy.OrDefault(true)
 	return taxonomy.name
 }
 
@@ -286,6 +323,7 @@ func (taxonomy *Taxonomy) Name() string {
 // Returns:
 //   - A string representing the unique code of the taxonomy.
 func (taxonomy *Taxonomy) Code() string {
+	taxonomy = taxonomy.OrDefault(true)
 	return taxonomy.code
 }
 
@@ -295,6 +333,7 @@ func (taxonomy *Taxonomy) Code() string {
 // Parameters:
 //   - root: A pointer to the Taxon instance to be set as the root.
 func (taxonomy *Taxonomy) SetRoot(root *Taxon) {
+	taxonomy = taxonomy.OrDefault(true)
 	taxonomy.root = root.Node
 }
 
@@ -304,6 +343,8 @@ func (taxonomy *Taxonomy) SetRoot(root *Taxon) {
 // Returns:
 //   - A pointer to the Taxon instance representing the root of the taxonomy.
 func (taxonomy *Taxonomy) Root() *Taxon {
+	taxonomy = taxonomy.OrDefault(true)
+
 	return &Taxon{
 		Taxonomy: taxonomy,
 		Node:     taxonomy.root,
@@ -315,5 +356,6 @@ func (taxonomy *Taxonomy) Root() *Taxon {
 // Returns:
 //   - A boolean indicating whether the Taxonomy has a root node (true) or not (false).
 func (taxonomy *Taxonomy) HasRoot() bool {
-	return taxonomy.root != nil
+	taxonomy = taxonomy.OrDefault(false)
+	return taxonomy != nil && taxonomy.root != nil
 }

@@ -30,6 +30,10 @@ func (taxon *Taxon) String() string {
 	return taxon.Node.String(taxon.Taxonomy.code)
 }
 
+func (taxon *Taxon) HasScientificName() bool {
+	return taxon != nil && taxon.Node.HasScientificName()
+}
+
 // ScientificName returns the scientific name of the Taxon.
 // It retrieves the scientific name from the underlying TaxNode associated with the taxon.
 //

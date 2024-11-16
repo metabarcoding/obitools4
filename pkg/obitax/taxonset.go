@@ -32,7 +32,7 @@ func (taxonomy *Taxonomy) NewTaxonSet() *TaxonSet {
 	return &TaxonSet{
 		set:      make(map[*string]*TaxNode),
 		nalias:   0,
-		taxonomy: taxonomy,
+		taxonomy: taxonomy.OrDefault(true),
 	}
 }
 
@@ -68,6 +68,9 @@ func (set *TaxonSet) Get(id *string) *Taxon {
 // Returns:
 //   - An integer representing the count of unique taxa in the TaxonSet.
 func (set *TaxonSet) Len() int {
+	if set == nil {
+		return 0
+	}
 	return len(set.set) - set.nalias
 }
 
@@ -81,11 +84,17 @@ func (set *TaxonSet) Len() int {
 // Behavior:
 //   - If a taxon with the same identifier already exists and is different from the
 //     new taxon, the alias count is decremented.
-func (set *TaxonSet) Insert(node *TaxNode) {
+func (set *TaxonSet) Insert(node *TaxNode) *TaxonSet {
+	if set == nil {
+		log.Panic("Cannot insert node into nil TaxonSet")
+	}
+
 	if old := set.set[node.id]; old != nil && old.id != node.id {
 		set.nalias--
 	}
 	set.set[node.id] = node
+
+	return set
 }
 
 // InsertTaxon adds a Taxon to the TaxonSet. It verifies that the Taxon belongs
@@ -94,7 +103,11 @@ func (set *TaxonSet) Insert(node *TaxNode) {
 //
 // Parameters:
 //   - taxon: A pointer to the Taxon instance to be added to the TaxonSet.
-func (set *TaxonSet) InsertTaxon(taxon *Taxon) {
+func (set *TaxonSet) InsertTaxon(taxon *Taxon) *TaxonSet {
+	if set == nil {
+		set = taxon.Taxonomy.NewTaxonSet()
+	}
+
 	if set.taxonomy != taxon.Taxonomy {
 		log.Fatalf(
 			"Cannot insert taxon %s into taxon set belonging to %s taxonomy",
@@ -102,6 +115,8 @@ func (set *TaxonSet) InsertTaxon(taxon *Taxon) {
 			set.taxonomy.name,
 		)
 	}
+
+	return set.Insert(taxon.Node)
 }
 
 // Taxonomy returns a pointer to the Taxonomy instance that this TaxonSet belongs to.
@@ -109,6 +124,10 @@ func (set *TaxonSet) InsertTaxon(taxon *Taxon) {
 // Returns:
 //   - A pointer to the Taxonomy instance that this TaxonSet belongs to.
 func (set *TaxonSet) Taxonomy() *Taxonomy {
+	if set == nil {
+		return nil
+	}
+
 	return set.taxonomy
 }
 
@@ -124,6 +143,10 @@ func (set *TaxonSet) Taxonomy() *Taxonomy {
 //   - If the original taxon corresponding to the alias is not part of the taxon set,
 //     the method will log a fatal error and terminate the program.
 func (set *TaxonSet) Alias(id *string, taxon *Taxon) {
+	if set == nil {
+		log.Panic("Cannot add alias to a nil TaxonSet")
+	}
+
 	original := set.Get(taxon.Node.id)
 	if original == nil {
 		log.Fatalf("Original taxon %v is not part of taxon set", id)

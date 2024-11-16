@@ -1,17 +1,14 @@
 package obifind
 
 import (
-	"errors"
+	"fmt"
 
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiformats/ncbitaxdump"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
 	"github.com/DavidGamba/go-getoptions"
 )
 
-var __taxdump__ = ""
-var __alternative_name__ = false
 var __rank_list__ = false
-var __selected_taxonomy__ = (*obitax.Taxonomy)(nil)
 var __taxonomical_restriction__ = make([]string, 0)
 
 var __fixed_pattern__ = false
@@ -19,24 +16,6 @@ var __with_path__ = false
 var __taxid_path__ = "NA"
 var __taxid_sons__ = "NA"
 var __restrict_rank__ = ""
-
-func LoadTaxonomyOptionSet(options *getoptions.GetOpt, required, alternatiive bool) {
-	if required {
-		options.StringVar(&__taxdump__, "taxdump", "",
-			options.Alias("t"),
-			options.Required(),
-			options.Description("Points to the directory containing the NCBI Taxonomy database dump."))
-	} else {
-		options.StringVar(&__taxdump__, "taxdump", "",
-			options.Alias("t"),
-			options.Description("Points to the directory containing the NCBI Taxonomy database dump."))
-	}
-	if alternatiive {
-		options.BoolVar(&__alternative_name__, "alternative-names", false,
-			options.Alias("a"),
-			options.Description("Enable the search on all alternative names and not only scientific names."))
-	}
-}
 
 func FilterTaxonomyOptionSet(options *getoptions.GetOpt) {
 	options.BoolVar(&__rank_list__, "rank-list", false,
@@ -48,31 +27,23 @@ func FilterTaxonomyOptionSet(options *getoptions.GetOpt) {
 		options.Description("Restrict output to some subclades."))
 }
 
-func CLISelectedNCBITaxDump() string {
-	return __taxdump__
-}
-
-func CLIHasSelectedTaxonomy() bool {
-	return __taxdump__ != ""
-}
-
-func CLIAreAlternativeNamesSelected() bool {
-	return __alternative_name__
-}
-
 func CLITaxonomicalRestrictions() (*obitax.TaxonSet, error) {
-	taxonomy, err := CLILoadSelectedTaxonomy()
+	taxonomy := obitax.DefaultTaxonomy()
 
-	if err != nil {
-		return nil, err
+	if taxonomy == nil {
+		return nil, fmt.Errorf("no taxonomy loaded")
 	}
 
 	ts := taxonomy.NewTaxonSet()
 	for _, taxid := range __taxonomical_restriction__ {
 		tx := taxonomy.Taxon(taxid)
 
-		if err != nil {
-			return nil, err
+		if tx == nil {
+			return nil, fmt.Errorf(
+				"cannot find taxon %s in taxonomy %s",
+				taxid,
+				taxonomy.Name(),
+			)
 		}
 
 		ts.InsertTaxon(tx)
@@ -81,24 +52,8 @@ func CLITaxonomicalRestrictions() (*obitax.TaxonSet, error) {
 	return ts, nil
 }
 
-func CLILoadSelectedTaxonomy() (*obitax.Taxonomy, error) {
-	if CLISelectedNCBITaxDump() != "" {
-		if __selected_taxonomy__ == nil {
-			var err error
-			__selected_taxonomy__, err = ncbitaxdump.LoadNCBITaxDump(CLISelectedNCBITaxDump(),
-				!CLIAreAlternativeNamesSelected())
-			if err != nil {
-				return nil, err
-			}
-		}
-		return __selected_taxonomy__, nil
-	}
-
-	return nil, errors.New("no NCBI taxdump selected using option -t|--taxdump")
-}
-
 func OptionSet(options *getoptions.GetOpt) {
-	LoadTaxonomyOptionSet(options, true, true)
+	obioptions.LoadTaxonomyOptionSet(options, true, true)
 	FilterTaxonomyOptionSet(options)
 	options.BoolVar(&__fixed_pattern__, "fixed", false,
 		options.Alias("F"),
