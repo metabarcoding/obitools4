@@ -1,3 +1,13 @@
+/*
+Package obitax provides functionality for handling taxonomic data structures,
+specifically for representing and manipulating collections of taxon nodes
+within a taxonomy.
+
+The primary data structure is the TaxonSlice, which encapsulates a slice of
+TaxNode instances and provides methods for accessing, counting, and
+formatting these nodes.
+*/
+
 package obitax
 
 import (
@@ -7,17 +17,26 @@ import (
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 )
 
-// TaxonSlice represents a slice of TaxNode[T] instances within a taxonomy.
+// TaxonSlice represents a slice of TaxNode instances within a taxonomy.
 // It encapsulates a collection of taxon nodes and the taxonomy they belong to.
 //
 // Fields:
-//   - slice: A slice of pointers to TaxNode[T] representing the taxon nodes.
-//   - taxonomy: A pointer to the Taxonomy[T] instance that these taxon nodes are part of.
+//   - slice: A slice of pointers to TaxNode representing the taxon nodes.
+//   - taxonomy: A pointer to the Taxonomy instance that these taxon nodes are part of.
 type TaxonSlice struct {
 	slice    []*TaxNode
 	taxonomy *Taxonomy
 }
 
+// NewTaxonSlice creates a new TaxonSlice with the specified size and capacity.
+// It initializes the slice of TaxNode pointers and associates it with the given taxonomy.
+//
+// Parameters:
+//   - size: The initial size of the slice.
+//   - capacity: The capacity of the slice.
+//
+// Returns:
+//   - A pointer to the newly created TaxonSlice.
 func (taxonomy *Taxonomy) NewTaxonSlice(size, capacity int) *TaxonSlice {
 	return &TaxonSlice{
 		slice:    make([]*TaxNode, size, capacity),
@@ -25,14 +44,14 @@ func (taxonomy *Taxonomy) NewTaxonSlice(size, capacity int) *TaxonSlice {
 	}
 }
 
-// Get retrieves the TaxNode[T] at the specified index from the TaxonSlice.
+// Get retrieves the TaxNode at the specified index from the TaxonSlice.
 // It returns the taxon node corresponding to the provided index.
 //
 // Parameters:
 //   - i: An integer representing the index of the taxon node to retrieve.
 //
 // Returns:
-//   - A pointer to the TaxNode[T] at the specified index in the slice.
+//   - A pointer to the TaxNode at the specified index in the slice.
 func (slice *TaxonSlice) Get(i int) *TaxNode {
 	if slice == nil {
 		return nil
@@ -40,7 +59,7 @@ func (slice *TaxonSlice) Get(i int) *TaxNode {
 	return slice.slice[i]
 }
 
-// Len returns the number of TaxNode[T] instances in the TaxonSlice.
+// Len returns the number of TaxNode instances in the TaxonSlice.
 // It provides the count of taxon nodes contained within the slice.
 //
 // Returns:
@@ -81,6 +100,15 @@ func (path *TaxonSlice) String() string {
 	return buffer.String()
 }
 
+// Reverse reverses the order of the TaxonSlice.
+// If inplace is true, the original slice is modified; otherwise, a new reversed
+// TaxonSlice is returned.
+//
+// Parameters:
+//   - inplace: A boolean indicating whether to reverse the slice in place.
+//
+// Returns:
+//   - A pointer to the reversed TaxonSlice. If inplace is true, it returns the original slice.
 func (slice *TaxonSlice) Reverse(inplace bool) *TaxonSlice {
 	if slice == nil {
 		return nil

@@ -11,12 +11,12 @@ import (
 // scientific name, and alternate names.
 //
 // Fields:
-//   - id: The unique identifier of the taxon of type T.
-//   - parent: The identifier of the parent taxon of type T.
-//   - rank: The rank of the taxon (e.g., species, genus).
+//   - id: A pointer to the unique identifier of the taxon of type T.
+//   - parent: A pointer to the identifier of the parent taxon of type T.
+//   - rank: A pointer to the rank of the taxon (e.g., species, genus).
 //   - scientificname: A pointer to a string representing the scientific name of the taxon.
 //   - alternatenames: A pointer to a map of alternate names for the taxon, where the key is
-//     a string representing the class name and the value is a pointer to a string
+//     a pointer to a string representing the class name and the value is a pointer to a string
 //     representing the name.
 type TaxNode struct {
 	id             *string
@@ -45,7 +45,7 @@ func (node *TaxNode) String(taxonomyCode string) string {
 // It retrieves the identifier of type T associated with the taxon node.
 //
 // Returns:
-//   - The unique identifier of the taxon node of type T.
+//   - A pointer to the unique identifier of the taxon node of type T.
 func (node *TaxNode) Id() *string {
 	return node.id
 }
@@ -54,7 +54,7 @@ func (node *TaxNode) Id() *string {
 // It retrieves the parent identifier of type T associated with the taxon node.
 //
 // Returns:
-//   - The identifier of the parent taxon of type T.
+//   - A pointer to the identifier of the parent taxon of type T.
 func (node *TaxNode) ParentId() *string {
 	return node.parent
 }
@@ -64,8 +64,9 @@ func (node *TaxNode) ParentId() *string {
 //
 // Returns:
 //   - The scientific name of the taxon as a string.
-//   - Note: This method assumes that scientificname is not nil;
-//     if it may be nil, additional error handling should be implemented.
+//   - If the scientific name is nil, it returns "NA".
+//   - Note: This method assumes that the TaxNode itself is not nil; if it may be nil,
+//     additional error handling should be implemented.
 func (node *TaxNode) ScientificName() string {
 	if node == nil {
 		return "NA"
@@ -77,18 +78,18 @@ func (node *TaxNode) ScientificName() string {
 }
 
 // Name retrieves the name of the TaxNode based on the specified class.
-// If the class is "scientificname", it returns the scientific name of the taxon.
+// If the class is "scientific name", it returns the scientific name of the taxon.
 // If the class corresponds to an alternate name, it retrieves that name from the alternatenames map.
 // If the class is not recognized or if no alternate names exist, it returns an empty string.
 //
 // Parameters:
-//   - class: A string representing the class of name to retrieve (e.g., "scientificname" or an alternate name class).
+//   - class: A pointer to a string representing the class of name to retrieve
+//     (e.g., "scientific name" or an alternate name class).
 //
 // Returns:
 //   - The name of the taxon as a string. If the class is not recognized or if no name is available,
 //     an empty string is returned.
 func (node *TaxNode) Name(class *string) string {
-
 	if *class == "scientific name" {
 		return *node.scientificname
 	}
@@ -106,6 +107,14 @@ func (node *TaxNode) Name(class *string) string {
 	return ""
 }
 
+// SetName sets the name of the TaxNode based on the specified class.
+// If the class is "scientific name", it updates the scientific name of the taxon.
+// If the class corresponds to an alternate name, it adds or updates that name in the alternatenames map.
+//
+// Parameters:
+//   - name: A pointer to a string representing the name to set.
+//   - class: A pointer to a string representing the class of name to set
+//     (e.g., "scientific name" or an alternate name class).
 func (node *TaxNode) SetName(name, class *string) {
 	if node == nil {
 		log.Panic("Cannot set name of nil TaxNode")

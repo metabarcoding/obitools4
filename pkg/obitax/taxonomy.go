@@ -1,3 +1,10 @@
+/*
+Package obitax provides functionality for managing taxonomic data structures,
+including hierarchical classifications of taxa. It includes the Taxonomy struct,
+which represents a taxonomy and provides methods for working with taxon identifiers
+and retrieving information about taxa.
+*/
+
 package obitax
 
 import (
@@ -14,9 +21,13 @@ import (
 // Fields:
 //   - name: The name of the taxonomy.
 //   - code: A unique code representing the taxonomy.
+//   - ids: A pointer to an InnerString instance that holds the taxon identifiers.
 //   - ranks: A pointer to an InnerString instance that holds the ranks of the taxa.
+//   - nameclasses: A pointer to an InnerString instance that holds the name classes.
+//   - names: A pointer to an InnerString instance that holds the names of the taxa.
 //   - nodes: A pointer to a TaxonSet containing all the nodes (taxa) in the taxonomy.
 //   - root: A pointer to the root TaxNode of the taxonomy.
+//   - matcher: A regular expression used for validating taxon identifiers.
 //   - index: A map that indexes taxa by their string representation for quick access.
 type Taxonomy struct {
 	name        string
@@ -37,13 +48,12 @@ type Taxonomy struct {
 // Parameters:
 //   - name: The name of the taxonomy to be created.
 //   - code: A unique code representing the taxonomy.
+//   - codeCharacters: A string representing valid characters for the taxon identifiers.
 //
 // Returns:
 //   - A pointer to the newly created Taxonomy instance.
 func NewTaxonomy(name, code, codeCharacters string) *Taxonomy {
 	set := make(map[*string]*TaxNode)
-
-	// 	codeCharacters := "[[:alnum:]]" // [[:digit:]]
 
 	matcher := regexp.MustCompile(fmt.Sprintf("^[[:blank:]]*(%s:)?(%s+)", code, codeCharacters))
 
@@ -119,7 +129,7 @@ func (taxonomy *Taxonomy) TaxidSting(id string) (string, error) {
 //   - taxid: A string representation of the taxon identifier to be retrieved.
 //
 // Returns:
-//   - A pointer to the Taxon[T] instance associated with the provided taxid.
+//   - A pointer to the Taxon instance associated with the provided taxid.
 //   - If the taxid is unknown, the method will log a fatal error.
 func (taxonomy *Taxonomy) Taxon(taxid string) *Taxon {
 	id, err := taxonomy.Id(taxid)
@@ -139,11 +149,11 @@ func (taxonomy *Taxonomy) Taxon(taxid string) *Taxon {
 	return taxon
 }
 
-// TaxonSet returns the set of taxon nodes contained within the Taxonomy.
+// AsTaxonSet returns the set of taxon nodes contained within the Taxonomy.
 // It provides access to the underlying collection of taxon nodes for further operations.
 //
 // Returns:
-//   - A pointer to the TaxonSet[T] representing the collection of taxon nodes in the taxonomy.
+//   - A pointer to the TaxonSet representing the collection of taxon nodes in the taxonomy.
 func (taxonomy *Taxonomy) AsTaxonSet() *TaxonSet {
 	return taxonomy.nodes
 }
@@ -168,7 +178,7 @@ func (taxonomy *Taxonomy) Len() int {
 //   - replace: A boolean indicating whether to replace an existing taxon with the same taxid.
 //
 // Returns:
-//   - A pointer to the newly created Taxon[T] instance.
+//   - A pointer to the newly created Taxon instance.
 //   - An error if the taxon cannot be added (e.g., it already exists and replace is false).
 func (taxonomy *Taxonomy) AddTaxon(taxid, parent string, rank string, isRoot bool, replace bool) (*Taxon, error) {
 
@@ -204,6 +214,19 @@ func (taxonomy *Taxonomy) AddTaxon(taxid, parent string, rank string, isRoot boo
 	}, nil
 }
 
+// AddAlias adds an alias for an existing taxon in the taxonomy.
+// It associates a new taxon identifier with an existing taxon identifier,
+// allowing for alternative names to be used. If specified, it can replace
+// an existing alias.
+//
+// Parameters:
+//   - newtaxid: The new identifier to be added as an alias.
+//   - oldtaxid: The existing identifier of the taxon to which the alias is added.
+//   - replace: A boolean indicating whether to replace an existing alias with the same newtaxid.
+//
+// Returns:
+//   - A pointer to the Taxon associated with the oldtaxid.
+//   - An error if the alias cannot be added (e.g., the old taxon does not exist).
 func (taxonomy *Taxonomy) AddAlias(newtaxid, oldtaxid string, replace bool) (*Taxon, error) {
 	newid, err := taxonomy.Id(newtaxid)
 
@@ -241,14 +264,56 @@ func (taxonomy *Taxonomy) RankList() []string {
 	return taxonomy.ranks.Slice()
 }
 
+// Index returns a pointer to the map that indexes taxa by their string representation.
+// This allows for quick access to taxon sets based on their identifiers.
+//
+// Returns:
+//   - A pointer to the map that indexes taxa in the taxonomy.
 func (taxonomy *Taxonomy) Index() *map[*string]*TaxonSet {
 	return &(taxonomy.index)
 }
 
+// Name returns the name of the taxonomy.
+//
+// Returns:
+//   - A string representing the name of the taxonomy.
 func (taxonomy *Taxonomy) Name() string {
 	return taxonomy.name
 }
 
+// Code returns the unique code representing the taxonomy.
+//
+// Returns:
+//   - A string representing the unique code of the taxonomy.
 func (taxonomy *Taxonomy) Code() string {
 	return taxonomy.code
+}
+
+// SetRoot sets the root taxon for the taxonomy.
+// It associates the provided Taxon instance as the root of the taxonomy.
+//
+// Parameters:
+//   - root: A pointer to the Taxon instance to be set as the root.
+func (taxonomy *Taxonomy) SetRoot(root *Taxon) {
+	taxonomy.root = root.Node
+}
+
+// Root returns the root taxon of the taxonomy.
+// It returns a pointer to a Taxon instance associated with the root node.
+//
+// Returns:
+//   - A pointer to the Taxon instance representing the root of the taxonomy.
+func (taxonomy *Taxonomy) Root() *Taxon {
+	return &Taxon{
+		Taxonomy: taxonomy,
+		Node:     taxonomy.root,
+	}
+}
+
+// HasRoot checks if the Taxonomy has a root node defined.
+//
+// Returns:
+//   - A boolean indicating whether the Taxonomy has a root node (true) or not (false).
+func (taxonomy *Taxonomy) HasRoot() bool {
+	return taxonomy.root != nil
 }

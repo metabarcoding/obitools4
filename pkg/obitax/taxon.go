@@ -11,8 +11,8 @@ import (
 // it belongs to and the specific taxon node information.
 //
 // Fields:
-//   - Taxonomy: A pointer to the Taxonomy[T] instance that this taxon is part of.
-//   - Node: A pointer to the TaxNode[T] instance representing the specific taxon.
+//   - Taxonomy: A pointer to the Taxonomy instance that this taxon is part of.
+//   - Node: A pointer to the TaxNode instance representing the specific taxon.
 type Taxon struct {
 	Taxonomy *Taxonomy
 	Node     *TaxNode
@@ -42,6 +42,14 @@ func (taxon *Taxon) ScientificName() string {
 	return taxon.Node.ScientificName()
 }
 
+// Name retrieves the name of the Taxon based on the specified class.
+// It uses the taxonomy's name classes to format the name appropriately.
+//
+// Parameters:
+//   - class: A string representing the name class to use for retrieval.
+//
+// Returns:
+//   - The name of the taxon as a string.
 func (taxon *Taxon) Name(class string) string {
 	if taxon == nil {
 		return "NA"
@@ -50,6 +58,14 @@ func (taxon *Taxon) Name(class string) string {
 	return taxon.Node.Name(pclass)
 }
 
+// IsNameEqual checks if the given name is equal to the name of the Taxon.
+// It compares the provided name with the name stored in the TaxNode.
+//
+// Parameters:
+//   - name: A string representing the name to compare against.
+//
+// Returns:
+//   - A boolean indicating whether the names are equal.
 func (taxon *Taxon) IsNameEqual(name string) bool {
 	if taxon == nil {
 		return false
@@ -58,6 +74,13 @@ func (taxon *Taxon) IsNameEqual(name string) bool {
 	return taxon.Node.IsNameEqual(name)
 }
 
+// IsNameMatching checks if the name of the Taxon matches the given regular expression pattern.
+//
+// Parameters:
+//   - pattern: A pointer to a compiled regular expression to match against the taxon's name.
+//
+// Returns:
+//   - A boolean indicating whether the taxon's name matches the specified pattern.
 func (taxon *Taxon) IsNameMatching(pattern *regexp.Regexp) bool {
 	if taxon == nil {
 		return false
@@ -66,6 +89,12 @@ func (taxon *Taxon) IsNameMatching(pattern *regexp.Regexp) bool {
 	return taxon.Node.IsNameMatching(pattern)
 }
 
+// SetName sets the name of the Taxon based on the provided name and class.
+// It logs a panic if the taxon pointer is nil.
+//
+// Parameters:
+//   - name: A string representing the new name to set for the taxon.
+//   - class: A string representing the name class to associate with the taxon.
 func (taxon *Taxon) SetName(name, class string) {
 	if taxon == nil {
 		log.Panicf("nil taxon pointer for name %s [%s]", name, class)
@@ -76,6 +105,11 @@ func (taxon *Taxon) SetName(name, class string) {
 	taxon.Node.SetName(pname, pclass)
 }
 
+// IsRoot checks if the Taxon is the root of the taxonomy.
+// It returns true if the taxon is nil or if it matches the root node of the taxonomy.
+//
+// Returns:
+//   - A boolean indicating whether the Taxon is the root of the taxonomy.
 func (taxon *Taxon) IsRoot() bool {
 	if taxon == nil {
 		return true
@@ -101,7 +135,7 @@ func (taxon *Taxon) Rank() string {
 // to create a new Taxon instance representing the parent taxon.
 //
 // Returns:
-//   - A pointer to the parent Taxon[T]. If the parent does not exist, it returns
+//   - A pointer to the parent Taxon. If the parent does not exist, it returns
 //     a Taxon with a nil Node.
 func (taxon *Taxon) Parent() *Taxon {
 	if taxon == nil {
@@ -120,7 +154,6 @@ func (taxon *Taxon) Parent() *Taxon {
 //     is called with each Taxon in the path from the current taxon to the root. If the
 //     taxonomy has no root node, the method logs a fatal error and terminates the program.
 func (taxon *Taxon) IPath() iter.Seq[*Taxon] {
-
 	if taxon.Taxonomy.root == nil {
 		log.Fatalf("Taxon[%v].IPath(): Taxonomy has no root node", taxon.Taxonomy.name)
 	}
@@ -140,13 +173,13 @@ func (taxon *Taxon) IPath() iter.Seq[*Taxon] {
 	}
 }
 
-// Path returns a slice of TaxNode[T] representing the path from the current Taxon
+// Path returns a slice of TaxNode representing the path from the current Taxon
 // to the root Taxon in the associated Taxonomy. It collects all the nodes in the path
 // using the IPath method and returns them as a TaxonSlice.
 //
 // Returns:
-//   - A pointer to a TaxonSlice[T] containing the TaxNode[T] instances in the path
-//     from the current taxon to the root.
+//   - A pointer to a TaxonSlice containing the TaxNode instances in the path
+//     from the current taxon to the root. If the taxon is nil, it returns nil.
 func (taxon *Taxon) Path() *TaxonSlice {
 	if taxon == nil {
 		return nil
@@ -196,7 +229,7 @@ func (taxon *Taxon) HasRankDefined(rank string) bool {
 //   - rank: A string representing the rank to search for (e.g., "species", "genus").
 //
 // Returns:
-//   - A pointer to the Taxon[T] that matches the specified rank, or nil if no such taxon exists
+//   - A pointer to the Taxon that matches the specified rank, or nil if no such taxon exists
 //     in the path to the root.
 func (taxon *Taxon) TaxonAtRank(rank string) *Taxon {
 	if taxon == nil {
@@ -219,7 +252,7 @@ func (taxon *Taxon) TaxonAtRank(rank string) *Taxon {
 // the matching Taxon.
 //
 // Returns:
-//   - A pointer to the Taxon[T] that matches the "species" rank, or nil if no such taxon
+//   - A pointer to the Taxon that matches the "species" rank, or nil if no such taxon
 //     exists in the path to the root.
 func (taxon *Taxon) Species() *Taxon {
 	return taxon.TaxonAtRank("species")
@@ -230,7 +263,7 @@ func (taxon *Taxon) Species() *Taxon {
 // the matching Taxon.
 //
 // Returns:
-//   - A pointer to the Taxon[T] that matches the "genus" rank, or nil if no such taxon
+//   - A pointer to the Taxon that matches the "genus" rank, or nil if no such taxon
 //     exists in the path to the root.
 func (taxon *Taxon) Genus() *Taxon {
 	return taxon.TaxonAtRank("genus")
@@ -241,7 +274,7 @@ func (taxon *Taxon) Genus() *Taxon {
 // the matching Taxon.
 //
 // Returns:
-//   - A pointer to the Taxon[T] that matches the "family" rank, or nil if no such taxon
+//   - A pointer to the Taxon that matches the "family" rank, or nil if no such taxon
 //     exists in the path to the root.
 func (taxon *Taxon) Family() *Taxon {
 	return taxon.TaxonAtRank("family")

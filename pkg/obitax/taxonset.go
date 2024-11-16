@@ -1,4 +1,10 @@
-// Package obitax provides functionality for managing taxonomic data structures.
+/*
+Package obitax provides functionality for managing taxonomic data structures,
+specifically for representing and manipulating collections of taxa within a taxonomy.
+It includes the TaxonSet structure, which holds mappings of taxon identifiers to their
+corresponding TaxNode instances, along with methods for managing and querying these taxa.
+*/
+
 package obitax
 
 import log "github.com/sirupsen/logrus"
@@ -17,6 +23,11 @@ type TaxonSet struct {
 	taxonomy *Taxonomy
 }
 
+// NewTaxonSet creates a new TaxonSet associated with the given Taxonomy.
+// It initializes the set as an empty map and sets the alias count to zero.
+//
+// Returns:
+//   - A pointer to the newly created TaxonSet.
 func (taxonomy *Taxonomy) NewTaxonSet() *TaxonSet {
 	return &TaxonSet{
 		set:      make(map[*string]*TaxNode),
@@ -77,10 +88,16 @@ func (set *TaxonSet) Insert(node *TaxNode) {
 	set.set[node.id] = node
 }
 
+// InsertTaxon adds a Taxon to the TaxonSet. It verifies that the Taxon belongs
+// to the same Taxonomy as the TaxonSet before insertion. If they do not match,
+// it logs a fatal error and terminates the program.
+//
+// Parameters:
+//   - taxon: A pointer to the Taxon instance to be added to the TaxonSet.
 func (set *TaxonSet) InsertTaxon(taxon *Taxon) {
 	if set.taxonomy != taxon.Taxonomy {
 		log.Fatalf(
-			"Cannot insert taxon %s into taxon set belonging %s taxonomy",
+			"Cannot insert taxon %s into taxon set belonging to %s taxonomy",
 			taxon.String(),
 			set.taxonomy.name,
 		)

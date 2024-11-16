@@ -1,22 +1,28 @@
 package obitax
 
+// ITaxon represents an iterator for traversing Taxon instances.
+// It provides methods to retrieve the next Taxon and check if the iteration is finished.
 type ITaxon struct {
-	source     chan *Taxon
-	current    *Taxon
-	finished   bool
-	p_finished *bool
+	source     chan *Taxon // Channel to receive Taxon instances
+	current    *Taxon      // Current Taxon instance
+	finished   bool        // Indicates if the iteration is finished
+	p_finished *bool       // Pointer to the finished status
 }
 
+// NewITaxon creates a new ITaxon iterator instance and initializes its fields.
 func NewITaxon() *ITaxon {
 	i := ITaxon{
 		source:     make(chan *Taxon),
 		current:    nil,
 		finished:   false,
-		p_finished: nil}
+		p_finished: nil,
+	}
 	i.p_finished = &i.finished
 	return &i
 }
 
+// Iterator creates a new ITaxon iterator for the TaxonSet.
+// It starts a goroutine to send Taxon instances from the set to the iterator's source channel.
 func (set *TaxonSet) Iterator() *ITaxon {
 	i := NewITaxon()
 
@@ -33,6 +39,8 @@ func (set *TaxonSet) Iterator() *ITaxon {
 	return i
 }
 
+// Iterator creates a new ITaxon iterator for the TaxonSlice.
+// It starts a goroutine to send Taxon instances from the slice to the iterator's source channel.
 func (set *TaxonSlice) Iterator() *ITaxon {
 	i := NewITaxon()
 
@@ -49,10 +57,13 @@ func (set *TaxonSlice) Iterator() *ITaxon {
 	return i
 }
 
-func (taxonmy *Taxonomy) Iterator() *ITaxon {
-	return taxonmy.nodes.Iterator()
+// Iterator creates a new ITaxon iterator for the Taxonomy's nodes.
+func (taxonomy *Taxonomy) Iterator() *ITaxon {
+	return taxonomy.nodes.Iterator()
 }
 
+// Next advances the iterator to the next Taxon instance.
+// It returns true if there is a next Taxon, and false if the iteration is finished.
 func (iterator *ITaxon) Next() bool {
 	if *(iterator.p_finished) {
 		return false
@@ -69,20 +80,19 @@ func (iterator *ITaxon) Next() bool {
 	return false
 }
 
-// The 'Get' method returns the instance of *TaxNode
-// currently pointed by the iterator. You have to use the
-// 'Next' method to move to the next entry before calling
-// 'Get' to retreive the following instance.
+// Get returns the current Taxon instance pointed to by the iterator.
+// You must call 'Next' before calling 'Get' to retrieve the next instance.
 func (iterator *ITaxon) Get() *Taxon {
 	return iterator.current
 }
 
-// Finished returns 'true' value if no more data is available
-// from the iterator.
+// Finished returns true if no more data is available from the iterator.
 func (iterator *ITaxon) Finished() bool {
 	return *iterator.p_finished
 }
 
+// Split creates a new ITaxon iterator that shares the same source channel
+// and finished status as the original iterator.
 func (iterator *ITaxon) Split() *ITaxon {
 	return &ITaxon{
 		source:     iterator.source,

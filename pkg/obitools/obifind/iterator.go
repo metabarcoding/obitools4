@@ -77,6 +77,7 @@ func TaxonAsString(taxon *obitax.Taxon, pattern string) string {
 }
 
 func TaxonWriter(itaxa *obitax.ITaxon, pattern string) {
+
 	for itaxa.Next() {
 		fmt.Println(TaxonAsString(itaxa.Get(), pattern))
 	}
