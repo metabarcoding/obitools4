@@ -55,8 +55,7 @@ func (sequence *BioSequence) ReverseComplement(inplace bool) *BioSequence {
 
 	if !inplace {
 		original = sequence
-		sequence.revcomp = sequence.Copy()
-		sequence = sequence.revcomp
+		sequence = sequence.Copy()
 		sequence.revcomp = original
 	}
 

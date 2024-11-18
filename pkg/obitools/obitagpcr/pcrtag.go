@@ -134,8 +134,6 @@ func IPCRTagPESequencesBatch(iterator obiiter.IBioSequence,
 					banot["experiment"] = experiment
 
 					if CLIReorientate() && direction == "reverse" {
-						B.ReverseComplement(true)
-						A.ReverseComplement(true)
 						B.PairTo(A)
 						batch.Slice()[i] = B
 					}

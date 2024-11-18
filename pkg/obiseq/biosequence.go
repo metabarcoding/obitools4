@@ -179,6 +179,9 @@ func (s *BioSequence) Copy() *BioSequence {
 	newSeq.sequence = CopySlice(s.sequence)
 	newSeq.qualities = CopySlice(s.qualities)
 	newSeq.feature = CopySlice(s.feature)
+	if s.revcomp != nil {
+		newSeq.revcomp = s.revcomp.Copy()
+	}
 
 	if len(s.annotations) > 0 {
 		s.annot_lock.Lock()
