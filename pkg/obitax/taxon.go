@@ -4,6 +4,7 @@ import (
 	"iter"
 	"regexp"
 
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -15,6 +16,7 @@ import (
 //   - Node: A pointer to the TaxNode instance representing the specific taxon.
 type Taxon struct {
 	Taxonomy *Taxonomy
+	Metadata *map[string]*interface{}
 	Node     *TaxNode
 }
 
@@ -70,12 +72,12 @@ func (taxon *Taxon) Name(class string) string {
 //
 // Returns:
 //   - A boolean indicating whether the names are equal.
-func (taxon *Taxon) IsNameEqual(name string) bool {
+func (taxon *Taxon) IsNameEqual(name string, ignoreCase bool) bool {
 	if taxon == nil {
 		return false
 	}
 
-	return taxon.Node.IsNameEqual(name)
+	return taxon.Node.IsNameEqual(name, ignoreCase)
 }
 
 // IsNameMatching checks if the name of the Taxon matches the given regular expression pattern.
@@ -282,4 +284,90 @@ func (taxon *Taxon) Genus() *Taxon {
 //     exists in the path to the root.
 func (taxon *Taxon) Family() *Taxon {
 	return taxon.TaxonAtRank("family")
+}
+
+func (taxon *Taxon) SetMetadata(name string, value interface{}) *Taxon {
+	if taxon == nil {
+		return nil
+	}
+
+	if taxon.Metadata == nil {
+		m := make(map[string]*interface{})
+		taxon.Metadata = &m
+	}
+	(*taxon.Metadata)[name] = &value
+	return taxon
+}
+
+func (taxon *Taxon) GetMetadata(name string) *interface{} {
+	if taxon == nil || taxon.Metadata == nil {
+		return nil
+	}
+	return (*taxon.Metadata)[name]
+}
+
+func (taxon *Taxon) HasMetadata(name string) bool {
+	if taxon == nil || taxon.Metadata == nil {
+		return false
+	}
+	_, ok := (*taxon.Metadata)[name]
+	return ok
+}
+
+func (taxon *Taxon) RemoveMetadata(name string) {
+	if taxon == nil || taxon.Metadata == nil {
+		return
+	}
+	delete(*taxon.Metadata, name)
+}
+
+func (taxon *Taxon) MetadataAsString(name string) string {
+	meta := taxon.GetMetadata(name)
+	if meta == nil {
+		return ""
+	}
+	value, err := obiutils.InterfaceToString(*meta)
+
+	if err != nil {
+		return ""
+	}
+
+	return value
+}
+
+func (taxon *Taxon) MetadataKeys() []string {
+	if taxon == nil || taxon.Metadata == nil {
+		return nil
+	}
+	keys := make([]string, 0, len(*taxon.Metadata))
+	for k := range *taxon.Metadata {
+		keys = append(keys, k)
+	}
+	return keys
+}
+
+func (taxon *Taxon) MetadataValues() []interface{} {
+	if taxon == nil || taxon.Metadata == nil {
+		return nil
+	}
+	values := make([]interface{}, 0, len(*taxon.Metadata))
+	for _, v := range *taxon.Metadata {
+		values = append(values, v)
+	}
+	return values
+}
+
+func (taxon *Taxon) MetadataStringValues() []string {
+	if taxon == nil || taxon.Metadata == nil {
+		return nil
+	}
+	values := make([]string, 0, len(*taxon.Metadata))
+	for _, v := range *taxon.Metadata {
+		value, err := obiutils.InterfaceToString(v)
+		if err != nil {
+			value = ""
+		}
+		values = append(values, value)
+	}
+	return values
 }

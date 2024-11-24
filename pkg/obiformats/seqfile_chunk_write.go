@@ -13,7 +13,6 @@ func WriteSeqFileChunk(
 	toBeClosed bool) ChannelSeqFileChunk {
 
 	obiiter.RegisterAPipe()
-
 	chunk_channel := make(ChannelSeqFileChunk)
 
 	go func() {

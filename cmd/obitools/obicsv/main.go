@@ -17,7 +17,7 @@ func main() {
 	fs, err := obiconvert.CLIReadBioSequences(args...)
 	obiconvert.OpenSequenceDataErrorMessage(args, err)
 
-	obicsv.CLIWriteCSV(fs, true)
+	obicsv.CLIWriteSequenceCSV(fs, true)
 
 	obiiter.WaitForLastPipe()
 

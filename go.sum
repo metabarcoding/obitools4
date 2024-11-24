@@ -1,3 +1,5 @@
+github.com/Clever/csvlint v0.3.0 h1:58WEFXWy+i0fCbxTXscR2QwYESRuAUFjEGLgZs6j2iU=
+github.com/Clever/csvlint v0.3.0/go.mod h1:+wLRuW/bI8NhpRoeyUBxqKsK35OhvgJhXHSWdKp5XJU=
 github.com/DavidGamba/go-getoptions v0.28.0 h1:18wgEvfZdrlfIhVDGEBO3Dl0fkOyXqXLa0tLMCKxM1c=
 github.com/DavidGamba/go-getoptions v0.28.0/go.mod h1:zE97E3PR9P3BI/HKyNYgdMlYxodcuiC6W68KIgeYT84=
 github.com/PaesslerAG/gval v1.2.2 h1:Y7iBzhgE09IGTt5QgGQ2IdaYYYOU134YGHBThD+wm9E=
@@ -65,6 +67,7 @@ github.com/sirupsen/logrus v1.9.3 h1:dueUQJ1C2q9oE3F7wvmSGAaVtTmUizReu6fjN8uqzbQ
 github.com/sirupsen/logrus v1.9.3/go.mod h1:naHLuLoDiP4jHNo9R0sCBMtWGeIprob74mVsIT4qYEQ=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
+github.com/stretchr/testify v1.6.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/stretchr/testify v1.8.4 h1:CcVxjf3Q8PM0mHUKJCdn+eZZtm5yQwehR5yeSVQQcUk=
 github.com/stretchr/testify v1.8.4/go.mod h1:sz/lmYIOXD/1dqDmKjjqLyZ2RngseejIcXlSw2iwfAo=

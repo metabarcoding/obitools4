@@ -2,8 +2,10 @@ package obitax
 
 import (
 	"fmt"
-	"log"
 	"regexp"
+	"strings"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // TaxNode represents a single taxon in a taxonomy.
@@ -161,13 +163,17 @@ func (node *TaxNode) Rank() string {
 // Returns:
 //   - A boolean indicating whether the provided name is equal to the scientific name or exists
 //     as an alternate name for the taxon.
-func (node *TaxNode) IsNameEqual(name string) bool {
-	if *(node.scientificname) == name {
+func (node *TaxNode) IsNameEqual(name string, ignoreCase bool) bool {
+	if node == nil {
+		return false
+	}
+
+	if *(node.scientificname) == name || (ignoreCase && strings.EqualFold(*(node.scientificname), name)) {
 		return true
 	}
 	if node.alternatenames != nil {
 		for _, n := range *node.alternatenames {
-			if n != nil && *n == name {
+			if n != nil && (ignoreCase && strings.EqualFold(*n, name)) {
 				return true
 			}
 		}

@@ -28,10 +28,12 @@ func (set *TaxonSet) Iterator() *ITaxon {
 
 	go func() {
 		for _, t := range set.set {
-			i.source <- &Taxon{
+			taxon := &Taxon{
 				Taxonomy: set.taxonomy,
+				Metadata: nil,
 				Node:     t,
 			}
+			i.Push(taxon)
 		}
 		close(i.source)
 	}()
@@ -46,15 +48,23 @@ func (set *TaxonSlice) Iterator() *ITaxon {
 
 	go func() {
 		for _, t := range set.slice {
-			i.source <- &Taxon{
+			i.Push(&Taxon{
 				Taxonomy: set.taxonomy,
 				Node:     t,
-			}
+			})
 		}
-		close(i.source)
+		i.Close()
 	}()
 
 	return i
+}
+
+func (iterator *ITaxon) Push(taxon *Taxon) {
+	iterator.source <- taxon
+}
+
+func (iterator *ITaxon) Close() {
+	close(iterator.source)
 }
 
 // Iterator creates a new ITaxon iterator for the Taxonomy's nodes.
@@ -83,21 +93,78 @@ func (iterator *ITaxon) Next() bool {
 // Get returns the current Taxon instance pointed to by the iterator.
 // You must call 'Next' before calling 'Get' to retrieve the next instance.
 func (iterator *ITaxon) Get() *Taxon {
+	if iterator == nil {
+		return nil
+	}
+
 	return iterator.current
 }
 
 // Finished returns true if no more data is available from the iterator.
 func (iterator *ITaxon) Finished() bool {
+	if iterator == nil {
+		return true
+	}
+
 	return *iterator.p_finished
 }
 
 // Split creates a new ITaxon iterator that shares the same source channel
 // and finished status as the original iterator.
 func (iterator *ITaxon) Split() *ITaxon {
+	if iterator == nil {
+		return nil
+	}
 	return &ITaxon{
 		source:     iterator.source,
 		current:    nil,
 		finished:   false,
 		p_finished: iterator.p_finished,
 	}
+}
+
+func (iterator *ITaxon) AddMetadata(name string, value interface{}) *ITaxon {
+	if iterator == nil {
+		return nil
+	}
+
+	i := NewITaxon()
+
+	go func() {
+		for iterator.Next() {
+			taxon := iterator.Get()
+			taxon.SetMetadata(name, value)
+			i.Push(taxon)
+		}
+		i.Close()
+	}()
+
+	return i
+}
+
+func (iterator *ITaxon) Concat(iterators ...*ITaxon) *ITaxon {
+
+	newIter := NewITaxon()
+
+	go func() {
+		if iterator != nil {
+			for iterator.Next() {
+				taxon := iterator.Get()
+				newIter.Push(taxon)
+			}
+		}
+
+		for _, iter := range iterators {
+			if iter != nil {
+				for iter.Next() {
+					taxon := iter.Get()
+					newIter.Push(taxon)
+				}
+			}
+		}
+
+		newIter.Close()
+	}()
+
+	return newIter
 }

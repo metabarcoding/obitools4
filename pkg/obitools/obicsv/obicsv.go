@@ -3,59 +3,78 @@ package obicsv
 import (
 	log "github.com/sirupsen/logrus"
 
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiformats"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
 )
 
-func CLIWriteCSV(iterator obiiter.IBioSequence,
-	terminalAction bool, filenames ...string) (obiiter.IBioSequence, error) {
+func CLIWriteSequenceCSV(iterator obiiter.IBioSequence,
+	terminalAction bool, filenames ...string) *ICSVRecord {
 
 	if obiconvert.CLIProgressBar() {
 		iterator = iterator.Speed("Writing CSV")
 	}
 
-	var newIter obiiter.IBioSequence
-
-	opts := make([]obiformats.WithOption, 0, 10)
+	opts := make([]WithOption, 0, 10)
 
 	nworkers := obioptions.CLIParallelWorkers() / 4
 	if nworkers < 2 {
 		nworkers = 2
 	}
 
-	opts = append(opts, obiformats.OptionsParallelWorkers(nworkers))
-	opts = append(opts, obiformats.OptionsBatchSize(obioptions.CLIBatchSize()))
-	opts = append(opts, obiformats.OptionsCompressed(obiconvert.CLICompressed()))
+	opts = append(opts, OptionsParallelWorkers(nworkers))
+	opts = append(opts, OptionsBatchSize(obioptions.CLIBatchSize()))
+	opts = append(opts, OptionsCompressed(obiconvert.CLICompressed()))
 
-	opts = append(opts, obiformats.CSVId(CLIPrintId()),
-		obiformats.CSVCount(CLIPrintCount()),
-		obiformats.CSVTaxon(CLIPrintTaxon()),
-		obiformats.CSVDefinition(CLIPrintDefinition()),
-		obiformats.CSVKeys(CLIToBeKeptAttributes()),
-		obiformats.CSVSequence(CLIPrintSequence()),
-		obiformats.CSVAutoColumn(CLIAutoColumns()),
+	opts = append(opts, CSVId(CLIPrintId()),
+		CSVCount(CLIPrintCount()),
+		CSVTaxon(CLIPrintTaxon()),
+		CSVDefinition(CLIPrintDefinition()),
+		CSVKeys(CLIToBeKeptAttributes()),
+		CSVSequence(CLIPrintSequence()),
+		CSVAutoColumn(CLIAutoColumns()),
 	)
 
-	var err error
+	csvIter := NewCSVSequenceIterator(iterator, opts...)
+	newIter := CLICSVWriter(csvIter, terminalAction, opts...)
 
-	if len(filenames) == 0 {
-		newIter, err = obiformats.WriteCSVToStdout(iterator, opts...)
-	} else {
-		newIter, err = obiformats.WriteCSVToFile(iterator, filenames[0], opts...)
+	return newIter
+
+}
+
+func CLICSVWriter(iterator *ICSVRecord,
+	terminalAction bool,
+	options ...WithOption) *ICSVRecord {
+
+	var err error
+	var newIter *ICSVRecord
+
+	if obiconvert.CLIOutPutFileName() != "-" {
+		options = append(options, OptionFileName(obiconvert.CLIOutPutFileName()))
 	}
 
-	if err != nil {
-		log.Fatalf("Write file error: %v", err)
-		return obiiter.NilIBioSequence, err
+	opt := MakeOptions(options)
+
+	if opt.FileName() != "-" {
+		newIter, err = WriteCSVToFile(iterator, opt.FileName(), options...)
+
+		if err != nil {
+			log.Fatalf("Cannot write to file : %+v", err)
+		}
+
+	} else {
+		newIter, err = WriteCSVToStdout(iterator, options...)
+
+		if err != nil {
+			log.Fatalf("Cannot write to stdout : %+v", err)
+		}
+
 	}
 
 	if terminalAction {
-		newIter.Recycle()
-		return obiiter.NilIBioSequence, nil
+		newIter.Consume()
+		return nil
 	}
 
-	return newIter, nil
-
+	return newIter
 }

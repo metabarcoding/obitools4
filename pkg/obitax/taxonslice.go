@@ -84,14 +84,14 @@ func (path *TaxonSlice) String() string {
 	if path.Len() > 0 {
 		taxon := path.slice[path.Len()-1]
 		fmt.Fprintf(&buffer, "%v@%s@%s",
-			taxon.Id(),
+			*taxon.Id(),
 			taxon.ScientificName(),
 			taxon.Rank())
 
 		for i := path.Len() - 2; i >= 0; i-- {
 			taxon := path.slice[i]
 			fmt.Fprintf(&buffer, "|%v@%s@%s",
-				taxon.Id(),
+				*taxon.Id(),
 				taxon.ScientificName(),
 				taxon.Rank())
 		}

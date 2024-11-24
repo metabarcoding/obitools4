@@ -1,9 +1,10 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"os"
 
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obifind"
@@ -14,13 +15,7 @@ func main() {
 
 	_, args := optionParser(os.Args)
 
-	//prof, _ := os.Create("obifind.prof")
-	//pprof.StartCPUProfile(prof)
-
-	restrictions, err := obifind.ITaxonRestrictions()
-	if err != nil {
-		fmt.Printf("%+v", err)
-	}
+	var iterator *obitax.ITaxon
 
 	switch {
 	case obifind.CLIRequestsPathForTaxid() != "NA":
@@ -28,34 +23,45 @@ func main() {
 		taxon := obitax.DefaultTaxonomy().Taxon(obifind.CLIRequestsPathForTaxid())
 
 		if taxon == nil {
-			fmt.Printf("%+v", err)
+			log.Fatalf("Cannot identify the requested taxon: %s",
+				obifind.CLIRequestsPathForTaxid())
 		}
 
 		s := taxon.Path()
 
-		if err != nil {
-			fmt.Printf("%+v", err)
+		if s == nil {
+			log.Fatalf("Cannot extract taxonomic path describing %s", taxon.String())
 		}
 
-		obifind.TaxonWriter(s.Iterator(),
-			fmt.Sprintf("path:%s", taxon.String()))
+		iterator = s.Iterator()
+
+		if obifind.CLIWithQuery() {
+			iterator = iterator.AddMetadata("query", taxon.String())
+		}
 
 	case len(args) == 0:
-		taxonomy := obitax.DefaultTaxonomy()
-		obifind.TaxonWriter(restrictions(taxonomy.Iterator()), "")
-
+		iterator = obitax.DefaultTaxonomy().Iterator()
 	default:
-		matcher, err := obifind.ITaxonNameMatcher()
+		iters := make([]*obitax.ITaxon, len(args))
 
-		if err != nil {
-			fmt.Printf("%+v", err)
+		for i, pat := range args {
+			ii := obitax.DefaultTaxonomy().IFilterOnName(pat, obifind.CLIFixedPattern(), true)
+			if obifind.CLIWithQuery() {
+				ii = ii.AddMetadata("query", pat)
+			}
+			iters[i] = ii
 		}
 
-		for _, pattern := range args {
-			s := restrictions(matcher(pattern))
-			obifind.TaxonWriter(s, pattern)
+		iterator = iters[0]
+
+		if len(iters) > 1 {
+			iterator = iterator.Concat(iters[1:]...)
 		}
 	}
 
-	//pprof.StopCPUProfile()
+	iterator = obifind.CLITaxonRestrictions(iterator)
+	obifind.CLICSVTaxaWriter(iterator, true)
+
+	obiiter.WaitForLastPipe()
+
 }

@@ -207,7 +207,7 @@ func EvalAttributeWorker(expression map[string]string) obiseq.SeqWorker {
 func AddTaxonAtRankWorker(taxonomy *obitax.Taxonomy, ranks ...string) obiseq.SeqWorker {
 	f := func(s *obiseq.BioSequence) (obiseq.BioSequenceSlice, error) {
 		for _, r := range ranks {
-			taxonomy.SetTaxonAtRank(s, r)
+			s.SetTaxonAtRank(taxonomy, r)
 		}
 		return obiseq.BioSequenceSlice{s}, nil
 	}
@@ -217,7 +217,7 @@ func AddTaxonAtRankWorker(taxonomy *obitax.Taxonomy, ranks ...string) obiseq.Seq
 
 func AddTaxonRankWorker(taxonomy *obitax.Taxonomy) obiseq.SeqWorker {
 	f := func(s *obiseq.BioSequence) (obiseq.BioSequenceSlice, error) {
-		taxonomy.SetTaxonomicRank(s)
+		s.SetTaxonomicRank(taxonomy)
 		return obiseq.BioSequenceSlice{s}, nil
 	}
 
@@ -226,7 +226,7 @@ func AddTaxonRankWorker(taxonomy *obitax.Taxonomy) obiseq.SeqWorker {
 
 func AddScientificNameWorker(taxonomy *obitax.Taxonomy) obiseq.SeqWorker {
 	f := func(s *obiseq.BioSequence) (obiseq.BioSequenceSlice, error) {
-		taxonomy.SetScientificName(s)
+		s.SetScientificName(taxonomy)
 		return obiseq.BioSequenceSlice{s}, nil
 	}
 
@@ -280,7 +280,7 @@ func CLIAnnotationWorker() obiseq.SeqWorker {
 
 	if CLISetTaxonomicPath() {
 		taxo := obigrep.CLILoadSelectedTaxonomy()
-		w := taxo.MakeSetPathWorker()
+		w := obiseq.MakeSetPathWorker(taxo)
 		annotator = annotator.ChainWorkers(w)
 	}
 
@@ -298,7 +298,7 @@ func CLIAnnotationWorker() obiseq.SeqWorker {
 
 	if CLIHasAddLCA() {
 		taxo := obigrep.CLILoadSelectedTaxonomy()
-		w := obitax.AddLCAWorker(taxo, CLILCASlotName(), CLILCAThreshold())
+		w := obiseq.AddLCAWorker(taxo, CLILCASlotName(), CLILCAThreshold())
 		annotator = annotator.ChainWorkers(w)
 	}
 

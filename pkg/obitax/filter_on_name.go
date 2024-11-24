@@ -14,18 +14,8 @@ import (
 //
 // Returns:
 //   - A pointer to a new ITaxon iterator containing only the Taxon instances that match the specified name.
-func (taxonomy *Taxonomy) IFilterOnName(name string, strict bool) *ITaxon {
-	if strict {
-		nodes, ok := taxonomy.index[taxonomy.names.Innerize(name)]
-		if ok {
-			return nodes.Iterator()
-		} else {
-			empty := taxonomy.NewTaxonSet()
-			return empty.Iterator()
-		}
-	}
-
-	return taxonomy.Iterator().IFilterOnName(name, strict)
+func (taxonomy *Taxonomy) IFilterOnName(name string, strict bool, ingnoreCase bool) *ITaxon {
+	return taxonomy.Iterator().IFilterOnName(name, strict, ingnoreCase)
 }
 
 // IFilterOnName filters the Taxon instances in the iterator based on the specified name.
@@ -38,7 +28,7 @@ func (taxonomy *Taxonomy) IFilterOnName(name string, strict bool) *ITaxon {
 //
 // Returns:
 //   - A pointer to a new ITaxon iterator containing only the Taxon instances that match the specified name.
-func (iterator *ITaxon) IFilterOnName(name string, strict bool) *ITaxon {
+func (iterator *ITaxon) IFilterOnName(name string, strict bool, ignoreCase bool) *ITaxon {
 	newIterator := NewITaxon()
 	sentTaxa := make(map[*string]bool)
 
@@ -48,16 +38,21 @@ func (iterator *ITaxon) IFilterOnName(name string, strict bool) *ITaxon {
 				taxon := iterator.Get()
 				node := taxon.Node
 				if _, ok := sentTaxa[node.id]; !ok {
-					if taxon.IsNameEqual(name) {
+					if taxon.IsNameEqual(name, ignoreCase) {
 						sentTaxa[node.id] = true
-						newIterator.source <- taxon
+						newIterator.Push(taxon)
 					}
 				}
 			}
 			close(newIterator.source)
 		}()
 	} else {
-		pattern := regexp.MustCompile(name)
+		var pattern *regexp.Regexp
+		if ignoreCase {
+			pattern = regexp.MustCompile("(?i)" + name)
+		} else {
+			pattern = regexp.MustCompile(name)
+		}
 
 		go func() {
 			for iterator.Next() {
@@ -66,11 +61,11 @@ func (iterator *ITaxon) IFilterOnName(name string, strict bool) *ITaxon {
 				if _, ok := sentTaxa[node.id]; !ok {
 					if taxon.IsNameMatching(pattern) {
 						sentTaxa[node.id] = true
-						newIterator.source <- taxon
+						newIterator.Push(taxon)
 					}
 				}
 			}
-			close(newIterator.source)
+			newIterator.Close()
 		}()
 	}
 
