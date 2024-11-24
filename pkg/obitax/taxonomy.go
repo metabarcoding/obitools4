@@ -141,6 +141,9 @@ func (taxonomy *Taxonomy) TaxidSting(id string) (string, error) {
 //   - If the taxid is unknown, the method will log a fatal error.
 func (taxonomy *Taxonomy) Taxon(taxid string) *Taxon {
 	taxonomy = taxonomy.OrDefault(false)
+	if taxonomy == nil {
+		return nil
+	}
 
 	id, err := taxonomy.Id(taxid)
 

@@ -2,6 +2,7 @@ package obicsv
 
 import (
 	"fmt"
+	"slices"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -222,7 +223,7 @@ func (iterator *ICSVRecord) SetHeader(header CSVHeader) {
 }
 
 func (iterator *ICSVRecord) AppendField(field string) {
-	iterator.header = append(iterator.header, field)
+	iterator.header.AppendField(field)
 }
 
 func (iterator *ICSVRecord) Next() bool {
@@ -337,5 +338,11 @@ func (iterator *ICSVRecord) SortBatches(sizes ...int) *ICSVRecord {
 func (iterator *ICSVRecord) Consume() {
 	for iterator.Next() {
 		iterator.Get()
+	}
+}
+
+func (head *CSVHeader) AppendField(field string) {
+	if !slices.Contains(*head, field) {
+		*head = append(*head, field)
 	}
 }

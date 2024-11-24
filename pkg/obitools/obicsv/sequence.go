@@ -1,40 +1,45 @@
 package obicsv
 
 import (
+	"log"
+	"slices"
+
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
-
-	log "github.com/sirupsen/logrus"
 )
 
 func CSVSequenceHeader(opt Options) CSVHeader {
 	keys := opt.CSVKeys()
-	record := make([]string, 0, len(keys)+4)
+	record := make(CSVHeader, 0, len(keys)+4)
 
 	if opt.CSVId() {
-		record = append(record, "id")
+		record.AppendField("id")
 	}
 
 	if opt.CSVCount() {
-		record = append(record, "count")
+		record.AppendField("count")
 	}
 
 	if opt.CSVTaxon() {
-		record = append(record, "taxid")
+		record.AppendField("taxid")
 	}
 
 	if opt.CSVDefinition() {
-		record = append(record, "definition")
+		record.AppendField("definition")
 	}
 
-	record = append(record, opt.CSVKeys()...)
+	for _, field := range opt.CSVKeys() {
+		if field != "definition" {
+			record.AppendField(field)
+		}
+	}
 
 	if opt.CSVSequence() {
-		record = append(record, "sequence")
+		record.AppendField("sequence")
 	}
 
 	if opt.CSVQuality() {
-		record = append(record, "quality")
+		record.AppendField("quality")
 	}
 
 	return record
@@ -110,10 +115,21 @@ func NewCSVSequenceIterator(iter obiiter.IBioSequence, options ...WithOption) *I
 
 	opt := MakeOptions(options)
 
+	if opt.CSVAutoColumn() {
+		if iter.Next() {
+			batch := iter.Get()
+			if len(batch.Slice()) == 0 {
+				log.Panicf("first batch should not be empty")
+			}
+			auto_slot := batch.Slice().AttributeKeys(true).Members()
+			slices.Sort(auto_slot)
+			CSVKeys(auto_slot)(opt)
+			iter.PushBack()
+		}
+	}
+
 	newIter := NewICSVRecord()
 	newIter.SetHeader(CSVSequenceHeader(opt))
-
-	log.Warnf("", newIter.Header())
 
 	nwriters := opt.ParallelWorkers()
 	newIter.Add(nwriters)

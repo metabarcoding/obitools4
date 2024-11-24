@@ -16,8 +16,6 @@ func FormatCVSBatch(batch CSVRecordBatch, header CSVHeader, navalue string) *byt
 	buff := new(bytes.Buffer)
 	csv := csv.NewWriter(buff)
 
-	log.Warn("Header:", header)
-
 	if batch.Order() == 0 {
 		csv.Write(header)
 	}
