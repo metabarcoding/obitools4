@@ -30,6 +30,7 @@ func main() {
 	// trace.Start(ftrace)
 	// defer trace.Stop()
 
+	obioptions.SetReadQualities(false)
 	optionParser := obioptions.GenerateOptionParser(obiuniq.OptionSet)
 
 	_, args := optionParser(os.Args)

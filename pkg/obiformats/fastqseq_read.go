@@ -131,7 +131,7 @@ func _storeSequenceQuality(bytes *bytes.Buffer, out *obiseq.BioSequence, quality
 	out.SetQualities(q)
 }
 
-func FastqChunkParser(quality_shift byte) func(string, io.Reader) (obiseq.BioSequenceSlice, error) {
+func FastqChunkParser(quality_shift byte, with_quality bool) func(string, io.Reader) (obiseq.BioSequenceSlice, error) {
 	parser := func(source string, input io.Reader) (obiseq.BioSequenceSlice, error) {
 
 		var identifier string
@@ -263,7 +263,9 @@ func FastqChunkParser(quality_shift byte) func(string, io.Reader) (obiseq.BioSeq
 				}
 			case 10:
 				if is_end_of_line {
-					_storeSequenceQuality(&qualBytes, sequences[len(sequences)-1], quality_shift)
+					if with_quality {
+						_storeSequenceQuality(&qualBytes, sequences[len(sequences)-1], quality_shift)
+					}
 					state = 11
 				} else {
 					qualBytes.WriteByte(C)
@@ -299,9 +301,10 @@ func _ParseFastqFile(
 	input ChannelSeqFileChunk,
 	out obiiter.IBioSequence,
 	quality_shift byte,
+	with_quality bool,
 ) {
 
-	parser := FastqChunkParser(quality_shift)
+	parser := FastqChunkParser(quality_shift, with_quality)
 
 	for chunks := range input {
 		sequences, err := parser(chunks.Source, chunks.Raw)
@@ -339,6 +342,7 @@ func ReadFastq(reader io.Reader, options ...WithOption) (obiiter.IBioSequence, e
 			chkchan,
 			out,
 			byte(obioptions.InputQualityShift()),
+			opt.ReadQualities(),
 		)
 	}
 

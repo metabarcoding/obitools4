@@ -27,6 +27,7 @@ var _PprofMudex = 10
 var _PprofGoroutine = 6060
 var _Quality_Shift_Input = byte(33)
 var _Quality_Shift_Output = byte(33)
+var _Read_Qualities = true
 
 type ArgumentParser func([]string) (*getoptions.GetOpt, []string)
 
@@ -259,6 +260,10 @@ func CLIBatchSize() int {
 	return _BatchSize
 }
 
+func CLIReadQualities() bool {
+	return _Read_Qualities
+}
+
 // SetDebugOn sets the debug mode on.
 func SetDebugOn() {
 	_Debug = true
@@ -267,6 +272,10 @@ func SetDebugOn() {
 // SetDebugOff sets the debug mode off.
 func SetDebugOff() {
 	_Debug = false
+}
+
+func SetReadQualities(status bool) {
+	_Read_Qualities = status
 }
 
 // SetWorkerPerCore sets the number of workers per CPU core.
