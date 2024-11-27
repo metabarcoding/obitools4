@@ -7,6 +7,10 @@
 - In `obipairing`, correct the stats `seq_a_single` and `seq_b_single` when
   on right alignment mode
 
+- Not really a bug but the memory impact of `obiuniq` has been reduced by reducing
+  the batch size and not reading the qualities from the fastq files as `obiuniq`
+  is producing only fasta output without qualities.
+
 ### New features
 
 -   Most of the time obitools identify automatically sequence file format. But
