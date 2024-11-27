@@ -2,13 +2,23 @@
 
 ## Latest changes
 
+### Bug fixes
+
+- In `obipairing`, correct the stats `seq_a_single` and `seq_b_single` when
+  on right alignment mode
+
 ### New features
 
 -   Most of the time obitools identify automatically sequence file format. But
     it fails sometimes. Two new option **--fasta** and **--fastq** are added to
     allow the processing of the rare fasta and fastq files not recognized.
-
-## August 2nd, 2024. Release 4.3.0
+    
+-   In `obiscript`, adds new methods to the Lua sequence object:
+    - `md5_string()`:  returning the MD5 check sum as an hexadecimal string,
+	- `subsequence(from,to)`: allows to extract a subsequence on a 0 based 
+            coordinate system, upper bound expluded like in go.
+	- `reverse_complement`: returning a sequence object corresponding to the reverse complement
+            of the current sequence.
 
 ### Change of git repositiory
 

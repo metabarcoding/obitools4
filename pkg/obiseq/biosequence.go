@@ -12,6 +12,7 @@ package obiseq
 
 import (
 	"crypto/md5"
+	"encoding/hex"
 	"slices"
 	"sync"
 	"sync/atomic"
@@ -373,6 +374,11 @@ func (s *BioSequence) Source() string {
 // Returns [16]byte, the MD5 hash of the BioSequence.
 func (s *BioSequence) MD5() [16]byte {
 	return md5.Sum(s.sequence)
+}
+
+func (s *BioSequence) MD5String() string {
+	md5_hash := s.MD5()
+	return hex.EncodeToString(md5_hash[:])
 }
 
 // SetId sets the id of the BioSequence.
