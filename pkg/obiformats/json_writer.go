@@ -7,6 +7,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/goccy/go-json"
@@ -84,6 +85,7 @@ func FormatJSONBatch(batch obiiter.BioSequenceBatch) *bytes.Buffer {
 func WriteJSON(iterator obiiter.IBioSequence,
 	file io.WriteCloser,
 	options ...WithOption) (obiiter.IBioSequence, error) {
+	var latestChunk atomic.Int64
 
 	opt := MakeOptions(options)
 
@@ -97,6 +99,12 @@ func WriteJSON(iterator obiiter.IBioSequence,
 
 	go func() {
 		newIter.WaitAndClose()
+
+		chunkchan <- FileChunk{
+			Source: "end",
+			Raw:    bytes.NewBuffer([]byte("\n]\n")),
+			Order:  int(latestChunk.Load()) + 1,
+		}
 		for len(chunkchan) > 0 {
 			time.Sleep(time.Millisecond)
 		}
@@ -115,6 +123,7 @@ func WriteJSON(iterator obiiter.IBioSequence,
 			}
 
 			chunkchan <- ss
+			latestChunk.Store(int64(batch.Order()))
 			newIter.Push(batch)
 		}
 		newIter.Done()

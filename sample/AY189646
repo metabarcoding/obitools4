@@ -1,4 +1,3 @@
-==> db_v05_idx_ori.fasta <==
 >AY189646 {"count":1,"obitag_ref_index":{"0":"9606@Homo sapiens@species","10":"9526@Catarrhini@parvorder","12":"1437010@Boreoeutheria@clade","16":"9347@Eutheria@clade","17":"40674@Mammalia@class","2":"207598@Homininae@subfamily","22":"117571@Euteleostomi@clade","25":"7776@Gnathostomata@clade","29":"33213@Bilateria@clade","3":"9604@Hominidae@family","30":"6072@Eumetazoa@clade","8":"314295@Hominoidea@superfamily"},"species_name":"Homo sapiens","taxid":9606} Homo sapiens clone arCan119 12S ribosomal RNA gene, partial sequence; mitochondrial gene for mitochondrial product.
 ttagccctaaacctcaacagttaaatcaacaaaactgctcgccagaacactacgrgccac
 agcttaaaactcaaaggacctggcggtgcttcatatccct
@@ -9,3 +8,5 @@ cagcttaaaactcaaaggacctggcggtgcttcatatccct
 ttagccctaaacttcaacagttaaattaacaaaactgctcgccagaacactacgagccac
 agcttaaaactcaaaggacctggcggtgcttcatatccct
 >AC008512 {"count":5,"obitag_ref_index":{"0":"9606@Homo sapiens@species","10":"1437010@Boreoeutheria@clade","14":"40674@Mammalia@class","18":"117571@Euteleostomi@clade","2":"207598@Homininae@subfamily","22":"7776@Gnathostomata@clade","26":"33213@Bilateria@clade","28":"6072@Eumetazoa@clade","7":"9526@Catarrhini@parvorder"},"species_name":"Homo sapiens","taxid":9606} Homo sapiens chromosome 5 clone CTC-454K8, complete sequence.
+ttagccctaaacttcaacagttaaattaacaaaactgctcgccagaacactacgagccac
+agcttaaaactcaaaggacctggcggtgcttcatatccct
