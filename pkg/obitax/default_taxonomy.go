@@ -1,16 +1,17 @@
 package obitax
 
-import "log"
+import log "github.com/sirupsen/logrus"
 
 var __defaut_taxonomy__ *Taxonomy
 
 func (taxonomy *Taxonomy) SetAsDefault() {
+	log.Infof("Set as default taxonomy %s", taxonomy.Name())
 	__defaut_taxonomy__ = taxonomy
 }
 
 func (taxonomy *Taxonomy) OrDefault(panicOnNil bool) *Taxonomy {
 	if taxonomy == nil {
-		return __defaut_taxonomy__
+		taxonomy = __defaut_taxonomy__
 	}
 
 	if panicOnNil && taxonomy == nil {

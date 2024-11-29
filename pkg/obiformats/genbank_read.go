@@ -198,7 +198,7 @@ func GenbankChunkParser(withFeatureTable bool) func(string, io.Reader) (obiseq.B
 	}
 }
 
-func _ParseGenbankFile(input ChannelSeqFileChunk,
+func _ParseGenbankFile(input ChannelFileChunk,
 	out obiiter.IBioSequence,
 	withFeatureTable bool) {
 
@@ -225,7 +225,7 @@ func ReadGenbank(reader io.Reader, options ...WithOption) (obiiter.IBioSequence,
 
 	buff := make([]byte, 1024*1024*128) // 128 MB
 
-	entry_channel := ReadSeqFileChunk(
+	entry_channel := ReadFileChunk(
 		opt.Source(),
 		reader,
 		buff,

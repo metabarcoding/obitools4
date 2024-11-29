@@ -55,7 +55,7 @@ func WriteCSV(iterator *ICSVRecord,
 
 	nwriters := opt.ParallelWorkers()
 
-	chunkchan := obiformats.WriteSeqFileChunk(file, opt.CloseFile())
+	chunkchan := obiformats.WriteFileChunk(file, opt.CloseFile())
 
 	newIter.Add(nwriters)
 
@@ -72,7 +72,7 @@ func WriteCSV(iterator *ICSVRecord,
 
 			log.Debugf("Formating CSV chunk %d", batch.Order())
 
-			ss := obiformats.SeqFileChunk{
+			ss := obiformats.FileChunk{
 				Source: batch.Source(),
 				Raw: FormatCVSBatch(
 					batch,

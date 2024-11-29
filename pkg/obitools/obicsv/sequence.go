@@ -121,7 +121,7 @@ func NewCSVSequenceIterator(iter obiiter.IBioSequence, options ...WithOption) *I
 			if len(batch.Slice()) == 0 {
 				log.Panicf("first batch should not be empty")
 			}
-			auto_slot := batch.Slice().AttributeKeys(true).Members()
+			auto_slot := batch.Slice().AttributeKeys(true, true).Members()
 			slices.Sort(auto_slot)
 			CSVKeys(auto_slot)(opt)
 			iter.PushBack()

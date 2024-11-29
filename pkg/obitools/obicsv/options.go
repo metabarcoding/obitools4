@@ -1,6 +1,7 @@
 package obicsv
 
 import (
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 	"github.com/DavidGamba/go-getoptions"
@@ -66,6 +67,7 @@ func CSVOptionSet(options *getoptions.GetOpt) {
 func OptionSet(options *getoptions.GetOpt) {
 	obiconvert.InputOptionSet(options)
 	obiconvert.OutputModeOptionSet(options)
+	obioptions.LoadTaxonomyOptionSet(options, false, false)
 	CSVOptionSet(options)
 }
 

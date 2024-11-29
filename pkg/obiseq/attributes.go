@@ -16,11 +16,12 @@ import (
 //
 // Returns:
 //   - A set of strings containing the keys of the BioSequence attributes.
-func (s *BioSequence) AttributeKeys(skip_container bool) obiutils.Set[string] {
+func (s *BioSequence) AttributeKeys(skip_container, skip_definition bool) obiutils.Set[string] {
 	keys := obiutils.MakeSet[string]()
 
 	for k, v := range s.Annotations() {
-		if !skip_container || !obiutils.IsAContainer(v) {
+		if !((skip_container && obiutils.IsAContainer(v)) ||
+			(skip_definition && k == "definition")) {
 			keys.Add(k)
 		}
 	}
@@ -38,8 +39,8 @@ func (s *BioSequence) AttributeKeys(skip_container bool) obiutils.Set[string] {
 //
 // Returns:
 //   - A set of strings containing the keys of the BioSequence.
-func (s *BioSequence) Keys(skip_container bool) obiutils.Set[string] {
-	keys := s.AttributeKeys(skip_container)
+func (s *BioSequence) Keys(skip_container, skip_definition bool) obiutils.Set[string] {
+	keys := s.AttributeKeys(skip_container, skip_definition)
 	keys.Add("id")
 
 	if s.HasSequence() {

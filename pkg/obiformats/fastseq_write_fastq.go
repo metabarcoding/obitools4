@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"io"
 	"os"
-	"sync"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -87,11 +86,6 @@ func FormatFastqBatch(batch obiiter.BioSequenceBatch,
 	return &bs
 }
 
-type FileChunk struct {
-	text  []byte
-	order int
-}
-
 func WriteFastq(iterator obiiter.IBioSequence,
 	file io.WriteCloser,
 	options ...WithOption) (obiiter.IBioSequence, error) {
@@ -104,13 +98,11 @@ func WriteFastq(iterator obiiter.IBioSequence,
 
 	nwriters := opt.ParallelWorkers()
 
-	chunkchan := WriteSeqFileChunk(file, opt.CloseFile())
+	chunkchan := WriteFileChunk(file, opt.CloseFile())
 
 	header_format := opt.FormatFastSeqHeader()
 
 	newIter.Add(nwriters)
-
-	var waitWriter sync.WaitGroup
 
 	go func() {
 		newIter.WaitAndClose()
@@ -118,13 +110,13 @@ func WriteFastq(iterator obiiter.IBioSequence,
 			time.Sleep(time.Millisecond)
 		}
 		close(chunkchan)
-		waitWriter.Wait()
+		log.Debugf("Writing fastq file done")
 	}()
 
 	ff := func(iterator obiiter.IBioSequence) {
 		for iterator.Next() {
 			batch := iterator.Get()
-			chunk := SeqFileChunk{
+			chunk := FileChunk{
 				Source: batch.Source(),
 				Raw:    FormatFastqBatch(batch, header_format, opt.SkipEmptySequence()),
 				Order:  batch.Order(),
@@ -137,7 +129,7 @@ func WriteFastq(iterator obiiter.IBioSequence,
 
 	log.Debugln("Start of the fastq file writing")
 	go ff(iterator)
-	for i := 0; i < nwriters-1; i++ {
+	for i := 1; i < nwriters; i++ {
 		go ff(iterator.Split())
 	}
 

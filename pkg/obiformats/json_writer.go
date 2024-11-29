@@ -7,7 +7,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/goccy/go-json"
@@ -58,9 +57,17 @@ func JSONRecord(sequence *obiseq.BioSequence) []byte {
 	return text
 }
 
-func FormatJSONBatch(batch obiiter.BioSequenceBatch) []byte {
+func FormatJSONBatch(batch obiiter.BioSequenceBatch) *bytes.Buffer {
 	buff := new(bytes.Buffer)
+
 	json := bufio.NewWriter(buff)
+
+	if batch.Order() == 0 {
+		json.WriteString("[\n")
+	} else {
+		json.WriteString(",\n")
+	}
+
 	n := batch.Slice().Len() - 1
 	for i, s := range batch.Slice() {
 		json.WriteString("  ")
@@ -71,8 +78,7 @@ func FormatJSONBatch(batch obiiter.BioSequenceBatch) []byte {
 	}
 
 	json.Flush()
-
-	return buff.Bytes()
+	return buff
 }
 
 func WriteJSON(iterator obiiter.IBioSequence,
@@ -84,14 +90,10 @@ func WriteJSON(iterator obiiter.IBioSequence,
 	file, _ = obiutils.CompressStream(file, opt.CompressedFile(), opt.CloseFile())
 
 	newIter := obiiter.MakeIBioSequence()
-
 	nwriters := opt.ParallelWorkers()
 
-	obiiter.RegisterAPipe()
-	chunkchan := make(chan FileChunk)
-
+	chunkchan := WriteFileChunk(file, opt.CloseFile())
 	newIter.Add(nwriters)
-	var waitWriter sync.WaitGroup
 
 	go func() {
 		newIter.WaitAndClose()
@@ -99,7 +101,6 @@ func WriteJSON(iterator obiiter.IBioSequence,
 			time.Sleep(time.Millisecond)
 		}
 		close(chunkchan)
-		waitWriter.Wait()
 	}()
 
 	ff := func(iterator obiiter.IBioSequence) {
@@ -107,62 +108,31 @@ func WriteJSON(iterator obiiter.IBioSequence,
 
 			batch := iterator.Get()
 
-			chunkchan <- FileChunk{
-				FormatJSONBatch(batch),
-				batch.Order(),
+			ss := FileChunk{
+				Source: batch.Source(),
+				Raw:    FormatJSONBatch(batch),
+				Order:  batch.Order(),
 			}
+
+			chunkchan <- ss
 			newIter.Push(batch)
 		}
 		newIter.Done()
 	}
 
-	next_to_send := 0
-	received := make(map[int]FileChunk, 100)
-
-	waitWriter.Add(1)
-	go func() {
-		for chunk := range chunkchan {
-			if chunk.order == next_to_send {
-				if next_to_send > 0 {
-					file.Write([]byte(",\n"))
-				}
-				file.Write(chunk.text)
-				next_to_send++
-				chunk, ok := received[next_to_send]
-				for ok {
-					file.Write(chunk.text)
-					delete(received, next_to_send)
-					next_to_send++
-					chunk, ok = received[next_to_send]
-				}
-			} else {
-				received[chunk.order] = chunk
-			}
-
-		}
-
-		file.Write([]byte("\n]\n"))
-		file.Close()
-
-		log.Debugln("End of the JSON file writing")
-		obiiter.UnregisterPipe()
-		waitWriter.Done()
-
-	}()
-
 	log.Debugln("Start of the JSON file writing")
-	file.Write([]byte("[\n"))
-	go ff(iterator)
-	for i := 0; i < nwriters-1; i++ {
+	for i := 1; i < nwriters; i++ {
 		go ff(iterator.Split())
 	}
+	go ff(iterator)
 
 	return newIter, nil
 }
 
 func WriteJSONToStdout(iterator obiiter.IBioSequence,
 	options ...WithOption) (obiiter.IBioSequence, error) {
-	options = append(options, OptionDontCloseFile())
+	options = append(options, OptionCloseFile())
+
 	return WriteJSON(iterator, os.Stdout, options...)
 }
 

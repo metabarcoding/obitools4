@@ -8,16 +8,16 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func WriteSeqFileChunk(
+func WriteFileChunk(
 	writer io.WriteCloser,
-	toBeClosed bool) ChannelSeqFileChunk {
+	toBeClosed bool) ChannelFileChunk {
 
 	obiiter.RegisterAPipe()
-	chunk_channel := make(ChannelSeqFileChunk)
+	chunk_channel := make(ChannelFileChunk)
 
 	go func() {
 		nextToPrint := 0
-		toBePrinted := make(map[int]SeqFileChunk)
+		toBePrinted := make(map[int]FileChunk)
 		for chunk := range chunk_channel {
 			if chunk.Order == nextToPrint {
 				log.Debugf("Writing chunk: %d of length %d bytes",

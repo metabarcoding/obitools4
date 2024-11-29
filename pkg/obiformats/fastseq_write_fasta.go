@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 
@@ -132,7 +133,7 @@ func WriteFasta(iterator obiiter.IBioSequence,
 
 	nwriters := opt.ParallelWorkers()
 
-	chunkchan := WriteSeqFileChunk(file, opt.CloseFile())
+	chunkchan := WriteFileChunk(file, opt.CloseFile())
 
 	header_format := opt.FormatFastSeqHeader()
 
@@ -140,6 +141,9 @@ func WriteFasta(iterator obiiter.IBioSequence,
 
 	go func() {
 		newIter.WaitAndClose()
+		for len(chunkchan) > 0 {
+			time.Sleep(time.Millisecond)
+		}
 		close(chunkchan)
 		log.Debugf("Writing fasta file done")
 	}()
@@ -151,7 +155,7 @@ func WriteFasta(iterator obiiter.IBioSequence,
 
 			log.Debugf("Formating fasta chunk %d", batch.Order())
 
-			chunkchan <- SeqFileChunk{
+			chunkchan <- FileChunk{
 				Source: batch.Source(),
 				Raw:    FormatFastaBatch(batch, header_format, opt.SkipEmptySequence()),
 				Order:  batch.Order(),
@@ -166,7 +170,7 @@ func WriteFasta(iterator obiiter.IBioSequence,
 
 	log.Debugln("Start of the fasta file writing")
 	go ff(iterator)
-	for i := 0; i < nwriters-1; i++ {
+	for i := 1; i < nwriters; i++ {
 		go ff(iterator.Split())
 	}
 

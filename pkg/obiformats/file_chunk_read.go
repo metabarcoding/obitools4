@@ -11,13 +11,13 @@ import (
 
 type SeqFileChunkParser func(string, io.Reader) (obiseq.BioSequenceSlice, error)
 
-type SeqFileChunk struct {
+type FileChunk struct {
 	Source string
 	Raw    *bytes.Buffer
 	Order  int
 }
 
-type ChannelSeqFileChunk chan SeqFileChunk
+type ChannelFileChunk chan FileChunk
 
 type LastSeqRecord func([]byte) int
 
@@ -34,15 +34,15 @@ type LastSeqRecord func([]byte) int
 //
 // Returns:
 // None
-func ReadSeqFileChunk(
+func ReadFileChunk(
 	source string,
 	reader io.Reader,
 	buff []byte,
-	splitter LastSeqRecord) ChannelSeqFileChunk {
+	splitter LastSeqRecord) ChannelFileChunk {
 	var err error
 	var fullbuff []byte
 
-	chunk_channel := make(ChannelSeqFileChunk)
+	chunk_channel := make(ChannelFileChunk)
 
 	fileChunkSize := len(buff)
 
@@ -95,8 +95,10 @@ func ReadSeqFileChunk(
 				}
 
 				if len(buff) > 0 {
-					io := bytes.NewBuffer(slices.Clone(buff))
-					chunk_channel <- SeqFileChunk{source, io, i}
+					cbuff := slices.Clone(buff)
+					io := bytes.NewBuffer(cbuff)
+					// log.Warnf("chuck %d :Read %d bytes from file %s", i, io.Len(), source)
+					chunk_channel <- FileChunk{source, io, i}
 					i++
 				}
 
@@ -120,7 +122,7 @@ func ReadSeqFileChunk(
 		// Send the last chunk to the channel
 		if len(buff) > 0 {
 			io := bytes.NewBuffer(slices.Clone(buff))
-			chunk_channel <- SeqFileChunk{source, io, i}
+			chunk_channel <- FileChunk{source, io, i}
 		}
 
 		// Close the readers channel when the end of the file is reached

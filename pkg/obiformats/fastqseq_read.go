@@ -296,7 +296,7 @@ func FastqChunkParser(quality_shift byte) func(string, io.Reader) (obiseq.BioSeq
 }
 
 func _ParseFastqFile(
-	input ChannelSeqFileChunk,
+	input ChannelFileChunk,
 	out obiiter.IBioSequence,
 	quality_shift byte,
 ) {
@@ -326,7 +326,7 @@ func ReadFastq(reader io.Reader, options ...WithOption) (obiiter.IBioSequence, e
 
 	buff := make([]byte, 1024*1024)
 
-	chkchan := ReadSeqFileChunk(
+	chkchan := ReadFileChunk(
 		opt.Source(),
 		reader,
 		buff,

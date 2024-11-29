@@ -150,11 +150,11 @@ func (s BioSequenceSlice) Size() int {
 	return size
 }
 
-func (s BioSequenceSlice) AttributeKeys(skip_map bool) obiutils.Set[string] {
+func (s BioSequenceSlice) AttributeKeys(skip_map, skip_definition bool) obiutils.Set[string] {
 	keys := obiutils.MakeSet[string]()
 
 	for _, k := range s {
-		keys = keys.Union(k.AttributeKeys(skip_map))
+		keys = keys.Union(k.AttributeKeys(skip_map, skip_definition))
 	}
 
 	return keys
