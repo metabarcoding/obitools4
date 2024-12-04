@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"reflect"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
@@ -119,11 +120,17 @@ func LuaWorker(proto *lua.FunctionProto) obiseq.SeqWorker {
 				case *obiseq.BioSequenceSlice:
 					return *val, err
 				default:
-					return nil, fmt.Errorf("worker function doesn't return the correct type %T", val)
+					r := reflect.TypeOf(val)
+					return nil, fmt.Errorf("worker function doesn't return the correct type %s", r)
 				}
 			}
 
-			return nil, fmt.Errorf("worker function doesn't return the correct type")
+			// If worker retuns nothing then it is considered as nil biosequence
+			if _, ok = lreponse.(*lua.LNilType); ok {
+				return nil, nil
+			}
+
+			return nil, fmt.Errorf("worker function doesn't return the correct type %T", lreponse)
 		}
 
 		return f
