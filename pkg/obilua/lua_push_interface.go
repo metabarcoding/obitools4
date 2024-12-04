@@ -46,6 +46,8 @@ func pushInterfaceToLua(L *lua.LState, val interface{}) {
 		pushSliceNumericToLua(L, v)
 	case []bool:
 		pushSliceBoolToLua(L, v)
+	case []interface{}:
+		pushSliceInterfaceToLua(L, v)
 	case nil:
 		L.Push(lua.LNil)
 	case *sync.Mutex:
@@ -71,6 +73,29 @@ func pushMapStringInterfaceToLua(L *lua.LState, m map[string]interface{}) {
 			luaTable.RawSetString(key, lua.LString(v))
 		default:
 			log.Fatalf("Doesn't deal with map containing value %v of type %T", v, v)
+		}
+	}
+
+	// Push the Lua table onto the stack
+	L.Push(luaTable)
+}
+
+func pushSliceInterfaceToLua(L *lua.LState, s []interface{}) {
+	// Create a new Lua table
+	luaTable := L.NewTable()
+	// Iterate over the Go map and set the key-value pairs in the Lua table
+	for _, value := range s {
+		switch v := value.(type) {
+		case int:
+			luaTable.Append(lua.LNumber(v))
+		case float64:
+			luaTable.Append(lua.LNumber(v))
+		case bool:
+			luaTable.Append(lua.LBool(v))
+		case string:
+			luaTable.Append(lua.LString(v))
+		default:
+			log.Fatalf("Doesn't deal with slice containing value %v of type %T", v, v)
 		}
 	}
 
