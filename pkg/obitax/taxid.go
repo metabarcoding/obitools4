@@ -21,7 +21,7 @@ type TaxidFactory struct {
 func NewTaxidFactory(code string, alphabet obiutils.AsciiSet) *TaxidFactory {
 	return &TaxidFactory{
 		inner:    NewInnerString(),
-		code:     code + ":",
+		code:     code,
 		alphabet: alphabet,
 	}
 	// Initialize and return a new TaxidFactory.
@@ -35,6 +35,7 @@ func (f *TaxidFactory) FromString(taxid string) (Taxid, error) {
 	if len(part2) == 0 {
 		taxid = part1
 	} else {
+		//log.Warnf("TaxidFactory.FromString: taxid %s -> -%s- -%s- ", taxid, part1, part2)
 		if part1 != f.code {
 			return nil, fmt.Errorf("taxid %s string does not start with taxonomy code %s", taxid, f.code)
 		}
