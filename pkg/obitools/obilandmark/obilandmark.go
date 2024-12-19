@@ -11,7 +11,6 @@ import (
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obistats"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obifind"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obirefidx"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 	"github.com/schollz/progressbar/v3"
@@ -155,19 +154,20 @@ func CLISelectLandmarkSequences(iterator obiiter.IBioSequence) obiiter.IBioSeque
 		}
 	}
 
-	if obifind.CLIHasSelectedTaxonomy() {
-		taxo, err := obifind.CLILoadSelectedTaxonomy()
-		if err != nil {
-			log.Fatal(err)
+	if obioptions.CLIHasSelectedTaxonomy() {
+		taxo := obitax.DefaultTaxonomy()
+		if taxo == nil {
+			log.Fatal("No taxonomy available")
 		}
 
-		taxa := make(obitax.TaxonSet, len(library))
+		taxa := obitax.DefaultTaxonomy().NewTaxonSlice(len(library), len(library))
 
 		for i, seq := range library {
-			taxa[i], err = taxo.Taxon(seq.Taxid())
-			if err != nil {
-				log.Fatal(err)
+			taxon := seq.Taxon(taxo)
+			if taxon == nil {
+				log.Fatal("%s: Cannot identify taxid %s in %s", seq.Id(), seq.Taxid(), taxo.Name())
 			}
+			taxa.Set(i, taxon)
 		}
 
 		pbopt := make([]progressbar.Option, 0, 5)
@@ -182,7 +182,7 @@ func CLISelectLandmarkSequences(iterator obiiter.IBioSequence) obiiter.IBioSeque
 		bar := progressbar.NewOptions(len(library), pbopt...)
 
 		for i, seq := range library {
-			idx := obirefidx.GeomIndexSesquence(i, library, &taxa, taxo)
+			idx := obirefidx.GeomIndexSesquence(i, library, taxa, taxo)
 			seq.SetOBITagGeomRefIndex(idx)
 
 			if i%10 == 0 {

@@ -47,14 +47,7 @@ func IsAValidTaxon(taxonomy *obitax.Taxonomy, withAutoCorrection ...bool) Sequen
 
 // A function that takes a taxonomy and a taxid as arguments and returns a function that takes a
 // pointer to a BioSequence as an argument and returns a boolean.
-func IsSubCladeOf(taxonomy *obitax.Taxonomy, taxid string) SequencePredicate {
-	parent := taxonomy.Taxon(taxid)
-
-	if parent == nil {
-		log.Fatalf("Cannot find taxon : %s in taxonomy %s",
-			taxid,
-			taxonomy.Name())
-	}
+func IsSubCladeOf(taxonomy *obitax.Taxonomy, parent *obitax.Taxon) SequencePredicate {
 
 	f := func(sequence *BioSequence) bool {
 		taxon := sequence.Taxon(taxonomy)

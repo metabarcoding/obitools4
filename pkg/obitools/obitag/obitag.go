@@ -2,8 +2,6 @@ package obitag
 
 import (
 	"sort"
-	"strconv"
-	"strings"
 
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/exp/maps"
@@ -29,7 +27,9 @@ import (
 // - taxid: The taxid associated with the matched distance.
 // - rank: The rank associated with the matched distance.
 // - scientificName: The scientific name associated with the matched distance.
-func MatchDistanceIndex(distance int, distanceIdx map[int]string) (int, string, string) {
+func MatchDistanceIndex(taxonomy *obitax.Taxonomy, distance int, distanceIdx map[int]string) *obitax.Taxon {
+	taxonomy = taxonomy.OrDefault(true)
+
 	keys := maps.Keys(distanceIdx)
 	slices.Sort(keys)
 
@@ -37,24 +37,20 @@ func MatchDistanceIndex(distance int, distanceIdx map[int]string) (int, string, 
 		return distance <= keys[i]
 	})
 
-	var taxid int
-	var rank string
-	var scientificName string
+	var taxon *obitax.Taxon
 
 	if i == len(keys) || distance > keys[len(keys)-1] {
-		taxid = 1
-		rank = "no rank"
-		scientificName = "root"
+		taxon = taxonomy.Root()
 	} else {
-		parts := strings.Split(distanceIdx[keys[i]], "@")
-		taxid, _ = strconv.Atoi(parts[0])
-		rank = parts[1]
-		scientificName = parts[2]
+		taxon = taxonomy.Taxon(distanceIdx[keys[i]])
+		if taxon == nil {
+			log.Panicf("Cannot identify taxon %s in %s", distanceIdx[keys[i]], taxonomy.Name())
+		}
 	}
 
 	// log.Info("taxid:", taxid, " rank:", rank, " scientificName:", scientificName)
 
-	return taxid, rank, scientificName
+	return taxon
 }
 
 // FindClosests finds the closest bio sequence from a given sequence and a slice of reference sequences.
@@ -169,12 +165,12 @@ func FindClosests(sequence *obiseq.BioSequence,
 func Identify(sequence *obiseq.BioSequence,
 	references obiseq.BioSequenceSlice,
 	refcounts []*obikmer.Table4mer,
-	taxa obitax.TaxonSet,
+	taxa *obitax.TaxonSlice,
 	taxo *obitax.Taxonomy,
 	runExact bool) *obiseq.BioSequence {
 
 	bests, differences, identity, bestmatch, seqidxs := FindClosests(sequence, references, refcounts, runExact)
-	taxon := (*obitax.TaxNode)(nil)
+	taxon := (*obitax.Taxon)(nil)
 
 	if identity >= 0.5 && differences >= 0 {
 		newidx := 0
@@ -183,56 +179,24 @@ func Identify(sequence *obiseq.BioSequence,
 			if idx == nil {
 				// log.Debugln("Need of indexing")
 				newidx++
-				idx = obirefidx.IndexSequence(seqidxs[i], references, &refcounts, &taxa, taxo)
+				idx = obirefidx.IndexSequence(seqidxs[i], references, &refcounts, taxa, taxo)
 				references[seqidxs[i]].SetOBITagRefIndex(idx)
 				log.Debugln(references[seqidxs[i]].Id(), idx)
 			}
 
 			d := differences
 			identification, ok := idx[d]
-			found := false
-			var parts []string
 
-			/*
-				Here is an horrible hack for xprize challence.
-				With Euka01 the part[0] was equal to "" for at
-				least a sequence consensus. Which is not normal.
-
-				TO BE CHECKED AND CORRECTED
-
-				The problem seems related to idx that doesn't have
-				a 0 distance
-			*/
-			for !found && d >= 0 {
-				for !ok && d >= 0 {
-					identification, ok = idx[d]
-					d--
-				}
-
-				parts = strings.Split(identification, "@")
-
-				found = parts[0] != ""
-				if !found {
-					log.Debugln("Problem in identification line : ", best.Id(), "idx:", idx, "distance:", d)
-					for !ok && d <= 1000 {
-						identification, ok = idx[d]
-						d++
-					}
-
-				}
+			for !ok && d >= 0 {
+				d--
+				identification, ok = idx[d]
 			}
 
-			match_taxid, err := strconv.Atoi(parts[0])
-
-			if err != nil {
-				log.Panicln("Cannot extract taxid from :", identification)
+			if !ok {
+				log.Panic("Problem in identification line : ", best.Id(), "idx:", idx, "distance:", d)
 			}
 
-			match_taxon, err := taxo.Taxon(match_taxid)
-
-			if err != nil {
-				log.Panicln("Cannot find taxon corresponding to taxid :", match_taxid)
-			}
+			match_taxon := taxo.Taxon(identification)
 
 			if taxon != nil {
 				taxon, _ = taxon.LCA(match_taxon)
@@ -241,16 +205,16 @@ func Identify(sequence *obiseq.BioSequence,
 			}
 
 		}
+
 		log.Debugln(sequence.Id(), "Best matches:", len(bests), "New index:", newidx)
 
-		sequence.SetTaxid(taxon.Taxid())
+		sequence.SetTaxon(taxon)
 
 	} else {
-		taxon, _ = taxo.Taxon(1)
-		sequence.SetTaxid(1)
+		taxon = taxo.Root()
+		sequence.SetTaxon(taxon)
 	}
 
-	sequence.SetAttribute("scientific_name", taxon.ScientificName())
 	sequence.SetAttribute("obitag_rank", taxon.Rank())
 	sequence.SetAttribute("obitag_bestid", identity)
 	sequence.SetAttribute("obitag_bestmatch", bestmatch)
@@ -262,7 +226,7 @@ func Identify(sequence *obiseq.BioSequence,
 
 func IdentifySeqWorker(references obiseq.BioSequenceSlice,
 	refcounts []*obikmer.Table4mer,
-	taxa obitax.TaxonSet,
+	taxa *obitax.TaxonSlice,
 	taxo *obitax.Taxonomy,
 	runExact bool) obiseq.SeqWorker {
 	return func(sequence *obiseq.BioSequence) (obiseq.BioSequenceSlice, error) {
@@ -279,23 +243,21 @@ func CLIAssignTaxonomy(iterator obiiter.IBioSequence,
 		[]*obikmer.Table4mer,
 		len(references))
 
-	taxa := make(obitax.TaxonSet,
-		len(references))
-
+	taxa := taxo.NewTaxonSlice(references.Len(), references.Len())
 	buffer := make([]byte, 0, 1000)
 
-	var err error
 	j := 0
 	for _, seq := range references {
 		references[j] = seq
 		refcounts[j] = obikmer.Count4Mer(seq, &buffer, nil)
-		taxa[j], err = taxo.Taxon(seq.Taxid())
-		if err == nil {
+		taxon := seq.Taxon(taxo)
+		taxa.Set(j, taxon)
+		if taxon != nil {
 			j++
 		} else {
-			log.Warnf("Taxid %d is not described in the taxonomy."+
+			log.Warnf("Taxid %d is not described in the taxonomy %s."+
 				" Sequence %s is discared from the reference database",
-				seq.Taxid(), seq.Id())
+				seq.Taxid(), taxo.Name(), seq.Id())
 		}
 	}
 

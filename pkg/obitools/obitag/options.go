@@ -8,7 +8,6 @@ import (
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obifind"
 	"github.com/DavidGamba/go-getoptions"
 )
 
@@ -42,7 +41,7 @@ func TagOptionSet(options *getoptions.GetOpt) {
 // the obiuniq command
 func OptionSet(options *getoptions.GetOpt) {
 	obiconvert.OptionSet(options)
-	obifind.LoadTaxonomyOptionSet(options, true, false)
+	obioptions.LoadTaxonomyOptionSet(options, true, false)
 	TagOptionSet(options)
 }
 

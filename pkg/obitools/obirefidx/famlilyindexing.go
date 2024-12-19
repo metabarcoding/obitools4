@@ -13,7 +13,6 @@ import (
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obifind"
 	"github.com/schollz/progressbar/v3"
 	log "github.com/sirupsen/logrus"
 )
@@ -73,9 +72,7 @@ func MakeIndexingSliceWorker(indexslot, idslot string,
 			[]*obikmer.Table4mer,
 			len(sequences))
 
-		taxa := make(
-			obitax.TaxonSet,
-			len(sequences))
+		taxa := taxonomy.NewTaxonSlice(sequences.Len(), sequences.Len())
 
 		for i, seq := range sequences {
 			j, ok := seq.GetIntAttribute(idslot)
@@ -85,8 +82,11 @@ func MakeIndexingSliceWorker(indexslot, idslot string,
 			}
 
 			kmercounts[i] = (*kmers)[j]
-
-			taxa[i], _ = taxonomy.Taxon(seq.Taxid())
+			taxon := seq.Taxon(taxonomy)
+			if taxon == nil {
+				log.Panicf("%s: Cannot get the taxon %s in %s", seq.Id(), seq.Taxid(), taxonomy.Name())
+			}
+			taxa.Set(i, taxon)
 
 		}
 
@@ -103,7 +103,7 @@ func MakeIndexingSliceWorker(indexslot, idslot string,
 		f := func() {
 			for l := range limits {
 				for i := l[0]; i < l[1]; i++ {
-					idx := IndexSequence(i, sequences, &kmercounts, &taxa, taxonomy)
+					idx := IndexSequence(i, sequences, &kmercounts, taxa, taxonomy)
 					sequences[i].SetAttribute(indexslot, idx)
 				}
 			}
@@ -134,7 +134,7 @@ func IndexFamilyDB(iterator obiiter.IBioSequence) obiiter.IBioSequence {
 	nref := len(references)
 	log.Infof("Done. Database contains %d sequences", nref)
 
-	taxonomy, error := obifind.CLILoadSelectedTaxonomy()
+	taxonomy, error := obioptions.CLILoadSelectedTaxonomy()
 	if error != nil {
 		log.Panicln(error)
 	}
@@ -155,13 +155,13 @@ func IndexFamilyDB(iterator obiiter.IBioSequence) obiiter.IBioSequence {
 	log.Info("done")
 
 	partof := obiiter.IBatchOver(source, references,
-		obioptions.CLIBatchSize()).MakeIWorker(taxonomy.MakeSetSpeciesWorker(),
+		obioptions.CLIBatchSize()).MakeIWorker(obiseq.MakeSetSpeciesWorker(taxonomy),
 		false,
 		obioptions.CLIParallelWorkers(),
-	).MakeIWorker(taxonomy.MakeSetGenusWorker(),
+	).MakeIWorker(obiseq.MakeSetGenusWorker(taxonomy),
 		false,
 		obioptions.CLIParallelWorkers(),
-	).MakeIWorker(taxonomy.MakeSetFamilyWorker(),
+	).MakeIWorker(obiseq.MakeSetFamilyWorker(taxonomy),
 		false,
 		obioptions.CLIParallelWorkers(),
 	)
@@ -187,14 +187,20 @@ func IndexFamilyDB(iterator obiiter.IBioSequence) obiiter.IBioSequence {
 
 	clusters := obiseq.MakeBioSequenceSlice(0)
 	kcluster := make([]*obikmer.Table4mer, 0)
-	taxa := make(obitax.TaxonSet, 0)
+	taxa := taxonomy.NewTaxonSlice(references.Len(), references.Len())
 
 	j := 0
 	for i, seq := range references {
 		if is_centrer, _ := seq.GetBoolAttribute("reffamidx_clusterhead"); is_centrer {
 			clusters = append(clusters, seq)
 			kcluster = append(kcluster, refcounts[i])
-			taxa[j], _ = taxonomy.Taxon(seq.Taxid())
+
+			taxon := seq.Taxon(taxonomy)
+			if taxon == nil {
+				log.Panicf("%s: Cannot get the taxon %s in %s", seq.Id(), seq.Taxid(), taxonomy.Name())
+			}
+			taxa.Set(j, taxon)
+
 			j++
 		}
 	}
@@ -225,7 +231,7 @@ func IndexFamilyDB(iterator obiiter.IBioSequence) obiiter.IBioSequence {
 	f := func() {
 		for l := range limits {
 			for i := l[0]; i < l[1]; i++ {
-				idx := IndexSequence(i, clusters, &kcluster, &taxa, taxonomy)
+				idx := IndexSequence(i, clusters, &kcluster, taxa, taxonomy)
 				clusters[i].SetOBITagRefIndex(idx)
 				bar.Add(1)
 			}

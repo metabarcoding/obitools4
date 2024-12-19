@@ -1,8 +1,8 @@
 package obilandmark
 
 import (
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obifind"
 	"github.com/DavidGamba/go-getoptions"
 )
 
@@ -25,7 +25,7 @@ func LandmarkOptionSet(options *getoptions.GetOpt) {
 func OptionSet(options *getoptions.GetOpt) {
 	obiconvert.InputOptionSet(options)
 	obiconvert.OutputOptionSet(options)
-	obifind.LoadTaxonomyOptionSet(options, false, false)
+	obioptions.LoadTaxonomyOptionSet(options, false, false)
 	LandmarkOptionSet(options)
 }
 

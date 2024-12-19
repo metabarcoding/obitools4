@@ -250,22 +250,26 @@ func ICleanDB(itertator obiiter.IBioSequence) obiiter.IBioSequence {
 	if len(obigrep.CLIRequiredRanks()) > 0 {
 		rankPredicate = obigrep.CLIHasRankDefinedPredicate()
 	} else {
-		rankPredicate = taxonomy.HasRequiredRank("species").And(taxonomy.HasRequiredRank("genus")).And(taxonomy.HasRequiredRank("family"))
+		rankPredicate = obiseq.HasRequiredRank(
+			taxonomy, "species",
+		).And(obiseq.HasRequiredRank(
+			taxonomy, "genus",
+		)).And(obiseq.HasRequiredRank(taxonomy, "family"))
 	}
 
-	goodTaxa := taxonomy.IsAValidTaxon(CLIUpdateTaxids()).And(rankPredicate)
+	goodTaxa := obiseq.IsAValidTaxon(taxonomy, CLIUpdateTaxids()).And(rankPredicate)
 
 	usable := unique.FilterOn(goodTaxa,
 		obioptions.CLIBatchSize(),
 		obioptions.CLIParallelWorkers())
 
-	annotated := usable.MakeIWorker(taxonomy.MakeSetSpeciesWorker(),
+	annotated := usable.MakeIWorker(obiseq.MakeSetSpeciesWorker(taxonomy),
 		false,
 		obioptions.CLIParallelWorkers(),
-	).MakeIWorker(taxonomy.MakeSetGenusWorker(),
+	).MakeIWorker(obiseq.MakeSetGenusWorker(taxonomy),
 		false,
 		obioptions.CLIParallelWorkers(),
-	).MakeIWorker(taxonomy.MakeSetFamilyWorker(),
+	).MakeIWorker(obiseq.MakeSetFamilyWorker(taxonomy),
 		false,
 		obioptions.CLIParallelWorkers(),
 	)

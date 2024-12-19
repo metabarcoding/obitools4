@@ -389,18 +389,6 @@ func (s *BioSequence) SetCount(count int) {
 	s.SetAttribute("count", count)
 }
 
-// SetTaxid sets the taxid for the BioSequence.
-//
-// Parameters:
-//
-//	taxid - the taxid to set.
-func (s *BioSequence) SetTaxid(taxid string) {
-	if taxid == "" {
-		taxid = "NA"
-	}
-	s.SetAttribute("taxid", taxid)
-}
-
 func (s *BioSequence) OBITagRefIndex(slot ...string) map[int]string {
 	key := "obitag_ref_index"
 

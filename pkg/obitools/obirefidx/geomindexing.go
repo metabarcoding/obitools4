@@ -2,9 +2,10 @@ package obirefidx
 
 import (
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"sort"
 	"sync"
+
+	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
@@ -15,7 +16,7 @@ import (
 
 func GeomIndexSesquence(seqidx int,
 	references obiseq.BioSequenceSlice,
-	taxa *obitax.TaxonSet,
+	taxa *obitax.TaxonSlice,
 	taxo *obitax.Taxonomy) map[int]string {
 
 	sequence := references[seqidx]
@@ -56,28 +57,28 @@ func GeomIndexSesquence(seqidx int,
 
 	order := obiutils.Order(sort.IntSlice(seq_dist))
 
-	lca := (*taxa)[seqidx]
+	lca := taxa.Taxon(seqidx)
 
 	index := make(map[int]string)
 	index[0] = fmt.Sprintf(
-		"%d@%s@%s",
-		lca.Taxid(),
-		lca.ScientificName(),
-		lca.Rank())
+		"%s@%s",
+		lca.String(),
+		lca.Rank(),
+	)
 
 	for _, o := range order {
-		new_lca, _ := lca.LCA((*taxa)[o])
-		if new_lca.Taxid() != lca.Taxid() {
+		new_lca, _ := lca.LCA(taxa.Taxon(o))
+		if new_lca.SameAs(lca) {
 			lca = new_lca
 			index[int(seq_dist[o])] = fmt.Sprintf(
-				"%d@%s@%s",
-				lca.Taxid(),
-				lca.ScientificName(),
-				lca.Rank())
-		}
+				"%s@%s",
+				lca.String(),
+				lca.Rank(),
+			)
 
-		if lca.Taxid() == 1 {
-			break
+			if lca.IsRoot() {
+				break
+			}
 		}
 	}
 

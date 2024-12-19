@@ -13,6 +13,7 @@ package obitax
 import (
 	"bytes"
 	"fmt"
+	"log"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 )
@@ -57,6 +58,16 @@ func (slice *TaxonSlice) Get(i int) *TaxNode {
 		return nil
 	}
 	return slice.slice[i]
+}
+
+func (slice *TaxonSlice) Taxon(i int) *Taxon {
+	if slice == nil {
+		return nil
+	}
+	return &Taxon{
+		Node:     slice.slice[i],
+		Taxonomy: slice.taxonomy,
+	}
 }
 
 // Len returns the number of TaxNode instances in the TaxonSlice.
@@ -123,4 +134,14 @@ func (slice *TaxonSlice) Reverse(inplace bool) *TaxonSlice {
 		taxonomy: slice.taxonomy,
 		slice:    rep,
 	}
+}
+
+func (slice *TaxonSlice) Set(index int, taxon *Taxon) *TaxonSlice {
+	if slice.taxonomy != taxon.Taxonomy {
+		log.Panic("Cannot add taxon from a different taxonomy")
+	}
+
+	slice.slice[index] = taxon.Node
+
+	return slice
 }

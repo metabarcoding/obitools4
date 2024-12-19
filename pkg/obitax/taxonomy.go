@@ -8,9 +8,10 @@ and retrieving information about taxa.
 package obitax
 
 import (
+	"errors"
 	"fmt"
-	"regexp"
 
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -32,13 +33,12 @@ import (
 type Taxonomy struct {
 	name        string
 	code        string
-	ids         *InnerString
+	ids         *TaxidFactory
 	ranks       *InnerString
 	nameclasses *InnerString
 	names       *InnerString
 	nodes       *TaxonSet
 	root        *TaxNode
-	matcher     *regexp.Regexp
 	index       map[*string]*TaxonSet
 }
 
@@ -52,21 +52,18 @@ type Taxonomy struct {
 //
 // Returns:
 //   - A pointer to the newly created Taxonomy instance.
-func NewTaxonomy(name, code, codeCharacters string) *Taxonomy {
+func NewTaxonomy(name, code string, codeCharacters obiutils.AsciiSet) *Taxonomy {
 	set := make(map[*string]*TaxNode)
-
-	matcher := regexp.MustCompile(fmt.Sprintf("^[[:blank:]]*(%s:)?(%s+)", code, codeCharacters))
 
 	taxonomy := &Taxonomy{
 		name:        name,
 		code:        code,
-		ids:         NewInnerString(),
+		ids:         NewTaxidFactory(code, codeCharacters),
 		ranks:       NewInnerString(),
 		nameclasses: NewInnerString(),
 		names:       NewInnerString(),
 		nodes:       &TaxonSet{set: set},
 		root:        nil,
-		matcher:     matcher,
 		index:       make(map[*string]*TaxonSet),
 	}
 
@@ -85,23 +82,17 @@ func NewTaxonomy(name, code, codeCharacters string) *Taxonomy {
 // Returns:
 //   - The taxon identifier as a *string corresponding to the provided taxid.
 //   - An error if the taxid is not valid or cannot be converted.
-func (taxonomy *Taxonomy) Id(taxid string) (*string, error) {
+func (taxonomy *Taxonomy) Id(taxid string) (Taxid, error) {
 	taxonomy = taxonomy.OrDefault(false)
 
 	if taxonomy == nil {
-		return nil, fmt.Errorf("Cannot extract Id from nil Taxonomy")
+		return nil, errors.New("Cannot extract Id from nil Taxonomy")
 	}
 
-	matches := taxonomy.matcher.FindStringSubmatch(taxid)
-
-	if matches == nil {
-		return nil, fmt.Errorf("taxid %s is not a valid taxid", taxid)
-	}
-
-	return taxonomy.ids.Innerize(matches[2]), nil
+	return taxonomy.ids.FromString(taxid)
 }
 
-// TaxidSting retrieves the string representation of a taxon node identified by the given ID.
+// TaxidString retrieves the string representation of a taxon node identified by the given ID.
 // It looks up the node in the taxonomy and returns its formatted string representation
 // along with the taxonomy code. If the node does not exist, it returns an error.
 //
@@ -111,7 +102,7 @@ func (taxonomy *Taxonomy) Id(taxid string) (*string, error) {
 // Returns:
 //   - A string representing the taxon node in the format "taxonomyCode:id [scientificName]",
 //     or an error if the taxon node with the specified ID does not exist in the taxonomy.
-func (taxonomy *Taxonomy) TaxidSting(id string) (string, error) {
+func (taxonomy *Taxonomy) TaxidString(id string) (string, error) {
 	taxonomy = taxonomy.OrDefault(false)
 
 	pid, err := taxonomy.Id(id)

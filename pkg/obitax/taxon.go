@@ -179,9 +179,9 @@ func (taxon *Taxon) IPath() iter.Seq[*Taxon] {
 	}
 }
 
-// Path returns a slice of TaxNode representing the path from the current Taxon
-// to the root Taxon in the associated Taxonomy. It collects all the nodes in the path
-// using the IPath method and returns them as a TaxonSlice.
+// Path returns a slice of TaxNode representing the path from the current Taxon.
+// The first element of the slice is the current Taxon, and the last element is the
+// to the root Taxon in the associated Taxonomy.
 //
 // Returns:
 //   - A pointer to a TaxonSlice containing the TaxNode instances in the path
@@ -370,4 +370,12 @@ func (taxon *Taxon) MetadataStringValues() []string {
 		values = append(values, value)
 	}
 	return values
+}
+
+func (taxon *Taxon) SameAs(other *Taxon) bool {
+	if taxon == nil || other == nil {
+		return false
+	}
+
+	return taxon.Taxonomy == other.Taxonomy && taxon.Node.id == other.Node.id
 }

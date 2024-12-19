@@ -16,11 +16,24 @@ import (
 //     if either of the taxa is nil, if they are not in the same taxonomy, or
 //     if the taxonomy is unrooted.
 func (t1 *Taxon) LCA(t2 *Taxon) (*Taxon, error) {
-	if t1 == nil || t1.Node == nil {
-		return nil, fmt.Errorf("try to get LCA of nil taxon")
+	if t1 == nil && t2 != nil {
+		return t2, nil
 	}
 
-	if t2 == nil || t2.Node == nil {
+	if t2 == nil && t1 != nil {
+
+		return t1, nil
+	}
+
+	if t1 == nil && t2 == nil {
+		return nil, fmt.Errorf("try to get LCA of nil taxa")
+	}
+
+	if t1.Node == nil {
+		return nil, fmt.Errorf("try to get LCA of nil taxa")
+	}
+
+	if t2.Node == nil {
 		return nil, fmt.Errorf("try to get LCA of nil taxon")
 	}
 

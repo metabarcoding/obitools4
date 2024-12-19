@@ -1,6 +1,9 @@
 package obitax
 
-import "sync"
+import (
+	"strings"
+	"sync"
+)
 
 // InnerString is a struct that holds a map of strings and a read-write lock for concurrent access.
 // The index map is used to store key-value pairs of strings.
@@ -31,10 +34,10 @@ func (i *InnerString) Innerize(value string) *string {
 	defer i.lock.Unlock()
 	s, ok := i.index[value]
 	if !ok {
+		value = strings.Clone(value)
 		s = &value
 		i.index[value] = s
 	}
-
 	return s
 }
 

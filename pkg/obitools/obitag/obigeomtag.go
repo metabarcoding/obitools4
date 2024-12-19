@@ -48,19 +48,18 @@ func ExtractLandmarkSeqs(references *obiseq.BioSequenceSlice) *obiseq.BioSequenc
 // - taxonomy: a pointer to a Taxonomy object.
 //
 // The function returns a pointer to a TaxonSet, which is a set of taxa.
-func ExtractTaxonSet(references *obiseq.BioSequenceSlice, taxonomy *obitax.Taxonomy) *obitax.TaxonSet {
-	var err error
-	taxa := make(obitax.TaxonSet, len(*references))
+func ExtractTaxonSet(references *obiseq.BioSequenceSlice, taxonomy *obitax.Taxonomy) *obitax.TaxonSlice {
+	taxa := taxonomy.NewTaxonSlice(references.Len(), references.Len())
 
 	for i, ref := range *references {
-		taxid := ref.Taxid()
-		taxa[i], err = taxonomy.Taxon(taxid)
-		if err != nil {
-			log.Panicf("Taxid %d, for sequence %s not found in taxonomy", taxid, ref.Id())
+		taxon := ref.Taxon(taxonomy)
+		if taxon == nil {
+			log.Panicf("%s: Cannot get the taxon %s in %s", ref.Id(), ref.Taxid(), taxonomy.Name())
 		}
+		taxa.Set(i, taxon)
 	}
 
-	return &taxa
+	return taxa
 }
 
 // MapOnLandmarkSequences calculates the coordinates of landmarks on a given sequence.
@@ -149,29 +148,26 @@ func FindGeomClosest(sequence *obiseq.BioSequence,
 func GeomIdentify(sequence *obiseq.BioSequence,
 	landmarks *obiseq.BioSequenceSlice,
 	references *obiseq.BioSequenceSlice,
-	taxa *obitax.TaxonSet,
+	taxa *obitax.TaxonSlice,
 	taxo *obitax.Taxonomy,
 	buffer *[]uint64) *obiseq.BioSequence {
 	best_seq, min_dist, best_id, query_location, matches := FindGeomClosest(sequence, landmarks, references, buffer)
 
-	taxon := (*obitax.TaxNode)(nil)
+	taxon := (*obitax.Taxon)(nil)
 	var err error
 
 	if best_id > 0.5 {
-		taxid, _, _ := MatchDistanceIndex(min_dist, (*matches)[0].OBITagGeomRefIndex())
-		taxon, _ = taxo.Taxon(taxid)
+		taxon = MatchDistanceIndex(taxo, min_dist, (*matches)[0].OBITagGeomRefIndex())
 		for i := 1; i < len(*matches); i++ {
-			taxid, _, _ := MatchDistanceIndex(min_dist, (*matches)[i].OBITagGeomRefIndex())
-			newTaxon, _ := taxo.Taxon(taxid)
+			newTaxon := MatchDistanceIndex(taxo, min_dist, (*matches)[i].OBITagGeomRefIndex())
 			taxon, err = newTaxon.LCA(taxon)
 			if err != nil {
 				log.Panicf("LCA error: %v", err)
 			}
 		}
-		sequence.SetTaxid(taxon.Taxid())
+		sequence.SetTaxon(taxon)
 	} else {
-		taxon, _ = taxo.Taxon(1)
-		sequence.SetTaxid(1)
+		sequence.SetTaxon(taxo.Root())
 	}
 
 	sequence.SetAttribute("scientific_name", taxon.ScientificName())

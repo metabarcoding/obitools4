@@ -1,7 +1,6 @@
 package obigrep
 
 import (
-	"strconv"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -16,7 +15,7 @@ import (
 )
 
 var _BelongTaxa = make([]string, 0)
-var _NotBelongTaxa = make([]int, 0)
+var _NotBelongTaxa = make([]string, 0)
 var _RequiredRanks = make([]string, 0)
 
 var _MinimumLength = 1
@@ -60,7 +59,7 @@ func TaxonomySelectionOptionSet(options *getoptions.GetOpt) {
 		options.ArgName("TAXID"),
 		options.Description("Require that the actual taxon of the sequence belongs the provided taxid."))
 
-	options.IntSliceVar(&_NotBelongTaxa, "ignore-taxon", 1, 1,
+	options.StringSliceVar(&_NotBelongTaxa, "ignore-taxon", 1, 1,
 		options.Alias("i"),
 		options.ArgName("TAXID"),
 		options.Description("Require that the actual taxon of the sequence doesn't belong the provided taxid."))
@@ -273,18 +272,18 @@ func CLIRestrictTaxonomyPredicate() obiseq.SequencePredicate {
 	if len(_BelongTaxa) > 0 {
 		taxonomy := CLILoadSelectedTaxonomy()
 
-		taxid, err := strconv.Atoi(_BelongTaxa[0])
-		if err != nil {
-			p = taxonomy.IsSubCladeOfSlot(_BelongTaxa[0])
+		taxon := taxonomy.Taxon(_BelongTaxa[0])
+		if taxon == nil {
+			p = obiseq.IsSubCladeOfSlot(taxonomy, _BelongTaxa[0])
 		} else {
-			p = taxonomy.IsSubCladeOf(taxid)
+			p = obiseq.IsSubCladeOf(taxonomy, taxon)
 		}
 		for _, staxid := range _BelongTaxa[1:] {
-			taxid, err := strconv.Atoi(staxid)
-			if err != nil {
-				p2 = taxonomy.IsSubCladeOfSlot(staxid)
+			taxon := taxonomy.Taxon(staxid)
+			if taxon == nil {
+				p2 = obiseq.IsSubCladeOfSlot(taxonomy, staxid)
 			} else {
-				p2 = taxonomy.IsSubCladeOf(taxid)
+				p2 = obiseq.IsSubCladeOf(taxonomy, taxon)
 			}
 
 			p = p.Or(p2)
@@ -297,13 +296,28 @@ func CLIRestrictTaxonomyPredicate() obiseq.SequencePredicate {
 }
 
 func CLIAvoidTaxonomyPredicate() obiseq.SequencePredicate {
+	var p obiseq.SequencePredicate
+	var p2 obiseq.SequencePredicate
 
 	if len(_NotBelongTaxa) > 0 {
 		taxonomy := CLILoadSelectedTaxonomy()
-		p := taxonomy.IsSubCladeOf(_NotBelongTaxa[0])
+
+		taxon := taxonomy.Taxon(_NotBelongTaxa[0])
+		if taxon == nil {
+			p = obiseq.IsSubCladeOfSlot(taxonomy, _NotBelongTaxa[0])
+		} else {
+			p = obiseq.IsSubCladeOf(taxonomy, taxon)
+		}
 
 		for _, taxid := range _NotBelongTaxa[1:] {
-			p = p.Or(taxonomy.IsSubCladeOf(taxid))
+			taxon := taxonomy.Taxon(taxid)
+			if taxon == nil {
+				p2 = obiseq.IsSubCladeOfSlot(taxonomy, taxid)
+			} else {
+				p2 = obiseq.IsSubCladeOf(taxonomy, taxon)
+			}
+
+			p = p.Or(p2)
 		}
 
 		return p.Not()
@@ -316,10 +330,10 @@ func CLIHasRankDefinedPredicate() obiseq.SequencePredicate {
 
 	if len(_RequiredRanks) > 0 {
 		taxonomy := CLILoadSelectedTaxonomy()
-		p := taxonomy.HasRequiredRank(_RequiredRanks[0])
+		p := obiseq.HasRequiredRank(taxonomy, _RequiredRanks[0])
 
 		for _, rank := range _RequiredRanks[1:] {
-			p = p.And(taxonomy.HasRequiredRank(rank))
+			p = p.And(obiseq.HasRequiredRank(taxonomy, rank))
 		}
 
 		return p

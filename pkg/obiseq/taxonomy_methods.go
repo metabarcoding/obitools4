@@ -1,6 +1,10 @@
 package obiseq
 
 import (
+	"fmt"
+
+	log "github.com/sirupsen/logrus"
+
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
 )
 
@@ -10,6 +14,23 @@ func (s *BioSequence) Taxon(taxonomy *obitax.Taxonomy) *obitax.Taxon {
 		return nil
 	}
 	return taxonomy.Taxon(taxid)
+}
+
+// SetTaxid sets the taxid for the BioSequence.
+//
+// Parameters:
+//
+//	taxid - the taxid to set.
+func (s *BioSequence) SetTaxid(taxid string) {
+	if taxid == "" {
+		taxid = "NA"
+	}
+	s.SetAttribute("taxid", taxid)
+}
+
+func (s *BioSequence) SetTaxon(taxon *obitax.Taxon) {
+	taxid := taxon.String()
+	s.SetTaxid(taxid)
 }
 
 // Taxid returns the taxonomic ID associated with the BioSequence.
@@ -25,7 +46,20 @@ func (s *BioSequence) Taxid() (taxid string) {
 		taxid = s.taxon.String()
 		ok = true
 	} else {
-		taxid, ok = s.GetStringAttribute("taxid")
+		var ta interface{}
+		ta, ok = s.GetAttribute("taxid")
+		if ok {
+			switch tv := ta.(type) {
+			case string:
+				taxid = tv
+			case int:
+				taxid = fmt.Sprintf("%d", tv)
+			case float64:
+				taxid = fmt.Sprintf("%d", int(tv))
+			default:
+				log.Fatalf("Taxid: %v is not a string or an integer (%T)", ta, ta)
+			}
+		}
 	}
 
 	if !ok {

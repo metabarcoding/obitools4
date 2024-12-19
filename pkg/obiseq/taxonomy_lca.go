@@ -123,7 +123,6 @@ func AddLCAWorker(taxonomy *obitax.Taxonomy, slot_name string, threshold float64
 		sequence.SetAttribute(slot_name, lca.String())
 		sequence.SetAttribute(lca_name, lca.ScientificName())
 		sequence.SetAttribute(lca_error, math.Round((1-rans)*1000)/1000)
-
 		return BioSequenceSlice{sequence}, nil
 	}
 

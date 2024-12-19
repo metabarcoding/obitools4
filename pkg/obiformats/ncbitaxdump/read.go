@@ -12,6 +12,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 )
 
 func loadNodeTable(reader io.Reader, taxonomy *obitax.Taxonomy) {
@@ -103,7 +104,7 @@ func loadMergedTable(reader io.Reader, taxonomy *obitax.Taxonomy) int {
 //     if any of the files cannot be opened or read.
 func LoadNCBITaxDump(directory string, onlysn bool) (*obitax.Taxonomy, error) {
 
-	taxonomy := obitax.NewTaxonomy("NCBI Taxonomy", "taxon", "[[:digit:]]")
+	taxonomy := obitax.NewTaxonomy("NCBI Taxonomy", "taxon", obiutils.AsciiDigitSet)
 
 	//
 	// Load the Taxonomy nodes

@@ -7,8 +7,8 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obifind"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obitag"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
@@ -44,9 +44,9 @@ func main() {
 	fs, err := obiconvert.CLIReadBioSequences(args...)
 	obiconvert.OpenSequenceDataErrorMessage(args, err)
 
-	taxo, error := obifind.CLILoadSelectedTaxonomy()
-	if error != nil {
-		log.Panicln(error)
+	taxo := obitax.DefaultTaxonomy()
+	if taxo == nil {
+		log.Panicln("No loaded taxonomy")
 	}
 
 	references := obitag.CLIRefDB()
