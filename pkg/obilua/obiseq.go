@@ -47,18 +47,21 @@ func newObiSeq(luaState *lua.LState) int {
 }
 
 var bioSequenceMethods = map[string]lua.LGFunction{
-	"id":            bioSequenceGetSetId,
-	"sequence":      bioSequenceGetSetSequence,
-	"qualities":     bioSequenceGetSetQualities,
-	"definition":    bioSequenceGetSetDefinition,
-	"count":         bioSequenceGetSetCount,
-	"taxid":         bioSequenceGetSetTaxid,
-	"attribute":     bioSequenceGetSetAttribute,
-	"len":           bioSequenceGetLength,
-	"has_sequence":  bioSequenceHasSequence,
-	"has_qualities": bioSequenceHasQualities,
-	"source":        bioSequenceGetSource,
-	"md5":           bioSequenceGetMD5,
+	"id":                 bioSequenceGetSetId,
+	"sequence":           bioSequenceGetSetSequence,
+	"qualities":          bioSequenceGetSetQualities,
+	"definition":         bioSequenceGetSetDefinition,
+	"count":              bioSequenceGetSetCount,
+	"taxid":              bioSequenceGetSetTaxid,
+	"attribute":          bioSequenceGetSetAttribute,
+	"len":                bioSequenceGetLength,
+	"has_sequence":       bioSequenceHasSequence,
+	"has_qualities":      bioSequenceHasQualities,
+	"source":             bioSequenceGetSource,
+	"md5":                bioSequenceGetMD5,
+	"md5_string":         bioSequenceGetMD5String,
+	"subsequence":        bioSequenceGetSubsequence,
+	"reverse_complement": bioSequenceGetRevcomp,
 }
 
 // checkBioSequence checks if the first argument in the Lua stack is a *obiseq.BioSequence.
@@ -222,5 +225,32 @@ func bioSequenceGetMD5(luaState *lua.LState) int {
 		rt.Append(lua.LNumber(md5[i]))
 	}
 	luaState.Push(rt)
+	return 1
+}
+
+func bioSequenceGetMD5String(luaState *lua.LState) int {
+	s := checkBioSequence(luaState)
+	md5 := s.MD5String()
+	luaState.Push(lua.LString(md5))
+	return 1
+}
+
+func bioSequenceGetSubsequence(luaState *lua.LState) int {
+	s := checkBioSequence(luaState)
+	start := luaState.CheckInt(2)
+	end := luaState.CheckInt(3)
+	subseq, err := s.Subsequence(start, end, false)
+	if err != nil {
+		luaState.RaiseError("%s : Error on subseq: %v", s.Id(), err)
+		return 0
+	}
+	luaState.Push(obiseq2Lua(luaState, subseq))
+	return 1
+}
+
+func bioSequenceGetRevcomp(luaState *lua.LState) int {
+	s := checkBioSequence(luaState)
+	revcomp := s.ReverseComplement(false)
+	luaState.Push(obiseq2Lua(luaState, revcomp))
 	return 1
 }

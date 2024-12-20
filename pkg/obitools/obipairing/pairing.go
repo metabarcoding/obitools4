@@ -9,6 +9,7 @@ import (
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 )
 
 func _Abs(x int) int {
@@ -112,7 +113,7 @@ func AssemblePESequences(seqA, seqB *obiseq.BioSequence,
 	inplace bool, fastAlign, fastModeRel bool,
 	arenaAlign obialign.PEAlignArena, shifh_buff *map[int]int) *obiseq.BioSequence {
 
-	score, path, fastcount, over, fastscore := obialign.PEAlign(
+	isLeftAlign, score, path, fastcount, over, fastscore := obialign.PEAlign(
 		seqA, seqB,
 		gap, scale,
 		fastAlign, delta, fastModeRel,
@@ -143,19 +144,14 @@ func AssemblePESequences(seqA, seqB *obiseq.BioSequence,
 	if aliLength >= minOverlap && identity >= minIdentity {
 		annot["mode"] = "alignment"
 		if withStats {
-			if left < 0 {
-				annot["seq_a_single"] = -left
+			if isLeftAlign {
 				annot["ali_dir"] = "left"
+				annot["seq_a_single"] = obiutils.Abs(left)
+				annot["seq_b_single"] = obiutils.Abs(right)
 			} else {
-				annot["seq_b_single"] = left
 				annot["ali_dir"] = "right"
-			}
-
-			if right < 0 {
-				right = -right
-				annot["seq_a_single"] = right
-			} else {
-				annot["seq_b_single"] = right
+				annot["seq_a_single"] = obiutils.Abs(right)
+				annot["seq_b_single"] = obiutils.Abs(left)
 			}
 		}
 		if inplace {

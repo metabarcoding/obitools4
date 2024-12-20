@@ -485,7 +485,8 @@ func PECenterAlign(seqA, seqB *obiseq.BioSequence, gap, scale float64,
 
 func PEAlign(seqA, seqB *obiseq.BioSequence,
 	gap, scale float64, fastAlign bool, delta int, fastScoreRel bool,
-	arena PEAlignArena, shift_buff *map[int]int) (int, []int, int, int, float64) {
+	arena PEAlignArena, shift_buff *map[int]int) (bool, int, []int, int, int, float64) {
+	var isLeftAlign bool
 	var score, shift int
 	var startA, startB int
 	var partLen, over int
@@ -536,6 +537,7 @@ func PEAlign(seqA, seqB *obiseq.BioSequence,
 				rawSeqB = seqB.Sequence()[0:partLen]
 				qualSeqB = seqB.Qualities()[0:partLen]
 				extra3 = seqB.Len() - partLen
+				isLeftAlign = true
 				score = _FillMatrixPeLeftAlign(
 					rawSeqA, qualSeqA, rawSeqB, qualSeqB, gap, scale,
 					&arena.pointer.scoreMatrix,
@@ -557,7 +559,7 @@ func PEAlign(seqA, seqB *obiseq.BioSequence,
 				rawSeqA = seqA.Sequence()[:partLen]
 				qualSeqA = seqA.Qualities()[:partLen]
 				extra3 = partLen - seqA.Len()
-
+				isLeftAlign = false
 				score = _FillMatrixPeRightAlign(
 					rawSeqA, qualSeqA, rawSeqB, qualSeqB, gap, scale,
 					&arena.pointer.scoreMatrix,
@@ -581,6 +583,7 @@ func PEAlign(seqA, seqB *obiseq.BioSequence,
 				qualSeqB = seqB.Qualities()[0:partLen]
 				extra3 = seqB.Len() - partLen
 				score = 0
+				isLeftAlign = true
 			} else {
 				startA = 0
 				startB = -shift
@@ -589,6 +592,7 @@ func PEAlign(seqA, seqB *obiseq.BioSequence,
 				partLen = len(qualSeqB)
 				extra3 = partLen - seqA.Len()
 				qualSeqA = seqA.Qualities()[:partLen]
+				isLeftAlign = false
 			}
 			score = 0
 			for i, qualA := range qualSeqA {
@@ -625,6 +629,8 @@ func PEAlign(seqA, seqB *obiseq.BioSequence,
 			len(rawSeqA), len(rawSeqB),
 			&(arena.pointer.path))
 
+		isLeftAlign = false
+
 		scoreL := _FillMatrixPeLeftAlign(
 			rawSeqA, qualSeqA, rawSeqB, qualSeqB, gap, scale,
 			&arena.pointer.scoreMatrix,
@@ -634,9 +640,10 @@ func PEAlign(seqA, seqB *obiseq.BioSequence,
 			path = _Backtracking(arena.pointer.pathMatrix,
 				len(rawSeqA), len(rawSeqB),
 				&(arena.pointer.path))
+			isLeftAlign = true
 		}
 
 	}
 
-	return score, path, fastCount, over, fastScore
+	return isLeftAlign, score, path, fastCount, over, fastScore
 }

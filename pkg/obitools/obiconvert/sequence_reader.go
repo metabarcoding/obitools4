@@ -99,6 +99,8 @@ func CLIReadBioSequences(filenames ...string) (obiiter.IBioSequence, error) {
 		opts = append(opts, obiformats.OptionsFastSeqHeaderParser(obiformats.ParseGuessedFastSeqHeader))
 	}
 
+	opts = append(opts, obiformats.OptionsReadQualities(obioptions.CLIReadQualities()))
+
 	nworkers := obioptions.CLIReadParallelWorkers()
 	if nworkers < 2 {
 		nworkers = 2
