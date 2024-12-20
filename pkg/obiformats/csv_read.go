@@ -5,7 +5,7 @@ import (
 	"io"
 	"os"
 	"path"
-	"unsafe"
+	"strings"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
@@ -94,19 +94,28 @@ func _ParseCsvFile(source string,
 				continue
 			}
 
-			err := json.Unmarshal(unsafe.Slice(unsafe.StringData(field), len(field)), &val)
+			ft := header[i]
 
-			if err != nil {
-				val = field
-			} else {
-				if _, ok := val.(float64); ok {
-					if obiutils.IsIntegral(val.(float64)) {
-						val = int(val.(float64))
+			switch {
+			case ft == "taxid":
+				sequence.SetTaxid(field)
+			case strings.HasSuffix(ft, "_taxid"):
+				sequence.SetTaxid(field, strings.TrimSuffix(ft, "_taxid"))
+			default:
+				err := json.Unmarshal(obiutils.UnsafeBytes(field), &val)
+
+				if err != nil {
+					val = field
+				} else {
+					if _, ok := val.(float64); ok {
+						if obiutils.IsIntegral(val.(float64)) {
+							val = int(val.(float64))
+						}
 					}
 				}
-			}
 
-			sequence.SetAttribute(header[i], val)
+				sequence.SetAttribute(ft, val)
+			}
 		}
 
 		slice = append(slice, sequence)
