@@ -6,7 +6,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiapat"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiformats/ncbitaxdump"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
@@ -33,7 +33,6 @@ var _Predicats = make([]string, 0)
 var _IdList = ""
 
 var _Taxdump = ""
-var _Taxonomy = (*obitax.Taxonomy)(nil)
 
 var _RequiredAttributes = make([]string, 0)
 var _AttributePatterns = make(map[string]string, 0)
@@ -49,10 +48,7 @@ var _pattern_indel = false
 var _pattern_only_forward = false
 
 func TaxonomySelectionOptionSet(options *getoptions.GetOpt) {
-
-	options.StringVar(&_Taxdump, "taxdump", _Taxdump,
-		options.Alias("t"),
-		options.Description("Points to the directory containing the NCBI Taxonomy database dump."))
+	obioptions.LoadTaxonomyOptionSet(options, false, false)
 
 	options.StringSliceVar(&_BelongTaxa, "restrict-to-taxon", 1, 1,
 		options.Alias("r"),
@@ -246,31 +242,12 @@ func CLIPatternBothStrand() bool {
 	return !_pattern_only_forward
 }
 
-func CLILoadSelectedTaxonomy() *obitax.Taxonomy {
-	if CLISelectedNCBITaxDump() != "" {
-		if _Taxonomy == nil {
-			var err error
-			_Taxonomy, err = ncbitaxdump.LoadNCBITaxDump(CLISelectedNCBITaxDump(), true)
-			if err != nil {
-				log.Fatalf("cannot load taxonomy %s : %v",
-					CLISelectedNCBITaxDump(), err)
-				return nil
-			}
-		}
-		return _Taxonomy
-	}
-
-	log.Fatalln("no NCBI taxdump selected using option -t|--taxdump")
-
-	return nil
-}
-
 func CLIRestrictTaxonomyPredicate() obiseq.SequencePredicate {
 	var p obiseq.SequencePredicate
 	var p2 obiseq.SequencePredicate
 
 	if len(_BelongTaxa) > 0 {
-		taxonomy := CLILoadSelectedTaxonomy()
+		taxonomy := obitax.DefaultTaxonomy()
 
 		taxon := taxonomy.Taxon(_BelongTaxa[0])
 		if taxon == nil {
@@ -300,7 +277,7 @@ func CLIAvoidTaxonomyPredicate() obiseq.SequencePredicate {
 	var p2 obiseq.SequencePredicate
 
 	if len(_NotBelongTaxa) > 0 {
-		taxonomy := CLILoadSelectedTaxonomy()
+		taxonomy := obitax.DefaultTaxonomy()
 
 		taxon := taxonomy.Taxon(_NotBelongTaxa[0])
 		if taxon == nil {
@@ -329,7 +306,7 @@ func CLIAvoidTaxonomyPredicate() obiseq.SequencePredicate {
 func CLIHasRankDefinedPredicate() obiseq.SequencePredicate {
 
 	if len(_RequiredRanks) > 0 {
-		taxonomy := CLILoadSelectedTaxonomy()
+		taxonomy := obitax.DefaultTaxonomy()
 		p := obiseq.HasRequiredRank(taxonomy, _RequiredRanks[0])
 
 		for _, rank := range _RequiredRanks[1:] {

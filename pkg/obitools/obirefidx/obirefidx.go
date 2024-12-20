@@ -1,7 +1,6 @@
 package obirefidx
 
 import (
-	"fmt"
 	"os"
 
 	log "github.com/sirupsen/logrus"
@@ -172,11 +171,7 @@ func IndexSequence(seqidx int,
 	for i, d := range closest {
 		if i < (len(closest)-1) && d < closest[i+1] {
 			current_taxon := pseq.Taxon(i)
-			obitag_index[d] = fmt.Sprintf(
-				"%s@%s",
-				current_taxon.String(),
-				current_taxon.Rank(),
-			)
+			obitag_index[d] = current_taxon.String()
 		}
 	}
 
@@ -197,9 +192,10 @@ func IndexReferenceDB(iterator obiiter.IBioSequence) obiiter.IBioSequence {
 	source, references := iterator.Load()
 	log.Infof("Done. Database contains %d sequences", len(references))
 
-	taxo, error := obioptions.CLILoadSelectedTaxonomy()
-	if error != nil {
-		log.Panicln(error)
+	taxo := obitax.DefaultTaxonomy()
+
+	if taxo == nil {
+		log.Fatal("No taxonomy loaded.")
 	}
 
 	log.Infoln("Indexing sequence taxids...")

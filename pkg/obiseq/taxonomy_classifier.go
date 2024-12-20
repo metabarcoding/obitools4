@@ -19,6 +19,8 @@ func TaxonomyClassifier(taxonomicRank string,
 	taxonomy *obitax.Taxonomy,
 	abortOnMissing bool) *BioSequenceClassifier {
 
+	taxonomy = taxonomy.OrDefault(true)
+
 	keys := make(map[*obitax.TaxNode]int)
 	codes := make([]*obitax.TaxNode, 1)
 	codes[0] = nil

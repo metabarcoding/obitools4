@@ -9,6 +9,7 @@ import (
 )
 
 func (s *BioSequence) Taxon(taxonomy *obitax.Taxonomy) *obitax.Taxon {
+
 	taxid := s.Taxid()
 	if taxid == "NA" {
 		return nil
@@ -21,16 +22,39 @@ func (s *BioSequence) Taxon(taxonomy *obitax.Taxonomy) *obitax.Taxon {
 // Parameters:
 //
 //	taxid - the taxid to set.
-func (s *BioSequence) SetTaxid(taxid string) {
+func (s *BioSequence) SetTaxid(taxid string, rank ...string) {
 	if taxid == "" {
 		taxid = "NA"
+	} else {
+		taxonomy := obitax.DefaultTaxonomy()
+		taxon := (*obitax.Taxon)(nil)
+
+		if taxonomy != nil {
+			taxon = taxonomy.Taxon(taxid)
+		}
+
+		if taxon != nil {
+			taxid = taxon.String()
+		}
 	}
-	s.SetAttribute("taxid", taxid)
+
+	if len(rank) > 0 {
+		r := rank[0]
+		s.SetAttribute(r+"_taxid", taxid)
+	} else {
+		s.SetAttribute("taxid", taxid)
+	}
 }
 
-func (s *BioSequence) SetTaxon(taxon *obitax.Taxon) {
+func (s *BioSequence) SetTaxon(taxon *obitax.Taxon, rank ...string) {
 	taxid := taxon.String()
-	s.SetTaxid(taxid)
+
+	if len(rank) > 0 {
+		r := rank[0]
+		s.SetAttribute(r+"_taxid", taxid)
+	} else {
+		s.SetAttribute("taxid", taxid)
+	}
 }
 
 // Taxid returns the taxonomic ID associated with the BioSequence.

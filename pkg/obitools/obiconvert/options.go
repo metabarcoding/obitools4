@@ -3,6 +3,7 @@ package obiconvert
 import (
 	"os"
 
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/DavidGamba/go-getoptions"
@@ -115,6 +116,7 @@ func PairedFilesOptionSet(options *getoptions.GetOpt) {
 }
 
 func OptionSet(options *getoptions.GetOpt) {
+	obioptions.LoadTaxonomyOptionSet(options, false, false)
 	InputOptionSet(options)
 	OutputOptionSet(options)
 	PairedFilesOptionSet(options)

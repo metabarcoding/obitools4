@@ -273,31 +273,31 @@ func CLIAnnotationWorker() obiseq.SeqWorker {
 	}
 
 	if CLIHasTaxonAtRank() {
-		taxo := obigrep.CLILoadSelectedTaxonomy()
+		taxo := obitax.DefaultTaxonomy()
 		w := AddTaxonAtRankWorker(taxo, CLITaxonAtRank()...)
 		annotator = annotator.ChainWorkers(w)
 	}
 
 	if CLISetTaxonomicPath() {
-		taxo := obigrep.CLILoadSelectedTaxonomy()
+		taxo := obitax.DefaultTaxonomy()
 		w := obiseq.MakeSetPathWorker(taxo)
 		annotator = annotator.ChainWorkers(w)
 	}
 
 	if CLISetTaxonomicRank() {
-		taxo := obigrep.CLILoadSelectedTaxonomy()
+		taxo := obitax.DefaultTaxonomy()
 		w := AddTaxonRankWorker(taxo)
 		annotator = annotator.ChainWorkers(w)
 	}
 
 	if CLISetScientificName() {
-		taxo := obigrep.CLILoadSelectedTaxonomy()
+		taxo := obitax.DefaultTaxonomy()
 		w := AddScientificNameWorker(taxo)
 		annotator = annotator.ChainWorkers(w)
 	}
 
 	if CLIHasAddLCA() {
-		taxo := obigrep.CLILoadSelectedTaxonomy()
+		taxo := obitax.DefaultTaxonomy()
 		w := obiseq.AddLCAWorker(taxo, CLILCASlotName(), CLILCAThreshold())
 		annotator = annotator.ChainWorkers(w)
 	}

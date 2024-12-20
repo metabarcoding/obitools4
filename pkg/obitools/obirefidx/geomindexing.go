@@ -70,11 +70,7 @@ func GeomIndexSesquence(seqidx int,
 		new_lca, _ := lca.LCA(taxa.Taxon(o))
 		if new_lca.SameAs(lca) {
 			lca = new_lca
-			index[int(seq_dist[o])] = fmt.Sprintf(
-				"%s@%s",
-				lca.String(),
-				lca.Rank(),
-			)
+			index[int(seq_dist[o])] = lca.String()
 
 			if lca.IsRoot() {
 				break

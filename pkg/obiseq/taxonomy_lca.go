@@ -12,6 +12,8 @@ func (sequence *BioSequence) TaxonomicDistribution(taxonomy *obitax.Taxonomy) ma
 	taxids := sequence.StatsOn(MakeStatsOnDescription("taxid"), "na")
 	taxons := make(map[*obitax.TaxNode]int, len(taxids))
 
+	taxonomy = taxonomy.OrDefault(true)
+
 	for taxid, v := range taxids {
 		t := taxonomy.Taxon(taxid)
 		if t == nil {
@@ -27,6 +29,9 @@ func (sequence *BioSequence) TaxonomicDistribution(taxonomy *obitax.Taxonomy) ma
 }
 
 func (sequence *BioSequence) LCA(taxonomy *obitax.Taxonomy, threshold float64) (*obitax.Taxon, float64, int) {
+
+	taxonomy = taxonomy.OrDefault(true)
+
 	taxons := sequence.TaxonomicDistribution(taxonomy)
 	paths := make(map[*obitax.TaxNode]*obitax.TaxonSlice, len(taxons))
 	answer := (*obitax.TaxNode)(nil)
@@ -34,11 +39,11 @@ func (sequence *BioSequence) LCA(taxonomy *obitax.Taxonomy, threshold float64) (
 	granTotal := 0
 
 	for t, w := range taxons {
-		p := (&obitax.Taxon{Taxonomy: taxonomy,
-			Node: t,
-		}).Path()
+		taxon := &obitax.Taxon{Taxonomy: taxonomy, Node: t}
+		p := taxon.Path()
+
 		if p == nil {
-			log.Panicf("Sequence %s: taxonomic path cannot be retreived from Taxid %d : %v", sequence.Id(), t.String(taxonomy.Code()))
+			log.Panicf("Sequence %s: taxonomic path cannot be retreived from Taxid : %s", sequence.Id(), taxon.String())
 		}
 
 		p.Reverse(true)
@@ -102,6 +107,8 @@ func (sequence *BioSequence) LCA(taxonomy *obitax.Taxonomy, threshold float64) (
 }
 
 func AddLCAWorker(taxonomy *obitax.Taxonomy, slot_name string, threshold float64) SeqWorker {
+
+	taxonomy = taxonomy.OrDefault(true)
 
 	if !strings.HasSuffix(slot_name, "taxid") {
 		slot_name = slot_name + "_taxid"

@@ -15,6 +15,19 @@ import (
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 )
 
+// loadNodeTable reads a node table from the provided reader and populates the given taxonomy.
+// It is an internal function and should not be called directly. It is part of the NCBI taxdump reader.
+// The node table is expected to be in CSV format with a custom delimiter ('|') and comments
+// starting with '#'. Each record in the table represents a taxon with its taxid, parent taxid,
+// and rank.
+//
+// Parameters:
+//   - reader: An io.Reader from which the node table is read.
+//   - taxonomy: A pointer to an obitax.Taxonomy instance where the taxon data will be added.
+//
+// The function reads each record from the input, trims whitespace from the taxid, parent, and rank,
+// and adds the taxon to the taxonomy. If an error occurs while adding a taxon, the function logs
+// a fatal error and terminates the program.
 func loadNodeTable(reader io.Reader, taxonomy *obitax.Taxonomy) {
 	file := csv.NewReader(reader)
 	file.Comma = '|'
@@ -38,6 +51,21 @@ func loadNodeTable(reader io.Reader, taxonomy *obitax.Taxonomy) {
 	}
 }
 
+// loadNameTable reads a name table from the provided reader and populates the given taxonomy.
+// It is an internal function and should not be called directly. It is part of the NCBI taxdump reader.
+// The name table is expected to be in a custom format with fields separated by the '|' character.
+// Each record in the table represents a taxon with its taxid, name, and class name.
+//
+// Parameters:
+//   - reader: An io.Reader from which the name table is read.
+//   - taxonomy: A pointer to an obitax.Taxonomy instance where the taxon names will be set.
+//   - onlysn: A boolean flag indicating whether to only process records with the class name "scientific name".
+//
+// Returns:
+//
+//	The number of taxon names successfully loaded into the taxonomy. If a line is too long, -1 is returned.
+//	The function processes each line, trims whitespace from the taxid, name, and class name, and sets
+//	the name in the taxonomy if the conditions are met.
 func loadNameTable(reader io.Reader, taxonomy *obitax.Taxonomy, onlysn bool) int {
 	// file := csv.NewReader(reader)
 	// file.Comma = '|'
@@ -71,6 +99,19 @@ func loadNameTable(reader io.Reader, taxonomy *obitax.Taxonomy, onlysn bool) int
 	return n
 }
 
+// loadMergedTable reads a merged table from the provided reader and populates the given taxonomy.
+// It is an internal function and should not be called directly. It is part of the NCBI taxdump reader.
+// The merged table is expected to be in CSV format with a custom delimiter ('|') and comments
+// starting with '#'. Each record in the table represents a mapping between an old taxid and a new taxid.
+//
+// Parameters:
+//   - reader: An io.Reader from which the merged table is read.
+//   - taxonomy: A pointer to an obitax.Taxonomy instance where the alias mappings will be added.
+//
+// Returns:
+//
+//	The number of alias mappings successfully loaded into the taxonomy. The function processes
+//	each record, trims whitespace from the old and new taxid, and adds the alias to the taxonomy.
 func loadMergedTable(reader io.Reader, taxonomy *obitax.Taxonomy) int {
 	file := csv.NewReader(reader)
 	file.Comma = '|'

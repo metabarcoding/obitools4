@@ -35,13 +35,15 @@ type TaxNode struct {
 //   - taxonomyCode: A string representing the code of the taxonomy to which the node belongs.
 //
 // Returns:
-//   - A formatted string representing the TaxNode in the form "taxonomyCode:id [scientificName]".
+//   - A formatted string representing the TaxNode in the form "taxonomyCode:id [scientificName]@rank".
 func (node *TaxNode) String(taxonomyCode string) string {
 	if node.HasScientificName() {
-		return fmt.Sprintf("%s:%v [%s]",
+		return fmt.Sprintf("%s:%v [%s]@%s",
 			taxonomyCode,
 			*node.id,
-			node.ScientificName())
+			node.ScientificName(),
+			node.Rank(),
+		)
 	}
 
 	return fmt.Sprintf("%s:%v",

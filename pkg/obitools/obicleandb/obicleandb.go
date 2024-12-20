@@ -11,6 +11,7 @@ import (
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obistats"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obigrep"
 )
 
@@ -245,7 +246,7 @@ func ICleanDB(itertator obiiter.IBioSequence) obiiter.IBioSequence {
 		log.Fatal(err)
 	}
 
-	taxonomy := obigrep.CLILoadSelectedTaxonomy()
+	taxonomy := obitax.DefaultTaxonomy()
 
 	if len(obigrep.CLIRequiredRanks()) > 0 {
 		rankPredicate = obigrep.CLIHasRankDefinedPredicate()
