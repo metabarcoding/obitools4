@@ -67,11 +67,6 @@ func TaxonomySelectionOptionSet(options *getoptions.GetOpt) {
 }
 
 func SequenceSelectionOptionSet(options *getoptions.GetOpt) {
-	TaxonomySelectionOptionSet(options)
-	options.StringVar(&_SaveRejected, "save-discarded", _SaveRejected,
-		options.ArgName("FILENAME"),
-		options.Description("Indicates in which file not selected sequences must be saved."))
-
 	options.StringVar(&_IdList, "id-list", _IdList,
 		options.ArgName("FILENAME"),
 		options.Description("<FILENAME> points to a text file containing the list of sequence record identifiers to be selected."+
@@ -168,6 +163,10 @@ func SequenceSelectionOptionSet(options *getoptions.GetOpt) {
 func OptionSet(options *getoptions.GetOpt) {
 	obiconvert.OptionSet(options)
 	SequenceSelectionOptionSet(options)
+
+	options.StringVar(&_SaveRejected, "save-discarded", _SaveRejected,
+		options.ArgName("FILENAME"),
+		options.Description("Indicates in which file not selected sequences must be saved."))
 }
 
 func CLIMinSequenceLength() int {

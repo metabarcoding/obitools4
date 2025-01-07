@@ -17,8 +17,7 @@ func ScriptOptionSet(options *getoptions.GetOpt) {
 
 	options.StringVar(&_script, "script", _script,
 		options.Description("The script to execute."),
-		options.Alias("S"),
-		options.Description("Name of a map attribute."))
+		options.Alias("S"))
 
 	options.BoolVar(&_askTemplate, "template", _askTemplate,
 		options.Description("Print on the standard output a script template."),
