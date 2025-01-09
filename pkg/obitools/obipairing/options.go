@@ -10,12 +10,12 @@ var _ForwardFile = ""
 var _ReverseFile = ""
 var _Delta = 5
 var _MinOverlap = 20
-var _GapPenality = 2.0
+var _GapPenalty = 2.0
 var _WithoutStats = false
 var _MinIdentity = 0.9
 var _NoFastAlign = false
 var _FastScoreAbs = false
-var _PenalityScale = 1.0
+var _PenaltyScale = 1.0
 
 func PairingOptionSet(options *getoptions.GetOpt) {
 	options.StringVar(&_ForwardFile, "forward-reads", "",
@@ -36,11 +36,11 @@ func PairingOptionSet(options *getoptions.GetOpt) {
 	options.Float64Var(&_MinIdentity, "min-identity", _MinIdentity,
 		options.Alias("X"),
 		options.Description("Minimum identity between ovelaped regions of the reads to consider the aligment"))
-	options.Float64Var(&_GapPenality, "gap-penality", _GapPenality,
+	options.Float64Var(&_GapPenalty, "gap-penalty", _GapPenalty,
 		options.Alias("G"),
-		options.Description("Gap penality expressed as the multiply factor applied to the mismatch score between two nucleotides with a quality of 40 (default 2)."))
-	options.Float64Var(&_PenalityScale, "penality-scale", _PenalityScale,
-		options.Description("Scale factor applied to the mismatch score and the gap penality (default 1)."))
+		options.Description("Gap penaity expressed as the multiply factor applied to the mismatch score between two nucleotides with a quality of 40 (default 2)."))
+	options.Float64Var(&_PenaltyScale, "penalty-scale", _PenaltyScale,
+		options.Description("Scale factor applied to the mismatch score and the gap penalty (default 1)."))
 	options.BoolVar(&_WithoutStats, "without-stat", _WithoutStats,
 		options.Alias("S"),
 		options.Description("Remove alignment statistics from the produced consensus sequences."))
@@ -85,11 +85,11 @@ func CLIMinIdentity() float64 {
 }
 
 func CLIGapPenality() float64 {
-	return _GapPenality
+	return _GapPenalty
 }
 
 func CLIPenalityScale() float64 {
-	return _PenalityScale
+	return _PenaltyScale
 }
 
 func CLIWithStats() bool {

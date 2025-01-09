@@ -85,7 +85,7 @@ func JoinPairedSequence(seqA, seqB *obiseq.BioSequence, inplace bool) *obiseq.Bi
 //
 // - seqA, seqB: the pair of sequences to align.
 //
-// - gap: the gap penality is expressed as a multiplicator factor of the cost
+// - gap: the gap penalty is expressed as a multiplicator factor of the cost
 // of a mismatch between two bases having a quality score of 40.
 //
 // - delta: the extension in number of base pairs added on both sides of the
@@ -192,7 +192,7 @@ func AssemblePESequences(seqA, seqB *obiseq.BioSequence,
 // - iterator: is an iterator of paired sequences as produced by the method
 // IBioSequenceBatch.PairWith
 //
-// - gap: the gap penality is expressed as a multiplicator factor of the cost
+// - gap: the gap penalty is expressed as a multiplicator factor of the cost
 // of a mismatch between two bases having a quality score of 40.
 //
 // - delta: the extension in number of base pairs added on both sides of the

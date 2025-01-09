@@ -15,8 +15,8 @@ var _MinSharedKmers = 1
 var _Self = false
 
 var _Delta = 5
-var _PenalityScale = 1.0
-var _GapPenality = 2.0
+var _PenaltyScale = 1.0
+var _GapPenalty = 2.0
 var _FastScoreAbs = false
 var _KmerMaxOccur = -1
 
@@ -62,13 +62,13 @@ func KmerSimMatchOptionSet(options *getoptions.GetOpt) {
 		options.Alias("d"),
 		options.Description("Delta value for the match."))
 
-	options.Float64Var(&_PenalityScale, "penality-scale", _PenalityScale,
+	options.Float64Var(&_PenaltyScale, "penalty-scale", _PenaltyScale,
 		options.Alias("X"),
-		options.Description("Scale factor applied to the mismatch score and the gap penality (default 1)."))
+		options.Description("Scale factor applied to the mismatch score and the gap penalty (default 1)."))
 
-	options.Float64Var(&_GapPenality, "gap-penality", _GapPenality,
+	options.Float64Var(&_GapPenalty, "gap-penalty", _GapPenalty,
 		options.Alias("G"),
-		options.Description("Gap penality expressed as the multiply factor applied to the mismatch score between two nucleotides with a quality of 40 (default 2)."))
+		options.Description("Gap penalty expressed as the multiply factor applied to the mismatch score between two nucleotides with a quality of 40 (default 2)."))
 
 	options.BoolVar(&_FastScoreAbs, "fast-absolute", _FastScoreAbs,
 		options.Alias("a"),
@@ -129,15 +129,15 @@ func CLIDelta() int {
 }
 
 func CLIScale() float64 {
-	return _PenalityScale
+	return _PenaltyScale
 }
 
 func CLIGapPenality() float64 {
-	return _GapPenality
+	return _GapPenalty
 }
 
 func CLIGap() float64 {
-	return _GapPenality
+	return _GapPenalty
 }
 
 func CLIFastRelativeScore() bool {
