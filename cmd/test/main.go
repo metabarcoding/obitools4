@@ -24,6 +24,7 @@ func main() {
 		},
 		7,
 		true,
+		10,
 	)
 
 	kmers := kmermap.NormalizedKmerSlice(seq, nil)
