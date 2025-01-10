@@ -5,7 +5,7 @@ import (
 	"github.com/DavidGamba/go-getoptions"
 )
 
-var _Demerge = ""
+var _Demerge = "sample"
 
 func DemergeOptionSet(options *getoptions.GetOpt) {
 
@@ -23,8 +23,4 @@ func OptionSet(options *getoptions.GetOpt) {
 
 func CLIDemergeSlot() string {
 	return _Demerge
-}
-
-func CLIHasSlotToDemerge() bool {
-	return _Demerge != ""
 }

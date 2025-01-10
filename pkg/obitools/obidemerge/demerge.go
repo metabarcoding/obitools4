@@ -33,12 +33,6 @@ func MakeDemergeWorker(key string) obiseq.SeqWorker {
 }
 
 func CLIDemergeSequences(iterator obiiter.IBioSequence) obiiter.IBioSequence {
-
-	if CLIHasSlotToDemerge() {
-
-		worker := MakeDemergeWorker(CLIDemergeSlot())
-		return iterator.MakeIWorker(worker, false, obioptions.CLIParallelWorkers(), 0)
-	}
-
-	return iterator
+	worker := MakeDemergeWorker(CLIDemergeSlot())
+	return iterator.MakeIWorker(worker, false, obioptions.CLIParallelWorkers(), 0)
 }
