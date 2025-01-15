@@ -6,7 +6,6 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiapat"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
@@ -48,7 +47,6 @@ var _pattern_indel = false
 var _pattern_only_forward = false
 
 func TaxonomySelectionOptionSet(options *getoptions.GetOpt) {
-	obioptions.LoadTaxonomyOptionSet(options, false, false)
 
 	options.StringSliceVar(&_BelongTaxa, "restrict-to-taxon", 1, 1,
 		options.Alias("r"),
@@ -67,6 +65,8 @@ func TaxonomySelectionOptionSet(options *getoptions.GetOpt) {
 }
 
 func SequenceSelectionOptionSet(options *getoptions.GetOpt) {
+	TaxonomySelectionOptionSet(options)
+
 	options.StringVar(&_IdList, "id-list", _IdList,
 		options.ArgName("FILENAME"),
 		options.Description("<FILENAME> points to a text file containing the list of sequence record identifiers to be selected."+
