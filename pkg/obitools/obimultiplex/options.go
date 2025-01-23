@@ -30,7 +30,7 @@ var _ConservedError = false
 // produced by the
 func MultiplexOptionSet(options *getoptions.GetOpt) {
 	options.StringVar(&_NGSFilterFile, "tag-list", _NGSFilterFile,
-		options.Alias("t"),
+		options.Alias("s"),
 		options.Description("File name of the NGSFilter file describing PCRs."))
 
 	options.BoolVar(&_ConservedError, "keep-errors", _ConservedError,

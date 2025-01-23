@@ -39,7 +39,7 @@ func main() {
 
 	nvariant, nread, nsymbol := fs.Count(true)
 
-	fmt.Print("entites,n\n")
+	fmt.Print("entities,n\n")
 
 	if obicount.CLIIsPrintingVariantCount() {
 		fmt.Printf("variants,%d\n", nvariant)
