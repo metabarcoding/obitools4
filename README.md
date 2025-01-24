@@ -7,6 +7,10 @@ The git for *OBITools4* is available at :
 
 > https://github.com/metabarcoding/obitools4
 
+A preliminary version of the documentation is available at the following address:
+
+> https://obitools4.metabarcoding.org
+
 ## Installing *OBITools V4*
 
 An installation script that compiles the new *OBITools* on your Unix-like system is available online.
