@@ -6,8 +6,8 @@ import (
 	"os"
 	"runtime"
 
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiformats/ncbitaxdump"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitaxformat"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/DavidGamba/go-getoptions"
@@ -32,7 +32,7 @@ var _Quality_Shift_Input = byte(33)
 var _Quality_Shift_Output = byte(33)
 var _Read_Qualities = true
 
-var __taxdump__ = ""
+var __taxonomy__ = ""
 var __alternative_name__ = false
 
 type ArgumentParser func([]string) (*getoptions.GetOpt, []string)
@@ -131,8 +131,8 @@ func GenerateOptionParser(optionset ...func(*getoptions.GetOpt)) ArgumentParser 
 			log.Info("  go tool pprof -http=127.0.0.1:8080 'http://localhost:6060/debug/pprof/block'")
 		}
 
-		if options.Called("taxdump") {
-			taxonomy, err := ncbitaxdump.LoadNCBITaxDump(CLISelectedNCBITaxDump(),
+		if options.Called("taxonomy") {
+			taxonomy, err := obitaxformat.LoadTaxonomy(CLISelectedTaxonomy(),
 				!CLIAreAlternativeNamesSelected())
 			if err != nil {
 				log.Fatalf("Loading taxonomy error: %v", err)
@@ -186,14 +186,14 @@ func GenerateOptionParser(optionset ...func(*getoptions.GetOpt)) ArgumentParser 
 
 func LoadTaxonomyOptionSet(options *getoptions.GetOpt, required, alternatiive bool) {
 	if required {
-		options.StringVar(&__taxdump__, "taxdump", "",
+		options.StringVar(&__taxonomy__, "taxonomy", "",
 			options.Alias("t"),
 			options.Required(),
-			options.Description("Points to the directory containing the NCBI Taxonomy database dump."))
+			options.Description("Path to the taxonomy database."))
 	} else {
-		options.StringVar(&__taxdump__, "taxdump", "",
+		options.StringVar(&__taxonomy__, "taxonomy", "",
 			options.Alias("t"),
-			options.Description("Points to the directory containing the NCBI Taxonomy database dump."))
+			options.Description("Path to the taxonomy database."))
 	}
 	if alternatiive {
 		options.BoolVar(&__alternative_name__, "alternative-names", false,
@@ -462,12 +462,12 @@ func SetParallelFilesRead(n int) {
 	_ParallelFilesRead = n
 }
 
-func CLISelectedNCBITaxDump() string {
-	return __taxdump__
+func CLISelectedTaxonomy() string {
+	return __taxonomy__
 }
 
 func CLIHasSelectedTaxonomy() bool {
-	return __taxdump__ != ""
+	return __taxonomy__ != ""
 }
 
 func CLIAreAlternativeNamesSelected() bool {
@@ -479,8 +479,8 @@ func CLILoadSelectedTaxonomy() (*obitax.Taxonomy, error) {
 		return obitax.DefaultTaxonomy(), nil
 	}
 
-	if CLISelectedNCBITaxDump() != "" {
-		taxonomy, err := ncbitaxdump.LoadNCBITaxDump(CLISelectedNCBITaxDump(),
+	if CLISelectedTaxonomy() != "" {
+		taxonomy, err := obitaxformat.LoadTaxonomy(CLISelectedTaxonomy(),
 			!CLIAreAlternativeNamesSelected())
 		if err != nil {
 			return nil, err
@@ -489,5 +489,5 @@ func CLILoadSelectedTaxonomy() (*obitax.Taxonomy, error) {
 		return taxonomy, nil
 	}
 
-	return nil, errors.New("no NCBI taxdump selected using option -t|--taxdump")
+	return nil, errors.New("no taxonomy selected using option -t|--taxonomy")
 }

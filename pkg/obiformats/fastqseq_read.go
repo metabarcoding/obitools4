@@ -370,9 +370,9 @@ func ReadFastq(reader io.Reader, options ...WithOption) (obiiter.IBioSequence, e
 func ReadFastqFromFile(filename string, options ...WithOption) (obiiter.IBioSequence, error) {
 	options = append(options, OptionsSource(obiutils.RemoveAllExt((path.Base(filename)))))
 
-	file, err := Ropen(filename)
+	file, err := obiutils.Ropen(filename)
 
-	if err == ErrNoContent {
+	if err == obiutils.ErrNoContent {
 		log.Infof("file %s is empty", filename)
 		return ReadEmptyFile(options...)
 	}
@@ -386,9 +386,9 @@ func ReadFastqFromFile(filename string, options ...WithOption) (obiiter.IBioSequ
 
 func ReadFastqFromStdin(reader io.Reader, options ...WithOption) (obiiter.IBioSequence, error) {
 	options = append(options, OptionsSource(obiutils.RemoveAllExt("stdin")))
-	input, err := Buf(os.Stdin)
+	input, err := obiutils.Buf(os.Stdin)
 
-	if err == ErrNoContent {
+	if err == obiutils.ErrNoContent {
 		log.Infof("stdin is empty")
 		return ReadEmptyFile(options...)
 	}

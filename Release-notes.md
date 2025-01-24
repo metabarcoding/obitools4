@@ -2,6 +2,14 @@
 
 ## Latest changes
 
+### Breaking changes
+
+- In `obimultiplex`, the short version of the **--tag-list** option used to specify the list 
+  of tags and primers to be used for the demultiplexing has been changed from `-t` to `-s`.
+
+- The **--taxdump** option used to specify the path to the taxdump containing the NCBI taxonomy
+  has been renamed to **--taxonomy**.
+
 ### Bug fixes
 
 - In `obipairing`, correct the stats `seq_a_single` and `seq_b_single` when
@@ -12,6 +20,10 @@
   is producing only fasta output without qualities.
 
 ### New features
+
+-   NCBI Taxonomy dump does not need to be uncompressed and unarchived anymore. The
+    path of the tar and gziped dump file can be directly specified using the
+    **--taxonomy** option.
 
 -   Most of the time obitools identify automatically sequence file format. But
     it fails sometimes. Two new option **--fasta** and **--fastq** are added to

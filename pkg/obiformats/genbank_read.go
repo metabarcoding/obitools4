@@ -266,9 +266,9 @@ func ReadGenbankFromFile(filename string, options ...WithOption) (obiiter.IBioSe
 
 	options = append(options, OptionsSource(obiutils.RemoveAllExt((path.Base(filename)))))
 
-	reader, err = Ropen(filename)
+	reader, err = obiutils.Ropen(filename)
 
-	if err == ErrNoContent {
+	if err == obiutils.ErrNoContent {
 		log.Infof("file %s is empty", filename)
 		return ReadEmptyFile(options...)
 	}

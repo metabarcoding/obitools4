@@ -172,15 +172,15 @@ func OBIMimeTypeGuesser(stream io.Reader) (*mimetype.MIME, io.Reader, error) {
 // - error: An error if any occurred during the reading process.
 func ReadSequencesFromFile(filename string,
 	options ...WithOption) (obiiter.IBioSequence, error) {
-	var file *Reader
+	var file *obiutils.Reader
 	var reader io.Reader
 	var err error
 
 	options = append(options, OptionsSource(obiutils.RemoveAllExt((path.Base(filename)))))
 
-	file, err = Ropen(filename)
+	file, err = obiutils.Ropen(filename)
 
-	if err == ErrNoContent {
+	if err == obiutils.ErrNoContent {
 		log.Infof("file %s is empty", filename)
 		return ReadEmptyFile(options...)
 	}

@@ -53,7 +53,7 @@ func CLICSVTaxaIterator(iterator *obitax.ITaxon) *obicsv.ICSVRecord {
 		OptionsWithScientificName(CLIWithScientificName()),
 		OptionsWithPath(CLIWithPath()),
 		OptionsRawTaxid(CLIRawTaxid()),
-		OptionsSource(obioptions.CLISelectedNCBITaxDump()),
+		OptionsSource(obioptions.CLISelectedTaxonomy()),
 	)
 
 	return NewCSVTaxaIterator(iterator, options...)

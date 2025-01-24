@@ -1,4 +1,4 @@
-package obiformats
+package obiutils
 
 import (
 	"bufio"

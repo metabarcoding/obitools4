@@ -9,7 +9,7 @@
 // Ropen opens a (possibly gzipped) file/process/http site for buffered reading.
 // Wopen opens a (possibly gzipped) file for buffered writing.
 // Both will use gzip when appropriate and will user buffered IO.
-package obiformats
+package obiutils
 
 import (
 	"bufio"
