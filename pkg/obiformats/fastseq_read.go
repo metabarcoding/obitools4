@@ -14,8 +14,8 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 )
@@ -92,7 +92,7 @@ func ReadFastSeqFromFile(filename string, options ...WithOption) (obiiter.IBioSe
 	name := C.CString(filename)
 	defer C.free(unsafe.Pointer(name))
 
-	pointer := C.open_fast_sek_file(name, C.int32_t(obioptions.InputQualityShift()))
+	pointer := C.open_fast_sek_file(name, C.int32_t(obidefault.ReadQualitiesShift()))
 
 	var err error
 	err = nil
@@ -151,7 +151,7 @@ func ReadFastSeqFromStdin(options ...WithOption) obiiter.IBioSequence {
 	}(newIter)
 
 	go _FastseqReader(opt.Source(),
-		C.open_fast_sek_stdin(C.int32_t(obioptions.InputQualityShift())),
+		C.open_fast_sek_stdin(C.int32_t(obidefault.ReadQualitiesShift())),
 		newIter, opt.BatchSize())
 
 	log.Debugln("Full file batch mode : ", opt.FullFileBatch())

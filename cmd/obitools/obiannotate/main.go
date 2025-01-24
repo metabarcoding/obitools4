@@ -3,11 +3,11 @@ package main
 import (
 	"os"
 
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiannotate"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 )
 
 func main() {
@@ -40,6 +40,6 @@ func main() {
 	annotator := obiannotate.CLIAnnotationPipeline()
 	obiconvert.CLIWriteBioSequences(sequences.Pipe(annotator), true)
 
-	obiiter.WaitForLastPipe()
+	obiutils.WaitForLastPipe()
 
 }

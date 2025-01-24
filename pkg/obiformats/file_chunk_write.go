@@ -3,7 +3,7 @@ package obiformats
 import (
 	"io"
 
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -12,7 +12,7 @@ func WriteFileChunk(
 	writer io.WriteCloser,
 	toBeClosed bool) ChannelFileChunk {
 
-	obiiter.RegisterAPipe()
+	obiutils.RegisterAPipe()
 	chunk_channel := make(ChannelFileChunk)
 
 	go func() {
@@ -53,7 +53,7 @@ func WriteFileChunk(
 			}
 		}
 
-		obiiter.UnregisterPipe()
+		obiutils.UnregisterPipe()
 		log.Debugf("The writer has been closed")
 	}()
 

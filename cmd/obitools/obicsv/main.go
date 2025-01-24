@@ -3,10 +3,10 @@ package main
 import (
 	"os"
 
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obicsv"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 )
 
 func main() {
@@ -19,6 +19,6 @@ func main() {
 
 	obicsv.CLIWriteSequenceCSV(fs, true)
 
-	obiiter.WaitForLastPipe()
+	obiutils.WaitForLastPipe()
 
 }

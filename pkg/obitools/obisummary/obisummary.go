@@ -187,7 +187,7 @@ func ISummary(iterator obiiter.IBioSequence, summarise []string) map[string]inte
 	}
 
 	waiter.Wait()
-	obiiter.WaitForLastPipe()
+	obiutils.WaitForLastPipe()
 
 	rep := summaries[0]
 

@@ -8,6 +8,7 @@ import (
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 	"github.com/DavidGamba/go-getoptions"
 )
 
@@ -112,7 +113,7 @@ func CLISaveRefetenceDB(db obiseq.BioSequenceSlice) {
 		}
 
 		newIter.Recycle()
-		obiiter.WaitForLastPipe()
+		obiutils.WaitForLastPipe()
 	}
 }
 

@@ -6,6 +6,7 @@ import (
 	"os"
 	"runtime"
 
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitaxformat"
 	log "github.com/sirupsen/logrus"
@@ -28,9 +29,6 @@ var _BatchSize = 2000
 var _Pprof = false
 var _PprofMudex = 10
 var _PprofGoroutine = 6060
-var _Quality_Shift_Input = byte(33)
-var _Quality_Shift_Output = byte(33)
-var _Read_Qualities = true
 
 var __taxonomy__ = ""
 var __alternative_name__ = false
@@ -177,7 +175,7 @@ func GenerateOptionParser(optionset ...func(*getoptions.GetOpt)) ArgumentParser 
 		// }
 
 		if options.Called("solexa") {
-			SetInputQualityShift(64)
+			obidefault.SetReadQualitiesShift(64)
 		}
 
 		return options, remaining
@@ -292,10 +290,6 @@ func CLIBatchSize() int {
 	return _BatchSize
 }
 
-func CLIReadQualities() bool {
-	return _Read_Qualities
-}
-
 // SetDebugOn sets the debug mode on.
 func SetDebugOn() {
 	_Debug = true
@@ -304,10 +298,6 @@ func SetDebugOn() {
 // SetDebugOff sets the debug mode off.
 func SetDebugOff() {
 	_Debug = false
-}
-
-func SetReadQualities(status bool) {
-	_Read_Qualities = status
 }
 
 // SetWorkerPerCore sets the number of workers per CPU core.
@@ -357,43 +347,6 @@ func WriteWorkerPerCore() float64 {
 // n - an integer representing the size of the sequence batches.
 func SetBatchSize(n int) {
 	_BatchSize = n
-}
-
-// InputQualityShift returns the quality shift value for input.
-//
-// It can be set programmatically by the SetInputQualityShift() function.
-// This value is used to decode the quality scores in FASTQ files.
-// The quality shift value defaults to 33, which is the correct value for
-// Sanger formated FASTQ files.
-// The quality shift value can be modified to 64 by the command line option
-// --solexa, for decoding old Solexa formated FASTQ files.
-//
-// No parameters.
-// Returns an integer representing the quality shift value for input.
-func InputQualityShift() byte {
-	return _Quality_Shift_Input
-}
-
-// OutputQualityShift returns the quality shift value used for FASTQ output.
-//
-// No parameters.
-// Returns an integer representing the quality shift value for output.
-func OutputQualityShift() byte {
-	return _Quality_Shift_Output
-}
-
-// SetInputQualityShift sets the quality shift value for decoding FASTQ.
-//
-// n - an integer representing the quality shift value to be set.
-func SetInputQualityShift[T int | byte](n T) {
-	_Quality_Shift_Input = byte(n)
-}
-
-// SetOutputQualityShift sets the quality shift value used for FASTQ output.
-//
-// n - an integer representing the quality shift value to be set.
-func SetOutputQualityShift[T int | byte](n T) {
-	_Quality_Shift_Output = byte(n)
 }
 
 // SetMaxCPU sets the maximum number of CPU cores allowed.

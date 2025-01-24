@@ -3,7 +3,7 @@ package obiformats
 import (
 	"fmt"
 
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 )
@@ -54,7 +54,7 @@ func CSVSequenceRecord(sequence *obiseq.BioSequence, opt Options) []string {
 			l := sequence.Len()
 			q := sequence.Qualities()
 			ascii := make([]byte, l)
-			quality_shift := obioptions.OutputQualityShift()
+			quality_shift := obidefault.WriteQualitiesShift()
 			for j := 0; j < l; j++ {
 				ascii[j] = uint8(q[j]) + uint8(quality_shift)
 			}

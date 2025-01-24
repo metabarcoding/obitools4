@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitaxformat/csvtaxdump"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitaxformat/ncbitaxdump"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 	"github.com/gabriel-vasile/mimetype"
@@ -62,18 +63,13 @@ func DetectTaxonomyFormat(path string) (TaxonomyLoader, error) {
 
 		switch mimetype.String() {
 		case "text/csv":
-			return LoadCSVTaxonomy, nil
+			return csvtaxdump.LoadCSVTaxonomy, nil
 		case "application/x-tar":
 			return DetectTaxonomyTarFormat(path)
 		}
 
 		log.Fatalf("Detected file format: %s", mimetype.String())
 	}
-
-	return nil, nil
-}
-
-func LoadCSVTaxonomy(path string, onlysn bool) (*obitax.Taxonomy, error) {
 
 	return nil, nil
 }

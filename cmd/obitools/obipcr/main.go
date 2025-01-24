@@ -3,10 +3,10 @@ package main
 import (
 	"os"
 
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obipcr"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 )
 
 func main() {
@@ -37,6 +37,6 @@ func main() {
 
 	amplicons, _ := obipcr.CLIPCR(sequences)
 	obiconvert.CLIWriteBioSequences(amplicons, true)
-	obiiter.WaitForLastPipe()
+	obiutils.WaitForLastPipe()
 
 }

@@ -3,9 +3,9 @@ package main
 import (
 	"os"
 
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obidemerge"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 )
@@ -25,6 +25,6 @@ func main() {
 
 	obiconvert.CLIWriteBioSequences(demerged, true)
 
-	obiiter.WaitForLastPipe()
+	obiutils.WaitForLastPipe()
 
 }

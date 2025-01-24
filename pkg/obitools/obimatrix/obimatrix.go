@@ -122,7 +122,7 @@ func IMatrix(iterator obiiter.IBioSequence) *MatrixData {
 	}
 
 	waiter.Wait()
-	obiiter.WaitForLastPipe()
+	obiutils.WaitForLastPipe()
 
 	rep := summaries[0]
 

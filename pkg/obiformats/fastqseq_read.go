@@ -7,8 +7,8 @@ import (
 	"os"
 	"path"
 
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 	log "github.com/sirupsen/logrus"
@@ -341,7 +341,7 @@ func ReadFastq(reader io.Reader, options ...WithOption) (obiiter.IBioSequence, e
 		go _ParseFastqFile(
 			chkchan,
 			out,
-			byte(obioptions.InputQualityShift()),
+			obidefault.ReadQualitiesShift(),
 			opt.ReadQualities(),
 		)
 	}

@@ -4,10 +4,10 @@ import (
 	"log"
 	"os"
 
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obifind"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 )
 
 func main() {
@@ -62,6 +62,6 @@ func main() {
 	iterator = obifind.CLITaxonRestrictions(iterator)
 	obifind.CLICSVTaxaWriter(iterator, true)
 
-	obiiter.WaitForLastPipe()
+	obiutils.WaitForLastPipe()
 
 }

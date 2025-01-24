@@ -9,6 +9,7 @@ import (
 	"github.com/goombaio/orderedset"
 	log "github.com/sirupsen/logrus"
 
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiformats"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
@@ -99,7 +100,7 @@ func CLIReadBioSequences(filenames ...string) (obiiter.IBioSequence, error) {
 		opts = append(opts, obiformats.OptionsFastSeqHeaderParser(obiformats.ParseGuessedFastSeqHeader))
 	}
 
-	opts = append(opts, obiformats.OptionsReadQualities(obioptions.CLIReadQualities()))
+	opts = append(opts, obiformats.OptionsReadQualities(obidefault.ReadQualities()))
 
 	nworkers := obioptions.CLIReadParallelWorkers()
 	if nworkers < 2 {

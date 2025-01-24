@@ -4,8 +4,8 @@ import (
 	"log"
 	"slices"
 
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 )
 
 func CSVSequenceHeader(opt Options) CSVHeader {
@@ -95,7 +95,7 @@ func CSVBatchFromSequences(batch obiiter.BioSequenceBatch, opt Options) CSVRecor
 				l := sequence.Len()
 				q := sequence.Qualities()
 				ascii := make([]byte, l)
-				quality_shift := obioptions.OutputQualityShift()
+				quality_shift := obidefault.WriteQualitiesShift()
 				for j := 0; j < l; j++ {
 					ascii[j] = uint8(q[j]) + uint8(quality_shift)
 				}

@@ -18,7 +18,7 @@ import (
 	"sync/atomic"
 	"unsafe"
 
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 	log "github.com/sirupsen/logrus"
@@ -287,7 +287,7 @@ func (s *BioSequence) Qualities() Quality {
 //
 // Returns a string representing the qualities of the BioSequence after applying the shift.
 func (s *BioSequence) QualitiesString() string {
-	quality_shift := obioptions.OutputQualityShift()
+	quality_shift := obidefault.WriteQualitiesShift()
 
 	qual := s.Qualities()
 	qual_ascii := make([]byte, len(qual))

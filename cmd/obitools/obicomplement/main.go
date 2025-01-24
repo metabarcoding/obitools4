@@ -3,9 +3,9 @@ package main
 import (
 	"os"
 
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 )
@@ -21,6 +21,6 @@ func main() {
 	comp := fs.MakeIWorker(obiseq.ReverseComplementWorker(true), true)
 	obiconvert.CLIWriteBioSequences(comp, true)
 
-	obiiter.WaitForLastPipe()
+	obiutils.WaitForLastPipe()
 
 }

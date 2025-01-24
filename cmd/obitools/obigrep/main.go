@@ -3,11 +3,11 @@ package main
 import (
 	"os"
 
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obigrep"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 )
 
 func main() {
@@ -39,6 +39,6 @@ func main() {
 
 	selected := obigrep.CLIFilterSequence(sequences)
 	obiconvert.CLIWriteBioSequences(selected, true)
-	obiiter.WaitForLastPipe()
+	obiutils.WaitForLastPipe()
 
 }

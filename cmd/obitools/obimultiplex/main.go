@@ -6,10 +6,10 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obimultiplex"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 )
 
 func main() {
@@ -48,6 +48,6 @@ func main() {
 	amplicons, _ := obimultiplex.IExtractBarcode(sequences)
 	obiconvert.CLIWriteBioSequences(amplicons, true)
 	amplicons.Wait()
-	obiiter.WaitForLastPipe()
+	obiutils.WaitForLastPipe()
 
 }

@@ -2,6 +2,7 @@ package obiutils
 
 import (
 	"path"
+	"path/filepath"
 	"strings"
 )
 
@@ -20,4 +21,17 @@ func RemoveAllExt(p string) string {
 
 	return p
 
+}
+
+func Basename(path string) string {
+	filename := filepath.Base(path)
+	ext := filepath.Ext(filename)
+
+	// Keep removing extensions until there are no more
+	for ext != "" {
+		filename = strings.TrimSuffix(filename, ext)
+		ext = filepath.Ext(filename)
+	}
+
+	return filename
 }

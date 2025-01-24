@@ -7,7 +7,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 	"github.com/tevino/abool/v2"
 
 	log "github.com/sirupsen/logrus"
@@ -57,7 +57,7 @@ func NewICSVRecord() *ICSVRecord {
 	lock := sync.RWMutex{}
 	i.lock = &lock
 
-	obiiter.RegisterAPipe()
+	obiutils.RegisterAPipe()
 
 	return &i
 }
@@ -275,7 +275,7 @@ func (iterator *ICSVRecord) Push(batch CSVRecordBatch) {
 
 func (iterator *ICSVRecord) Close() {
 	close(iterator.channel)
-	obiiter.UnregisterPipe()
+	obiutils.UnregisterPipe()
 }
 
 func (iterator *ICSVRecord) WaitAndClose() {

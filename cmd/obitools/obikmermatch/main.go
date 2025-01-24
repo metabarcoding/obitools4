@@ -8,6 +8,7 @@ import (
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obikmersim"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 )
 
 func main() {
@@ -45,6 +46,6 @@ func main() {
 
 	selected := obikmersim.CLIAlignSequences(sequences)
 	obiconvert.CLIWriteBioSequences(selected, true)
-	obiiter.WaitForLastPipe()
+	obiutils.WaitForLastPipe()
 
 }

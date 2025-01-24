@@ -1,9 +1,8 @@
 package obiutils_test
 
 import (
-	"testing"
-
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
+	"testing"
 )
 
 func TestAbs(t *testing.T) {

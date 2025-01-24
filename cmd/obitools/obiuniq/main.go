@@ -3,11 +3,12 @@ package main
 import (
 	"os"
 
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiuniq"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 )
 
 func main() {
@@ -31,7 +32,7 @@ func main() {
 	// defer trace.Stop()
 
 	obioptions.SetBatchSize(10)
-	obioptions.SetReadQualities(false)
+	obidefault.SetReadQualities(false)
 	optionParser := obioptions.GenerateOptionParser(obiuniq.OptionSet)
 
 	_, args := optionParser(os.Args)
@@ -42,6 +43,6 @@ func main() {
 	unique := obiuniq.CLIUnique(sequences)
 	obiconvert.CLIWriteBioSequences(unique, true)
 
-	obiiter.WaitForLastPipe()
+	obiutils.WaitForLastPipe()
 
 }

@@ -7,8 +7,8 @@ import (
 	"path"
 	"strings"
 
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 	"github.com/goccy/go-json"
@@ -143,7 +143,7 @@ func ReadCSV(reader io.Reader, options ...WithOption) (obiiter.IBioSequence, err
 	go _ParseCsvFile(opt.Source(),
 		reader,
 		out,
-		byte(obioptions.InputQualityShift()),
+		obidefault.ReadQualitiesShift(),
 		opt.BatchSize())
 
 	go func() {

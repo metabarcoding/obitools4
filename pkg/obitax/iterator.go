@@ -1,5 +1,9 @@
 package obitax
 
+import (
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
+)
+
 // ITaxon represents an iterator for traversing Taxon instances.
 // It provides methods to retrieve the next Taxon and check if the iteration is finished.
 type ITaxon struct {
@@ -167,4 +171,47 @@ func (iterator *ITaxon) Concat(iterators ...*ITaxon) *ITaxon {
 	}()
 
 	return newIter
+}
+
+func (taxon *Taxon) ISubTaxonomy() *ITaxon {
+
+	taxo := taxon.Taxonomy
+
+	path := taxon.Path()
+	lpath := path.Len()
+
+	iter := NewITaxon()
+
+	parents := map[*TaxNode]bool{taxon.Node: true}
+
+	obiutils.RegisterAPipe()
+
+	go func() {
+		for i := lpath - 1; i >= 0; i-- {
+			taxon := path.Taxon(i)
+			parents[taxon.Node] = true
+			iter.Push(taxon)
+		}
+
+		pushed := true
+
+		for pushed {
+			itaxo := taxo.Iterator()
+			pushed = false
+			for itaxo.Next() {
+				taxon := itaxo.Get()
+
+				if !parents[taxon.Node] && parents[taxon.Parent().Node] {
+					parents[taxon.Node] = true
+					iter.Push(taxon)
+					pushed = true
+				}
+			}
+		}
+
+		iter.Close()
+		obiutils.UnregisterPipe()
+	}()
+
+	return iter
 }
