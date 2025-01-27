@@ -5,11 +5,12 @@ import (
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiitercsv"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
 )
 
 func CLIWriteSequenceCSV(iterator obiiter.IBioSequence,
-	terminalAction bool, filenames ...string) *obiiter.ICSVRecord {
+	terminalAction bool, filenames ...string) *obiitercsv.ICSVRecord {
 
 	if obiconvert.CLIProgressBar() {
 		iterator = iterator.Speed("Writing CSV")
@@ -42,12 +43,12 @@ func CLIWriteSequenceCSV(iterator obiiter.IBioSequence,
 
 }
 
-func CLICSVWriter(iterator *obiiter.ICSVRecord,
+func CLICSVWriter(iterator *obiitercsv.ICSVRecord,
 	terminalAction bool,
-	options ...WithOption) *obiiter.ICSVRecord {
+	options ...WithOption) *obiitercsv.ICSVRecord {
 
 	var err error
-	var newIter *obiiter.ICSVRecord
+	var newIter *obiitercsv.ICSVRecord
 
 	if obiconvert.CLIOutPutFileName() != "-" {
 		options = append(options, OptionFileName(obiconvert.CLIOutPutFileName()))

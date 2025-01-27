@@ -1,4 +1,4 @@
-package obiiter
+package obiitercsv
 
 import (
 	"fmt"

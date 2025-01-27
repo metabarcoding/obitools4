@@ -2,7 +2,7 @@ package obicsv
 
 import (
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiitercsv"
 )
 
 // __options__ holds configuration options for processing.
@@ -70,7 +70,7 @@ func MakeOptions(setters []WithOption) Options {
 		csv_quality:       false,
 		csv_separator:     ",",
 		csv_navalue:       "NA",
-		csv_keys:          make(obiiter.CSVHeader, 0),
+		csv_keys:          make(obiitercsv.CSVHeader, 0),
 		csv_auto:          false,
 		source:            "unknown",
 	}

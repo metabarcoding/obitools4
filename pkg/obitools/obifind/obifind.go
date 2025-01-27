@@ -2,7 +2,7 @@ package obifind
 
 import (
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiitercsv"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obicsv"
 
@@ -40,7 +40,7 @@ func CLIFilterRankRestriction(iterator *obitax.ITaxon) *obitax.ITaxon {
 	return iterator
 }
 
-func CLICSVTaxaIterator(iterator *obitax.ITaxon) *obiiter.ICSVRecord {
+func CLICSVTaxaIterator(iterator *obitax.ITaxon) *obiitercsv.ICSVRecord {
 	if iterator == nil {
 		return nil
 	}
@@ -60,6 +60,6 @@ func CLICSVTaxaIterator(iterator *obitax.ITaxon) *obiiter.ICSVRecord {
 	return NewCSVTaxaIterator(iterator, options...)
 }
 
-func CLICSVTaxaWriter(iterator *obitax.ITaxon, terminalAction bool) *obiiter.ICSVRecord {
+func CLICSVTaxaWriter(iterator *obitax.ITaxon, terminalAction bool) *obiitercsv.ICSVRecord {
 	return obicsv.CLICSVWriter(CLICSVTaxaIterator(iterator), terminalAction)
 }

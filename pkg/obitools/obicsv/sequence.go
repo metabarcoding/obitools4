@@ -6,11 +6,12 @@ import (
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiitercsv"
 )
 
-func CSVSequenceHeader(opt Options) obiiter.CSVHeader {
+func CSVSequenceHeader(opt Options) obiitercsv.CSVHeader {
 	keys := opt.CSVKeys()
-	record := make(obiiter.CSVHeader, 0, len(keys)+4)
+	record := make(obiitercsv.CSVHeader, 0, len(keys)+4)
 
 	if opt.CSVId() {
 		record.AppendField("id")
@@ -45,12 +46,12 @@ func CSVSequenceHeader(opt Options) obiiter.CSVHeader {
 	return record
 }
 
-func CSVBatchFromSequences(batch obiiter.BioSequenceBatch, opt Options) obiiter.CSVRecordBatch {
+func CSVBatchFromSequences(batch obiiter.BioSequenceBatch, opt Options) obiitercsv.CSVRecordBatch {
 	keys := opt.CSVKeys()
-	csvslice := make([]obiiter.CSVRecord, batch.Len())
+	csvslice := make([]obiitercsv.CSVRecord, batch.Len())
 
 	for i, sequence := range batch.Slice() {
-		record := make(obiiter.CSVRecord)
+		record := make(obiitercsv.CSVRecord)
 
 		if opt.CSVId() {
 			record["id"] = sequence.Id()
@@ -108,10 +109,10 @@ func CSVBatchFromSequences(batch obiiter.BioSequenceBatch, opt Options) obiiter.
 		csvslice[i] = record
 	}
 
-	return obiiter.MakeCSVRecordBatch(batch.Source(), batch.Order(), csvslice)
+	return obiitercsv.MakeCSVRecordBatch(batch.Source(), batch.Order(), csvslice)
 }
 
-func NewCSVSequenceIterator(iter obiiter.IBioSequence, options ...WithOption) *obiiter.ICSVRecord {
+func NewCSVSequenceIterator(iter obiiter.IBioSequence, options ...WithOption) *obiitercsv.ICSVRecord {
 
 	opt := MakeOptions(options)
 
@@ -128,7 +129,7 @@ func NewCSVSequenceIterator(iter obiiter.IBioSequence, options ...WithOption) *o
 		}
 	}
 
-	newIter := obiiter.NewICSVRecord()
+	newIter := obiitercsv.NewICSVRecord()
 	newIter.SetHeader(CSVSequenceHeader(opt))
 
 	nwriters := opt.ParallelWorkers()

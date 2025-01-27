@@ -4,7 +4,7 @@ import (
 	"slices"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiitercsv"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
 )
 
@@ -192,12 +192,12 @@ func OptionsWithMetadata(values ...string) WithOption {
 	return f
 }
 
-func NewCSVTaxaIterator(iterator *obitax.ITaxon, options ...WithOption) *obiiter.ICSVRecord {
+func NewCSVTaxaIterator(iterator *obitax.ITaxon, options ...WithOption) *obiitercsv.ICSVRecord {
 
 	opt := MakeOptions(options)
 	metakeys := make([]string, 0)
 
-	newIter := obiiter.NewICSVRecord()
+	newIter := obiitercsv.NewICSVRecord()
 
 	newIter.Add(1)
 
@@ -240,11 +240,11 @@ func NewCSVTaxaIterator(iterator *obitax.ITaxon, options ...WithOption) *obiiter
 
 	go func() {
 		o := 0
-		data := make([]obiiter.CSVRecord, 0, batch_size)
+		data := make([]obiitercsv.CSVRecord, 0, batch_size)
 		for iterator.Next() {
 
 			taxon := iterator.Get()
-			record := make(obiiter.CSVRecord)
+			record := make(obiitercsv.CSVRecord)
 
 			if opt.WithPattern() {
 				record["query"] = taxon.MetadataAsString("query")
@@ -282,15 +282,15 @@ func NewCSVTaxaIterator(iterator *obitax.ITaxon, options ...WithOption) *obiiter
 
 			data = append(data, record)
 			if len(data) >= batch_size {
-				newIter.Push(obiiter.MakeCSVRecordBatch(opt.Source(), o, data))
-				data = make([]obiiter.CSVRecord, 0, batch_size)
+				newIter.Push(obiitercsv.MakeCSVRecordBatch(opt.Source(), o, data))
+				data = make([]obiitercsv.CSVRecord, 0, batch_size)
 				o++
 			}
 
 		}
 
 		if len(data) > 0 {
-			newIter.Push(obiiter.MakeCSVRecordBatch(opt.Source(), o, data))
+			newIter.Push(obiitercsv.MakeCSVRecordBatch(opt.Source(), o, data))
 		}
 
 		newIter.Done()
