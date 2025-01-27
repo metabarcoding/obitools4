@@ -1,9 +1,9 @@
 package obijoin
 
 import (
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiformats"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 
@@ -137,7 +137,7 @@ func CLIJoinSequences(iterator obiiter.IBioSequence) obiiter.IBioSequence {
 
 	worker := MakeJoinWorker(keys.Left, index, CLIUpdateId(), CLIUpdateSequence(), CLIUpdateQuality())
 
-	iterator = iterator.MakeIWorker(worker, false, obioptions.CLIParallelWorkers())
+	iterator = iterator.MakeIWorker(worker, false, obidefault.ParallelWorkers())
 
 	return iterator
 }

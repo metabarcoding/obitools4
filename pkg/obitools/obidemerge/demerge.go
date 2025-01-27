@@ -1,8 +1,8 @@
 package obidemerge
 
 import (
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 )
 
@@ -34,5 +34,5 @@ func MakeDemergeWorker(key string) obiseq.SeqWorker {
 
 func CLIDemergeSequences(iterator obiiter.IBioSequence) obiiter.IBioSequence {
 	worker := MakeDemergeWorker(CLIDemergeSlot())
-	return iterator.MakeIWorker(worker, false, obioptions.CLIParallelWorkers(), 0)
+	return iterator.MakeIWorker(worker, false, obidefault.ParallelWorkers(), 0)
 }

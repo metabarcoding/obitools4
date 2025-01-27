@@ -3,8 +3,8 @@ package obisummary
 import (
 	"sync"
 
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 )
@@ -154,7 +154,7 @@ func (data *DataSummary) Update(s *obiseq.BioSequence) *DataSummary {
 
 func ISummary(iterator obiiter.IBioSequence, summarise []string) map[string]interface{} {
 
-	nproc := obioptions.CLIParallelWorkers()
+	nproc := obidefault.ParallelWorkers()
 	waiter := sync.WaitGroup{}
 
 	summaries := make([]*DataSummary, nproc)

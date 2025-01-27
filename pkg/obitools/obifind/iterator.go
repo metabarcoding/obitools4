@@ -3,9 +3,9 @@ package obifind
 import (
 	"slices"
 
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obicsv"
 )
 
 type __options__ struct {
@@ -38,7 +38,7 @@ type WithOption func(Options)
 //   - An Options instance with the specified settings.
 func MakeOptions(setters []WithOption) Options {
 	o := __options__{
-		batch_size:           obioptions.CLIBatchSize(), // Number of items to process in a batch
+		batch_size:           obidefault.BatchSize(), // Number of items to process in a batch
 		with_pattern:         true,
 		with_parent:          false,
 		with_path:            false,
@@ -192,12 +192,12 @@ func OptionsWithMetadata(values ...string) WithOption {
 	return f
 }
 
-func NewCSVTaxaIterator(iterator *obitax.ITaxon, options ...WithOption) *obicsv.ICSVRecord {
+func NewCSVTaxaIterator(iterator *obitax.ITaxon, options ...WithOption) *obiiter.ICSVRecord {
 
 	opt := MakeOptions(options)
 	metakeys := make([]string, 0)
 
-	newIter := obicsv.NewICSVRecord()
+	newIter := obiiter.NewICSVRecord()
 
 	newIter.Add(1)
 
@@ -240,11 +240,11 @@ func NewCSVTaxaIterator(iterator *obitax.ITaxon, options ...WithOption) *obicsv.
 
 	go func() {
 		o := 0
-		data := make([]obicsv.CSVRecord, 0, batch_size)
+		data := make([]obiiter.CSVRecord, 0, batch_size)
 		for iterator.Next() {
 
 			taxon := iterator.Get()
-			record := make(obicsv.CSVRecord)
+			record := make(obiiter.CSVRecord)
 
 			if opt.WithPattern() {
 				record["query"] = taxon.MetadataAsString("query")
@@ -282,15 +282,15 @@ func NewCSVTaxaIterator(iterator *obitax.ITaxon, options ...WithOption) *obicsv.
 
 			data = append(data, record)
 			if len(data) >= batch_size {
-				newIter.Push(obicsv.MakeCSVRecordBatch(opt.Source(), o, data))
-				data = make([]obicsv.CSVRecord, 0, batch_size)
+				newIter.Push(obiiter.MakeCSVRecordBatch(opt.Source(), o, data))
+				data = make([]obiiter.CSVRecord, 0, batch_size)
 				o++
 			}
 
 		}
 
 		if len(data) > 0 {
-			newIter.Push(obicsv.MakeCSVRecordBatch(opt.Source(), o, data))
+			newIter.Push(obiiter.MakeCSVRecordBatch(opt.Source(), o, data))
 		}
 
 		newIter.Done()

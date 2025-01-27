@@ -3,13 +3,13 @@ package obicsv
 import (
 	log "github.com/sirupsen/logrus"
 
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
 )
 
 func CLIWriteSequenceCSV(iterator obiiter.IBioSequence,
-	terminalAction bool, filenames ...string) *ICSVRecord {
+	terminalAction bool, filenames ...string) *obiiter.ICSVRecord {
 
 	if obiconvert.CLIProgressBar() {
 		iterator = iterator.Speed("Writing CSV")
@@ -17,14 +17,14 @@ func CLIWriteSequenceCSV(iterator obiiter.IBioSequence,
 
 	opts := make([]WithOption, 0, 10)
 
-	nworkers := obioptions.CLIParallelWorkers() / 4
+	nworkers := obidefault.ParallelWorkers() / 4
 	if nworkers < 2 {
 		nworkers = 2
 	}
 
 	opts = append(opts, OptionsParallelWorkers(nworkers))
-	opts = append(opts, OptionsBatchSize(obioptions.CLIBatchSize()))
-	opts = append(opts, OptionsCompressed(obiconvert.CLICompressed()))
+	opts = append(opts, OptionsBatchSize(obidefault.BatchSize()))
+	opts = append(opts, OptionsCompressed(obidefault.CompressOutput()))
 
 	opts = append(opts, CSVId(CLIPrintId()),
 		CSVCount(CLIPrintCount()),
@@ -42,12 +42,12 @@ func CLIWriteSequenceCSV(iterator obiiter.IBioSequence,
 
 }
 
-func CLICSVWriter(iterator *ICSVRecord,
+func CLICSVWriter(iterator *obiiter.ICSVRecord,
 	terminalAction bool,
-	options ...WithOption) *ICSVRecord {
+	options ...WithOption) *obiiter.ICSVRecord {
 
 	var err error
-	var newIter *ICSVRecord
+	var newIter *obiiter.ICSVRecord
 
 	if obiconvert.CLIOutPutFileName() != "-" {
 		options = append(options, OptionFileName(obiconvert.CLIOutPutFileName()))

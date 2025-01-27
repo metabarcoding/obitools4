@@ -4,8 +4,8 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obichunk"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 )
 
 func CLIUnique(sequences obiiter.IBioSequence) obiiter.IBioSequence {
@@ -50,9 +50,9 @@ func CLIUnique(sequences obiiter.IBioSequence) obiiter.IBioSequence {
 
 	options = append(options,
 		obichunk.OptionsParallelWorkers(
-			obioptions.CLIParallelWorkers()),
+			obidefault.ParallelWorkers()),
 		obichunk.OptionsBatchSize(
-			obioptions.CLIBatchSize()),
+			obidefault.BatchSize()),
 		obichunk.OptionNAValue(CLINAValue()),
 	)
 

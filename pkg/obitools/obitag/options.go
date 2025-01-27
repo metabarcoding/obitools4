@@ -3,6 +3,7 @@ package obitag
 import (
 	log "github.com/sirupsen/logrus"
 
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiformats"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
@@ -87,15 +88,15 @@ func CLISaveRefetenceDB(db obiseq.BioSequenceSlice) {
 			opts = append(opts, obiformats.OptionsFastSeqHeaderFormat(obiformats.FormatFastSeqJsonHeader))
 		}
 
-		nworkers := obioptions.CLIParallelWorkers() / 4
+		nworkers := obidefault.ParallelWorkers() / 4
 		if nworkers < 2 {
 			nworkers = 2
 		}
 
 		opts = append(opts, obiformats.OptionsParallelWorkers(nworkers))
-		opts = append(opts, obiformats.OptionsBatchSize(obioptions.CLIBatchSize()))
+		opts = append(opts, obiformats.OptionsBatchSize(obidefault.BatchSize()))
 
-		opts = append(opts, obiformats.OptionsCompressed(obiconvert.CLICompressed()))
+		opts = append(opts, obiformats.OptionsCompressed(obidefault.CompressOutput()))
 
 		var err error
 

@@ -3,9 +3,9 @@ package obidistribute
 import (
 	log "github.com/sirupsen/logrus"
 
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiformats"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
 )
 
@@ -25,13 +25,13 @@ func CLIDistributeSequence(sequences obiiter.IBioSequence) {
 		opts = append(opts, obiformats.OptionsFastSeqHeaderFormat(obiformats.FormatFastSeqJsonHeader))
 	}
 
-	nworkers := obioptions.CLIParallelWorkers() / 4
+	nworkers := obidefault.ParallelWorkers() / 4
 	if nworkers < 2 {
 		nworkers = 2
 	}
 
 	opts = append(opts, obiformats.OptionsParallelWorkers(nworkers),
-		obiformats.OptionsBatchSize(obioptions.CLIBatchSize()),
+		obiformats.OptionsBatchSize(obidefault.BatchSize()),
 		obiformats.OptionsAppendFile(CLIAppendSequences()),
 		obiformats.OptionsCompressed(obiconvert.CLICompressed()))
 
@@ -47,7 +47,7 @@ func CLIDistributeSequence(sequences obiiter.IBioSequence) {
 	}
 
 	dispatcher := sequences.Distribute(CLISequenceClassifier(),
-		obioptions.CLIBatchSize())
+		obidefault.BatchSize())
 
 	obiformats.WriterDispatcher(CLIFileNamePattern(),
 		dispatcher, formater, opts...,

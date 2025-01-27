@@ -1,8 +1,8 @@
 package obikmersim
 
 import (
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiformats"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
 	"github.com/DavidGamba/go-getoptions"
@@ -105,7 +105,7 @@ func CLIReference() (string, obiseq.BioSequenceSlice) {
 	nreader := 1
 
 	if obiconvert.CLINoInputOrder() {
-		nreader = obioptions.StrictReadWorker()
+		nreader = obidefault.StrictReadWorker()
 	}
 
 	source, references := obiformats.ReadSequencesBatchFromFiles(

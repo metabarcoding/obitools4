@@ -7,8 +7,8 @@ import (
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obialign"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obichunk"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obistats"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
@@ -234,9 +234,9 @@ func ICleanDB(itertator obiiter.IBioSequence) obiiter.IBioSequence {
 		obichunk.OptionSortOnMemory(),
 		obichunk.OptionSubCategory("taxid"),
 		obichunk.OptionsParallelWorkers(
-			obioptions.CLIParallelWorkers()),
+			obidefault.ParallelWorkers()),
 		obichunk.OptionsBatchSize(
-			obioptions.CLIBatchSize()),
+			obidefault.BatchSize()),
 		obichunk.OptionNAValue("NA"),
 	)
 
@@ -261,22 +261,22 @@ func ICleanDB(itertator obiiter.IBioSequence) obiiter.IBioSequence {
 	goodTaxa := obiseq.IsAValidTaxon(taxonomy, CLIUpdateTaxids()).And(rankPredicate)
 
 	usable := unique.FilterOn(goodTaxa,
-		obioptions.CLIBatchSize(),
-		obioptions.CLIParallelWorkers())
+		obidefault.BatchSize(),
+		obidefault.ParallelWorkers())
 
 	annotated := usable.MakeIWorker(obiseq.MakeSetSpeciesWorker(taxonomy),
 		false,
-		obioptions.CLIParallelWorkers(),
+		obidefault.ParallelWorkers(),
 	).MakeIWorker(obiseq.MakeSetGenusWorker(taxonomy),
 		false,
-		obioptions.CLIParallelWorkers(),
+		obidefault.ParallelWorkers(),
 	).MakeIWorker(obiseq.MakeSetFamilyWorker(taxonomy),
 		false,
-		obioptions.CLIParallelWorkers(),
+		obidefault.ParallelWorkers(),
 	)
 	// .MakeIWorker(SequenceTrust,
 	// 	false,
-	// 	obioptions.CLIParallelWorkers(),
+	// 	obidefault.ParallelWorkers(),
 	// )
 
 	source, references := annotated.Load()
@@ -284,7 +284,7 @@ func ICleanDB(itertator obiiter.IBioSequence) obiiter.IBioSequence {
 	mannwithney := MakeSequenceFamilyGenusWorker(references)
 
 	partof := obiiter.IBatchOver(source, references,
-		obioptions.CLIBatchSize())
+		obidefault.BatchSize())
 
 	// genera_iterator, err := obichunk.ISequenceChunk(
 	// 	annotated,

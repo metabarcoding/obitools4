@@ -6,8 +6,8 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obialign"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 )
@@ -222,7 +222,7 @@ func IAssemblePESequencesBatch(iterator obiiter.IBioSequence,
 		log.Fatalln("Sequence data must be paired")
 	}
 
-	nworkers := obioptions.CLIParallelWorkers()
+	nworkers := obidefault.ParallelWorkers()
 
 	if len(sizes) > 0 {
 		nworkers = sizes[0]

@@ -12,7 +12,6 @@ import (
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiformats"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 )
 
 func ExpandListOfFiles(check_ext bool, filenames ...string) ([]string, error) {
@@ -102,13 +101,13 @@ func CLIReadBioSequences(filenames ...string) (obiiter.IBioSequence, error) {
 
 	opts = append(opts, obiformats.OptionsReadQualities(obidefault.ReadQualities()))
 
-	nworkers := obioptions.CLIReadParallelWorkers()
+	nworkers := obidefault.ReadParallelWorkers()
 	if nworkers < 2 {
 		nworkers = 2
 	}
 
 	opts = append(opts, obiformats.OptionsParallelWorkers(nworkers))
-	opts = append(opts, obiformats.OptionsBatchSize(obioptions.CLIBatchSize()))
+	opts = append(opts, obiformats.OptionsBatchSize(obidefault.BatchSize()))
 
 	opts = append(opts, obiformats.OptionsFullFileBatch(FullFileBatch()))
 
@@ -159,7 +158,7 @@ func CLIReadBioSequences(filenames ...string) (obiiter.IBioSequence, error) {
 			nreader := 1
 
 			if CLINoInputOrder() {
-				nreader = obioptions.ParallelFilesRead()
+				nreader = obidefault.ParallelFilesRead()
 			}
 
 			iterator = obiformats.ReadSequencesBatchFromFiles(

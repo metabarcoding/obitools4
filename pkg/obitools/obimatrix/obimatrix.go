@@ -8,8 +8,8 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 	"golang.org/x/exp/maps"
@@ -93,7 +93,7 @@ func (data *MatrixData) Update(s *obiseq.BioSequence, mapkey string) *MatrixData
 
 func IMatrix(iterator obiiter.IBioSequence) *MatrixData {
 
-	nproc := obioptions.CLIParallelWorkers()
+	nproc := obidefault.ParallelWorkers()
 	waiter := sync.WaitGroup{}
 
 	mapAttribute := CLIMapAttribute()

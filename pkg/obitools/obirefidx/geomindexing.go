@@ -7,7 +7,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obistats"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
@@ -32,7 +32,7 @@ func GeomIndexSesquence(seqidx int,
 
 	iseq_channel := make(chan int)
 
-	for k := 0; k < obioptions.CLIParallelWorkers(); k++ {
+	for k := 0; k < obidefault.ParallelWorkers(); k++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()

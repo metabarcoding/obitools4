@@ -7,8 +7,8 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiapat"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 )
 
@@ -295,7 +295,7 @@ func CLISlitPipeline() obiiter.Pipeable {
 	worker := SplitPatternWorker(CLIConfig())
 
 	annotator := obiseq.SeqToSliceWorker(worker, false)
-	f := obiiter.SliceWorkerPipe(annotator, false, obioptions.CLIParallelWorkers())
+	f := obiiter.SliceWorkerPipe(annotator, false, obidefault.ParallelWorkers())
 
 	return f
 }

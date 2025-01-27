@@ -4,10 +4,10 @@ import (
 	"math"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obialign"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obifp"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obikmer"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 )
 
@@ -147,7 +147,7 @@ func CLILookForSharedKmers(iterator obiiter.IBioSequence) obiiter.IBioSequence {
 	source, references := CLIReference()
 
 	if iterator == obiiter.NilIBioSequence {
-		iterator = obiiter.IBatchOver(source, references, obioptions.CLIBatchSize())
+		iterator = obiiter.IBatchOver(source, references, obidefault.BatchSize())
 	}
 
 	if CLISelf() {
@@ -163,7 +163,7 @@ func CLILookForSharedKmers(iterator obiiter.IBioSequence) obiiter.IBioSequence {
 		CLIMaxKmerOccurs())
 
 	worker := MakeCountMatchWorker(kmerMatch, CLIMinSharedKmers())
-	newIter = iterator.MakeIWorker(worker, false, obioptions.CLIParallelWorkers())
+	newIter = iterator.MakeIWorker(worker, false, obidefault.ParallelWorkers())
 
 	return newIter.FilterEmpty()
 }
@@ -174,7 +174,7 @@ func CLIAlignSequences(iterator obiiter.IBioSequence) obiiter.IBioSequence {
 	source, references := CLIReference()
 
 	if iterator == obiiter.NilIBioSequence {
-		iterator = obiiter.IBatchOver(source, references, obioptions.CLIBatchSize())
+		iterator = obiiter.IBatchOver(source, references, obidefault.BatchSize())
 	}
 
 	if CLISelf() {
@@ -188,7 +188,7 @@ func CLIAlignSequences(iterator obiiter.IBioSequence) obiiter.IBioSequence {
 		CLISparseMode(),
 		CLIMaxKmerOccurs())
 	worker := MakeKmerAlignWorker(kmerMatch, CLIMinSharedKmers(), CLIGap(), CLIScale(), CLIDelta(), CLIFastRelativeScore(), 0.8, true)
-	newIter = iterator.MakeIWorker(worker, false, obioptions.CLIParallelWorkers())
+	newIter = iterator.MakeIWorker(worker, false, obidefault.ParallelWorkers())
 
 	return newIter.FilterEmpty()
 }

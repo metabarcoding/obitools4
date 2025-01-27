@@ -7,8 +7,8 @@ import (
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiapat"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obicorazick"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obigrep"
@@ -345,7 +345,7 @@ func CLIAnnotationPipeline() obiiter.Pipeable {
 	worker := CLIAnnotationWorker()
 
 	annotator := obiseq.SeqToSliceConditionalWorker(predicate, worker, false)
-	f := obiiter.SliceWorkerPipe(annotator, false, obioptions.CLIParallelWorkers())
+	f := obiiter.SliceWorkerPipe(annotator, false, obidefault.ParallelWorkers())
 
 	return f
 }

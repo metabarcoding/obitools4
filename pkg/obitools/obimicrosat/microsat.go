@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"sort"
 
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	"github.com/dlclark/regexp2"
 )
@@ -168,7 +168,7 @@ func CLIAnnotateMicrosat(iterator obiiter.IBioSequence) obiiter.IBioSequence {
 		CLIMinFlankLength(),
 		CLIReoriented())
 
-	newIter = iterator.MakeIWorker(worker, false, obioptions.CLIParallelWorkers())
+	newIter = iterator.MakeIWorker(worker, false, obidefault.ParallelWorkers())
 
 	return newIter.FilterEmpty()
 

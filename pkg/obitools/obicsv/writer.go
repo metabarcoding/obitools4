@@ -7,12 +7,13 @@ import (
 	"os"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiformats"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 
 	log "github.com/sirupsen/logrus"
 )
 
-func FormatCVSBatch(batch CSVRecordBatch, header CSVHeader, navalue string) *bytes.Buffer {
+func FormatCVSBatch(batch obiiter.CSVRecordBatch, header obiiter.CSVHeader, navalue string) *bytes.Buffer {
 	buff := new(bytes.Buffer)
 	csv := csv.NewWriter(buff)
 
@@ -44,14 +45,14 @@ func FormatCVSBatch(batch CSVRecordBatch, header CSVHeader, navalue string) *byt
 	return buff
 }
 
-func WriteCSV(iterator *ICSVRecord,
+func WriteCSV(iterator *obiiter.ICSVRecord,
 	file io.WriteCloser,
-	options ...WithOption) (*ICSVRecord, error) {
+	options ...WithOption) (*obiiter.ICSVRecord, error) {
 	opt := MakeOptions(options)
 
 	file, _ = obiutils.CompressStream(file, opt.CompressedFile(), opt.CloseFile())
 
-	newIter := NewICSVRecord()
+	newIter := obiiter.NewICSVRecord()
 
 	nwriters := opt.ParallelWorkers()
 
@@ -65,7 +66,7 @@ func WriteCSV(iterator *ICSVRecord,
 		log.Debugf("Writing CSV file done")
 	}()
 
-	ff := func(iterator *ICSVRecord) {
+	ff := func(iterator *obiiter.ICSVRecord) {
 		for iterator.Next() {
 
 			batch := iterator.Get()
@@ -108,8 +109,8 @@ func WriteCSV(iterator *ICSVRecord,
 // os.Stdout as the output file, and the options slice.
 //
 // The function returns the same bio sequence iterator and an error if any occurred.
-func WriteCSVToStdout(iterator *ICSVRecord,
-	options ...WithOption) (*ICSVRecord, error) {
+func WriteCSVToStdout(iterator *obiiter.ICSVRecord,
+	options ...WithOption) (*obiiter.ICSVRecord, error) {
 	// options = append(options, OptionDontCloseFile())
 	options = append(options, OptionCloseFile())
 	return WriteCSV(iterator, os.Stdout, options...)
@@ -126,9 +127,9 @@ func WriteCSVToStdout(iterator *ICSVRecord,
 // Returns:
 // - obiiter.IBioSequence: The updated biosequence iterator.
 // - error: Any error that occurred during the writing process.
-func WriteCSVToFile(iterator *ICSVRecord,
+func WriteCSVToFile(iterator *obiiter.ICSVRecord,
 	filename string,
-	options ...WithOption) (*ICSVRecord, error) {
+	options ...WithOption) (*obiiter.ICSVRecord, error) {
 
 	opt := MakeOptions(options)
 	flags := os.O_WRONLY | os.O_CREATE

@@ -8,11 +8,11 @@ import (
 	"sync"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obialign"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiformats"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obigraph"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obikmer"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obisuffix"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiannotate"
@@ -472,7 +472,7 @@ func CLIOBIMinion(itertator obiiter.IBioSequence) obiiter.IBioSequence {
 				CLISampleAttribute(),
 				seqs,
 				CLIDistStepMax(),
-				obioptions.CLIParallelWorkers())
+				obidefault.ParallelWorkers())
 			if bar != nil {
 				bar.Add(1)
 			}

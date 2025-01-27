@@ -6,8 +6,8 @@ import (
 	"os"
 	"reflect"
 
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	log "github.com/sirupsen/logrus"
 	lua "github.com/yuin/gopher-lua"
@@ -154,7 +154,7 @@ func LuaProcessor(iterator obiiter.IBioSequence, name, program string, breakOnEr
 	newIter := obiiter.MakeIBioSequence()
 
 	if nworkers <= 0 {
-		nworkers = obioptions.CLIParallelWorkers()
+		nworkers = obidefault.ParallelWorkers()
 	}
 
 	newIter.Add(nworkers)

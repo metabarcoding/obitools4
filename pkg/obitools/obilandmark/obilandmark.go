@@ -6,8 +6,8 @@ import (
 	"sync"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obialign"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obistats"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
@@ -30,7 +30,7 @@ import (
 // Returns:
 // - seqworld: A matrix of float64 values representing the mapped coordinates.
 func MapOnLandmarkSequences(library obiseq.BioSequenceSlice, landmark_idx []int, sizes ...int) obiutils.Matrix[float64] {
-	nworkers := obioptions.CLIParallelWorkers()
+	nworkers := obidefault.ParallelWorkers()
 
 	if len(sizes) > 0 {
 		nworkers = sizes[0]
@@ -154,7 +154,7 @@ func CLISelectLandmarkSequences(iterator obiiter.IBioSequence) obiiter.IBioSeque
 		}
 	}
 
-	if obioptions.CLIHasSelectedTaxonomy() {
+	if obidefault.HasSelectedTaxonomy() {
 		taxo := obitax.DefaultTaxonomy()
 		if taxo == nil {
 			log.Fatal("No taxonomy available")
@@ -191,6 +191,6 @@ func CLISelectLandmarkSequences(iterator obiiter.IBioSequence) obiiter.IBioSeque
 		}
 	}
 
-	return obiiter.IBatchOver(source, library, obioptions.CLIBatchSize())
+	return obiiter.IBatchOver(source, library, obidefault.BatchSize())
 
 }

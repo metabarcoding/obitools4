@@ -1,7 +1,7 @@
 package obiformats
 
 import (
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 )
 
@@ -49,8 +49,8 @@ func MakeOptions(setters []WithOption) Options {
 		seqBatchFormater:      nil,
 		with_progress_bar:     false,
 		buffer_size:           2,
-		parallel_workers:      obioptions.CLIReadParallelWorkers(),
-		batch_size:            obioptions.CLIBatchSize(),
+		parallel_workers:      obidefault.ReadParallelWorkers(),
+		batch_size:            obidefault.BatchSize(),
 		total_seq_size:        1024 * 1024 * 100, // 100 MB by default
 		no_order:              false,
 		full_file_batch:       false,

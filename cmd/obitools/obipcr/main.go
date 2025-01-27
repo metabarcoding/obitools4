@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obipcr"
@@ -23,10 +24,10 @@ func main() {
 	// trace.Start(ftrace)
 	// defer trace.Stop()
 
-	obioptions.SetWorkerPerCore(2)
-	obioptions.SetReadWorkerPerCore(0.5)
-	obioptions.SetParallelFilesRead(obioptions.CLIParallelWorkers() / 4)
-	obioptions.SetBatchSize(10)
+	obidefault.SetWorkerPerCore(2)
+	obidefault.SetReadWorkerPerCore(0.5)
+	obidefault.SetParallelFilesRead(obidefault.ParallelWorkers() / 4)
+	obidefault.SetBatchSize(10)
 
 	optionParser := obioptions.GenerateOptionParser(obipcr.OptionSet)
 

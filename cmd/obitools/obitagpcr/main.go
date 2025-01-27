@@ -5,6 +5,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obipairing"
@@ -30,7 +31,7 @@ func main() {
 	// trace.Start(ftrace)
 	// defer trace.Stop()
 
-	obioptions.SetWorkerPerCore(1)
+	obidefault.SetWorkerPerCore(1)
 
 	optionParser := obioptions.GenerateOptionParser(obitagpcr.OptionSet)
 

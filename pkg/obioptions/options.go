@@ -1,14 +1,11 @@
 package obioptions
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"runtime"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitaxformat"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/DavidGamba/go-getoptions"
@@ -18,20 +15,10 @@ import (
 )
 
 var _Debug = false
-var _WorkerPerCore = 1.0
-var _ReadWorkerPerCore = 0.25
-var _WriteWorkerPerCore = 0.25
-var _StrictReadWorker = 0
-var _StrictWriteWorker = 0
-var _ParallelFilesRead = 0
-var _MaxAllowedCPU = runtime.NumCPU()
 var _BatchSize = 2000
 var _Pprof = false
 var _PprofMudex = 10
 var _PprofGoroutine = 6060
-
-var __taxonomy__ = ""
-var __alternative_name__ = false
 
 type ArgumentParser func([]string) (*getoptions.GetOpt, []string)
 
@@ -56,7 +43,7 @@ func GenerateOptionParser(optionset ...func(*getoptions.GetOpt)) ArgumentParser 
 	// 	options.Alias("w"),
 	// 	options.Description("Number of parallele threads computing the result"))
 
-	options.IntVar(&_MaxAllowedCPU, "max-cpu", _MaxAllowedCPU,
+	options.IntVar(obidefault.MaxCPUPtr(), "max-cpu", obidefault.MaxCPU(),
 		options.GetEnv("OBIMAXCPU"),
 		options.Description("Number of parallele threads computing the result"))
 
@@ -71,13 +58,17 @@ func GenerateOptionParser(optionset ...func(*getoptions.GetOpt)) ArgumentParser 
 		options.GetEnv("OBIPPROFGOROUTINE"),
 		options.Description("Enable profiling of goroutine blocking profile."))
 
-	options.IntVar(&_BatchSize, "batch-size", _BatchSize,
+	options.IntVar(obidefault.BatchSizePtr(), "batch-size", obidefault.BatchSize(),
 		options.GetEnv("OBIBATCHSIZE"),
 		options.Description("Number of sequence per batch for paralelle processing"))
 
 	options.Bool("solexa", false,
 		options.GetEnv("OBISOLEXA"),
 		options.Description("Decodes quality string according to the Solexa specification."))
+
+	options.BoolVar(obidefault.CompressedPtr(), "compressed", obidefault.CompressOutput(),
+		options.Alias("Z"),
+		options.Description("Compress all the result using gzip"))
 
 	for _, o := range optionset {
 		o(options)
@@ -129,14 +120,6 @@ func GenerateOptionParser(optionset ...func(*getoptions.GetOpt)) ArgumentParser 
 			log.Info("  go tool pprof -http=127.0.0.1:8080 'http://localhost:6060/debug/pprof/block'")
 		}
 
-		if options.Called("taxonomy") {
-			taxonomy, err := obitaxformat.LoadTaxonomy(CLISelectedTaxonomy(),
-				!CLIAreAlternativeNamesSelected())
-			if err != nil {
-				log.Fatalf("Loading taxonomy error: %v", err)
-			}
-			taxonomy.SetAsDefault()
-		}
 		// Handle user errors
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "ERROR: %s\n\n", err)
@@ -145,30 +128,30 @@ func GenerateOptionParser(optionset ...func(*getoptions.GetOpt)) ArgumentParser 
 		}
 
 		// Setup the maximum number of CPU usable by the program
-		if _MaxAllowedCPU == 1 {
+		if obidefault.MaxCPU() == 1 {
 			log.Warn("Limitating the Maximum number of CPU to 1 is not recommanded")
 			log.Warn("The number of CPU requested has been set to 2")
-			SetMaxCPU(2)
+			obidefault.SetMaxCPU(2)
 		}
 
 		if options.Called("force-one-cpu") {
 			log.Warn("Limitating the Maximum number of CPU to 1 is not recommanded")
 			log.Warn("The number of CPU has been forced to 1")
 			log.Warn("This can lead to unexpected behavior")
-			SetMaxCPU(1)
+			obidefault.SetMaxCPU(1)
 		}
 
-		runtime.GOMAXPROCS(_MaxAllowedCPU)
+		runtime.GOMAXPROCS(obidefault.MaxCPU())
 
 		if options.Called("max-cpu") || options.Called("force-one-cpu") {
-			log.Printf("CPU number limited to %d", _MaxAllowedCPU)
+			log.Printf("CPU number limited to %d", obidefault.MaxCPU())
 		}
 
 		if options.Called("no-singleton") {
 			log.Printf("No singleton option set")
 		}
 
-		log.Printf("Number of workers set %d", CLIParallelWorkers())
+		log.Printf("Number of workers set %d", obidefault.ParallelWorkers())
 
 		// if options.Called("workers") {
 
@@ -184,17 +167,17 @@ func GenerateOptionParser(optionset ...func(*getoptions.GetOpt)) ArgumentParser 
 
 func LoadTaxonomyOptionSet(options *getoptions.GetOpt, required, alternatiive bool) {
 	if required {
-		options.StringVar(&__taxonomy__, "taxonomy", "",
+		options.StringVar(obidefault.SelectedTaxonomyPtr(), "taxonomy", obidefault.SelectedTaxonomy(),
 			options.Alias("t"),
 			options.Required(),
 			options.Description("Path to the taxonomy database."))
 	} else {
-		options.StringVar(&__taxonomy__, "taxonomy", "",
+		options.StringVar(obidefault.SelectedTaxonomyPtr(), "taxonomy", obidefault.SelectedTaxonomy(),
 			options.Alias("t"),
 			options.Description("Path to the taxonomy database."))
 	}
 	if alternatiive {
-		options.BoolVar(&__alternative_name__, "alternative-names", false,
+		options.BoolVar(obidefault.AlternativeNamesSelectedPtr(), "alternative-names", obidefault.AreAlternativeNamesSelected(),
 			options.Alias("a"),
 			options.Description("Enable the search on all alternative names and not only scientific names."))
 	}
@@ -212,84 +195,6 @@ func CLIIsDebugMode() bool {
 	return _Debug
 }
 
-// CLIParallelWorkers returns the number of parallel workers used for
-// computing the result.
-//
-// The number of parallel workers is determined by the command line option
-// --max-cpu|-m and the environment variable OBIMAXCPU. This number is
-// multiplied by the variable _WorkerPerCore.
-//
-// No parameters.
-// Returns an integer representing the number of parallel workers.
-func CLIParallelWorkers() int {
-	return int(float64(CLIMaxCPU()) * float64(WorkerPerCore()))
-}
-
-// CLIReadParallelWorkers returns the number of parallel workers used for
-// reading files.
-//
-// The number of parallel workers is determined by the command line option
-// --max-cpu|-m and the environment variable OBIMAXCPU. This number is
-// multiplied by the variable _ReadWorkerPerCore.
-//
-// No parameters.
-// Returns an integer representing the number of parallel workers.
-func CLIReadParallelWorkers() int {
-	if StrictReadWorker() == 0 {
-		n := int(float64(CLIMaxCPU()) * ReadWorkerPerCore())
-		if n == 0 {
-			n = 1
-		}
-		return n
-	} else {
-		return StrictReadWorker()
-	}
-}
-
-// CLIWriteParallelWorkers returns the number of parallel workers used for
-// writing files.
-//
-// The number of parallel workers is determined by the command line option
-// --max-cpu|-m and the environment variable OBIMAXCPU. This number is
-// multiplied by the variable _WriteWorkerPerCore.
-//
-// No parameters.
-// Returns an integer representing the number of parallel workers.
-func CLIWriteParallelWorkers() int {
-	if StrictWriteWorker() == 0 {
-		n := int(float64(CLIMaxCPU()) * WriteWorkerPerCore())
-		if n == 0 {
-			n = 1
-		}
-		return n
-	} else {
-		return StrictWriteWorker()
-	}
-}
-
-// CLIMaxCPU returns the maximum number of CPU cores allowed.
-//
-// The maximum number of CPU cores is determined by the command line option
-// --max-cpu|-m and the environment variable OBIMAXCPU.
-//
-// No parameters.
-// Returns an integer representing the maximum number of CPU cores allowed.
-func CLIMaxCPU() int {
-	return _MaxAllowedCPU
-}
-
-// CLIBatchSize returns the expected size of the sequence batches.
-//
-// In Obitools, the sequences are processed in parallel by batches.
-// The number of sequence in each batch is determined by the command line option
-// --batch-size and the environment variable OBIBATCHSIZE.
-//
-// No parameters.
-// Returns an integer value.
-func CLIBatchSize() int {
-	return _BatchSize
-}
-
 // SetDebugOn sets the debug mode on.
 func SetDebugOn() {
 	_Debug = true
@@ -298,149 +203,4 @@ func SetDebugOn() {
 // SetDebugOff sets the debug mode off.
 func SetDebugOff() {
 	_Debug = false
-}
-
-// SetWorkerPerCore sets the number of workers per CPU core.
-//
-// It takes a float64 parameter representing the number of workers
-// per CPU core and does not return any value.
-func SetWorkerPerCore(n float64) {
-	_WorkerPerCore = n
-}
-
-// SetReadWorkerPerCore sets the number of worker per CPU
-// core for reading files.
-//
-// n float64
-func SetReadWorkerPerCore(n float64) {
-	_ReadWorkerPerCore = n
-}
-
-// WorkerPerCore returns the number of workers per CPU core.
-//
-// No parameters.
-// Returns a float64 representing the number of workers per CPU core.
-func WorkerPerCore() float64 {
-	return _WorkerPerCore
-}
-
-// ReadWorkerPerCore returns the number of worker per CPU core for
-// computing the result.
-//
-// No parameters.
-// Returns a float64 representing the number of worker per CPU core.
-func ReadWorkerPerCore() float64 {
-	return _ReadWorkerPerCore
-}
-
-// WriteWorkerPerCore returns the number of worker per CPU core for
-// computing the result.
-//
-// No parameters.
-// Returns a float64 representing the number of worker per CPU core.
-func WriteWorkerPerCore() float64 {
-	return _WriteWorkerPerCore
-}
-
-// SetBatchSize sets the size of the sequence batches.
-//
-// n - an integer representing the size of the sequence batches.
-func SetBatchSize(n int) {
-	_BatchSize = n
-}
-
-// SetMaxCPU sets the maximum number of CPU cores allowed.
-//
-// n - an integer representing the new maximum number of CPU cores.
-func SetMaxCPU(n int) {
-	_MaxAllowedCPU = n
-}
-
-// SetReadWorker sets the number of workers for reading files.
-//
-// The number of worker dedicated to reading files is determined
-// as the number of allowed CPU cores multiplied by number of read workers per core.
-// Setting the number of read workers using this function allows to decouple the number
-// of read workers from the number of CPU cores.
-//
-// n - an integer representing the number of workers to be set.
-func SetStrictReadWorker(n int) {
-	_StrictReadWorker = n
-}
-
-// ReadWorker returns the number of workers for reading files.
-//
-// No parameters.
-// Returns an integer representing the number of workers.
-func StrictReadWorker() int {
-	return _StrictReadWorker
-}
-
-// SetWriteWorker sets the number of workers for writing files.
-//
-// The number of worker dedicated to writing files is determined
-// as the number of allowed CPU cores multiplied by number of write workers per core.
-// Setting the number of write workers using this function allows to decouple the number
-// of write workers from the number of CPU cores.
-//
-// n - an integer representing the number of workers to be set.
-func SetStrictWriteWorker(n int) {
-	_StrictWriteWorker = n
-}
-
-// WriteWorker returns the number of workers for writing files.
-//
-// No parameters.
-// Returns an integer representing the number of workers.
-func StrictWriteWorker() int {
-	return _StrictWriteWorker
-}
-
-// ParallelFilesRead returns the number of files to be read in parallel.
-//
-// No parameters.
-// Returns an integer representing the number of files to be read.
-func ParallelFilesRead() int {
-	if _ParallelFilesRead == 0 {
-		return CLIReadParallelWorkers()
-	} else {
-		return _ParallelFilesRead
-	}
-}
-
-// SetParallelFilesRead sets the number of files to be read in parallel.
-//
-// n - an integer representing the number of files to be set.
-func SetParallelFilesRead(n int) {
-	_ParallelFilesRead = n
-}
-
-func CLISelectedTaxonomy() string {
-	return __taxonomy__
-}
-
-func CLIHasSelectedTaxonomy() bool {
-	return __taxonomy__ != ""
-}
-
-func CLIAreAlternativeNamesSelected() bool {
-	return __alternative_name__
-}
-
-func CLILoadSelectedTaxonomy() (*obitax.Taxonomy, error) {
-	if obitax.IsDefaultTaxonomyDefined() {
-		return obitax.DefaultTaxonomy(), nil
-	}
-
-	if CLISelectedTaxonomy() != "" {
-		taxonomy, err := obitaxformat.LoadTaxonomy(CLISelectedTaxonomy(),
-			!CLIAreAlternativeNamesSelected())
-		if err != nil {
-			return nil, err
-		}
-		taxonomy.SetAsDefault()
-		return taxonomy, nil
-	}
-
-	return nil, errors.New("no taxonomy selected using option -t|--taxonomy")
 }

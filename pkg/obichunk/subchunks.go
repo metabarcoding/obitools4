@@ -6,8 +6,8 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 )
 
@@ -62,7 +62,7 @@ func ISequenceSubChunk(iterator obiiter.IBioSequence,
 	nworkers int) (obiiter.IBioSequence, error) {
 
 	if nworkers <= 0 {
-		nworkers = obioptions.CLIParallelWorkers()
+		nworkers = obidefault.ParallelWorkers()
 	}
 
 	newIter := obiiter.MakeIBioSequence()

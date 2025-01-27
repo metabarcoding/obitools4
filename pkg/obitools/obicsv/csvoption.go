@@ -1,7 +1,8 @@
 package obicsv
 
 import (
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
 )
 
 // __options__ holds configuration options for processing.
@@ -53,8 +54,8 @@ func MakeOptions(setters []WithOption) Options {
 		with_progress_bar: false,
 		filename:          "-",
 		buffer_size:       2,
-		parallel_workers:  obioptions.CLIReadParallelWorkers(),
-		batch_size:        obioptions.CLIBatchSize(),
+		parallel_workers:  obidefault.ReadParallelWorkers(),
+		batch_size:        obidefault.BatchSize(),
 		no_order:          false,
 		full_file_batch:   false,
 		closefile:         false,
@@ -69,7 +70,7 @@ func MakeOptions(setters []WithOption) Options {
 		csv_quality:       false,
 		csv_separator:     ",",
 		csv_navalue:       "NA",
-		csv_keys:          make(CSVHeader, 0),
+		csv_keys:          make(obiiter.CSVHeader, 0),
 		csv_auto:          false,
 		source:            "unknown",
 	}

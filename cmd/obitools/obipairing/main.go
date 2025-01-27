@@ -5,6 +5,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obipairing"
@@ -33,8 +34,8 @@ func main() {
 
 	optionParser(os.Args)
 
-	obioptions.SetStrictReadWorker(2)
-	obioptions.SetStrictWriteWorker(2)
+	obidefault.SetStrictReadWorker(2)
+	obidefault.SetStrictWriteWorker(2)
 	pairs, err := obipairing.CLIPairedSequence()
 
 	if err != nil {
@@ -51,7 +52,7 @@ func main() {
 		obipairing.CLIFastMode(),
 		obipairing.CLIFastRelativeScore(),
 		obipairing.CLIWithStats(),
-		obioptions.CLIParallelWorkers(),
+		obidefault.ParallelWorkers(),
 	)
 
 	obiconvert.CLIWriteBioSequences(paired, true)

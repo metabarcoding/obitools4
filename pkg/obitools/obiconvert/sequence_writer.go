@@ -8,9 +8,9 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiformats"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 )
 
 func BuildPairedFileNames(filename string) (string, string) {
@@ -53,10 +53,10 @@ func CLIWriteBioSequences(iterator obiiter.IBioSequence,
 		opts = append(opts, obiformats.OptionsFastSeqHeaderFormat(obiformats.FormatFastSeqJsonHeader))
 	}
 
-	nworkers := obioptions.CLIWriteParallelWorkers()
+	nworkers := obidefault.WriteParallelWorkers()
 
 	opts = append(opts, obiformats.OptionsParallelWorkers(nworkers))
-	opts = append(opts, obiformats.OptionsBatchSize(obioptions.CLIBatchSize()))
+	opts = append(opts, obiformats.OptionsBatchSize(obidefault.BatchSize()))
 
 	opts = append(opts, obiformats.OptionsCompressed(CLICompressed()))
 

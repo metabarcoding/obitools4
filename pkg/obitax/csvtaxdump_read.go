@@ -1,16 +1,15 @@
-package csvtaxdump
+package obitax
 
 import (
 	"encoding/csv"
 	"errors"
 	"strings"
 
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 	log "github.com/sirupsen/logrus"
 )
 
-func LoadCSVTaxonomy(path string, onlysn bool) (*obitax.Taxonomy, error) {
+func LoadCSVTaxonomy(path string, onlysn bool) (*Taxonomy, error) {
 
 	file, err := obiutils.Ropen(path)
 
@@ -71,7 +70,7 @@ func LoadCSVTaxonomy(path string, onlysn bool) (*obitax.Taxonomy, error) {
 
 	name := obiutils.RemoveAllExt(path)
 	short := obiutils.Basename(path)
-	taxonomy := obitax.NewTaxonomy(name, short, obiutils.AsciiAlphaNumSet)
+	taxonomy := NewTaxonomy(name, short, obiutils.AsciiAlphaNumSet)
 
 	line, err := csvfile.Read()
 

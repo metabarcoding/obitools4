@@ -1,7 +1,7 @@
 package obichunk
 
 import (
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 )
 
@@ -29,8 +29,8 @@ func MakeOptions(setters []WithOption) Options {
 		navalue:         "NA",
 		cacheOnDisk:     false,
 		batchCount:      100,
-		batchSize:       obioptions.CLIBatchSize(),
-		parallelWorkers: obioptions.CLIParallelWorkers(),
+		batchSize:       obidefault.BatchSize(),
+		parallelWorkers: obidefault.ParallelWorkers(),
 		noSingleton:     false,
 	}
 

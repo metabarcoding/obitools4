@@ -8,9 +8,9 @@ import (
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obialign"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obichunk"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obikmer"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
 	"github.com/schollz/progressbar/v3"
@@ -111,7 +111,7 @@ func MakeIndexingSliceWorker(indexslot, idslot string,
 			waiting.Done()
 		}
 
-		nworkers := max(min(obioptions.CLIParallelWorkers(), len(sequences)/10), 1)
+		nworkers := max(min(obidefault.ParallelWorkers(), len(sequences)/10), 1)
 
 		waiting.Add(nworkers)
 
@@ -134,9 +134,9 @@ func IndexFamilyDB(iterator obiiter.IBioSequence) obiiter.IBioSequence {
 	nref := len(references)
 	log.Infof("Done. Database contains %d sequences", nref)
 
-	taxonomy, error := obioptions.CLILoadSelectedTaxonomy()
-	if error != nil {
-		log.Panicln(error)
+	taxonomy := obitax.DefaultTaxonomy()
+	if taxonomy == nil {
+		log.Panicln("No taxonomy available use the --taxonomy option")
 	}
 
 	log.Infoln("Indexing database kmers...")
@@ -155,15 +155,15 @@ func IndexFamilyDB(iterator obiiter.IBioSequence) obiiter.IBioSequence {
 	log.Info("done")
 
 	partof := obiiter.IBatchOver(source, references,
-		obioptions.CLIBatchSize()).MakeIWorker(obiseq.MakeSetSpeciesWorker(taxonomy),
+		obidefault.BatchSize()).MakeIWorker(obiseq.MakeSetSpeciesWorker(taxonomy),
 		false,
-		obioptions.CLIParallelWorkers(),
+		obidefault.ParallelWorkers(),
 	).MakeIWorker(obiseq.MakeSetGenusWorker(taxonomy),
 		false,
-		obioptions.CLIParallelWorkers(),
+		obidefault.ParallelWorkers(),
 	).MakeIWorker(obiseq.MakeSetFamilyWorker(taxonomy),
 		false,
-		obioptions.CLIParallelWorkers(),
+		obidefault.ParallelWorkers(),
 	)
 
 	family_iterator, err := obichunk.ISequenceChunk(
@@ -178,11 +178,11 @@ func IndexFamilyDB(iterator obiiter.IBioSequence) obiiter.IBioSequence {
 	family_iterator.MakeISliceWorker(
 		MakeStartClusterSliceWorker("reffamidx", 0.9),
 		false,
-		obioptions.CLIParallelWorkers(),
+		obidefault.ParallelWorkers(),
 	).MakeISliceWorker(
 		MakeIndexingSliceWorker("reffamidx_in", "reffamidx_id", &refcounts, taxonomy),
 		false,
-		obioptions.CLIParallelWorkers(),
+		obidefault.ParallelWorkers(),
 	).Speed("Family Indexing", nref).Consume()
 
 	clusters := obiseq.MakeBioSequenceSlice(0)
@@ -240,7 +240,7 @@ func IndexFamilyDB(iterator obiiter.IBioSequence) obiiter.IBioSequence {
 		waiting.Done()
 	}
 
-	nworkers := obioptions.CLIParallelWorkers()
+	nworkers := obidefault.ParallelWorkers()
 	waiting.Add(nworkers)
 
 	for w := 0; w < nworkers; w++ {
@@ -250,7 +250,7 @@ func IndexFamilyDB(iterator obiiter.IBioSequence) obiiter.IBioSequence {
 	waiting.Wait()
 
 	results := obiiter.IBatchOver(source, references,
-		obioptions.CLIBatchSize()).Speed("Writing db", nref)
+		obidefault.BatchSize()).Speed("Writing db", nref)
 
 	return results
 }

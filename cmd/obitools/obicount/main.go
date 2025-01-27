@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obicount"
 
@@ -33,7 +34,7 @@ func main() {
 
 	_, args := optionParser(os.Args)
 
-	obioptions.SetStrictReadWorker(min(4, obioptions.CLIParallelWorkers()))
+	obidefault.SetStrictReadWorker(min(4, obidefault.ParallelWorkers()))
 	fs, err := obiconvert.CLIReadBioSequences(args...)
 	obiconvert.OpenSequenceDataErrorMessage(args, err)
 

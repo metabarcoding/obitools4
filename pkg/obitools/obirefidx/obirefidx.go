@@ -6,9 +6,9 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obialign"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obikmer"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
@@ -274,7 +274,7 @@ func IndexReferenceDB(iterator obiiter.IBioSequence) obiiter.IBioSequence {
 		indexed.Done()
 	}
 
-	nworkers := obioptions.CLIParallelWorkers()
+	nworkers := obidefault.ParallelWorkers()
 	indexed.Add(nworkers)
 
 	go func() {
@@ -285,5 +285,5 @@ func IndexReferenceDB(iterator obiiter.IBioSequence) obiiter.IBioSequence {
 		go f()
 	}
 
-	return indexed.Rebatch(obioptions.CLIBatchSize())
+	return indexed.Rebatch(obidefault.BatchSize())
 }

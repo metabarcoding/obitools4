@@ -3,7 +3,7 @@ package obiiter
 import (
 	log "github.com/sirupsen/logrus"
 
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 )
 
@@ -18,7 +18,7 @@ import (
 func (iterator IBioSequence) MakeIWorker(worker obiseq.SeqWorker,
 	breakOnError bool,
 	sizes ...int) IBioSequence {
-	nworkers := obioptions.CLIParallelWorkers()
+	nworkers := obidefault.ParallelWorkers()
 
 	if len(sizes) > 0 {
 		nworkers = sizes[0]
@@ -34,13 +34,13 @@ func (iterator IBioSequence) MakeIWorker(worker obiseq.SeqWorker,
 // Parameters:
 // - predicate: A function that takes a sequence and returns a boolean value indicating whether the sequence satisfies a certain condition.
 // - worker: A function that takes a sequence and returns a modified version of the sequence.
-// - sizes: Optional. One or more integers representing the number of workers to be used for parallel processing. If not provided, the number of workers will be determined by the obioptions.CLIReadParallelWorkers() function.
+// - sizes: Optional. One or more integers representing the number of workers to be used for parallel processing. If not provided, the number of workers will be determined by the obidefault.ReadParallelWorkers() function.
 //
 // Return:
 // - newIter: A new IBioSequence iterator with the modified sequences.
 func (iterator IBioSequence) MakeIConditionalWorker(predicate obiseq.SequencePredicate,
 	worker obiseq.SeqWorker, breakOnError bool, sizes ...int) IBioSequence {
-	nworkers := obioptions.CLIReadParallelWorkers()
+	nworkers := obidefault.ReadParallelWorkers()
 
 	if len(sizes) > 0 {
 		nworkers = sizes[0]
@@ -63,7 +63,7 @@ func (iterator IBioSequence) MakeIConditionalWorker(predicate obiseq.SequencePre
 //
 // The function returns a new IBioSequence containing the modified slices.
 func (iterator IBioSequence) MakeISliceWorker(worker obiseq.SeqSliceWorker, breakOnError bool, sizes ...int) IBioSequence {
-	nworkers := obioptions.CLIParallelWorkers()
+	nworkers := obidefault.ParallelWorkers()
 
 	if len(sizes) > 0 {
 		nworkers = sizes[0]

@@ -1,26 +1,23 @@
-package obitaxformat
+package obitax
 
 import (
 	"fmt"
 	"os"
 
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitaxformat/csvtaxdump"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitaxformat/ncbitaxdump"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 	"github.com/gabriel-vasile/mimetype"
 
 	log "github.com/sirupsen/logrus"
 )
 
-type TaxonomyLoader func(path string, onlysn bool) (*obitax.Taxonomy, error)
+type TaxonomyLoader func(path string, onlysn bool) (*Taxonomy, error)
 
 func DetectTaxonomyTarFormat(path string) (TaxonomyLoader, error) {
 
 	switch {
-	case ncbitaxdump.IsNCBITarTaxDump(path):
+	case IsNCBITarTaxDump(path):
 		log.Infof("NCBI Taxdump Tar Archive detected: %s", path)
-		return ncbitaxdump.LoadNCBITarTaxDump, nil
+		return LoadNCBITarTaxDump, nil
 	}
 
 	return nil, fmt.Errorf("unknown taxonomy format: %s", path)
@@ -44,7 +41,7 @@ func DetectTaxonomyFormat(path string) (TaxonomyLoader, error) {
 	if fileInfo.IsDir() {
 		// For the moment, we only support NCBI Taxdump directory format
 		log.Infof("NCBI Taxdump detected: %s", path)
-		return ncbitaxdump.LoadNCBITaxDump, nil
+		return LoadNCBITaxDump, nil
 	} else {
 		file, err := obiutils.Ropen(path)
 
@@ -63,7 +60,7 @@ func DetectTaxonomyFormat(path string) (TaxonomyLoader, error) {
 
 		switch mimetype.String() {
 		case "text/csv":
-			return csvtaxdump.LoadCSVTaxonomy, nil
+			return LoadCSVTaxonomy, nil
 		case "application/x-tar":
 			return DetectTaxonomyTarFormat(path)
 		}
@@ -74,7 +71,7 @@ func DetectTaxonomyFormat(path string) (TaxonomyLoader, error) {
 	return nil, nil
 }
 
-func LoadTaxonomy(path string, onlysn bool) (*obitax.Taxonomy, error) {
+func LoadTaxonomy(path string, onlysn bool) (*Taxonomy, error) {
 	loader, err := DetectTaxonomyFormat(path)
 
 	if err != nil {

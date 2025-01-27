@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sync"
 
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 )
 
@@ -74,7 +74,7 @@ func (dist *IDistribute) Classifier() *obiseq.BioSequenceClassifier {
 // It ensures that the outputs are closed and cleaned up once
 // processing is complete.
 func (iterator IBioSequence) Distribute(class *obiseq.BioSequenceClassifier, sizes ...int) IDistribute {
-	batchsize := obioptions.CLIBatchSize()
+	batchsize := obidefault.BatchSize()
 
 	outputs := make(map[int]IBioSequence, 100)
 	slices := make(map[int]*obiseq.BioSequenceSlice, 100)

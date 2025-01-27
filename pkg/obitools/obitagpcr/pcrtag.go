@@ -4,8 +4,8 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obialign"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obimultiplex"
@@ -44,7 +44,7 @@ func IPCRTagPESequencesBatch(iterator obiiter.IBioSequence,
 		log.Fatalln("Sequence data must be paired")
 	}
 
-	nworkers := obioptions.CLIParallelWorkers()
+	nworkers := obidefault.ParallelWorkers()
 	ngsfilter, err := obimultiplex.CLINGSFIlter()
 
 	if err != nil {
@@ -180,14 +180,14 @@ func IPCRTagPESequencesBatch(iterator obiiter.IBioSequence,
 
 	if !obimultiplex.CLIConservedErrors() {
 		log.Println("Discards unassigned sequences")
-		iout = iout.FilterOn(obiseq.HasAttribute("obimultiplex_error").Not(), obioptions.CLIBatchSize())
+		iout = iout.FilterOn(obiseq.HasAttribute("obimultiplex_error").Not(), obidefault.BatchSize())
 	}
 
 	var unidentified obiiter.IBioSequence
 	if obimultiplex.CLIUnidentifiedFileName() != "" {
 		log.Printf("Unassigned sequences saved in file: %s\n", obimultiplex.CLIUnidentifiedFileName())
 		unidentified, iout = iout.DivideOn(obiseq.HasAttribute("obimultiplex_error"),
-			obioptions.CLIBatchSize())
+			obidefault.BatchSize())
 
 		go func() {
 			_, err := obiconvert.CLIWriteBioSequences(unidentified,

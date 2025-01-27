@@ -3,7 +3,7 @@ package obiapat
 import (
 	log "github.com/sirupsen/logrus"
 
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 )
@@ -104,7 +104,7 @@ func MakeOptions(setters []WithOption) Options {
 		extension:       -1,
 		fullExtension:   false,
 		circular:        false,
-		parallelWorkers: obioptions.CLIParallelWorkers(),
+		parallelWorkers: obidefault.ParallelWorkers(),
 		batchSize:       100,
 		forward:         NilApatPattern,
 		cfwd:            NilApatPattern,

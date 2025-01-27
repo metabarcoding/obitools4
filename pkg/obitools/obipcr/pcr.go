@@ -2,8 +2,8 @@ package obipcr
 
 import (
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiapat"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -50,7 +50,7 @@ func CLIPCR(iterator obiiter.IBioSequence) (obiiter.IBioSequence, error) {
 				len(CLIReversePrimer()))+min(len(CLIForwardPrimer()),
 				len(CLIReversePrimer()))/2,
 			100,
-			obioptions.CLIParallelWorkers(),
+			obidefault.ParallelWorkers(),
 		)
 		log.Infof("Fragmenting sequence longer than %dbp into chuncks of %dbp",
 			CLIMaxLength()*1000,
@@ -59,5 +59,5 @@ func CLIPCR(iterator obiiter.IBioSequence) (obiiter.IBioSequence, error) {
 		iterator = iterator.Pipe(frags)
 	}
 
-	return iterator.LimitMemory(0.5).MakeISliceWorker(worker, false, obioptions.CLIParallelWorkers()), nil
+	return iterator.LimitMemory(0.5).MakeISliceWorker(worker, false, obidefault.ParallelWorkers()), nil
 }
