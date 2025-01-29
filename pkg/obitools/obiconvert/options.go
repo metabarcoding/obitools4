@@ -3,6 +3,7 @@ package obiconvert
 import (
 	"os"
 
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	log "github.com/sirupsen/logrus"
 
@@ -76,9 +77,10 @@ func OutputModeOptionSet(options *getoptions.GetOpt, compressed bool) {
 		options.Description("Disable the progress bar printing"))
 
 	if compressed {
-		options.BoolVar(&__compressed__, "compress", false,
+		options.BoolVar(obidefault.CompressedPtr(), "compressed", obidefault.CompressOutput(),
 			options.Alias("Z"),
-			options.Description("Output is compressed"))
+			options.Description("Compress all the result using gzip"))
+
 	}
 
 	options.StringVar(&__output_file_name__, "out", __output_file_name__,

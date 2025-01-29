@@ -196,3 +196,29 @@ func (set *TaxonSet) Contains(id *string) bool {
 	node := set.Get(id)
 	return node != nil
 }
+
+func (set *TaxonSet) Sort() *TaxonSlice {
+	if set == nil {
+		return nil
+	}
+
+	taxonomy := set.Taxonomy()
+	taxa := taxonomy.NewTaxonSlice(0, set.Len())
+	parent := make(map[*TaxNode]bool, set.Len())
+
+	pushed := true
+
+	for pushed {
+		pushed = false
+		for _, node := range set.set {
+			if !parent[node] && (parent[set.Get(node.parent).Node] ||
+				!set.Contains(node.parent)) {
+				pushed = true
+				taxa.slice = append(taxa.slice, node)
+				parent[node] = true
+			}
+		}
+	}
+
+	return taxa
+}

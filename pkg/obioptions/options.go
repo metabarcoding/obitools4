@@ -66,10 +66,6 @@ func GenerateOptionParser(optionset ...func(*getoptions.GetOpt)) ArgumentParser 
 		options.GetEnv("OBISOLEXA"),
 		options.Description("Decodes quality string according to the Solexa specification."))
 
-	options.BoolVar(obidefault.CompressedPtr(), "compressed", obidefault.CompressOutput(),
-		options.Alias("Z"),
-		options.Description("Compress all the result using gzip"))
-
 	for _, o := range optionset {
 		o(options)
 	}
