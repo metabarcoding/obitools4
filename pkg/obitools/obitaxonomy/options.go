@@ -22,6 +22,7 @@ var __taxid_path__ = "NA"
 var __taxid_sons__ = "NA"
 var __restrict_rank__ = ""
 var __to_dump__ = ""
+var __download_ncbi__ = false
 
 func FilterTaxonomyOptionSet(options *getoptions.GetOpt) {
 	options.BoolVar(&__rank_list__, "rank-list", false,
@@ -34,7 +35,7 @@ func FilterTaxonomyOptionSet(options *getoptions.GetOpt) {
 }
 
 func OptionSet(options *getoptions.GetOpt) {
-	obioptions.LoadTaxonomyOptionSet(options, true, true)
+	obioptions.LoadTaxonomyOptionSet(options, false, true)
 	FilterTaxonomyOptionSet(options)
 	options.BoolVar(&__fixed_pattern__, "fixed", false,
 		options.Alias("F"),
@@ -70,6 +71,10 @@ func OptionSet(options *getoptions.GetOpt) {
 		options.ArgName("TAXID"),
 		options.Description("Dump a sub-taxonomy corresponding to the precised clade"),
 	)
+	options.BoolVar(&__download_ncbi__, "download-ncbi", __download_ncbi__,
+		options.Description("Download the current NCBI taxonomy taxdump"),
+	)
+
 }
 
 func CLITaxonomicalRestrictions() (*obitax.TaxonSet, error) {
@@ -143,4 +148,8 @@ func CLIDumpSubtaxonomy() bool {
 
 func CLISubTaxonomyNode() string {
 	return __to_dump__
+}
+
+func CLIDownloadNCBI() bool {
+	return __download_ncbi__
 }

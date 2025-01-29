@@ -1,13 +1,14 @@
 package main
 
 import (
-	"log"
 	"os"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obitaxonomy"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func main() {
@@ -18,6 +19,15 @@ func main() {
 	var iterator *obitax.ITaxon
 
 	switch {
+
+	case obitaxonomy.CLIDownloadNCBI():
+		err := obitaxonomy.CLIDownloadNCBITaxdump()
+		if err != nil {
+			log.Errorf("Cannot download NCBI taxonomy: %s", err.Error())
+			os.Exit(1)
+		}
+
+		os.Exit(0)
 
 	case obitaxonomy.CLIDumpSubtaxonomy():
 		iterator = obitaxonomy.CLISubTaxonomyIterator()
