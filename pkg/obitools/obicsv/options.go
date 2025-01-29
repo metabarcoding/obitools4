@@ -66,7 +66,7 @@ func CSVOptionSet(options *getoptions.GetOpt) {
 
 func OptionSet(options *getoptions.GetOpt) {
 	obiconvert.InputOptionSet(options)
-	obiconvert.OutputModeOptionSet(options)
+	obiconvert.OutputModeOptionSet(options, true)
 	obioptions.LoadTaxonomyOptionSet(options, false, false)
 	CSVOptionSet(options)
 }

@@ -5,6 +5,7 @@ import (
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
 	"github.com/DavidGamba/go-getoptions"
 )
 
@@ -36,6 +37,7 @@ func FilterTaxonomyOptionSet(options *getoptions.GetOpt) {
 
 func OptionSet(options *getoptions.GetOpt) {
 	obioptions.LoadTaxonomyOptionSet(options, false, true)
+	obiconvert.OutputModeOptionSet(options, false)
 	FilterTaxonomyOptionSet(options)
 	options.BoolVar(&__fixed_pattern__, "fixed", false,
 		options.Alias("F"),

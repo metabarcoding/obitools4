@@ -71,16 +71,15 @@ func InputOptionSet(options *getoptions.GetOpt) {
 
 }
 
-func OutputModeOptionSet(options *getoptions.GetOpt) {
+func OutputModeOptionSet(options *getoptions.GetOpt, compressed bool) {
 	options.BoolVar(&__no_progress_bar__, "no-progressbar", false,
 		options.Description("Disable the progress bar printing"))
 
-	options.BoolVar(&__compressed__, "compress", false,
-		options.Alias("Z"),
-		options.Description("Output is compressed"))
-
-	options.BoolVar(&__skip_empty__, "skip-empty", __skip_empty__,
-		options.Description("Sequences of length equal to zero are suppressed from the output"))
+	if compressed {
+		options.BoolVar(&__compressed__, "compress", false,
+			options.Alias("Z"),
+			options.Description("Output is compressed"))
+	}
 
 	options.StringVar(&__output_file_name__, "out", __output_file_name__,
 		options.Alias("o"),
@@ -90,6 +89,9 @@ func OutputModeOptionSet(options *getoptions.GetOpt) {
 }
 
 func OutputOptionSet(options *getoptions.GetOpt) {
+	options.BoolVar(&__skip_empty__, "skip-empty", __skip_empty__,
+		options.Description("Sequences of length equal to zero are suppressed from the output"))
+
 	options.BoolVar(&__output_in_fasta__, "fasta-output", false,
 		options.Description("Write sequence in fasta format (default if no quality data available)."))
 
@@ -105,7 +107,7 @@ func OutputOptionSet(options *getoptions.GetOpt) {
 		options.Alias("O"),
 		options.Description("output FASTA/FASTQ title line annotations follow OBI format."))
 
-	OutputModeOptionSet(options)
+	OutputModeOptionSet(options, true)
 }
 
 func PairedFilesOptionSet(options *getoptions.GetOpt) {
