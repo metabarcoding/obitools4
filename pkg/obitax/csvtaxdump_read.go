@@ -11,6 +11,8 @@ import (
 
 func LoadCSVTaxonomy(path string, onlysn bool) (*Taxonomy, error) {
 
+	log.Infof("Loading taxonomy from csv file: %s", path)
+
 	file, err := obiutils.Ropen(path)
 
 	if err != nil {
@@ -47,7 +49,7 @@ func LoadCSVTaxonomy(path string, onlysn bool) (*Taxonomy, error) {
 			parentColIndex = i
 		case "scientific_name":
 			scientific_nameColIndex = i
-		case "rank":
+		case "taxonomic_rank":
 			rankColIndex = i
 		}
 	}
@@ -70,30 +72,44 @@ func LoadCSVTaxonomy(path string, onlysn bool) (*Taxonomy, error) {
 
 	name := obiutils.RemoveAllExt(path)
 	short := obiutils.Basename(path)
-	taxonomy := NewTaxonomy(name, short, obiutils.AsciiAlphaNumSet)
 
 	line, err := csvfile.Read()
+	if err == nil {
+		parts := strings.Split(line[taxidColIndex], " ")
+		parts = strings.Split(parts[0], ":")
+		if len(parts) > 1 {
+			short = parts[0]
+		}
+	}
 
-	for err != nil {
+	log.Infof("Taxonomy name: %s", name)
+	log.Infof("Taxon code: %s", short)
+
+	taxonomy := NewTaxonomy(name, short, obiutils.AsciiAlphaNumSet)
+
+	root := true
+	var taxon *Taxon
+
+	for err == nil {
 		taxid := line[taxidColIndex]
 		parent := line[parentColIndex]
 		scientific_name := line[scientific_nameColIndex]
 		rank := line[rankColIndex]
 
-		parts := strings.Split(rank, ":")
-
-		rank = parts[0]
-
-		root := len(parts) > 1 && parts[1] == "root"
-
-		taxon, err := taxonomy.AddTaxon(taxid, parent, rank, false, root)
-		taxon.SetName(scientific_name, "scientific name")
+		taxon, err = taxonomy.AddTaxon(taxid, parent, rank, root, false)
 
 		if err != nil {
-			return nil, err
+			log.Fatalf("cannot add taxon %s:  %v", taxid, err)
 		}
 
+		root = false
+
+		taxon.SetName(scientific_name, "scientific name")
+
+		line, err = csvfile.Read()
 	}
+
+	log.Infof("%d Taxa loaded", taxonomy.Len())
 
 	if !taxonomy.HasRoot() {
 		return nil, errors.New("taxonomy file does not contain root node")

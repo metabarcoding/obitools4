@@ -1,11 +1,10 @@
-package obifind
+package obitax
 
 import (
 	"slices"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiitercsv"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
 )
 
 type __options__ struct {
@@ -192,7 +191,7 @@ func OptionsWithMetadata(values ...string) WithOption {
 	return f
 }
 
-func NewCSVTaxaIterator(iterator *obitax.ITaxon, options ...WithOption) *obiitercsv.ICSVRecord {
+func (iterator *ITaxon) CSVTaxaIterator(options ...WithOption) *obiitercsv.ICSVRecord {
 
 	opt := MakeOptions(options)
 	metakeys := make([]string, 0)

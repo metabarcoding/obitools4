@@ -1,4 +1,4 @@
-package obifind
+package obitaxonomy
 
 import (
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
@@ -40,24 +40,34 @@ func CLIFilterRankRestriction(iterator *obitax.ITaxon) *obitax.ITaxon {
 	return iterator
 }
 
+func CLISubTaxonomyIterator() *obitax.ITaxon {
+
+	if CLIDumpSubtaxonomy() {
+		return obitax.DefaultTaxonomy().ISubTaxonomy(CLISubTaxonomyNode())
+	}
+
+	log.Fatalf("No sub-taxonomy specified use the --dump option")
+	return nil
+}
+
 func CLICSVTaxaIterator(iterator *obitax.ITaxon) *obiitercsv.ICSVRecord {
 	if iterator == nil {
 		return nil
 	}
 
-	options := make([]WithOption, 0)
+	options := make([]obitax.WithOption, 0)
 
 	options = append(options,
-		OptionsWithPattern(CLIWithQuery()),
-		OptionsWithParent(CLIWithParent()),
-		OptionsWithRank(CLIWithRank()),
-		OptionsWithScientificName(CLIWithScientificName()),
-		OptionsWithPath(CLIWithPath()),
-		OptionsRawTaxid(CLIRawTaxid()),
-		OptionsSource(obidefault.SelectedTaxonomy()),
+		obitax.OptionsWithPattern(CLIWithQuery()),
+		obitax.OptionsWithParent(CLIWithParent()),
+		obitax.OptionsWithRank(CLIWithRank()),
+		obitax.OptionsWithScientificName(CLIWithScientificName()),
+		obitax.OptionsWithPath(CLIWithPath()),
+		obitax.OptionsRawTaxid(CLIRawTaxid()),
+		obitax.OptionsSource(obidefault.SelectedTaxonomy()),
 	)
 
-	return NewCSVTaxaIterator(iterator, options...)
+	return iterator.CSVTaxaIterator(options...)
 }
 
 func CLICSVTaxaWriter(iterator *obitax.ITaxon, terminalAction bool) *obiitercsv.ICSVRecord {

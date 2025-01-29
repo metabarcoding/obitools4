@@ -1,4 +1,4 @@
-package obifind
+package obitaxonomy
 
 import (
 	"fmt"
@@ -16,11 +16,12 @@ var __with_path__ = false
 var __with_query__ = false
 var __without_rank__ = false
 var __without_parent__ = false
-var __with_scientific_name__ = false
+var __without_scientific_name__ = false
 var __raw_taxid__ = false
 var __taxid_path__ = "NA"
 var __taxid_sons__ = "NA"
 var __restrict_rank__ = ""
+var __to_dump__ = ""
 
 func FilterTaxonomyOptionSet(options *getoptions.GetOpt) {
 	options.BoolVar(&__rank_list__, "rank-list", false,
@@ -40,27 +41,35 @@ func OptionSet(options *getoptions.GetOpt) {
 		options.Description("Match taxon names using a fixed pattern, not a regular expression"))
 	options.StringVar(&__taxid_path__, "parents", "NA",
 		options.Alias("p"),
+		options.ArgName("TAXID"),
 		options.Description("Displays every parental tree's information for the provided taxid."))
 	options.StringVar(&__restrict_rank__, "rank", "",
+		options.ArgName("RANK"),
 		options.Description("Restrict to the given taxonomic rank."))
 	options.BoolVar(&__without_parent__, "without-parent", __without_parent__,
-		options.Description("Adds a column containing the parent's taxonid for each displayed taxon."))
+		options.Description("Supress the column containing the parent's taxonid from the output."))
 	options.StringVar(&__taxid_sons__, "sons", "NA",
 		options.Alias("s"),
+		options.ArgName("TAXID"),
 		options.Description("Displays every sons' tree's information for the provided taxid."))
 	options.BoolVar(&__with_path__, "with-path", false,
 		options.Description("Adds a column containing the full path for each displayed taxon."))
 	options.BoolVar(&__without_rank__, "without-rank", __without_rank__,
 		options.Alias("R"),
-		options.Description("Adds a column containing the taxonomic rank for each displayed taxon."))
+		options.Description("Supress the column containing the taxonomic rank from the output."))
 	options.BoolVar(&__with_query__, "with-query", false,
 		options.Alias("P"),
 		options.Description("Adds a column containing query used to filter taxon name for each displayed taxon."))
-	options.BoolVar(&__with_scientific_name__, "with-scientific-name", false,
+	options.BoolVar(&__without_scientific_name__, "without-scientific-name", __without_scientific_name__,
 		options.Alias("S"),
-		options.Description("Adds a column containing the scientific name for each displayed taxon."))
+		options.Description("Supress the column containing the scientific name from the output."))
 	options.BoolVar(&__raw_taxid__, "raw-taxid", false,
 		options.Description("Displays the raw taxid for each displayed taxon."))
+	options.StringVar(&__to_dump__, "dump", __to_dump__,
+		options.Alias("D"),
+		options.ArgName("TAXID"),
+		options.Description("Dump a sub-taxonomy corresponding to the precised clade"),
+	)
 }
 
 func CLITaxonomicalRestrictions() (*obitax.TaxonSet, error) {
@@ -109,7 +118,7 @@ func CLIWithRank() bool {
 }
 
 func CLIWithScientificName() bool {
-	return __with_scientific_name__
+	return !__without_scientific_name__
 }
 
 func CLIRawTaxid() bool {
@@ -126,4 +135,12 @@ func CLIFixedPattern() bool {
 
 func CLIWithQuery() bool {
 	return __with_query__
+}
+
+func CLIDumpSubtaxonomy() bool {
+	return __to_dump__ != ""
+}
+
+func CLISubTaxonomyNode() string {
+	return __to_dump__
 }

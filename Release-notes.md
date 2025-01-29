@@ -7,6 +7,8 @@
 - In `obimultiplex`, the short version of the **--tag-list** option used to specify the list 
   of tags and primers to be used for the demultiplexing has been changed from `-t` to `-s`.
 
+- The command `obifind` is now renamed `obitaxonomy`.
+
 - The **--taxdump** option used to specify the path to the taxdump containing the NCBI taxonomy
   has been renamed to **--taxonomy**.
 
@@ -20,6 +22,11 @@
   is producing only fasta output without qualities.
 
 ### New features
+
+-   `obitoaxonomy` a new **--dump|D** option allows for dumping a sub-taxonomy.
+  
+-   Taxonomy dump can now be provided as a four-columns CSV file to the **--taxonomy**
+    option.
 
 -   NCBI Taxonomy dump does not need to be uncompressed and unarchived anymore. The
     path of the tar and gziped dump file can be directly specified using the

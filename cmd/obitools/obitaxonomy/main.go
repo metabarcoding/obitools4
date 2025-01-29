@@ -6,25 +6,29 @@ import (
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obifind"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obitaxonomy"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 )
 
 func main() {
-	optionParser := obioptions.GenerateOptionParser(obifind.OptionSet)
+	optionParser := obioptions.GenerateOptionParser(obitaxonomy.OptionSet)
 
 	_, args := optionParser(os.Args)
 
 	var iterator *obitax.ITaxon
 
 	switch {
-	case obifind.CLIRequestsPathForTaxid() != "NA":
 
-		taxon := obitax.DefaultTaxonomy().Taxon(obifind.CLIRequestsPathForTaxid())
+	case obitaxonomy.CLIDumpSubtaxonomy():
+		iterator = obitaxonomy.CLISubTaxonomyIterator()
+
+	case obitaxonomy.CLIRequestsPathForTaxid() != "NA":
+
+		taxon := obitax.DefaultTaxonomy().Taxon(obitaxonomy.CLIRequestsPathForTaxid())
 
 		if taxon == nil {
 			log.Fatalf("Cannot identify the requested taxon: %s",
-				obifind.CLIRequestsPathForTaxid())
+				obitaxonomy.CLIRequestsPathForTaxid())
 		}
 
 		s := taxon.Path()
@@ -35,7 +39,7 @@ func main() {
 
 		iterator = s.Iterator()
 
-		if obifind.CLIWithQuery() {
+		if obitaxonomy.CLIWithQuery() {
 			iterator = iterator.AddMetadata("query", taxon.String())
 		}
 
@@ -45,8 +49,8 @@ func main() {
 		iters := make([]*obitax.ITaxon, len(args))
 
 		for i, pat := range args {
-			ii := obitax.DefaultTaxonomy().IFilterOnName(pat, obifind.CLIFixedPattern(), true)
-			if obifind.CLIWithQuery() {
+			ii := obitax.DefaultTaxonomy().IFilterOnName(pat, obitaxonomy.CLIFixedPattern(), true)
+			if obitaxonomy.CLIWithQuery() {
 				ii = ii.AddMetadata("query", pat)
 			}
 			iters[i] = ii
@@ -59,8 +63,8 @@ func main() {
 		}
 	}
 
-	iterator = obifind.CLITaxonRestrictions(iterator)
-	obifind.CLICSVTaxaWriter(iterator, true)
+	iterator = obitaxonomy.CLITaxonRestrictions(iterator)
+	obitaxonomy.CLICSVTaxaWriter(iterator, true)
 
 	obiutils.WaitForLastPipe()
 

@@ -197,7 +197,7 @@ func (taxonomy *Taxonomy) Len() int {
 //   - A pointer to the newly created Taxon instance.
 //   - An error if the taxon cannot be added (e.g., it already exists and replace is false).
 func (taxonomy *Taxonomy) AddTaxon(taxid, parent string, rank string, isRoot bool, replace bool) (*Taxon, error) {
-	taxonomy = taxonomy.OrDefault(false)
+	taxonomy = taxonomy.OrDefault(true)
 
 	parentid, perr := taxonomy.Id(parent)
 	if perr != nil {
