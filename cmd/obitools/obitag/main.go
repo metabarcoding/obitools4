@@ -47,11 +47,26 @@ func main() {
 	obiconvert.OpenSequenceDataErrorMessage(args, err)
 
 	taxo := obitax.DefaultTaxonomy()
+
+	references := obitag.CLIRefDB()
+
+	if references == nil {
+		log.Panicln("No loaded reference database")
+	}
+
+	if taxo == nil {
+		taxo, err = references.ExtractTaxonomy(nil)
+
+		if err != nil {
+			log.Fatalf("No taxonomy specified or extractable from reference database: %v", err)
+		}
+
+		taxo.SetAsDefault()
+	}
+
 	if taxo == nil {
 		log.Panicln("No loaded taxonomy")
 	}
-
-	references := obitag.CLIRefDB()
 
 	var identified obiiter.IBioSequence
 
