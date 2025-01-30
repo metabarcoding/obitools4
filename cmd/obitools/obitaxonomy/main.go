@@ -5,6 +5,7 @@ import (
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obitaxonomy"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 
@@ -19,7 +20,6 @@ func main() {
 	var iterator *obitax.ITaxon
 
 	switch {
-
 	case obitaxonomy.CLIDownloadNCBI():
 		err := obitaxonomy.CLIDownloadNCBITaxdump()
 		if err != nil {
@@ -29,16 +29,34 @@ func main() {
 
 		os.Exit(0)
 
+	case obitaxonomy.CLIExtractTaxonomy():
+		iter, err := obiconvert.CLIReadBioSequences(args...)
+
+		if err != nil {
+			log.Fatalf("Cannot extract taxonomy: %v", err)
+		}
+
+		taxonomy, err := iter.ExtractTaxonomy()
+
+		if err != nil {
+			log.Fatalf("Cannot extract taxonomy: %v", err)
+		}
+
+		taxonomy.SetAsDefault()
+
+		log.Infof("Number of extracted taxa: %d", taxonomy.Len())
+		iterator = taxonomy.AsTaxonSet().Sort().Iterator()
+
 	case obitaxonomy.CLIDumpSubtaxonomy():
 		iterator = obitaxonomy.CLISubTaxonomyIterator()
 
 	case obitaxonomy.CLIRequestsPathForTaxid() != "NA":
 
-		taxon := obitax.DefaultTaxonomy().Taxon(obitaxonomy.CLIRequestsPathForTaxid())
+		taxon, err := obitax.DefaultTaxonomy().Taxon(obitaxonomy.CLIRequestsPathForTaxid())
 
-		if taxon == nil {
-			log.Fatalf("Cannot identify the requested taxon: %s",
-				obitaxonomy.CLIRequestsPathForTaxid())
+		if err != nil {
+			log.Fatalf("Cannot identify the requested taxon: %s (%v)",
+				obitaxonomy.CLIRequestsPathForTaxid(), err)
 		}
 
 		s := taxon.Path()

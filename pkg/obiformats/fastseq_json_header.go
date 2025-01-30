@@ -292,8 +292,8 @@ func _parse_json_header_(header string, sequence *obiseq.BioSequence) string {
 			case skey == "taxid":
 				if dataType == jsonparser.Number || dataType == jsonparser.String {
 					taxid := obiutils.UnsafeString(value)
-					taxon := taxonomy.Taxon(taxid)
-					if taxon != nil {
+					taxon, err := taxonomy.Taxon(taxid)
+					if err == nil {
 						sequence.SetTaxon(taxon)
 					} else {
 						sequence.SetTaxid(string(value))
@@ -307,9 +307,9 @@ func _parse_json_header_(header string, sequence *obiseq.BioSequence) string {
 					rank, _ := obiutils.SplitInTwo(skey, '_')
 
 					taxid := obiutils.UnsafeString(value)
-					taxon := taxonomy.Taxon(taxid)
+					taxon, err := taxonomy.Taxon(taxid)
 
-					if taxon != nil {
+					if err == nil {
 						taxid = taxon.String()
 					} else {
 						taxid = string(value)

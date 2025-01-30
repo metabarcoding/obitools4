@@ -25,43 +25,6 @@ func (m *NotAnInteger) Error() string {
 	return m.message
 }
 
-// InterfaceToInt converts a interface{} to an integer value if possible.
-// If not a "NotAnInteger" error is returned via the err
-// return value and val is set to 0.
-func InterfaceToInt(i interface{}) (val int, err error) {
-
-	err = nil
-	val = 0
-
-	switch t := i.(type) {
-	case int:
-		val = t
-	case int8:
-		val = int(t) // standardizes across systems
-	case int16:
-		val = int(t) // standardizes across systems
-	case int32:
-		val = int(t) // standardizes across systems
-	case int64:
-		val = int(t) // standardizes across systems
-	case float32:
-		val = int(t) // standardizes across systems
-	case float64:
-		val = int(t) // standardizes across systems
-	case uint8:
-		val = int(t) // standardizes across systems
-	case uint16:
-		val = int(t) // standardizes across systems
-	case uint32:
-		val = int(t) // standardizes across systems
-	case uint64:
-		val = int(t) // standardizes across systems
-	default:
-		err = &NotAnInteger{"value attribute cannot be casted to an integer"}
-	}
-	return
-}
-
 // NotAnInteger defines a new type of Error : "NotAnInteger"
 type NotAnFloat64 struct {
 	message string
@@ -74,43 +37,6 @@ func (m *NotAnFloat64) Error() string {
 	return m.message
 }
 
-// InterfaceToInt converts a interface{} to an integer value if possible.
-// If not a "NotAnInteger" error is returned via the err
-// return value and val is set to 0.
-func InterfaceToFloat64(i interface{}) (val float64, err error) {
-
-	err = nil
-	val = 0
-
-	switch t := i.(type) {
-	case int:
-		val = float64(t)
-	case int8:
-		val = float64(t) // standardizes across systems
-	case int16:
-		val = float64(t) // standardizes across systems
-	case int32:
-		val = float64(t) // standardizes across systems
-	case int64:
-		val = float64(t) // standardizes across systems
-	case float32:
-		val = float64(t) // standardizes across systems
-	case float64:
-		val = t // standardizes across systems
-	case uint8:
-		val = float64(t) // standardizes across systems
-	case uint16:
-		val = float64(t) // standardizes across systems
-	case uint32:
-		val = float64(t) // standardizes across systems
-	case uint64:
-		val = float64(t) // standardizes across systems
-	default:
-		err = &NotAnFloat64{"value attribute cannot be casted to a float value"}
-	}
-	return
-}
-
 // NotABoolean defines a new type of Error : "NotAMapInt"
 type NotAMapInt struct {
 	message string
@@ -121,53 +47,6 @@ type NotAMapInt struct {
 // complying with the error interface
 func (m *NotAMapInt) Error() string {
 	return m.message
-}
-
-func InterfaceToIntMap(i interface{}) (val map[string]int, err error) {
-	err = nil
-
-	switch i := i.(type) {
-	case map[string]int:
-		val = i
-	case map[string]interface{}:
-		val = make(map[string]int, len(i))
-		for k, v := range i {
-			val[k], err = InterfaceToInt(v)
-			if err != nil {
-				return
-			}
-		}
-	case map[string]float64:
-		val = make(map[string]int, len(i))
-		for k, v := range i {
-			val[k] = int(v)
-		}
-	default:
-		err = &NotAMapInt{"value attribute cannot be casted to a map[string]int"}
-	}
-
-	return
-}
-
-func InterfaceToStringMap(i interface{}) (val map[string]string, err error) {
-	err = nil
-
-	switch i := i.(type) {
-	case map[string]string:
-		val = i
-	case map[string]interface{}:
-		val = make(map[string]string, len(i))
-		for k, v := range i {
-			val[k], err = InterfaceToString(v)
-			if err != nil {
-				return
-			}
-		}
-	default:
-		err = &NotAMapInt{"value attribute cannot be casted to a map[string]int"}
-	}
-
-	return
 }
 
 // NotABoolean defines a new type of Error : "NotAMapInt"

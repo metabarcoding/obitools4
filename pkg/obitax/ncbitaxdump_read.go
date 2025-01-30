@@ -91,7 +91,13 @@ func loadNameTable(reader io.Reader, taxonomy *Taxonomy, onlysn bool) int {
 
 		if !onlysn || classname == "scientific name" {
 			n++
-			taxonomy.Taxon(taxid).SetName(name, classname)
+			taxon, err := taxonomy.Taxon(taxid)
+
+			if err != nil {
+				log.Fatalf("%s: is unknown from the taxonomy", taxid)
+			}
+
+			taxon.SetName(name, classname)
 		}
 	}
 
@@ -196,7 +202,11 @@ func LoadNCBITaxDump(directory string, onlysn bool) (*Taxonomy, error) {
 	n = loadMergedTable(buffered, taxonomy)
 	log.Printf("%d merged taxa read\n", n)
 
-	root := taxonomy.Taxon("1")
+	root, err := taxonomy.Taxon("1")
+
+	if err != nil {
+		log.Fatal("cannot find the root taxon (1) in the NCBI tax dump")
+	}
 	taxonomy.SetRoot(root)
 
 	return taxonomy, nil

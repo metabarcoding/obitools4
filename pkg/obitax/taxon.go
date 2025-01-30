@@ -1,6 +1,7 @@
 package obitax
 
 import (
+	"errors"
 	"iter"
 	"regexp"
 
@@ -378,4 +379,30 @@ func (taxon *Taxon) SameAs(other *Taxon) bool {
 	}
 
 	return taxon.Taxonomy == other.Taxonomy && taxon.Node.id == other.Node.id
+}
+
+func (taxon *Taxon) AddChild(child string, replace bool) (*Taxon, error) {
+	if taxon == nil {
+		return nil, errors.New("nil taxon")
+	}
+
+	code, taxid, scientific_name, rank, err := ParseTaxonString(child)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if taxon.Taxonomy.code != code {
+		return nil, errors.New("taxonomy code mismatch")
+	}
+
+	newTaxon, err := taxon.Taxonomy.AddTaxon(taxid, *taxon.Node.id, rank, false, replace)
+
+	if err != nil {
+		return nil, err
+	}
+
+	newTaxon.SetName(scientific_name, "scientific name")
+
+	return newTaxon, nil
 }

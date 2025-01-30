@@ -248,15 +248,15 @@ func CLIRestrictTaxonomyPredicate() obiseq.SequencePredicate {
 	if len(_BelongTaxa) > 0 {
 		taxonomy := obitax.DefaultTaxonomy()
 
-		taxon := taxonomy.Taxon(_BelongTaxa[0])
-		if taxon == nil {
+		taxon, err := taxonomy.Taxon(_BelongTaxa[0])
+		if err != nil {
 			p = obiseq.IsSubCladeOfSlot(taxonomy, _BelongTaxa[0])
 		} else {
 			p = obiseq.IsSubCladeOf(taxonomy, taxon)
 		}
 		for _, staxid := range _BelongTaxa[1:] {
-			taxon := taxonomy.Taxon(staxid)
-			if taxon == nil {
+			taxon, err := taxonomy.Taxon(staxid)
+			if err != nil {
 				p2 = obiseq.IsSubCladeOfSlot(taxonomy, staxid)
 			} else {
 				p2 = obiseq.IsSubCladeOf(taxonomy, taxon)
@@ -278,16 +278,16 @@ func CLIAvoidTaxonomyPredicate() obiseq.SequencePredicate {
 	if len(_NotBelongTaxa) > 0 {
 		taxonomy := obitax.DefaultTaxonomy()
 
-		taxon := taxonomy.Taxon(_NotBelongTaxa[0])
-		if taxon == nil {
+		taxon, err := taxonomy.Taxon(_NotBelongTaxa[0])
+		if err != nil {
 			p = obiseq.IsSubCladeOfSlot(taxonomy, _NotBelongTaxa[0])
 		} else {
 			p = obiseq.IsSubCladeOf(taxonomy, taxon)
 		}
 
 		for _, taxid := range _NotBelongTaxa[1:] {
-			taxon := taxonomy.Taxon(taxid)
-			if taxon == nil {
+			taxon, err := taxonomy.Taxon(taxid)
+			if err != nil {
 				p2 = obiseq.IsSubCladeOfSlot(taxonomy, taxid)
 			} else {
 				p2 = obiseq.IsSubCladeOf(taxonomy, taxon)

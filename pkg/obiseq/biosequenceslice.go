@@ -1,6 +1,7 @@
 package obiseq
 
 import (
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/exp/slices"
@@ -178,4 +179,19 @@ func (s *BioSequenceSlice) SortOnLength(reverse bool) {
 			return a.Len() - b.Len()
 		}
 	})
+}
+
+func (s *BioSequenceSlice) ExtractTaxonomy(taxonomy *obitax.Taxonomy) (*obitax.Taxonomy, error) {
+	var err error
+
+	for _, s := range *s {
+		taxonomy, err = taxonomy.InsertPathString(s.Path())
+
+		if err != nil {
+			return nil, err
+		}
+
+	}
+
+	return taxonomy, nil
 }

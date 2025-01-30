@@ -212,7 +212,8 @@ func (set *TaxonSet) Sort() *TaxonSlice {
 		pushed = false
 		for _, node := range set.set {
 			if !parent[node] && (parent[set.Get(node.parent).Node] ||
-				!set.Contains(node.parent)) {
+				!set.Contains(node.parent) ||
+				node == taxonomy.Root().Node) {
 				pushed = true
 				taxa.slice = append(taxa.slice, node)
 				parent[node] = true

@@ -12,7 +12,6 @@ import (
 	"fmt"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
-	log "github.com/sirupsen/logrus"
 )
 
 // Taxonomy represents a hierarchical classification of taxa.
@@ -130,27 +129,28 @@ func (taxonomy *Taxonomy) TaxidString(id string) (string, error) {
 // Returns:
 //   - A pointer to the Taxon instance associated with the provided taxid.
 //   - If the taxid is unknown, the method will log a fatal error.
-func (taxonomy *Taxonomy) Taxon(taxid string) *Taxon {
+func (taxonomy *Taxonomy) Taxon(taxid string) (*Taxon, error) {
 	taxonomy = taxonomy.OrDefault(false)
 	if taxonomy == nil {
-		return nil
+		return nil, errors.New("cannot extract taxon from nil taxonomy")
 	}
 
 	id, err := taxonomy.Id(taxid)
 
 	if err != nil {
-		log.Fatalf("Taxid %s: %v", taxid, err)
+		return nil, fmt.Errorf("Taxid %s: %v", taxid, err)
 	}
 
 	taxon := taxonomy.nodes.Get(id)
 
 	if taxon == nil {
-		log.Fatalf("Taxid %s is not part of the taxonomy %s",
-			taxid,
-			taxonomy.name)
+		return nil,
+			fmt.Errorf("Taxid %s is not part of the taxonomy %s",
+				taxid,
+				taxonomy.name)
 	}
 
-	return taxon
+	return taxon, nil
 }
 
 // AsTaxonSet returns the set of taxon nodes contained within the Taxonomy.
@@ -352,4 +352,64 @@ func (taxonomy *Taxonomy) Root() *Taxon {
 func (taxonomy *Taxonomy) HasRoot() bool {
 	taxonomy = taxonomy.OrDefault(false)
 	return taxonomy != nil && taxonomy.root != nil
+}
+
+func (taxonomy *Taxonomy) InsertPathString(path []string) (*Taxonomy, error) {
+	if len(path) == 0 {
+		return nil, errors.New("path is empty")
+	}
+
+	code, taxid, scientific_name, rank, err := ParseTaxonString(path[0])
+
+	if taxonomy == nil {
+		taxonomy = NewTaxonomy(code, code, obiutils.AsciiAlphaNumSet)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	if taxonomy.Len() == 0 {
+
+		if code != taxonomy.code {
+			return nil, fmt.Errorf("cannot insert taxon %s into taxonomy %s with code %s",
+				path[0], taxonomy.name, taxonomy.code)
+		}
+
+		root, err := taxonomy.AddTaxon(taxid, taxid, rank, true, true)
+
+		if err != nil {
+			return nil, err
+		}
+		root.SetName(scientific_name, "scientificName")
+	}
+
+	var current *Taxon
+	current, err = taxonomy.Taxon(taxid)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if !current.IsRoot() {
+		return nil, errors.New("path does not start with a root node")
+	}
+
+	for _, id := range path[1:] {
+		taxon, err := taxonomy.Taxon(id)
+		if err == nil {
+			if !current.SameAs(taxon.Parent()) {
+				return nil, errors.New("path is not consistent with the taxonomy, parent mismatch")
+			}
+			current = taxon
+		} else {
+			current, err = current.AddChild(id, false)
+
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	return taxonomy, nil
 }

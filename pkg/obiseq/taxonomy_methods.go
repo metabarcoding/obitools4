@@ -6,6 +6,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 )
 
 func (s *BioSequence) Taxon(taxonomy *obitax.Taxonomy) *obitax.Taxon {
@@ -14,7 +15,10 @@ func (s *BioSequence) Taxon(taxonomy *obitax.Taxonomy) *obitax.Taxon {
 	if taxid == "NA" {
 		return nil
 	}
-	return taxonomy.Taxon(taxid)
+
+	taxon, _ := taxonomy.Taxon(taxid)
+
+	return taxon
 }
 
 // SetTaxid sets the taxid for the BioSequence.
@@ -23,6 +27,7 @@ func (s *BioSequence) Taxon(taxonomy *obitax.Taxonomy) *obitax.Taxon {
 //
 //	taxid - the taxid to set.
 func (s *BioSequence) SetTaxid(taxid string, rank ...string) {
+	var err error
 	if taxid == "" {
 		taxid = "NA"
 	} else {
@@ -30,7 +35,12 @@ func (s *BioSequence) SetTaxid(taxid string, rank ...string) {
 		taxon := (*obitax.Taxon)(nil)
 
 		if taxonomy != nil {
-			taxon = taxonomy.Taxon(taxid)
+			taxon, err = taxonomy.Taxon(taxid)
+
+			if err != nil {
+				log.Warnf("%s: Taxid: %v is unknown from taxonomy (%v)",
+					s.Id(), taxid, err)
+			}
 		}
 
 		if taxon != nil {
@@ -135,14 +145,35 @@ func (sequence *BioSequence) SetFamily(taxonomy *obitax.Taxonomy) *obitax.Taxon 
 	return sequence.SetTaxonAtRank(taxonomy, "family")
 }
 
-func (sequence *BioSequence) SetPath(taxonomy *obitax.Taxonomy) string {
+func (sequence *BioSequence) SetPath(taxonomy *obitax.Taxonomy) []string {
 	taxon := sequence.Taxon(taxonomy)
 	path := taxon.Path()
+	spath := make([]string, path.Len())
+	lpath := path.Len() - 1
 
-	tpath := path.String()
-	sequence.SetAttribute("taxonomic_path", tpath)
+	for i := lpath; i >= 0; i-- {
+		spath[lpath-i] = path.Get(i).String(taxonomy.Code())
+	}
 
-	return tpath
+	sequence.SetAttribute("taxonomic_path", spath)
+
+	return spath
+}
+
+func (sequence *BioSequence) Path() []string {
+	path, ok := sequence.GetAttribute("taxonomic_path")
+
+	if !ok {
+		return nil
+	}
+
+	slice, err := obiutils.InterfaceToStringSlice(path)
+
+	if err != nil {
+		log.Fatalf("%s: taxonomic_path has the wrong type (%v)", sequence.Id(), err)
+	}
+
+	return slice
 }
 
 func (sequence *BioSequence) SetScientificName(taxonomy *obitax.Taxonomy) string {

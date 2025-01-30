@@ -134,7 +134,12 @@ func LoadNCBITarTaxDump(path string, onlysn bool) (*Taxonomy, error) {
 	n = loadMergedTable(buffered, taxonomy)
 	log.Printf("%d merged taxa read\n", n)
 
-	root := taxonomy.Taxon("1")
+	root, err := taxonomy.Taxon("1")
+
+	if err != nil {
+		log.Fatal("cannot find the root taxon (1) in the NCBI tax dump")
+	}
+
 	taxonomy.SetRoot(root)
 
 	return taxonomy, nil

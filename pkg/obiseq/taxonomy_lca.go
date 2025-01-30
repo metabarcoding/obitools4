@@ -15,13 +15,15 @@ func (sequence *BioSequence) TaxonomicDistribution(taxonomy *obitax.Taxonomy) ma
 	taxonomy = taxonomy.OrDefault(true)
 
 	for taxid, v := range taxids {
-		t := taxonomy.Taxon(taxid)
-		if t == nil {
+		t, err := taxonomy.Taxon(taxid)
+		if err != nil {
 			log.Fatalf(
-				"On sequence %s taxid %s is not defined in taxonomy: %s",
+				"On sequence %s taxid %s is not defined in taxonomy: %s (%v)",
 				sequence.Id(),
 				taxid,
-				taxonomy.Name())
+				taxonomy.Name(),
+				err,
+			)
 		}
 		taxons[t.Node] = v
 	}

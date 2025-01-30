@@ -24,6 +24,7 @@ var __taxid_sons__ = "NA"
 var __restrict_rank__ = ""
 var __to_dump__ = ""
 var __download_ncbi__ = false
+var __extract_taxonomy__ = false
 
 func FilterTaxonomyOptionSet(options *getoptions.GetOpt) {
 	options.BoolVar(&__rank_list__, "rank-list", false,
@@ -76,7 +77,9 @@ func OptionSet(options *getoptions.GetOpt) {
 	options.BoolVar(&__download_ncbi__, "download-ncbi", __download_ncbi__,
 		options.Description("Download the current NCBI taxonomy taxdump"),
 	)
-
+	options.BoolVar(&__extract_taxonomy__, "extract-taxonomy", __extract_taxonomy__,
+		options.Description("Extract taxonomy from a sequence file"),
+	)
 }
 
 func CLITaxonomicalRestrictions() (*obitax.TaxonSet, error) {
@@ -88,13 +91,14 @@ func CLITaxonomicalRestrictions() (*obitax.TaxonSet, error) {
 
 	ts := taxonomy.NewTaxonSet()
 	for _, taxid := range __taxonomical_restriction__ {
-		tx := taxonomy.Taxon(taxid)
+		tx, err := taxonomy.Taxon(taxid)
 
-		if tx == nil {
+		if err != nil {
 			return nil, fmt.Errorf(
-				"cannot find taxon %s in taxonomy %s",
+				"cannot find taxon %s in taxonomy %s (%v)",
 				taxid,
 				taxonomy.Name(),
+				err,
 			)
 		}
 
@@ -154,4 +158,8 @@ func CLISubTaxonomyNode() string {
 
 func CLIDownloadNCBI() bool {
 	return __download_ncbi__
+}
+
+func CLIExtractTaxonomy() bool {
+	return __extract_taxonomy__
 }
