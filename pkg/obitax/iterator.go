@@ -2,7 +2,6 @@ package obitax
 
 import (
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
-	log "github.com/sirupsen/logrus"
 )
 
 // ITaxon represents an iterator for traversing Taxon instances.
@@ -195,7 +194,6 @@ func (taxon *Taxon) ISubTaxonomy() *ITaxon {
 
 		pushed := true
 
-		log.Warn(parents)
 		for pushed {
 			itaxo := taxo.Iterator()
 			pushed = false
