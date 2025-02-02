@@ -1,7 +1,9 @@
 package obilua
 
 import (
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiformats"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
 	lua "github.com/yuin/gopher-lua"
 )
 
@@ -16,6 +18,7 @@ func registerBioSequenceType(luaState *lua.LState) {
 	bioSequenceType := luaState.NewTypeMetatable(luaBioSequenceTypeName)
 	luaState.SetGlobal(luaBioSequenceTypeName, bioSequenceType)
 	luaState.SetField(bioSequenceType, "new", luaState.NewFunction(newObiSeq))
+	luaState.SetField(bioSequenceType, "nil", obiseq2Lua(luaState, nil))
 
 	luaState.SetField(bioSequenceType, "__index",
 		luaState.SetFuncs(luaState.NewTable(),
@@ -53,6 +56,7 @@ var bioSequenceMethods = map[string]lua.LGFunction{
 	"definition":         bioSequenceGetSetDefinition,
 	"count":              bioSequenceGetSetCount,
 	"taxid":              bioSequenceGetSetTaxid,
+	"taxon":              bioSequenceGetSetTaxon,
 	"attribute":          bioSequenceGetSetAttribute,
 	"len":                bioSequenceGetLength,
 	"has_sequence":       bioSequenceHasSequence,
@@ -62,6 +66,9 @@ var bioSequenceMethods = map[string]lua.LGFunction{
 	"md5_string":         bioSequenceGetMD5String,
 	"subsequence":        bioSequenceGetSubsequence,
 	"reverse_complement": bioSequenceGetRevcomp,
+	"fasta":              bioSequenceGetFasta,
+	"fastq":              bioSequenceGetFastq,
+	"string":             bioSequenceAsString,
 }
 
 // checkBioSequence checks if the first argument in the Lua stack is a *obiseq.BioSequence.
@@ -252,5 +259,90 @@ func bioSequenceGetRevcomp(luaState *lua.LState) int {
 	s := checkBioSequence(luaState)
 	revcomp := s.ReverseComplement(false)
 	luaState.Push(obiseq2Lua(luaState, revcomp))
+	return 1
+}
+
+func bioSequenceGetSetTaxon(luaState *lua.LState) int {
+	s := checkBioSequence(luaState)
+
+	if luaState.GetTop() > 1 {
+		taxon := checkTaxon(luaState, 2)
+
+		s.SetTaxon(taxon)
+
+		return 0
+	}
+
+	taxon := s.Taxon(obitax.DefaultTaxonomy())
+	luaState.Push(taxon2Lua(luaState, taxon))
+
+	return 1
+}
+
+func bioSequenceGetFasta(luaState *lua.LState) int {
+	s := checkBioSequence(luaState)
+
+	formater := obiformats.FormatFastSeqJsonHeader
+
+	if luaState.GetTop() > 1 {
+		format := luaState.CheckString(2)
+		switch format {
+		case "json":
+			formater = obiformats.FormatFastSeqJsonHeader
+		case "obi":
+			formater = obiformats.FormatFastSeqOBIHeader
+		}
+	}
+
+	txt := obiformats.FormatFasta(s, formater)
+
+	luaState.Push(lua.LString(txt))
+	return 1
+}
+
+func bioSequenceGetFastq(luaState *lua.LState) int {
+	s := checkBioSequence(luaState)
+
+	formater := obiformats.FormatFastSeqJsonHeader
+
+	if luaState.GetTop() > 1 {
+		format := luaState.CheckString(2)
+		switch format {
+		case "json":
+			formater = obiformats.FormatFastSeqJsonHeader
+		case "obi":
+			formater = obiformats.FormatFastSeqOBIHeader
+		}
+	}
+
+	txt := obiformats.FormatFastq(s, formater)
+
+	luaState.Push(lua.LString(txt))
+	return 1
+}
+
+func bioSequenceAsString(luaState *lua.LState) int {
+	s := checkBioSequence(luaState)
+
+	formater := obiformats.FormatFastSeqJsonHeader
+	format := obiformats.FormatFasta
+
+	if s.HasQualities() {
+		format = obiformats.FormatFastq
+	}
+
+	if luaState.GetTop() > 1 {
+		format := luaState.CheckString(2)
+		switch format {
+		case "json":
+			formater = obiformats.FormatFastSeqJsonHeader
+		case "obi":
+			formater = obiformats.FormatFastSeqOBIHeader
+		}
+	}
+
+	txt := format(s, formater)
+
+	luaState.Push(lua.LString(txt))
 	return 1
 }

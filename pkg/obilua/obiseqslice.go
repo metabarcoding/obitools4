@@ -1,6 +1,9 @@
 package obilua
 
 import (
+	"strings"
+
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiformats"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	lua "github.com/yuin/gopher-lua"
 )
@@ -11,6 +14,7 @@ func registerBioSequenceSliceType(luaState *lua.LState) {
 	bioSequenceSliceType := luaState.NewTypeMetatable(luaBioSequenceSliceTypeName)
 	luaState.SetGlobal(luaBioSequenceSliceTypeName, bioSequenceSliceType)
 	luaState.SetField(bioSequenceSliceType, "new", luaState.NewFunction(newObiSeqSlice))
+	luaState.SetField(bioSequenceSliceType, "nil", obiseqslice2Lua(luaState, nil))
 
 	luaState.SetField(bioSequenceSliceType, "__index",
 		luaState.SetFuncs(luaState.NewTable(),
@@ -37,6 +41,9 @@ var bioSequenceSliceMethods = map[string]lua.LGFunction{
 	"pop":      bioSequenceSlicePop,
 	"sequence": bioSequenceSliceGetSetSequence,
 	"len":      bioSequenceSliceGetLength,
+	"fasta":    bioSequenceSliceGetFasta,
+	"fastq":    bioSequenceSliceGetFastq,
+	"string":   bioSequenceSliceAsString,
 }
 
 func checkBioSequenceSlice(L *lua.LState) *obiseq.BioSequenceSlice {
@@ -104,4 +111,97 @@ func bioSequenceSlicePop(luaState *lua.LState) int {
 	luaState.Push(value)
 	return 1
 
+}
+
+func bioSequenceSliceGetFasta(luaState *lua.LState) int {
+	s := checkBioSequenceSlice(luaState)
+
+	formater := obiformats.FormatFastSeqJsonHeader
+
+	if luaState.GetTop() > 1 {
+		format := luaState.CheckString(2)
+		switch format {
+		case "json":
+			formater = obiformats.FormatFastSeqJsonHeader
+		case "obi":
+			formater = obiformats.FormatFastSeqOBIHeader
+		}
+	}
+
+	txts := make([]string, len(*s))
+
+	for i, seq := range *s {
+		txts[i] = obiformats.FormatFasta(seq, formater)
+	}
+
+	txt := strings.Join(txts, "\n")
+
+	luaState.Push(lua.LString(txt))
+	return 1
+}
+
+func bioSequenceSliceGetFastq(luaState *lua.LState) int {
+	s := checkBioSequenceSlice(luaState)
+
+	formater := obiformats.FormatFastSeqJsonHeader
+
+	if luaState.GetTop() > 1 {
+		format := luaState.CheckString(2)
+		switch format {
+		case "json":
+			formater = obiformats.FormatFastSeqJsonHeader
+		case "obi":
+			formater = obiformats.FormatFastSeqOBIHeader
+		}
+	}
+
+	txts := make([]string, len(*s))
+
+	for i, seq := range *s {
+		txts[i] = obiformats.FormatFastq(seq, formater)
+	}
+
+	txt := strings.Join(txts, "\n")
+
+	luaState.Push(lua.LString(txt))
+	return 1
+}
+
+func bioSequenceSliceAsString(luaState *lua.LState) int {
+	s := checkBioSequenceSlice(luaState)
+
+	formater := obiformats.FormatFastSeqJsonHeader
+
+	if luaState.GetTop() > 1 {
+		format := luaState.CheckString(2)
+		switch format {
+		case "json":
+			formater = obiformats.FormatFastSeqJsonHeader
+		case "obi":
+			formater = obiformats.FormatFastSeqOBIHeader
+		}
+	}
+
+	txts := make([]string, len(*s))
+
+	format := obiformats.FormatFasta
+
+	allQual := true
+
+	for _, s := range *s {
+		allQual = allQual && s.HasQualities()
+	}
+
+	if allQual {
+		format = obiformats.FormatFastq
+	}
+
+	for i, seq := range *s {
+		txts[i] = format(seq, formater)
+	}
+
+	txt := strings.Join(txts, "\n")
+
+	luaState.Push(lua.LString(txt))
+	return 1
 }
