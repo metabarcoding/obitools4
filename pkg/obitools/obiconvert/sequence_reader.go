@@ -55,6 +55,8 @@ func ExpandListOfFiles(check_ext bool, filenames ...string) ([]string, error) {
 						strings.HasSuffix(path, "fasta.gz") ||
 						strings.HasSuffix(path, "fastq") ||
 						strings.HasSuffix(path, "fastq.gz") ||
+						strings.HasSuffix(path, "fq") ||
+						strings.HasSuffix(path, "fq.gz") ||
 						strings.HasSuffix(path, "seq") ||
 						strings.HasSuffix(path, "seq.gz") ||
 						strings.HasSuffix(path, "gb") ||
@@ -140,7 +142,7 @@ func CLIReadBioSequences(filenames ...string) (obiiter.IBioSequence, error) {
 		}
 
 		switch CLIInputFormat() {
-		case "fastq":
+		case "fastq", "fq":
 			reader = obiformats.ReadFastqFromFile
 		case "fasta":
 			reader = obiformats.ReadFastaFromFile
@@ -168,22 +170,25 @@ func CLIReadBioSequences(filenames ...string) (obiiter.IBioSequence, error) {
 				opts...,
 			)
 		} else {
-			iterator, err = reader(list_of_files[0], opts...)
-
-			if err != nil {
-				return obiiter.NilIBioSequence, err
-			}
-
-			if CLIPairedFileName() != "" {
-				ip, err := reader(CLIPairedFileName(), opts...)
+			if len(list_of_files) > 0 {
+				iterator, err = reader(list_of_files[0], opts...)
 
 				if err != nil {
 					return obiiter.NilIBioSequence, err
 				}
 
-				iterator = iterator.PairTo(ip)
-			}
+				if CLIPairedFileName() != "" {
+					ip, err := reader(CLIPairedFileName(), opts...)
 
+					if err != nil {
+						return obiiter.NilIBioSequence, err
+					}
+
+					iterator = iterator.PairTo(ip)
+				}
+			} else {
+				iterator = obiiter.NilIBioSequence
+			}
 		}
 
 	}
