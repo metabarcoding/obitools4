@@ -163,10 +163,6 @@ func CLIOutputFormat() string {
 	}
 }
 
-func CLICompressed() bool {
-	return __compressed__
-}
-
 func CLISkipEmpty() bool {
 	return __skip_empty__
 }

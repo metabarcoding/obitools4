@@ -58,7 +58,7 @@ func CLIWriteBioSequences(iterator obiiter.IBioSequence,
 	opts = append(opts, obiformats.OptionsParallelWorkers(nworkers))
 	opts = append(opts, obiformats.OptionsBatchSize(obidefault.BatchSize()))
 
-	opts = append(opts, obiformats.OptionsCompressed(CLICompressed()))
+	opts = append(opts, obiformats.OptionsCompressed(obidefault.CompressOutput()))
 
 	var err error
 

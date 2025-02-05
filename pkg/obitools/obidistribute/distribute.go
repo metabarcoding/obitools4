@@ -33,7 +33,7 @@ func CLIDistributeSequence(sequences obiiter.IBioSequence) {
 	opts = append(opts, obiformats.OptionsParallelWorkers(nworkers),
 		obiformats.OptionsBatchSize(obidefault.BatchSize()),
 		obiformats.OptionsAppendFile(CLIAppendSequences()),
-		obiformats.OptionsCompressed(obiconvert.CLICompressed()))
+		obiformats.OptionsCompressed(obidefault.CompressOutput()))
 
 	var formater obiformats.SequenceBatchWriterToFile
 

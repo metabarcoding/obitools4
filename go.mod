@@ -25,6 +25,7 @@ require (
 
 require (
 	github.com/Clever/csvlint v0.3.0 // indirect
+	github.com/TuftsBCB/io v0.0.0-20140121014543-22b94e9b23f9 // indirect
 	github.com/buger/jsonparser v1.1.1 // indirect
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
