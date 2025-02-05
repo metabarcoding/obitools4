@@ -40,7 +40,7 @@ func CSVSequenceHeader(opt Options) obiitercsv.CSVHeader {
 	}
 
 	if opt.CSVQuality() {
-		record.AppendField("quality")
+		record.AppendField("qualities")
 	}
 
 	return record
@@ -100,9 +100,9 @@ func CSVBatchFromSequences(batch obiiter.BioSequenceBatch, opt Options) obiiterc
 				for j := 0; j < l; j++ {
 					ascii[j] = uint8(q[j]) + uint8(quality_shift)
 				}
-				record["quality"] = string(ascii)
+				record["qualities"] = string(ascii)
 			} else {
-				record["quality"] = opt.CSVNAValue()
+				record["qualities"] = opt.CSVNAValue()
 			}
 		}
 

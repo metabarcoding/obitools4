@@ -33,6 +33,7 @@ func CLIWriteSequenceCSV(iterator obiiter.IBioSequence,
 		CSVDefinition(CLIPrintDefinition()),
 		CSVKeys(CLIToBeKeptAttributes()),
 		CSVSequence(CLIPrintSequence()),
+		CSVQuality(CLIPrintQuality()),
 		CSVAutoColumn(CLIAutoColumns()),
 	)
 
