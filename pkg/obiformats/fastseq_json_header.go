@@ -9,7 +9,6 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 	"github.com/buger/jsonparser"
 )
@@ -201,8 +200,6 @@ func _parse_json_array_interface(str []byte, sequence *obiseq.BioSequence) ([]in
 }
 
 func _parse_json_header_(header string, sequence *obiseq.BioSequence) string {
-	taxonomy := obitax.DefaultTaxonomy()
-
 	annotations := sequence.Annotations()
 	start := -1
 	stop := -1
@@ -291,13 +288,8 @@ func _parse_json_header_(header string, sequence *obiseq.BioSequence) string {
 
 			case skey == "taxid":
 				if dataType == jsonparser.Number || dataType == jsonparser.String {
-					taxid := obiutils.UnsafeString(value)
-					taxon, err := taxonomy.Taxon(taxid)
-					if err == nil {
-						sequence.SetTaxon(taxon)
-					} else {
-						sequence.SetTaxid(string(value))
-					}
+					taxid := string(value)
+					sequence.SetTaxid(taxid)
 				} else {
 					log.Fatalf("%s: Cannot parse taxid %s", sequence.Id(), string(value))
 				}
@@ -306,15 +298,7 @@ func _parse_json_header_(header string, sequence *obiseq.BioSequence) string {
 				if dataType == jsonparser.Number || dataType == jsonparser.String {
 					rank, _ := obiutils.SplitInTwo(skey, '_')
 
-					taxid := obiutils.UnsafeString(value)
-					taxon, err := taxonomy.Taxon(taxid)
-
-					if err == nil {
-						taxid = taxon.String()
-					} else {
-						taxid = string(value)
-					}
-
+					taxid := string(value)
 					sequence.SetTaxid(taxid, rank)
 				} else {
 					log.Fatalf("%s: Cannot parse taxid %s", sequence.Id(), string(value))

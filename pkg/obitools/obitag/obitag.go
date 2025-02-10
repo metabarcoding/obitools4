@@ -43,7 +43,7 @@ func MatchDistanceIndex(taxonomy *obitax.Taxonomy, distance int, distanceIdx map
 		taxon = taxonomy.Root()
 	} else {
 		var err error
-		taxon, err = taxonomy.Taxon(distanceIdx[keys[i]])
+		taxon, _, err = taxonomy.Taxon(distanceIdx[keys[i]])
 		if err != nil {
 			log.Panicf("Cannot identify taxon %s in %s (%v)", distanceIdx[keys[i]], taxonomy.Name(), err)
 		}
@@ -197,7 +197,7 @@ func Identify(sequence *obiseq.BioSequence,
 				log.Panic("Problem in identification line : ", best.Id(), "idx:", idx, "distance:", d)
 			}
 
-			match_taxon, err := taxo.Taxon(identification)
+			match_taxon, _, err := taxo.Taxon(identification)
 
 			if err == nil {
 				taxon, _ = taxon.LCA(match_taxon)

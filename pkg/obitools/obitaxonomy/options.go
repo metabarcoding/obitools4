@@ -91,7 +91,7 @@ func CLITaxonomicalRestrictions() (*obitax.TaxonSet, error) {
 
 	ts := taxonomy.NewTaxonSet()
 	for _, taxid := range __taxonomical_restriction__ {
-		tx, err := taxonomy.Taxon(taxid)
+		tx, _, err := taxonomy.Taxon(taxid)
 
 		if err != nil {
 			return nil, fmt.Errorf(

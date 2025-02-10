@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
@@ -52,11 +53,17 @@ func main() {
 
 	case obitaxonomy.CLIRequestsPathForTaxid() != "NA":
 
-		taxon, err := obitax.DefaultTaxonomy().Taxon(obitaxonomy.CLIRequestsPathForTaxid())
+		taxon, isAlias, err := obitax.DefaultTaxonomy().Taxon(obitaxonomy.CLIRequestsPathForTaxid())
 
 		if err != nil {
 			log.Fatalf("Cannot identify the requested taxon: %s (%v)",
 				obitaxonomy.CLIRequestsPathForTaxid(), err)
+		}
+
+		if isAlias {
+			if obidefault.FailOnTaxonomy() {
+				log.Fatalf("Taxon %s is an alias for %s", taxon.String(), taxon.Parent().String())
+			}
 		}
 
 		s := taxon.Path()

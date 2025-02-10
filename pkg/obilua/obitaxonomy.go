@@ -1,6 +1,7 @@
 package obilua
 
 import (
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 	lua "github.com/yuin/gopher-lua"
@@ -98,10 +99,15 @@ func taxonomyGetCode(luaState *lua.LState) int {
 func taxonomyGetTaxon(luaState *lua.LState) int {
 	taxo := checkTaxonomy(luaState)
 	taxid := luaState.CheckString(2)
-	taxon, err := taxo.Taxon(taxid)
+	taxon, isAlias, err := taxo.Taxon(taxid)
 
 	if err != nil {
 		luaState.RaiseError("%s : Error on taxon taxon: %v", taxid, err)
+		return 0
+	}
+
+	if isAlias && obidefault.FailOnTaxonomy() {
+		luaState.RaiseError("%s : Taxon is an alias of %s", taxid, taxon.String())
 		return 0
 	}
 

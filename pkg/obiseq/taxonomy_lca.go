@@ -4,6 +4,7 @@ import (
 	"math"
 	"strings"
 
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
 	log "github.com/sirupsen/logrus"
 )
@@ -15,7 +16,7 @@ func (sequence *BioSequence) TaxonomicDistribution(taxonomy *obitax.Taxonomy) ma
 	taxonomy = taxonomy.OrDefault(true)
 
 	for taxid, v := range taxids {
-		t, err := taxonomy.Taxon(taxid)
+		t, isAlias, err := taxonomy.Taxon(taxid)
 		if err != nil {
 			log.Fatalf(
 				"On sequence %s taxid %s is not defined in taxonomy: %s (%v)",
@@ -24,6 +25,11 @@ func (sequence *BioSequence) TaxonomicDistribution(taxonomy *obitax.Taxonomy) ma
 				taxonomy.Name(),
 				err,
 			)
+		}
+
+		if isAlias && obidefault.FailOnTaxonomy() {
+			log.Fatalf("On sequence %s taxid %s is an alias on %s",
+				sequence.Id(), taxid, t.String())
 		}
 		taxons[t.Node] = v
 	}

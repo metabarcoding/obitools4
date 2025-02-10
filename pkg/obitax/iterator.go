@@ -216,7 +216,7 @@ func (taxon *Taxon) ISubTaxonomy() *ITaxon {
 }
 
 func (taxonomy *Taxonomy) ISubTaxonomy(taxid string) *ITaxon {
-	taxon, err := taxonomy.Taxon(taxid)
+	taxon, _, err := taxonomy.Taxon(taxid)
 
 	if err != nil {
 		return nil

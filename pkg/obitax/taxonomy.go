@@ -129,28 +129,30 @@ func (taxonomy *Taxonomy) TaxidString(id string) (string, error) {
 // Returns:
 //   - A pointer to the Taxon instance associated with the provided taxid.
 //   - If the taxid is unknown, the method will log a fatal error.
-func (taxonomy *Taxonomy) Taxon(taxid string) (*Taxon, error) {
+func (taxonomy *Taxonomy) Taxon(taxid string) (*Taxon, bool, error) {
 	taxonomy = taxonomy.OrDefault(false)
 	if taxonomy == nil {
-		return nil, errors.New("cannot extract taxon from nil taxonomy")
+		return nil, false, errors.New("cannot extract taxon from nil taxonomy")
 	}
 
 	id, err := taxonomy.Id(taxid)
 
 	if err != nil {
-		return nil, fmt.Errorf("Taxid %s: %v", taxid, err)
+		return nil, false, fmt.Errorf("Taxid %s: %v", taxid, err)
 	}
 
 	taxon := taxonomy.nodes.Get(id)
+	isAlias := taxon.Node.id != id
 
 	if taxon == nil {
 		return nil,
+			false,
 			fmt.Errorf("Taxid %s is not part of the taxonomy %s",
 				taxid,
 				taxonomy.name)
 	}
 
-	return taxon, nil
+	return taxon, isAlias, nil
 }
 
 // AsTaxonSet returns the set of taxon nodes contained within the Taxonomy.
@@ -385,7 +387,7 @@ func (taxonomy *Taxonomy) InsertPathString(path []string) (*Taxonomy, error) {
 	}
 
 	var current *Taxon
-	current, err = taxonomy.Taxon(taxid)
+	current, _, err = taxonomy.Taxon(taxid)
 
 	if err != nil {
 		return nil, err
@@ -396,7 +398,7 @@ func (taxonomy *Taxonomy) InsertPathString(path []string) (*Taxonomy, error) {
 	}
 
 	for _, id := range path[1:] {
-		taxon, err := taxonomy.Taxon(id)
+		taxon, _, err := taxonomy.Taxon(id)
 		if err == nil {
 			if !current.SameAs(taxon.Parent()) {
 				return nil, errors.New("path is not consistent with the taxonomy, parent mismatch")

@@ -63,7 +63,7 @@ func IsSubCladeOfSlot(taxonomy *obitax.Taxonomy, key string) SequencePredicate {
 		val, ok := sequence.GetStringAttribute(key)
 
 		if ok {
-			parent, err := taxonomy.Taxon(val)
+			parent, _, err := taxonomy.Taxon(val)
 
 			if err != nil {
 				log.Warnf("%s: %s is unkown from the taxonomy (%v)", sequence.Id(), val, err)

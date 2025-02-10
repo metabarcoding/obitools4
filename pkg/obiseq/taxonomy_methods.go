@@ -5,6 +5,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 )
@@ -16,7 +17,7 @@ func (s *BioSequence) Taxon(taxonomy *obitax.Taxonomy) *obitax.Taxon {
 		return nil
 	}
 
-	taxon, _ := taxonomy.Taxon(taxid)
+	taxon, _, _ := taxonomy.Taxon(taxid)
 
 	return taxon
 }
@@ -28,6 +29,8 @@ func (s *BioSequence) Taxon(taxonomy *obitax.Taxonomy) *obitax.Taxon {
 //	taxid - the taxid to set.
 func (s *BioSequence) SetTaxid(taxid string, rank ...string) {
 	var err error
+	var isAlias bool
+
 	if taxid == "" {
 		taxid = "NA"
 	} else {
@@ -35,16 +38,39 @@ func (s *BioSequence) SetTaxid(taxid string, rank ...string) {
 		taxon := (*obitax.Taxon)(nil)
 
 		if taxonomy != nil {
-			taxon, err = taxonomy.Taxon(taxid)
+			taxon, isAlias, err = taxonomy.Taxon(taxid)
 
 			if err != nil {
-				log.Warnf("%s: Taxid: %v is unknown from taxonomy (%v)",
-					s.Id(), taxid, err)
+				if obidefault.FailOnTaxonomy() {
+					log.Fatalf("%s: Taxid: %v is unknown from taxonomy (%v)",
+						s.Id(), taxid, err)
+				} else {
+					log.Warnf("%s: Taxid: %v is unknown from taxonomy (%v)",
+						s.Id(), taxid, err)
+				}
 			}
-		}
 
-		if taxon != nil {
-			taxid = taxon.String()
+			if isAlias {
+				if obidefault.FailOnTaxonomy() {
+					log.Fatalf("%s: Taxid: %v is an alias from taxonomy (%v) to %s",
+						s.Id(), taxid, taxonomy.Name(), taxon.String())
+				} else {
+					if obidefault.UpdateTaxid() {
+						log.Warnf("%s: Taxid: %v is updated to %s",
+							s.Id(), taxid, taxon.String())
+						taxid = taxon.String()
+					} else {
+						log.Warnf("%s: Taxid %v has to be updated to %s",
+							s.Id(), taxid, taxon.String())
+					}
+				}
+
+			} else {
+				if taxon != nil {
+					taxid = taxon.String()
+				}
+			}
+
 		}
 	}
 
