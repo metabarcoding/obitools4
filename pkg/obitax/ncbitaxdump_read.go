@@ -131,7 +131,7 @@ func loadMergedTable(reader io.Reader, taxonomy *Taxonomy) int {
 		oldtaxid := strings.TrimSpace(record[0])
 		newtaxid := strings.TrimSpace(record[1])
 
-		taxonomy.AddAlias(newtaxid, oldtaxid, false)
+		taxonomy.AddAlias(oldtaxid, newtaxid, false)
 	}
 
 	return n

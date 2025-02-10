@@ -151,7 +151,8 @@ func (set *TaxonSet) Alias(id *string, taxon *Taxon) {
 	if original == nil {
 		log.Fatalf("Original taxon %v is not part of taxon set", id)
 	}
-	set.set[id] = taxon.Node
+
+	set.set[id] = original.Node
 	set.nalias++
 }
 
