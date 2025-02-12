@@ -72,7 +72,7 @@ func OBIMimeTypeGuesser(stream io.Reader) (*mimetype.MIME, io.Reader, error) {
 	}
 
 	fastqDetector := func(raw []byte, limit uint32) bool {
-		ok, err := regexp.Match("^@[^ ].*\n[^ ]+\n\\+", raw)
+		ok, err := regexp.Match("^@[^ ].*\n[A-Za-z.-]+", raw)
 		return ok && err == nil
 	}
 

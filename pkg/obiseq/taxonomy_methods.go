@@ -41,13 +41,12 @@ func (s *BioSequence) SetTaxid(taxid string, rank ...string) {
 			taxon, isAlias, err = taxonomy.Taxon(taxid)
 
 			if err != nil {
+				logger := log.Warnf
 				if obidefault.FailOnTaxonomy() {
-					log.Fatalf("%s: Taxid: %v is unknown from taxonomy (%v)",
-						s.Id(), taxid, err)
-				} else {
-					log.Warnf("%s: Taxid: %v is unknown from taxonomy (%v)",
-						s.Id(), taxid, err)
+					logger = log.Fatalf
 				}
+				logger("%s: Taxid: %v is unknown from taxonomy (%v)",
+					s.Id(), taxid, err)
 			}
 
 			if isAlias {
