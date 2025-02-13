@@ -17,7 +17,7 @@ An installation script that compiles the new *OBITools* on your Unix-like system
 The easiest way to run it is to copy and paste the following command into your terminal
 
 ```{bash}
-curl -L https://raw.githubusercontent.com/metabarcoding/obitools4/master/install_obitools.sh | bash
+curl -L https://metabarcoding.org/obitools4/install.sh | bash
 ```
 
 By default, the script installs the *OBITools* commands and other associated files into the `/usr/local` directory.
@@ -37,7 +37,7 @@ available on your system, the installation script offers two options:
 You can use these options by following the installation command:
 
 ```{bash}
-curl -L https://raw.githubusercontent.com/metabarcoding/obitools4/master/install_obitools.sh | \
+curl -L https://metabarcoding.org/obitools4/install.sh | \
       bash -s -- --install-dir test_install --obitools-prefix k
 ```
 
