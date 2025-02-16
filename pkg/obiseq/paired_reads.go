@@ -25,7 +25,7 @@ func (s *BioSequence) UnPair() {
 }
 
 func (s *BioSequenceSlice) IsPaired() bool {
-	return (*s)[0].paired != nil
+	return s != nil && s.Len() > 0 && (*s)[0].paired != nil
 }
 
 func (s *BioSequenceSlice) PairedWith() *BioSequenceSlice {
