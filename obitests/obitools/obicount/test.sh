@@ -43,13 +43,14 @@ cleanup() {
 }
 
 log() {
-    echo "[$TEST_NAME @ $(date)] $*" 1>&2
+    echo -e "[$TEST_NAME @ $(date)] $*" 1>&2
 }
 
 log "Testing $TEST_NAME..." 
 log "Test directory is $TEST_DIR" 
 log "obitools directory is $OBITOOLS_DIR" 
 log "Temporary directory is $TMPDIR" 
+log "files: "$(find $TEST_DIR | awk -F'/' '{print $NF}')
 
 ######################################################################
 ####
