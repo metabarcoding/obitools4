@@ -65,7 +65,9 @@ test:
 	$(GOTEST) ./...
 
 obitests: 
-	@find obitests -name test.sh -exec bash {} \; 
+	@for t in $$(find obitests -name test.sh -print) ; do \
+		bash $${t} ;\
+	done 
 
 githubtests: obitools obitests
 	
