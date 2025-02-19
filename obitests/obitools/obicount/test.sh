@@ -50,7 +50,7 @@ log "Testing $TEST_NAME..."
 log "Test directory is $TEST_DIR" 
 log "obitools directory is $OBITOOLS_DIR" 
 log "Temporary directory is $TMPDIR" 
-log "files: "$(find $TEST_DIR | awk -F'/' '{print $NF}')
+log "files: "$(find $TEST_DIR | awk -F'/' '{print $NF}' | tail -n +2)
 
 ######################################################################
 ####
