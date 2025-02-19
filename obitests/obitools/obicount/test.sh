@@ -36,6 +36,7 @@ cleanup() {
     rm -rf "$TMPDIR"  # Suppress the temporary directory
 
     if [ $failed -gt 0 ]; then
+       log "$TEST_NAME tests failed" 
        exit 1
     fi
 
