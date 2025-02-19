@@ -66,6 +66,8 @@ test:
 
 obitests: 
 	@find obitests -name test.sh -exec bash {} \; 
+
+githubtests: obitools obitests
 	
 man: 
 	make -C doc man
@@ -100,5 +102,5 @@ ifneq ($(strip $(COMMIT_ID)),)
 	@rm -f $(OUTPUT)
 endif
 
-.PHONY: all packages obitools man obibook doc update-deps obitests .FORCE
+.PHONY: all packages obitools man obibook doc update-deps obitests githubtests .FORCE
 .FORCE:

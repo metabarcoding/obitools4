@@ -50,9 +50,6 @@ log "Testing $TEST_NAME..."
 log "Test directory is $TEST_DIR" 
 log "obitools directory is $OBITOOLS_DIR" 
 log "Temporary directory is $TMPDIR" 
-log "PATH variable is $PATH" 
-
-log "$(which obicount)" 
 
 ######################################################################
 ####

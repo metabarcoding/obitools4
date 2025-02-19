@@ -16,4 +16,4 @@ jobs:
     - name: Checkout obitools4 project
       uses: actions/checkout@v4
     - name: Run tests
-      run: make obitests
+      run: make githubtests
