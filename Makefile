@@ -66,7 +66,7 @@ test:
 
 obitests: obitools
 	for t in $$(find obitests -name test.sh -print) ; do \
-		$(SHELL) $${t} ; \
+		bash $${t} ; \
 	done
 	
 man: 
