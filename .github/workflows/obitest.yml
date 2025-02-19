@@ -1,0 +1,19 @@
+name: "Run the obitools command test suite"
+
+on:
+  push:
+    branches:
+      - master
+      - V*
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Setup Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: '1.23'
+    - name: Checkout obitools4 project
+      uses: actions/checkout@v4
+    - name: Run tests
+      run: make obitests
