@@ -63,6 +63,11 @@ update-deps:
 
 test:
 	$(GOTEST) ./...
+
+obitests:
+	for t in $$(find obitests -name test.sh -print) ; do \
+		$(SHELL) $${t} ; \
+	done
 	
 man: 
 	make -C doc man
@@ -97,5 +102,5 @@ ifneq ($(strip $(COMMIT_ID)),)
 	@rm -f $(OUTPUT)
 endif
 
-.PHONY: all packages obitools man obibook doc update-deps .FORCE
+.PHONY: all packages obitools man obibook doc update-deps obitests .FORCE
 .FORCE:
