@@ -10,9 +10,8 @@ TEST_NAME=obicount
 # Some variable and function definitions: please don't change them
 #
 ######
-
 TEST_DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
-OBITOOLS_DIR="${TEST_DIR/obitest*/}build"
+OBITOOLS_DIR="$(sed 's/obitest.*//' <<< "$TEST_DIR")build"
 export PATH="${OBITOOLS_DIR}:${PATH}"
 
 
