@@ -64,10 +64,8 @@ update-deps:
 test:
 	$(GOTEST) ./...
 
-obitests: obitools
-	for t in $$(find obitests -name test.sh -print) ; do \
-		bash $${t} ; \
-	done
+obitests: 
+	@find obitests -name test.sh -exec bash {} \; 
 	
 man: 
 	make -C doc man

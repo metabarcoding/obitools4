@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/bash
 
 #
 # Here give the name of the test serie
@@ -34,25 +34,37 @@ cleanup() {
     echo "========================================" 1>&2
 
     rm -rf "$TMPDIR"  # Suppress the temporary directory
+
+    if [ $failed -gt 0 ]; then
+       exit 1
+    fi
+
+    exit 0
 }
 
 log() {
     echo "[$TEST_NAME @ $(date)] $*" 1>&2
 }
 
-trap cleanup EXIT ERR SIGINT SIGTERM
+log "Testing $TEST_NAME..." 
+log "Test directory is $TEST_DIR" 
+log "Temporary directory is $TMPDIR" 
 
-echo "Testing $TEST_NAME..." 1>&2
 
-
-#################################################
+######################################################################
 ####
 #### Below are the tests
 ####
 #### Before each test :
 ####  - increment the variable ntest
 ####
-#### Run the command as the condition of a if / then /else
+#### Run the command as the condition of an if / then /else
+####  - The command must return 0 on success
+####  - The command must return an exit code different from 0 on failure
+####  - The datafiles are stored in the same directory than the test script
+####  - The test script directory is stored in the TEST_DIR variable
+####  - If result files have to be produced they must be stored
+####    in the temporary directory (TMPDIR variable)
 ####
 #### then clause is executed on success of the command
 ####  - Write a success message using the log function
@@ -62,11 +74,12 @@ echo "Testing $TEST_NAME..." 1>&2
 ####  - Write a failure message using the log function
 ####  - increment the variable failed
 ####
-#################################################
+######################################################################
 
 ((ntest++))
 if obicount "${TEST_DIR}/wolf_F.fasta.gz" \
-    > "${TMPDIR}/wolf_F.fasta_count.csv" ; then
+    > "${TMPDIR}/wolf_F.fasta_count.csv" 
+then
     log "OBICount: fasta reading OK" 
     ((success++))
 else
@@ -98,7 +111,7 @@ fi
 
 ((ntest++))
 if diff "${TMPDIR}/wolf_F.fasta_count.csv" \
-    "${TMPDIR}/wolf_F.fastq_count.csv"  > /dev/null
+        "${TMPDIR}/wolf_F.fastq_count.csv"  > /dev/null
 then
     log "OBICount: counting on fasta and fastq are identical OK"
     ((success++))
@@ -109,7 +122,7 @@ fi
 
 ((ntest++))
 if diff "${TMPDIR}/wolf_F.fasta_count.csv" \
-    "${TMPDIR}/wolf_F.csv_count.csv" > /dev/null
+        "${TMPDIR}/wolf_F.csv_count.csv" > /dev/null
 then
     log "OBICount: counting on fasta and csv are identical OK"
     ((success++))
@@ -117,3 +130,12 @@ else
     log "OBICount: counting on fasta and csv are different failed"
     ((failed++))
 fi
+
+#########################################
+#
+# At the end of the tests
+# the cleanup function is called
+#
+#########################################
+
+cleanup
