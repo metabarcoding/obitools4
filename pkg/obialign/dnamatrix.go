@@ -74,6 +74,30 @@ func _Logaddexp(a, b float64) float64 {
 	return b + math.Log1p(math.Exp(a-b))
 }
 
+func _Log1mexp(a float64) float64 {
+	if a > 0 {
+		log.Panic("Log1mexp: a > 0")
+	}
+
+	if a == 0 {
+		return 0
+	}
+
+	return (math.Log(-math.Expm1(a)))
+}
+
+func _Logdiffexp(a, b float64) float64 {
+	if a < b {
+		log.Panic("Log1mexp: a < b")
+	}
+
+	if a == b {
+		return math.Inf(-1)
+	}
+
+	return a + _Log1mexp(b-a)
+}
+
 // _MatchScoreRatio calculates the match score ratio between two bytes.
 //
 // Parameters:
@@ -83,25 +107,25 @@ func _Logaddexp(a, b float64) float64 {
 // Returns:
 // - float64: the match score ratio when a match is observed
 // - float64: the match score ratio when a mismatch is observed
-func _MatchScoreRatio(a, b byte) (float64, float64) {
+func _MatchScoreRatio(QF, QR byte) (float64, float64) {
 
-	l2 := math.Log(2)
 	l3 := math.Log(3)
+	l4 := math.Log(4)
 	l10 := math.Log(10)
-	lalea := math.Log(4)                   // 1 /(change of the random model)
-	lE1 := -float64(a)/10*l10 - l3         // log proba of sequencing error on A/3
-	lE2 := -float64(b)/10*l10 - l3         // log proba of sequencing error on B/3
-	lO1 := math.Log1p(-math.Exp(lE1 + l3)) // log proba no being an error on A
-	lO2 := math.Log1p(-math.Exp(lE2 + l3)) // log proba no being an error on B
-	lO1O2 := lO1 + lO2
-	lE1E2 := lE1 + lE2
-	lO1E2 := lO1 + lE2
-	lO2E1 := lO2 + lE1
+	qF := -float64(QF) / 10 * l10
+	qR := -float64(QR) / 10 * l10
+	term1 := _Logaddexp(qF, qR)
+	term2 := _Logdiffexp(term1, qF+qR)
 
-	MM := _Logaddexp(lO1O2, lE1E2+l3)                    // Proba match when match observed
-	Mm := _Logaddexp(_Logaddexp(lO1E2, lO2E1), lE1E2+l2) // Proba match when mismatch observed
+	// log.Warnf("MatchScoreRatio: %v, %v , %v, %v", QF, QR, term1, term2)
 
-	return MM + lalea, Mm + lalea
+	match_logp := _Log1mexp(term2 + l3 - l4)
+	match_score := match_logp - _Log1mexp(match_logp)
+
+	mismatch_logp := term2 - l4
+	mismatch_score := mismatch_logp - _Log1mexp(mismatch_logp)
+
+	return match_score, mismatch_score
 }
 
 func _InitNucPartMatch() {

@@ -2,6 +2,7 @@ package obikmer
 
 import (
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 )
 
 var __single_base_code__ = []byte{0,
@@ -131,33 +132,39 @@ func FastShiftFourMer(index [][]int, shifts *map[int]int, lindex int, seq *obise
 	maxshift := 0
 	maxcount := 0
 	maxscore := -1.0
+	maxrelscore := -1.0
 
 	for shift, count := range *shifts {
 		delete((*shifts), shift)
-		score := float64(count)
-		if relscore {
-			over := -shift
-			switch {
-			case shift > 0:
-				over += lindex
-			case shift < 0:
-				over = seq.Len() - over
-			default:
-				over = min(lindex, seq.Len())
-			}
-			score = score / float64(over-3)
+		selectscore := float64(count)
+		relativescore := float64(count)
+		over := -shift
+		switch {
+		case shift > 0:
+			over += lindex
+		case shift < 0:
+			over = seq.Len() - over
+		default:
+			over = min(lindex, seq.Len())
 		}
-		if score > maxscore {
+		relativescore = relativescore / float64(over-3)
+		if relscore {
+			selectscore = relativescore
+		}
+
+		if selectscore > maxscore {
 			maxshift = shift
 			maxcount = count
-			maxscore = score
+			maxscore = selectscore
+			maxrelscore = relativescore
 		} else {
-			if score == maxscore && shift < maxshift {
+			if selectscore == maxscore && obiutils.Abs(shift) < obiutils.Abs(maxshift) {
 				maxshift = shift
 				maxcount = count
+				maxrelscore = relativescore
 			}
 		}
 	}
 
-	return maxshift, maxcount, maxscore
+	return maxshift, maxcount, maxrelscore
 }
