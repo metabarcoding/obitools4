@@ -4,7 +4,7 @@
 # Here give the name of the test serie
 #
 
-TEST_NAME=obicount
+TEST_NAME=obiparing
 
 ######
 #
@@ -80,57 +80,47 @@ log "files: $(find $TEST_DIR | awk -F'/' '{print $NF}' | tail -n +2)"
 ######################################################################
 
 ((ntest++))
-if obicount "${TEST_DIR}/wolf_F.fasta.gz" \
-    > "${TMPDIR}/wolf_F.fasta_count.csv" 
+if obipairing -F "${TEST_DIR}/wolf_F.fastq.gz" \
+              -R "${TEST_DIR}/wolf_R.fastq.gz" \
+    | obidistribute -Z -c mode \
+                    -p "${TMPDIR}/wolf_paired_%s.fastq.gz" 
 then
-    log "OBICount: fasta reading OK" 
+    log "OBIPairing: sequence pairing OK" 
     ((success++))
 else
-    log "OBICount: fasta reading failed" 
+    log "OBIPairing: sequence pairing failed" 
     ((failed++))
 fi
 
 ((ntest++))
-if obicount "${TEST_DIR}/wolf_F.fastq.gz" \
-    > "${TMPDIR}/wolf_F.fastq_count.csv"
+if obicsv -Z -s -i \
+          -k ali_dir -k ali_length -k paring_fast_count \
+          -k paring_fast_overlap -k paring_fast_score \
+          -k score -k score_norm -k seq_a_single \
+          -k seq_b_single -k seq_ab_match \
+          "${TMPDIR}/wolf_paired_alignment.fastq.gz" \
+    > "${TMPDIR}/wolf_paired_alignment.csv.gz" \
+    && zdiff -c "${TEST_DIR}/wolf_paired_alignment.csv.gz" \
+                "${TMPDIR}/wolf_paired_alignment.csv.gz" 
 then
-    log "OBICount: fastq reading OK"
+    log "OBIPairing: check aligned sequences OK" 
     ((success++))
 else
-    log "OBICount: fastq reading failed" 
+    log "OBIPairing: check aligned sequences failed" 
     ((failed++))
 fi
 
 ((ntest++))
-if obicount "${TEST_DIR}/wolf_F.csv.gz" \
-    > "${TMPDIR}/wolf_F.csv_count.csv"
+if obicsv -Z -s -i \
+          "${TMPDIR}/wolf_paired_join.fastq.gz" \
+    > "${TMPDIR}/wolf_paired_join.csv.gz" \
+    && zdiff -c "${TEST_DIR}/wolf_paired_join.csv.gz" \
+                "${TMPDIR}/wolf_paired_join.csv.gz"
 then
-    log "OBICount: csv reading OK" 
+    log "OBIPairing: check joined sequences OK" 
     ((success++))
 else
-    log "OBICount: csv reading failed"
-    ((failed++))
-fi
-
-((ntest++))
-if diff "${TMPDIR}/wolf_F.fasta_count.csv" \
-        "${TMPDIR}/wolf_F.fastq_count.csv"  > /dev/null
-then
-    log "OBICount: counting on fasta and fastq are identical OK"
-    ((success++))
-else
-    log "OBICount: counting on fasta and fastq are different failed"
-    ((failed++))
-fi
-
-((ntest++))
-if diff "${TMPDIR}/wolf_F.fasta_count.csv" \
-        "${TMPDIR}/wolf_F.csv_count.csv" > /dev/null
-then
-    log "OBICount: counting on fasta and csv are identical OK"
-    ((success++))
-else
-    log "OBICount: counting on fasta and csv are different failed"
+    log "OBIPairing: check joined sequences failed" 
     ((failed++))
 fi
 
