@@ -163,7 +163,15 @@ func BuildQualityConsensus(seqA, seqB *obiseq.BioSequence, path []int, statOnMis
 		nB := (*bufferSB)[i]
 		qB = (*bufferQB)[i]
 
-		if statOnMismatch && nA != nB && nA != ' ' && nB != ' ' {
+		if statOnMismatch && nA != nB {
+			if nA == ' ' {
+				nA = '-'
+				qA = 0
+			}
+			if nB == ' ' {
+				nB = '-'
+				qB = 0
+			}
 			mismatches[strings.ToUpper(fmt.Sprintf("(%c:%02d)->(%c:%02d)", nA, qA, nB, qB))] = i + 1
 		}
 
@@ -183,13 +191,12 @@ func BuildQualityConsensus(seqA, seqB *obiseq.BioSequence, path []int, statOnMis
 
 		q := qA + qB
 
-		if qA > 0 && qB > 0 {
-			if nA != nB {
-				q = qM - byte(math.Log10(1-math.Pow(10, -float64(qm)/30))*10+0.5)
-			}
-			if nA == nB {
-				match++
-			}
+		if nA != nB {
+			q = qM - byte(math.Log10(1-math.Pow(10, -float64(qm)/40))*10+0.5)
+		}
+
+		if nA == nB {
+			match++
 		}
 
 		if q > 90 {
