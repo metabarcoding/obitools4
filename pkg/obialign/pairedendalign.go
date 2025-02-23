@@ -625,6 +625,8 @@ func PEAlign(seqA, seqB *obiseq.BioSequence,
 			&arena.pointer.scoreMatrix,
 			&arena.pointer.pathMatrix)
 
+		score = scoreR
+
 		path = _Backtracking(arena.pointer.pathMatrix,
 			len(rawSeqA), len(rawSeqB),
 			&(arena.pointer.path))
@@ -641,6 +643,7 @@ func PEAlign(seqA, seqB *obiseq.BioSequence,
 				len(rawSeqA), len(rawSeqB),
 				&(arena.pointer.path))
 			isLeftAlign = true
+			score = scoreL
 		}
 
 	}

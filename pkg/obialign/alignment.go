@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 )
 
 // // A pool of byte slices.
@@ -158,19 +159,29 @@ func BuildQualityConsensus(seqA, seqB *obiseq.BioSequence, path []int, statOnMis
 
 	match := 0
 
+	left := obiutils.Abs(path[0])
+	right := 0
+	if path[len(path)-1] == 0 {
+		right = path[len(path)-2]
+	}
+
+	right = obiutils.Abs(right)
+
+	right = len(*bufferQA) - right
+
+	// log.Warnf("BuildQualityConsensus: left = %d right = %d\n", left, right)
+
 	for i, qA = range *bufferQA {
 		nA := (*bufferSA)[i]
 		nB := (*bufferSB)[i]
 		qB = (*bufferQB)[i]
 
-		if statOnMismatch && nA != nB {
+		if statOnMismatch && i >= left && i < right && nA != nB {
 			if nA == ' ' {
 				nA = '-'
-				qA = 0
 			}
 			if nB == ' ' {
 				nB = '-'
-				qB = 0
 			}
 			mismatches[strings.ToUpper(fmt.Sprintf("(%c:%02d)->(%c:%02d)", nA, qA, nB, qB))] = i + 1
 		}

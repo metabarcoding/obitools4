@@ -129,6 +129,7 @@ func AssemblePESequences(seqA, seqB *obiseq.BioSequence,
 	}
 	lcons := cons.Len()
 	aliLength := lcons - _Abs(left) - _Abs(right)
+
 	identity := float64(match) / float64(aliLength)
 	if aliLength == 0 {
 		identity = 0
