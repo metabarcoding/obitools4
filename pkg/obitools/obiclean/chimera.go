@@ -35,15 +35,17 @@ func commonSuffix(a, b *obiseq.BioSequence) int {
 	j := b.Len() - 1
 
 	if i < 0 || j < 0 {
-		return -1
+		return 0
 	}
 
 	as := a.Sequence()
 	bs := b.Sequence()
 
+	l := 0
 	for i >= 0 && j >= 0 && as[i] == bs[j] {
 		i--
 		j--
+		l++
 	}
 
 	if obiutils.UnsafeString(as[i+1:]) != obiutils.UnsafeString(bs[j+1:]) {
@@ -51,7 +53,7 @@ func commonSuffix(a, b *obiseq.BioSequence) int {
 	}
 	// log.Warnf("i: %d, j: %d (%s)", i, j, as[i+1:])
 
-	return i + 1
+	return l
 }
 
 func AnnotateChimera(samples map[string]*[]*seqPCR) {
@@ -97,16 +99,11 @@ func AnnotateChimera(samples map[string]*[]*seqPCR) {
 				}
 			}
 
+			ls := s.Sequence.Len()
+
 			for k := i + 1; k < lp; k++ {
 				for l := i + 1; l < lp; l++ {
-					if k != l &&
-						cs[k] >= 0 &&
-						obiutils.Abs(cp[k]-cs[l]) == 0 &&
-						obiutils.UnsafeString(pcrs[k].Sequence.Sequence()[:cp[k]]) !=
-							obiutils.UnsafeString(pcrs[l].Sequence.Sequence()[:cp[k]]) &&
-						obiutils.UnsafeString(pcrs[k].Sequence.Sequence()[cp[k]:]) !=
-							obiutils.UnsafeString(pcrs[l].Sequence.Sequence()[cp[k]:]) {
-
+					if k != l && cp[k]+cs[l] == ls {
 						cm[sample] = fmt.Sprintf("{%s}/{%s}@(%d)",
 							pcrs[k].Sequence.Id(),
 							pcrs[l].Sequence.Id(),
