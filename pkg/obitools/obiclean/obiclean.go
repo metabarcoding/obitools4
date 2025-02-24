@@ -2,6 +2,7 @@ package obiclean
 
 import (
 	"fmt"
+	"maps"
 	"os"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
@@ -19,6 +20,7 @@ type seqPCR struct {
 	Sequence  *obiseq.BioSequence // pointer to the corresponding sequence
 	SonCount  int
 	AddedSons int
+	IsHead    bool
 	Edges     []Edge
 	Cluster   map[int]bool // used as the set of head sequences associated to that sequence
 }
@@ -50,6 +52,7 @@ func buildSamples(dataset obiseq.BioSequenceSlice,
 				Sequence:  s,
 				SonCount:  0,
 				AddedSons: 0,
+				IsHead:    false,
 			})
 		}
 	}
@@ -110,6 +113,28 @@ func IsHead(sequence *obiseq.BioSequence) bool {
 	}
 
 	return ishead
+}
+
+func NotAlwaysChimera(tag string) obiseq.SequencePredicate {
+	descriptor := obiseq.MakeStatsOnDescription(tag)
+	predicat := func(sequence *obiseq.BioSequence) bool {
+
+		chimera, ok := sequence.GetStringMap("chimera")
+		if !ok || len(chimera) == 0 {
+			return true
+		}
+		samples := maps.Keys(sequence.StatsOn(descriptor, "NA"))
+
+		for s := range samples {
+			if _, ok := chimera[s]; !ok {
+				return true
+			}
+		}
+
+		return false
+	}
+
+	return predicat
 }
 
 func HeadCount(sequence *obiseq.BioSequence) int {
@@ -235,6 +260,7 @@ func Mutation(sample map[string]*([]*seqPCR)) {
 }
 
 func Status(sequence *obiseq.BioSequence) map[string]string {
+	var err error
 	annotation := sequence.Annotations()
 	iobistatus, ok := annotation["obiclean_status"]
 	var obistatus map[string]string
@@ -244,9 +270,9 @@ func Status(sequence *obiseq.BioSequence) map[string]string {
 		case map[string]string:
 			obistatus = iobistatus
 		case map[string]interface{}:
-			obistatus = make(map[string]string)
-			for k, v := range iobistatus {
-				obistatus[k] = fmt.Sprint(v)
+			obistatus, err = obiutils.InterfaceToStringMap(obistatus)
+			if err != nil {
+				log.Panicf("obiclean_status attribute of sequence %s must be castable to a map[string]string", sequence.Id())
 			}
 		}
 	} else {
@@ -354,6 +380,10 @@ func CLIOBIClean(itertator obiiter.IBioSequence) obiiter.IBioSequence {
 		}
 	}
 
+	if DetectChimera() {
+		AnnotateChimera(samples)
+	}
+
 	if SaveGraphToFiles() {
 		SaveGMLGraphs(GraphFilesDirectory(), samples, MinCountToEvalMutationRate())
 	}
@@ -366,7 +396,9 @@ func CLIOBIClean(itertator obiiter.IBioSequence) obiiter.IBioSequence {
 	iter := annotateOBIClean(source, db)
 
 	if OnlyHead() {
-		iter = iter.FilterOn(IsHead, obidefault.BatchSize())
+		iter = iter.FilterOn(IsHead,
+			obidefault.BatchSize()).FilterOn(NotAlwaysChimera(SampleAttribute()),
+			obidefault.BatchSize())
 	}
 
 	if MinSampleCount() > 1 {

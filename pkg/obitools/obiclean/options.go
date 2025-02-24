@@ -17,6 +17,7 @@ var _onlyHead = false
 var _saveGraph = "__@@NOSAVE@@__"
 var _saveRatio = "__@@NOSAVE@@__"
 var _minSample = 1
+var _detectChimera = false
 
 func ObicleanOptionSet(options *getoptions.GetOpt) {
 	options.StringVar(&_sampleAttribute, "sample", _sampleAttribute,
@@ -58,6 +59,10 @@ func ObicleanOptionSet(options *getoptions.GetOpt) {
 
 	options.IntVar(&_minSample, "min-sample-count", _minSample,
 		options.Description("Minimum number of samples a sequence must be present in to be considered in the analysis."),
+	)
+
+	options.BoolVar(&_detectChimera, "detect-chimera", _detectChimera,
+		options.Description("Detect chimera sequences."),
 	)
 }
 
@@ -119,4 +124,9 @@ func RatioTableFilename() string {
 // It returns the minimum number of samples a sequence must be present in to be considered in the analysis
 func MinSampleCount() int {
 	return _minSample
+}
+
+// It returns true if chimera detection is enabled
+func DetectChimera() bool {
+	return _detectChimera
 }
