@@ -5,7 +5,9 @@ go 1.23.1
 require (
 	github.com/DavidGamba/go-getoptions v0.28.0
 	github.com/PaesslerAG/gval v1.2.2
+	github.com/TuftsBCB/io v0.0.0-20140121014543-22b94e9b23f9
 	github.com/barkimedes/go-deepcopy v0.0.0-20220514131651-17c30cfc62df
+	github.com/buger/jsonparser v1.1.1
 	github.com/chen3feng/stl4go v0.1.1
 	github.com/dlclark/regexp2 v1.11.4
 	github.com/goccy/go-json v0.10.3
@@ -24,10 +26,6 @@ require (
 )
 
 require (
-	github.com/Clever/csvlint v0.3.0 // indirect
-	github.com/TuftsBCB/io v0.0.0-20140121014543-22b94e9b23f9 // indirect
-	github.com/buger/jsonparser v1.1.1 // indirect
-	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/goombaio/orderedmap v0.0.0-20180924084748-ba921b7e2419 // indirect
 	github.com/kr/pretty v0.3.0 // indirect

@@ -238,7 +238,7 @@ func IAssemblePESequencesBatch(iterator obiiter.IBioSequence,
 		log.Printf("End of the sequence Pairing")
 	}()
 
-	f := func(iterator obiiter.IBioSequence, wid int) {
+	f := func(iterator obiiter.IBioSequence) {
 		arena := obialign.MakePEAlignArena(150, 150)
 		shifts := make(map[int]int)
 
@@ -263,9 +263,9 @@ func IAssemblePESequencesBatch(iterator obiiter.IBioSequence,
 	log.Printf("Start of the sequence Pairing using %d workers\n", nworkers)
 
 	for i := 0; i < nworkers-1; i++ {
-		go f(iterator.Split(), i)
+		go f(iterator.Split())
 	}
-	go f(iterator, nworkers-1)
+	go f(iterator)
 	return newIter
 
 }

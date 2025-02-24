@@ -21,15 +21,15 @@ func encodeValues(score, length int, out bool) uint64 {
 	return fo
 }
 
-func _isout(value uint64) bool {
-	const outmask = uint64(1) << dwsize
-	return (value & outmask) == 0
-}
+// func _isout(value uint64) bool {
+// 	const outmask = uint64(1) << dwsize
+// 	return (value & outmask) == 0
+// }
 
-func _lpath(value uint64) int {
-	const mask = uint64(1<<wsize) - 1
-	return int(((value + 1) ^ mask) & mask)
-}
+// func _lpath(value uint64) int {
+// 	const mask = uint64(1<<wsize) - 1
+// 	return int(((value + 1) ^ mask) & mask)
+// }
 
 func decodeValues(value uint64) (int, int, bool) {
 	const mask = uint64(1<<wsize) - 1
@@ -57,4 +57,3 @@ func _setout(value uint64) uint64 {
 var _empty = encodeValues(0, 0, false)
 var _out = encodeValues(0, 30000, true)
 var _notavail = encodeValues(0, 30000, false)
-

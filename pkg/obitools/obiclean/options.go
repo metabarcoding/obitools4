@@ -16,6 +16,7 @@ var _onlyHead = false
 
 var _saveGraph = "__@@NOSAVE@@__"
 var _saveRatio = "__@@NOSAVE@@__"
+var _minSample = 1
 
 func ObicleanOptionSet(options *getoptions.GetOpt) {
 	options.StringVar(&_sampleAttribute, "sample", _sampleAttribute,
@@ -55,6 +56,9 @@ func ObicleanOptionSet(options *getoptions.GetOpt) {
 			"The ratio file follows the csv format."),
 	)
 
+	options.IntVar(&_minSample, "min-sample-count", _minSample,
+		options.Description("Minimum number of samples a sequence must be present in to be considered in the analysis."),
+	)
 }
 
 func OptionSet(options *getoptions.GetOpt) {
@@ -110,4 +114,9 @@ func IsSaveRatioTable() bool {
 // It returns the filename of the file that stores the ratio table
 func RatioTableFilename() string {
 	return _saveRatio
+}
+
+// It returns the minimum number of samples a sequence must be present in to be considered in the analysis
+func MinSampleCount() int {
+	return _minSample
 }

@@ -23,6 +23,10 @@
 
 ### New features
 
+-   `obiclean` add a new **--min-sample-count** option with a default value of 1,
+    asking to filter out sequences which are not occurring in at least the
+    specified number of samples.
+
 -   `obitoaxonomy` a new **--dump|D** option allows for dumping a sub-taxonomy.
   
 -   Taxonomy dump can now be provided as a four-columns CSV file to the **--taxonomy**

@@ -368,7 +368,12 @@ func CLIOBIClean(itertator obiiter.IBioSequence) obiiter.IBioSequence {
 	iter := annotateOBIClean(source, db, samples, SampleAttribute(), "NA")
 
 	if OnlyHead() {
-		iter = iter.FilterOn(IsHead, 1000)
+		iter = iter.FilterOn(IsHead, obidefault.BatchSize())
+	}
+
+	if MinSampleCount() > 1 {
+		sc := obiseq.OccurInAtleast(SampleAttribute(), MinSampleCount())
+		iter = iter.FilterOn(sc, obidefault.BatchSize())
 	}
 
 	return iter

@@ -196,6 +196,16 @@ func IsShorterOrEqualTo(length int) SequencePredicate {
 	return f
 }
 
+func OccurInAtleast(sample string, n int) SequencePredicate {
+	desc := MakeStatsOnDescription(sample)
+	f := func(sequence *BioSequence) bool {
+		stats := sequence.StatsOn(desc, "NA")
+		return len(stats) >= n
+	}
+
+	return f
+}
+
 func IsSequenceMatch(pattern string) SequencePredicate {
 	pat, err := regexp.Compile("(?i)" + pattern)
 
