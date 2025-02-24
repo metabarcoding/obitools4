@@ -19,7 +19,7 @@ func IFragments(minsize, length, overlap, size, nworkers int) Pipeable {
 			newiter.WaitAndClose()
 		}()
 
-		f := func(iterator IBioSequence, id int) {
+		f := func(iterator IBioSequence) {
 			source := ""
 			for iterator.Next() {
 				news := obiseq.MakeBioSequenceSlice()
@@ -66,9 +66,9 @@ func IFragments(minsize, length, overlap, size, nworkers int) Pipeable {
 		}
 
 		for i := 1; i < nworkers; i++ {
-			go f(iterator.Split(), i)
+			go f(iterator.Split())
 		}
-		go f(iterator, 0)
+		go f(iterator)
 
 		return newiter.SortBatches().Rebatch(size)
 	}

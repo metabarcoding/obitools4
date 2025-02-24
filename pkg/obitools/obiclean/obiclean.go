@@ -57,9 +57,7 @@ func buildSamples(dataset obiseq.BioSequenceSlice,
 	return samples
 }
 
-func annotateOBIClean(source string, dataset obiseq.BioSequenceSlice,
-	sample map[string]*([]*seqPCR),
-	tag, NAValue string) obiiter.IBioSequence {
+func annotateOBIClean(source string, dataset obiseq.BioSequenceSlice) obiiter.IBioSequence {
 	batchsize := 1000
 	var annot = func(data obiseq.BioSequenceSlice) (obiseq.BioSequenceSlice, error) {
 
@@ -365,7 +363,7 @@ func CLIOBIClean(itertator obiiter.IBioSequence) obiiter.IBioSequence {
 		EmpiricalDistCsv(RatioTableFilename(), all_ratio)
 	}
 
-	iter := annotateOBIClean(source, db, samples, SampleAttribute(), "NA")
+	iter := annotateOBIClean(source, db)
 
 	if OnlyHead() {
 		iter = iter.FilterOn(IsHead, obidefault.BatchSize())

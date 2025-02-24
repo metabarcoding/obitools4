@@ -25,7 +25,7 @@ func IsAValidTaxon(taxonomy *obitax.Taxonomy, withAutoCorrection ...bool) Sequen
 				if autocorrection {
 					sequence.SetTaxid(ttaxid)
 					log.Printf(
-						"Sequence %s : Taxid %d updated with %d",
+						"Sequence %s : Taxid %s updated with %s",
 						sequence.Id(),
 						taxid,
 						ttaxid,

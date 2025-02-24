@@ -52,35 +52,6 @@ func makeEdge(father, dist, pos int, from, to byte) Edge {
 	}
 }
 
-func abs(x int) int {
-	if x < 0 {
-		return -x
-	}
-	return x
-}
-
-func max(x, y int) int {
-	if x > y {
-		return x
-	}
-	return y
-}
-
-func min(x, y int) int {
-	if x < y {
-		return x
-	}
-	return y
-}
-
-func minMax(x, y int) (int, int) {
-	if x < y {
-		return x, y
-	}
-	return y, x
-
-}
-
 // It takes a filename and a 2D slice of floats pruduced during graph building,
 // and writes a CSV file with the first column being the
 // first nucleotide, the second column being the second nucleotide, and the third column being the

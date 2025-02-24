@@ -41,15 +41,15 @@
     allow the processing of the rare fasta and fastq files not recognized.
     
 -   In `obiscript`, adds new methods to the Lua sequence object:
-    - `md5_string()`:  returning the MD5 check sum as an hexadecimal string,
-	- `subsequence(from,to)`: allows to extract a subsequence on a 0 based 
-            coordinate system, upper bound expluded like in go.
+    - `md5_string()`: returning the MD5 check sum as a hexadecimal string,
+	- `subsequence(from,to)`: allows extracting a subsequence on a 0 based 
+            coordinate system, upper bound excluded like in go.
 	- `reverse_complement`: returning a sequence object corresponding to the reverse complement
             of the current sequence.
 
-### Change of git repositiory
+### Change of git repository
 
--   The OBITools4 git repository has been moved to the github repository. 
+-   The OBITools4 git repository has been moved to the GitHub repository. 
     The new address is: https://github.com/metabarcoding/obitools4.
     Take care for using the new install script for retrieving the new version.
 
@@ -72,7 +72,7 @@
     are running on a computer cluster managed by your university). You can limit
     the number of CPU cores used by *OBITools4* or by using the **--max-cpu**
     option or by setting the **OBIMAXCPU** environment variable. Some strange
-    behaviour of *OBITools4* has been observed when users try to limit the
+    behavior of *OBITools4* has been observed when users try to limit the
     maximum number of usable CPU cores to one. This seems to be caused by the Go
     language, and it is not obvious to get *OBITools4* to run correctly on a
     single core in all circumstances. Therefore, if you ask to use a single
@@ -88,7 +88,7 @@
     in CSV format, with the separator `,`, the decimal separator `.`, and a
     header line with the column names. It is more convenient to use the output
     in other programs. For example, you can use the `csvtomd` command to
-    reformat the csv output into a markdown table. The first command to initiate
+    reformat the CSV output into a Markdown table. The first command to initiate
     this change is `obicount`, which now produces a 3-line CSV output.
 
     ```bash
@@ -100,7 +100,7 @@
     database for `obitag` is to use `obipcr` on a local copy of Genbank or EMBL.
     However, these sequence databases are known to contain many taxonomic
     errors, such as bacterial sequences annotated with the taxid of their host
-    species. obicleandb tries to detect these errors. To do this, it first keeps
+    species. `obicleandb` tries to detect these errors. To do this, it first keeps
     only sequences annotated with the taxid to which a species, genus, and
     family taxid can be assigned. Then, for each sequence, it compares the
     distance of the sequence to the other sequences belonging to the same genus
@@ -111,7 +111,7 @@
     with the p-value of the Mann-Whitney U test in the **obicleandb_trusted**
     slot. Later, the distribution of this p-value can be analyzed to determine a
     threshold. Empirically, a threshold of 0.05 is a good compromise and allows
-    to filter out less than 1‰ of the sequences. These sequences can then be
+    filtering out less than 1‰ of the sequences. These sequences can then be
     removed using `obigrep`.
 
 -   Adds a new `obijoin` utility to join information contained in a sequence
@@ -121,16 +121,16 @@
 
 -   Adds a new tool `obidemerge` to demerge a `merge_xxx` slot by recreating the 
     multiple identical sequences having the slot `xxx` recreated with its initial
-    value and the sequence count set to the number of occurences refered in the
+    value and the sequence count set to the number of occurrences referred in the
     `merge_xxx` slot. During the operation, the `merge_xxx` slot is removed.
 
 -   Adds CSV as one of the input format for every obitools command. To encode
-    sequence the CSV file must includes a column named `sequence` and another
+    sequence the CSV file must include a column named `sequence` and another
     column named `id`. An extra column named `qualities` can be added to specify 
-    the quality scores of the sequence following the same ascii encoding than the
+    the quality scores of the sequence following the same ASCII encoding than the
     fastq format. All the other columns will be considered as annotations and will
     be interpreted as JSON objects encoding potentially for atomic values. If a 
-    calumn value can not be decoded as JSON it will be considered as a string.
+    column value can not be decoded as JSON it will be considered as a string.
 
 -   A new option **--version** has been added to every obitools command. It will
     print the version of the command.
@@ -139,8 +139,8 @@
     quality scores from a BioSequence object.\
 
 -   In `obimultuplex` the ngsfilter file describing the samples can be no provided
-    not only using the classical nfsfilter format but also using the csv format.
-    When using csv, the first line must contain the column names. 5 columns are
+    not only using the classical ngsfilter format but also using the CSV format.
+    When using CSV, the first line must contain the column names. 5 columns are
     expected:
 
     -   `experiment` the name of the experiment
@@ -156,20 +156,19 @@
 
     Supplementary columns are allowed. Their names and content will be used to
     annotate the sequence corresponding to the sample, as the `key=value;` did
-    in the nfsfilter format.
+    in the ngsfilter format.
 
     The CSV format used allows for comment lines starting with `#` character.
-    Special data lines starting with `@param` in the first column allow to
-    configure the algorithm. The options **--template** provided an over
-    commented example of the csv format, including all the possible options.
+    Special data lines starting with `@param` in the first column allow configuring the algorithm. The options **--template** provided an over
+    commented example of the CSV format, including all the possible options.
 
 ### Enhancement
 
--   In every *OBITools* command, the progress bar are automatically deactivated
+-   In every *OBITools* command, the progress bar is automatically deactivated
     when the standard error output is redirected.
 -   Because Genbank and ENA:EMBL contain very large sequences, while OBITools4
     are optimized As Genbank and ENA:EMBL contain very large sequences, while
-    OBITools4 is optimised for short sequences, `obipcr` faces some problems
+    OBITools4 is optimized for short sequences, `obipcr` faces some problems
     with excessive consumption of computer resources, especially memory. Several
     improvements in the tuning of the default `obipcr` parameters and some new
     features, currently only available for FASTA and FASTQ file readers, have
@@ -184,15 +183,15 @@
 -   In `obiclean`, the **--no-progress-bar** option disables all progress bars,
     not just the data.
 -   Several fixes in reading FASTA and FASTQ files, including some code
-    simplification and and factorization.
+    simplification and factorization.
 -   Fixed a bug in all obitools that caused the same file to be processed
-    multiple times. when specifying a directory name as input.
+    multiple times, when specifying a directory name as input.
 
 ## April 2nd, 2024. Release 4.2.0
 
 ### New features
 
--   A new OBITools named `obiscript` allows to process each sequence according
+-   A new OBITools named `obiscript` allows processing each sequence according
     to a Lua script. This is an experimental tool. The **--template** option
     allows for generating an example script on the `stdout`.
 
@@ -200,7 +199,7 @@
 
 -   Two of the main class `obiseq.SeqWorker` and `obiseq.SeqWorker` have their
     declaration changed. Both now return two values a `obiseq.BioSequenceSlice`
-    and an `error`. This allow a worker to return potentially several sequences
+    and an `error`. This allows a worker to return potentially several sequences
     as the result of the processing of a single sequence, or zero, which is
     equivalent to filter out the input sequence.
 
@@ -208,12 +207,12 @@
 
 -   In `obitag` if the reference database contains sequences annotated by taxid
     not referenced in the taxonomy, the corresponding sequences are discarded
-    from the reference database and a warning indicating the sequence id and the
+    from the reference database and a warning indicating the sequence *id* and the
     wrong taxid is emitted.
 -   The bug corrected in the parsing of EMBL and Genbank files as implemented in
     version 4.1.2 of OBITools4, potentially induced some reduction in the
     performance of the parsing. This should have been now fixed.
--   In the same idea, parsing of genbank and EMBL files were reading and storing
+-   In the same idea, parsing of Genbank and EMBL files were reading and storing
     in memory not only the sequence but also the annotations (features table).
     Up to now none of the OBITools are using this information, but with large
     complete genomes, it is occupying a lot of memory. To reduce this impact,
@@ -252,7 +251,7 @@
 
 ### New feature
 
--   In `obimatrix` a **--transpose** option allows to transpose the produced
+-   In `obimatrix` a **--transpose** option allows transposing the produced
     matrix table in CSV format.
 -   In `obitpairing` and `obipcrtag` two new options **--exact-mode** and
     **--fast-absolute** to control the heuristic used in the alignment
@@ -260,7 +259,7 @@
     the exact algorithm at the cost of a speed. **--fast-absolute** change the
     scoring schema of the heuristic.
 -   In `obiannotate` adds the possibility to annotate the first match of a
-    pattern using the same algorithm than the one used in `obipcr` and
+    pattern using the same algorithm as the one used in `obipcr` and
     `obimultiplex`. For that four option were added :
     -   **--pattern** : to specify the pattern. It can use IUPAC codes and
         position with no error tolerated has to be followed by a `#` character.
@@ -341,7 +340,7 @@
 
 ### Bugs
 
--   in the obitools language, the `composition` function now returns a map
+-   In the obitools language, the `composition` function now returns a map
     indexed by lowercase string "a", "c", "g", "t" and "o" for other instead of
     being indexed by the ASCII codes of the corresponding letters.
 -   Correction of the reverse-complement operation. Every reverse complement of
@@ -354,18 +353,18 @@
     duplicating the quality values. This made `obimultiplex` to produce fastq
     files with sequences having quality values duplicated.
 
-### Becareful
+### Be careful
 
 GO 1.21.0 is out, and it includes new functionalities which are used in the
-OBITools4 code. If you use the recommanded method for compiling OBITools on your
-computer, their is no problem, as the script always load the latest GO version.
-If you rely on you personnal GO install, please think to update.
+OBITools4 code. If you use the recommended method for compiling OBITools on your
+computer, there is no problem, as the script always load the latest GO version.
+If you rely on your personal GO install, please think to update.
 
 ## August 29th, 2023. Release 4.0.5
 
 ### Bugs
 
--   Patch a bug in the `obiseq.BioSequence` constructor leading to a error on
+-   Patch a bug in the `obiseq.BioSequence` constructor leading to an error on
     almost every obitools. The error message indicates : `fatal error: sync:
     unlock of unlocked mutex` This bug was introduced in the release 4.0.4
 
@@ -384,7 +383,7 @@ If you rely on you personnal GO install, please think to update.
     data structure to limit the number of alignments actually computed. This
     increase a bit the speed of both the software. `obirefidx` is nevertheless
     still too slow compared to my expectation.
--   Switch to a parallel version of the gzip library, allowing for high speed
+-   Switch to a parallel version of the GZIP library, allowing for high speed
     compress and decompress operation on files.
 
 ### New feature
@@ -428,12 +427,12 @@ If you rely on you personnal GO install, please think to update.
               --unidentified not_assigned.fastq
     ```
 
-    the command produced four files : `tagged_library_R1.fastq` and
+    The command produced four files : `tagged_library_R1.fastq` and
     `tagged_library_R2.fastq` containing the assigned reads and
     `not_assigned_R1.fastq` and `not_assigned_R2.fastq` containing the
     unassignable reads.
 
-    the tagged library files can then be split using `obidistribute`:
+    The tagged library files can then be split using `obidistribute`:
 
     ```{bash}
     mkdir pcr_reads
@@ -443,9 +442,9 @@ If you rely on you personnal GO install, please think to update.
 
 -   Adding of two options **--add-lca-in** and **--lca-error** to `obiannotate`.
     These options aim to help during construction of reference database using
-    `obipcr`. On obipcr output, it is commonly run obiuniq. To merge identical
+    `obipcr`. On `obipcr` output, it is commonly run `obiuniq`. To merge identical
     sequences annotated with different taxids, it is now possible to use the
-    following strategie :
+    following strategies :
 
     ```{bash}
     obiuniq -m taxid myrefdb.obipcr.fasta \
@@ -476,7 +475,7 @@ If you rely on you personnal GO install, please think to update.
 -   Correction of a bug in `obiconsensus` leading into the deletion of a base
     close to the beginning of the consensus sequence.
 
-## March 31th, 2023. Release 4.0.2
+## March 31st, 2023. Release 4.0.2
 
 ### Compiler change
 
@@ -487,15 +486,15 @@ If you rely on you personnal GO install, please think to update.
 -   Add the possibility for looking pattern with indels. This has been added to
     `obimultiplex` through the **--with-indels** option.
 -   Every obitools command has a **--pprof** option making the command
-    publishing a profiling web site available at the address :
+    publishing a profiling website available at the address :
     <http://localhost:8080/debug/pprof/>
 -   A new `obiconsensus` command has been added. It is a prototype. It aims to
     build a consensus sequence from a set of reads. The consensus is estimated
     for all the sequences contained in the input file. If several input files,
     or a directory name are provided the result contains a consensus per file.
-    The id of the sequence is the name of the input file depleted of its
+    The *id* of the sequence is the name of the input file depleted of its
     directory name and of all its extensions.
--   In `obipcr` an experimental option **--fragmented** allows for spliting very
+-   In `obipcr` an experimental option **--fragmented** allows for splitting very
     long query sequences into shorter fragments with an overlap between the two
     contiguous fragment insuring that no amplicons are missed despite the split.
     As a site effect some amplicon can be identified twice.
@@ -538,7 +537,7 @@ If you rely on you personnal GO install, please think to update.
 ### Enhancement
 
 -   *OBITools* are automatically processing all the sequences files contained in
-    a directory and its sub-directory\
+    a directory and its subdirectory\
     recursively if its name is provided as input. To process easily Genbank
     files, the corresponding filename extensions have been added. Today the
     following extensions are recognized as sequence files : `.fasta`, `.fastq`,
@@ -555,7 +554,7 @@ If you rely on you personnal GO install, please think to update.
     export OBICPUMAX=4
     ```
 
--   Adds a new option --out\|-o allowing to specify the name of an outpout file.
+-   Adds a new option --out\|-o allowing to specify the name of an output file.
 
     ``` bash
     obiconvert -o xyz.fasta xxx.fastq
@@ -577,10 +576,10 @@ If you rely on you personnal GO install, please think to update.
     matched files remain consistent when processed.
 
 -   Adding of the function `ifelse` to the expression language for computing
-    conditionnal values.
+    conditional values.
 
 -   Adding two function to the expression language related to sequence
-    conposition : `composition` and `gcskew`. Both are taking a sequence as
+    composition : `composition` and `gcskew`. Both are taking a sequence as
     single argument.
 
 ## February 18th, 2023. Release 4.0.0
@@ -588,8 +587,8 @@ If you rely on you personnal GO install, please think to update.
 It is the first version of the *OBITools* version 4. I decided to tag then
 following two weeks of intensive data analysis with them allowing to discover
 many small bugs present in the previous non-official version. Obviously other
-bugs are certainly persent in the code, and you are welcome to use the git
-ticket system to mention them. But they seems to produce now reliable results.
+bugs are certainly present in the code, and you are welcome to use the git
+ticket system to mention them. But they seem to produce now reliable results.
 
 ### Corrected bugs
 
@@ -597,11 +596,11 @@ ticket system to mention them. But they seems to produce now reliable results.
     of sequences and to the production of incorrect file because of the last
     sequence record, sometime truncated in its middle. This was only occurring
     when more than a single CPU was used. It was affecting every obitools.
--   The `obiparing` software had a bug in the right aligment procedure. This led
-    to the non alignment of very sort barcode during the paring of the forward
+-   The `obiparing` software had a bug in the right alignment procedure. This led
+    to the non-alignment of very sort barcode during the paring of the forward
     and reverse reads.
--   The `obipairing` tools had a non deterministic comportment when aligning a
-    paor very low quality reads. This induced that the result of the same low
+-   The `obipairing` tools had a non-deterministic comportment when aligning a
+    pair very low quality reads. This induced that the result of the same low
     quality read pair was not the same from run to run.
 
 ### New features
@@ -609,11 +608,10 @@ ticket system to mention them. But they seems to produce now reliable results.
 -   Adding of a `--compress|-Z` option to every obitools allowing to produce
     `gz` compressed output. OBITools were already able to deal with gziped input
     files transparently. They can now produce their results in the same format.
-    - Adding of a `--append|-A` option to the `obidistribute` tool. It allows to
-    append the result of an `obidistribute` execution to preexisting files. -
+    - Adding of a `--append|-A` option to the `obidistribute` tool. It allows appending the result of an `obidistribute` execution to preexisting files. -
     Adding of a `--directory|-d` option to the `obidistribute` tool. It allows
-    to declare a secondary classification key over the one defined by the
-    '--category\|-c\` option. This extra key leads to produce directories in
+    declaring a secondary classification key over the one defined by the
+    `--category\|-c\` option. This extra key leads to produce directories in
     which files produced according to the primary criterion are stored.
 -   Adding of the functions `subspc`, `printf`, `int`, `numeric`, and `bool` to
     the expression language.

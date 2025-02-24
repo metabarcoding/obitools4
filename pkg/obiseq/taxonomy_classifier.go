@@ -31,7 +31,7 @@ func TaxonomyClassifier(taxonomicRank string,
 		if taxon != nil {
 			ttaxon := taxon.TaxonAtRank(taxonomicRank)
 			if abortOnMissing && ttaxon == nil {
-				log.Fatalf("Taxon at rank %s not found in taxonomy for taxid %d", taxonomicRank, taxon.String())
+				log.Fatalf("Taxon at rank %s not found in taxonomy for taxid %s", taxonomicRank, taxon.String())
 			}
 		} else {
 			if abortOnMissing {
