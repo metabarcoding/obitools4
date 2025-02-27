@@ -23,7 +23,7 @@ func MakeSet[E comparable](vals ...E) Set[E] {
 // It takes a variadic parameter of type E, where E is a comparable type.
 // It returns a pointer to a Set of type E.
 func NewSet[E comparable](vals ...E) *Set[E] {
-	s := MakeSet[E](vals...)
+	s := MakeSet(vals...)
 	return &s
 }
 

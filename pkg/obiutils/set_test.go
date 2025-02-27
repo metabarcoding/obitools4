@@ -50,7 +50,7 @@ func TestNewSet(t *testing.T) {
 	}
 
 	// Test Case 2: Creating a set with multiple values
-	set2 := NewSet[string]("apple", "banana", "cherry")
+	set2 := NewSet("apple", "banana", "cherry")
 	if len(*set2) != 3 {
 		t.Errorf("Expected size to be 3, but got %d", len(*set2))
 	}
@@ -147,7 +147,7 @@ func TestMembers(t *testing.T) {
 	}
 
 	// Test case 2: Set with multiple elements
-	set = MakeSet[int](1, 2, 3)
+	set = MakeSet(1, 2, 3)
 	expected = []int{1, 2, 3}
 	actual = set.Members()
 	sort.Ints(actual)
@@ -172,7 +172,7 @@ func TestSetString(t *testing.T) {
 	}
 
 	// Test set with single member
-	singleMemberSet := NewSet[int](42)
+	singleMemberSet := NewSet(42)
 	singleMemberSetString := singleMemberSet.String()
 	expectedSingleMemberSetString := "[42]"
 	if singleMemberSetString != expectedSingleMemberSetString {
@@ -180,7 +180,7 @@ func TestSetString(t *testing.T) {
 	}
 
 	// Test set with multiple members
-	multipleMembersSet := NewSet[int](1, 2, 3)
+	multipleMembersSet := NewSet(1, 2, 3)
 	multipleMembersSetString := multipleMembersSet.String()
 	expectedMultipleMembersSetString := "[1 2 3]"
 	if multipleMembersSetString != expectedMultipleMembersSetString {
@@ -213,26 +213,26 @@ func TestUnion(t *testing.T) {
 
 	// Test case 2: Union of an empty set and a non-empty set should return the non-empty set
 	set1 = MakeSet[int]()
-	set2 = MakeSet[int](1, 2, 3)
-	expected = MakeSet[int](1, 2, 3)
+	set2 = MakeSet(1, 2, 3)
+	expected = MakeSet(1, 2, 3)
 	result = set1.Union(set2)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("Expected %v, but got %v", expected, result)
 	}
 
 	// Test case 3: Union of two non-empty sets with common elements should return a set with unique elements
-	set1 = MakeSet[int](1, 2, 3)
-	set2 = MakeSet[int](2, 3, 4)
-	expected = MakeSet[int](1, 2, 3, 4)
+	set1 = MakeSet(1, 2, 3)
+	set2 = MakeSet(2, 3, 4)
+	expected = MakeSet(1, 2, 3, 4)
 	result = set1.Union(set2)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("Expected %v, but got %v", expected, result)
 	}
 
 	// Test case 4: Union of two non-empty sets with no common elements should return a set with all elements
-	set1 = MakeSet[int](1, 2, 3)
-	set2 = MakeSet[int](4, 5, 6)
-	expected = MakeSet[int](1, 2, 3, 4, 5, 6)
+	set1 = MakeSet(1, 2, 3)
+	set2 = MakeSet(4, 5, 6)
+	expected = MakeSet(1, 2, 3, 4, 5, 6)
 	result = set1.Union(set2)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("Expected %v, but got %v", expected, result)

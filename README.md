@@ -37,7 +37,7 @@ curl -L https://raw.githubusercontent.com/metabarcoding/obitools4/master/install
       bash -s -- --install-dir test_install --obitools-prefix k
 ```
 
-In this case, the binaries will be installed in the `test_install` directory and all command names will be prefixed with the letter `k`. Thus `obigrep` will be named `kobigrep`.
+In this case, the binaries will be installed in the `test_install` directory and all command names will be prefixed with the letter `k`. Thus, `obigrep` will be named `kobigrep`.
 
 ## Continuing the analysis...
 

@@ -18,19 +18,19 @@ import (
 )
 
 type Ratio struct {
-	Sample string
-	SeqID  string
-	status string
-	From   int
-	To     int
-	CFrom  int
-	CTo    int
-	Pos    int
-	Length int
-	A      int
-	C      int
-	G      int
-	T      int
+	Sample         string
+	SeqID          string
+	OriginalStatus string
+	WOriginal      int
+	WMutant        int
+	COriginal      int
+	CMutant        int
+	Pos            int
+	Length         int
+	A              int
+	C              int
+	G              int
+	T              int
 }
 
 type Edge struct {
@@ -59,13 +59,15 @@ func makeEdge(father, dist, pos int, from, to byte) Edge {
 // ratio
 func EmpiricalDistCsv(filename string, data [][]Ratio, compressed bool) {
 	file, err := os.Create(filename)
-
-	defer file.Close()
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	destfile, err := obiutils.CompressStream(file, true, true)
 	if err != nil {
 		fmt.Println(err)
 	}
+	defer destfile.Close()
 
 	pbopt := make([]progressbar.Option, 0, 5)
 	pbopt = append(pbopt,
@@ -78,19 +80,19 @@ func EmpiricalDistCsv(filename string, data [][]Ratio, compressed bool) {
 
 	bar := progressbar.NewOptions(len(data), pbopt...)
 
-	fmt.Fprintln(destfile, "Sample,Father_id,Father_status,From,To,Weight_from,Weight_to,Count_from,Count_to,Position,length,A,C,G,T")
+	fmt.Fprintln(destfile, "Sample,Origin_id,Origin_status,Origin,Mutant,Origin_Weight,Mutant_Weight,Origin_Count,Mutant_Count,Position,Origin_length,A,C,G,T")
 	for code, dist := range data {
 		a1, a2 := intToNucPair(code)
 		for _, ratio := range dist {
 			fmt.Fprintf(destfile, "%s,%s,%s,%c,%c,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\n",
 				ratio.Sample,
 				ratio.SeqID,
-				ratio.status,
+				ratio.OriginalStatus,
 				a1, a2,
-				ratio.From,
-				ratio.To,
-				ratio.CFrom,
-				ratio.CTo,
+				ratio.WOriginal,
+				ratio.WMutant,
+				ratio.COriginal,
+				ratio.CMutant,
 				ratio.Pos,
 				ratio.Length,
 				ratio.A,
@@ -453,16 +455,20 @@ func EstimateRatio(samples map[string]*[]*seqPCR, minStatRatio int) [][]Ratio {
 				if father.Weight >= minStatRatio && edge.Dist == 1 {
 					s := father.Sequence.Sequence()
 					ratio[edge.NucPair] = append(ratio[edge.NucPair],
-						Ratio{name,
-							father.Sequence.Id(), Status(father.Sequence)[name],
-							father.Weight, seq.Weight,
-							father.Count, seq.Count,
-							edge.Pos,
-							father.Sequence.Len(),
-							bytes.Count(s, []byte("a")),
-							bytes.Count(s, []byte("c")),
-							bytes.Count(s, []byte("g")),
-							bytes.Count(s, []byte("t"))})
+						Ratio{
+							Sample:         name,
+							SeqID:          father.Sequence.Id(),
+							OriginalStatus: Status(father.Sequence)[name],
+							WOriginal:      father.Weight,
+							WMutant:        seq.Weight,
+							COriginal:      father.Count,
+							CMutant:        seq.Count,
+							Pos:            edge.Pos,
+							Length:         father.Sequence.Len(),
+							A:              bytes.Count(s, []byte("a")),
+							C:              bytes.Count(s, []byte("c")),
+							G:              bytes.Count(s, []byte("g")),
+							T:              bytes.Count(s, []byte("t"))})
 				}
 			}
 

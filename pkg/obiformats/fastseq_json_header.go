@@ -13,7 +13,7 @@ import (
 	"github.com/buger/jsonparser"
 )
 
-func _parse_json_map_string(str []byte, sequence *obiseq.BioSequence) (map[string]string, error) {
+func _parse_json_map_string(str []byte) (map[string]string, error) {
 	values := make(map[string]string)
 	jsonparser.ObjectEach(str,
 		func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) (err error) {
@@ -25,7 +25,7 @@ func _parse_json_map_string(str []byte, sequence *obiseq.BioSequence) (map[strin
 	return values, nil
 }
 
-func _parse_json_map_int(str []byte, sequence *obiseq.BioSequence) (map[string]int, error) {
+func _parse_json_map_int(str []byte) (map[string]int, error) {
 	values := make(map[string]int)
 	jsonparser.ObjectEach(str,
 		func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) (err error) {
@@ -41,7 +41,7 @@ func _parse_json_map_int(str []byte, sequence *obiseq.BioSequence) (map[string]i
 	return values, nil
 }
 
-func _parse_json_map_float(str []byte, sequence *obiseq.BioSequence) (map[string]float64, error) {
+func _parse_json_map_float(str []byte) (map[string]float64, error) {
 	values := make(map[string]float64)
 	jsonparser.ObjectEach(str,
 		func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) (err error) {
@@ -57,7 +57,7 @@ func _parse_json_map_float(str []byte, sequence *obiseq.BioSequence) (map[string
 	return values, nil
 }
 
-func _parse_json_map_bool(str []byte, sequence *obiseq.BioSequence) (map[string]bool, error) {
+func _parse_json_map_bool(str []byte) (map[string]bool, error) {
 	values := make(map[string]bool)
 	jsonparser.ObjectEach(str,
 		func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) (err error) {
@@ -73,7 +73,7 @@ func _parse_json_map_bool(str []byte, sequence *obiseq.BioSequence) (map[string]
 	return values, nil
 }
 
-func _parse_json_map_interface(str []byte, sequence *obiseq.BioSequence) (map[string]interface{}, error) {
+func _parse_json_map_interface(str []byte) (map[string]interface{}, error) {
 	values := make(map[string]interface{})
 	jsonparser.ObjectEach(str,
 		func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) (err error) {
@@ -100,7 +100,7 @@ func _parse_json_map_interface(str []byte, sequence *obiseq.BioSequence) (map[st
 	return values, nil
 }
 
-func _parse_json_array_string(str []byte, sequence *obiseq.BioSequence) ([]string, error) {
+func _parse_json_array_string(str []byte) ([]string, error) {
 	values := make([]string, 0)
 	jsonparser.ArrayEach(str,
 		func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
@@ -162,7 +162,7 @@ func _parse_json_array_bool(str []byte, sequence *obiseq.BioSequence) ([]bool, e
 	return values, nil
 }
 
-func _parse_json_array_interface(str []byte, sequence *obiseq.BioSequence) ([]interface{}, error) {
+func _parse_json_array_interface(str []byte) ([]interface{}, error) {
 	values := make([]interface{}, 0)
 	jsonparser.ArrayEach(str,
 		func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
@@ -261,14 +261,14 @@ func _parse_json_header_(header string, sequence *obiseq.BioSequence) string {
 				sequence.SetCount(int(count))
 
 			case skey == "obiclean_weight":
-				weight, err := _parse_json_map_int(value, sequence)
+				weight, err := _parse_json_map_int(value)
 				if err != nil {
 					log.Fatalf("%s: Cannot parse obiclean weight %s", sequence.Id(), string(value))
 				}
 				annotations[skey] = weight
 
 			case skey == "obiclean_status":
-				status, err := _parse_json_map_string(value, sequence)
+				status, err := _parse_json_map_string(value)
 				if err != nil {
 					log.Fatalf("%s: Cannot parse obiclean status %s", sequence.Id(), string(value))
 				}
@@ -276,7 +276,7 @@ func _parse_json_header_(header string, sequence *obiseq.BioSequence) string {
 
 			case strings.HasPrefix(skey, "merged_"):
 				if dataType == jsonparser.Object {
-					data, err := _parse_json_map_int(value, sequence)
+					data, err := _parse_json_map_int(value)
 					if err != nil {
 						log.Fatalf("%s: Cannot parse merged slot %s: %v", sequence.Id(), skey, err)
 					} else {
@@ -316,9 +316,9 @@ func _parse_json_header_(header string, sequence *obiseq.BioSequence) string {
 						annotations[skey], err = strconv.ParseFloat(obiutils.UnsafeString(value), 64)
 					}
 				case jsonparser.Array:
-					annotations[skey], err = _parse_json_array_interface(value, sequence)
+					annotations[skey], err = _parse_json_array_interface(value)
 				case jsonparser.Object:
-					annotations[skey], err = _parse_json_map_interface(value, sequence)
+					annotations[skey], err = _parse_json_map_interface(value)
 				case jsonparser.Boolean:
 					annotations[skey], err = jsonparser.ParseBoolean(value)
 				case jsonparser.Null:
