@@ -73,6 +73,10 @@ func FindClosests(sequence *obiseq.BioSequence,
 	refcounts []*obikmer.Table4mer,
 	runExact bool) (obiseq.BioSequenceSlice, int, float64, string, []int) {
 
+	if sequence.Len() < 5 {
+		return obiseq.BioSequenceSlice{}, 1000, 0, "NA", []int{}
+	}
+
 	var matrix []uint64
 
 	seqwords := obikmer.Count4Mer(sequence, nil, nil)
