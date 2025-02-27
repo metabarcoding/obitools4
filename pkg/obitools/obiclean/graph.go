@@ -13,6 +13,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obialign"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 	"github.com/schollz/progressbar/v3"
 )
 
@@ -56,12 +57,15 @@ func makeEdge(father, dist, pos int, from, to byte) Edge {
 // and writes a CSV file with the first column being the
 // first nucleotide, the second column being the second nucleotide, and the third column being the
 // ratio
-func EmpiricalDistCsv(filename string, data [][]Ratio) {
+func EmpiricalDistCsv(filename string, data [][]Ratio, compressed bool) {
 	file, err := os.Create(filename)
+
+	defer file.Close()
+
+	destfile, err := obiutils.CompressStream(file, true, true)
 	if err != nil {
 		fmt.Println(err)
 	}
-	defer file.Close()
 
 	pbopt := make([]progressbar.Option, 0, 5)
 	pbopt = append(pbopt,
@@ -74,11 +78,11 @@ func EmpiricalDistCsv(filename string, data [][]Ratio) {
 
 	bar := progressbar.NewOptions(len(data), pbopt...)
 
-	fmt.Fprintln(file, "Sample,Father_id,Father_status,From,To,Weight_from,Weight_to,Count_from,Count_to,Position,length,A,C,G,T")
+	fmt.Fprintln(destfile, "Sample,Father_id,Father_status,From,To,Weight_from,Weight_to,Count_from,Count_to,Position,length,A,C,G,T")
 	for code, dist := range data {
 		a1, a2 := intToNucPair(code)
 		for _, ratio := range dist {
-			fmt.Fprintf(file, "%s,%s,%s,%c,%c,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\n",
+			fmt.Fprintf(destfile, "%s,%s,%s,%c,%c,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\n",
 				ratio.Sample,
 				ratio.SeqID,
 				ratio.status,

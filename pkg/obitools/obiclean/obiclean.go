@@ -390,7 +390,7 @@ func CLIOBIClean(itertator obiiter.IBioSequence) obiiter.IBioSequence {
 
 	if IsSaveRatioTable() {
 		all_ratio := EstimateRatio(samples, MinCountToEvalMutationRate())
-		EmpiricalDistCsv(RatioTableFilename(), all_ratio)
+		EmpiricalDistCsv(RatioTableFilename(), all_ratio, obidefault.CompressOutput())
 	}
 
 	iter := annotateOBIClean(source, db)
