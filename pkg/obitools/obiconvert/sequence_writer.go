@@ -21,7 +21,7 @@ func BuildPairedFileNames(filename string) (string, string) {
 	forward := parts[0] + "_R1"
 	reverse := parts[0] + "_R2"
 
-	if parts[1] != "" {
+	if len(parts) > 1 && parts[1] != "" {
 		suffix := "." + parts[1]
 		forward += suffix
 		reverse += suffix
