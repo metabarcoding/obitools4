@@ -6,6 +6,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiapat"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
@@ -16,6 +17,7 @@ import (
 var _BelongTaxa = make([]string, 0)
 var _NotBelongTaxa = make([]string, 0)
 var _RequiredRanks = make([]string, 0)
+var _ValidateTaxonomy = false
 
 var _MinimumLength = 1
 var _MaximumLength = int(2e9)
@@ -61,6 +63,9 @@ func TaxonomySelectionOptionSet(options *getoptions.GetOpt) {
 	options.StringSliceVar(&_RequiredRanks, "require-rank", 1, 1,
 		options.ArgName("RANK_NAME"),
 		options.Description("Select sequences belonging a taxon with a rank <RANK_NAME>"))
+
+	options.BoolVar(&_ValidateTaxonomy, "valid-taxid", _ValidateTaxonomy,
+		options.Description("Validate the taxonomic classification of the sequences."))
 
 }
 
@@ -271,6 +276,27 @@ func CLIRestrictTaxonomyPredicate() obiseq.SequencePredicate {
 	return nil
 }
 
+func CLIIsValidTaxonomyPredicate() obiseq.SequencePredicate {
+	if _ValidateTaxonomy {
+		if !obidefault.HasSelectedTaxonomy() {
+			log.Fatal("Taxonomy not found")
+		}
+		taxonomy := obitax.DefaultTaxonomy()
+		if taxonomy == nil {
+			log.Fatal("Taxonomy not found")
+		}
+
+		predicat := func(sequences *obiseq.BioSequence) bool {
+			taxon := sequences.Taxon(taxonomy)
+			return taxon != nil
+		}
+
+		return predicat
+	}
+
+	return nil
+}
+
 func CLIAvoidTaxonomyPredicate() obiseq.SequencePredicate {
 	var p obiseq.SequencePredicate
 	var p2 obiseq.SequencePredicate
@@ -319,7 +345,7 @@ func CLIHasRankDefinedPredicate() obiseq.SequencePredicate {
 }
 
 func CLITaxonomyFilterPredicate() obiseq.SequencePredicate {
-	return CLIHasRankDefinedPredicate().And(CLIRestrictTaxonomyPredicate()).And(CLIAvoidTaxonomyPredicate())
+	return CLIIsValidTaxonomyPredicate().And(CLIAvoidTaxonomyPredicate()).And(CLIHasRankDefinedPredicate()).And(CLIRestrictTaxonomyPredicate())
 }
 
 func CLIPredicatesPredicate() obiseq.SequencePredicate {
