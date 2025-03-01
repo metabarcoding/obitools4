@@ -1,18 +1,28 @@
 # OBITools release notes
 
-## Latest changes
+## March 2nd, 2025. Release 4.3.0
+
+A new documentation website is available at https://obitools4.metabarcoding.org.
+Its development is still in progress. 
 
 ### Breaking changes
 
-- In `obimultiplex`, the short version of the **--tag-list** option used to specify the list 
-  of tags and primers to be used for the demultiplexing has been changed from `-t` to `-s`.
+- In `obimultiplex`, the short version of the **--tag-list** option used to
+  specify the list of tags and primers to be used for the demultiplexing has
+  been changed from `-t` to `-s`.
 
 - The command `obifind` is now renamed `obitaxonomy`.
 
-- The **--taxdump** option used to specify the path to the taxdump containing the NCBI taxonomy
-  has been renamed to **--taxonomy**.
+- The **--taxdump** option used to specify the path to the taxdump containing
+  the NCBI taxonomy has been renamed to **--taxonomy**.
 
 ### Bug fixes
+
+- Correction of a bug when using paired sequence file with the **--out** option.
+
+- Correction of a bug in `obitag` when trying to annotate very short sequence of
+  4 bases or less.
+  
 
 - In `obipairing`, correct the stats `seq_a_single` and `seq_b_single` when
   on right alignment mode
@@ -21,7 +31,23 @@
   the batch size and not reading the qualities from the fastq files as `obiuniq`
   is producing only fasta output without qualities.
 
+-   In `obitag`, correct the wrong assignment of the **obitag_bestmatch**
+    attribute.
+
+-   In `obiclean`, the **--no-progress-bar** option disables all progress bars,
+    not just the data.
+
+-   Several fixes in reading FASTA and FASTQ files, including some code
+    simplification and factorization.
+
+-   Fixed a bug in all obitools that caused the same file to be processed
+    multiple times, when specifying a directory name as input.
+
+
 ### New features
+
+-   `obigrep` add a new **--valid-taxid** option to keep only sequence with a
+    valid taxid
 
 -   `obiclean` add a new **--min-sample-count** option with a default value of 1,
     asking to filter out sequences which are not occurring in at least the
@@ -29,8 +55,8 @@
 
 -   `obitoaxonomy` a new **--dump|D** option allows for dumping a sub-taxonomy.
   
--   Taxonomy dump can now be provided as a four-columns CSV file to the **--taxonomy**
-    option.
+-   Taxonomy dump can now be provided as a four-columns CSV file to the
+    **--taxonomy** option.
 
 -   NCBI Taxonomy dump does not need to be uncompressed and unarchived anymore. The
     path of the tar and gziped dump file can be directly specified using the
@@ -41,11 +67,26 @@
     allow the processing of the rare fasta and fastq files not recognized.
     
 -   In `obiscript`, adds new methods to the Lua sequence object:
-    - `md5_string()`: returning the MD5 check sum as a hexadecimal string,
-	- `subsequence(from,to)`: allows extracting a subsequence on a 0 based 
-            coordinate system, upper bound excluded like in go.
-	- `reverse_complement`: returning a sequence object corresponding to the reverse complement
-            of the current sequence.
+    - `md5_string()`: returning the MD5 check sum as a hexadecimal string, 
+    - `subsequence(from,to)`: allows extracting a subsequence on a 0 based
+      coordinate system, upper bound excluded like in go. 
+    - `reverse_complement`: returning a sequence object corresponding to the
+      reverse complement of the current sequence.
+
+### Enhancement
+
+-   In every *OBITools* command, the progress bar is automatically deactivated
+    when the standard error output is redirected.
+-   Because Genbank and ENA:EMBL contain very large sequences, while OBITools4
+    are optimized As Genbank and ENA:EMBL contain very large sequences, while
+    OBITools4 is optimized for short sequences, `obipcr` faces some problems
+    with excessive consumption of computer resources, especially memory. Several
+    improvements in the tuning of the default `obipcr` parameters and some new
+    features, currently only available for FASTA and FASTQ file readers, have
+    been implemented to limit the memory impact of `obipcr` without changing the
+    computational efficiency too much.
+-   Logging system and therefore format, have been homogenized.
+
 
 ### Change of git repository
 
@@ -54,35 +95,16 @@
     Take care for using the new install script for retrieving the new version.
 
     ```bash
-    curl -L https://raw.githubusercontent.com/metabarcoding/obitools4/master/install_obitools.sh \
+    curl -L https://metabarcoding.org/obitools4/install.sh \
       | bash
     ```
 
     or with options:
 
     ```bash
-    curl -L https://raw.githubusercontent.com/metabarcoding/obitools4/master/install_obitools.sh \
+    curl -L https://metabarcoding.org/obitools4/install.sh \
       | bash -s -- --install-dir test_install --obitools-prefix k
     ```
-    
-### CPU limitation
-
--   By default, *OBITools4* tries to use all the computing power available on
-    your computer. In some circumstances this can be problematic (e.g. if you
-    are running on a computer cluster managed by your university). You can limit
-    the number of CPU cores used by *OBITools4* or by using the **--max-cpu**
-    option or by setting the **OBIMAXCPU** environment variable. Some strange
-    behavior of *OBITools4* has been observed when users try to limit the
-    maximum number of usable CPU cores to one. This seems to be caused by the Go
-    language, and it is not obvious to get *OBITools4* to run correctly on a
-    single core in all circumstances. Therefore, if you ask to use a single
-    core, **OBITools4** will print a warning message and actually set this
-    parameter to two cores. If you really want a single core, you can use the
-    **--force-one-core** option. But be aware that this can lead to incorrect
-    calculations.
-
-### New features
-
 -   The output of the obitools will evolve to produce results only in standard
     formats such as fasta and fastq. For non-sequential data, the output will be
     in CSV format, with the separator `,`, the decimal separator `.`, and a
@@ -161,31 +183,23 @@
     The CSV format used allows for comment lines starting with `#` character.
     Special data lines starting with `@param` in the first column allow configuring the algorithm. The options **--template** provided an over
     commented example of the CSV format, including all the possible options.
+    
+### CPU limitation
 
-### Enhancement
+-   By default, *OBITools4* tries to use all the computing power available on
+    your computer. In some circumstances this can be problematic (e.g. if you
+    are running on a computer cluster managed by your university). You can limit
+    the number of CPU cores used by *OBITools4* or by using the **--max-cpu**
+    option or by setting the **OBIMAXCPU** environment variable. Some strange
+    behavior of *OBITools4* has been observed when users try to limit the
+    maximum number of usable CPU cores to one. This seems to be caused by the Go
+    language, and it is not obvious to get *OBITools4* to run correctly on a
+    single core in all circumstances. Therefore, if you ask to use a single
+    core, **OBITools4** will print a warning message and actually set this
+    parameter to two cores. If you really want a single core, you can use the
+    **--force-one-core** option. But be aware that this can lead to incorrect
+    calculations.
 
--   In every *OBITools* command, the progress bar is automatically deactivated
-    when the standard error output is redirected.
--   Because Genbank and ENA:EMBL contain very large sequences, while OBITools4
-    are optimized As Genbank and ENA:EMBL contain very large sequences, while
-    OBITools4 is optimized for short sequences, `obipcr` faces some problems
-    with excessive consumption of computer resources, especially memory. Several
-    improvements in the tuning of the default `obipcr` parameters and some new
-    features, currently only available for FASTA and FASTQ file readers, have
-    been implemented to limit the memory impact of `obipcr` without changing the
-    computational efficiency too much.
--   Logging system and therefore format, have been homogenized.
-
-### Bug
-
--   In `obitag`, correct the wrong assignment of the **obitag_bestmatch**
-    attribute.
--   In `obiclean`, the **--no-progress-bar** option disables all progress bars,
-    not just the data.
--   Several fixes in reading FASTA and FASTQ files, including some code
-    simplification and factorization.
--   Fixed a bug in all obitools that caused the same file to be processed
-    multiple times, when specifying a directory name as input.
 
 ## April 2nd, 2024. Release 4.2.0
 
