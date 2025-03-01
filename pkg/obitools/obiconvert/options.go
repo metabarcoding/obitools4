@@ -31,7 +31,6 @@ var __output_fastjson_format__ = false
 var __output_fastobi_format__ = false
 
 var __no_progress_bar__ = false
-var __compressed__ = false
 var __skip_empty__ = false
 
 var __output_file_name__ = "-"

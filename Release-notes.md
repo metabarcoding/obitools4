@@ -20,7 +20,7 @@ Its development is still in progress.
 
 - Correction of a bug when using paired sequence file with the **--out** option.
 
-- Correction of a bug in `obitag` when trying to annotate very short sequence of
+- Correction of a bug in `obitag` when trying to annotate very short sequences of
   4 bases or less.
   
 
