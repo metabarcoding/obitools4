@@ -9,7 +9,7 @@ import (
 // commited
 
 var _Commit = "7b23314"
-var _Version = "Release 4.3.0"
+var _Version = "Release 4.4.0"
 
 // Version returns the version of the obitools package.
 //
