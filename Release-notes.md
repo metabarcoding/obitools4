@@ -1,9 +1,14 @@
 # OBITools release notes
 
-## March 2nd, 2025. Release 4.3.0
+## March 1st, 2025. Release 4.4.0
 
 A new documentation website is available at https://obitools4.metabarcoding.org.
 Its development is still in progress. 
+
+The biggest step forward in this new version is taxonomy management.
+The new version is now able to handle taxonomic identifiers that are not just integer values. This is a first step towards an easy way to handle other taxonomy databases soon, such as the GBIF or Catalogue of Life taxonomies.
+This version is able to handle files containing taxonomic information created by previous versions of OBITools, but files created by this new version may have some problems to be analysed by previous versions, at least for the taxonomic information.
+
 
 ### Breaking changes
 
@@ -75,8 +80,24 @@ Its development is still in progress.
 
 ### Enhancement
 
+-   All obitools now have a **--taxonomy** option. If specified, the taxonomy is
+    loaded first and taxids annotating the sequences are validated against that
+    taxonomy. A warning is issued for any invalid taxid and for any taxid that
+    is transferred to a new taxid. The **--update-taxid** option allows these
+    old taxids to be replaced with their new equivalent in the result of the
+    obitools command.
+
+-   The scoring system used by the `obipairing` command has been changed to be
+    more coherent. In the new version, the scores associated to a match and a
+    mismatch involving a nucleotide with a quality score of 0 are equal. Which
+    is normal as a zero quality score means a perfect indecision on the read
+    nucleotide, therefore there is no reason to penalize a match differently
+    from a mismatch (see 
+    https://obitools4.metabarcoding.org/docs/commands/alignments/obipairing/exact-alignment/).
+
 -   In every *OBITools* command, the progress bar is automatically deactivated
     when the standard error output is redirected.
+
 -   Because Genbank and ENA:EMBL contain very large sequences, while OBITools4
     are optimized As Genbank and ENA:EMBL contain very large sequences, while
     OBITools4 is optimized for short sequences, `obipcr` faces some problems
@@ -85,8 +106,10 @@ Its development is still in progress.
     features, currently only available for FASTA and FASTQ file readers, have
     been implemented to limit the memory impact of `obipcr` without changing the
     computational efficiency too much.
+
 -   Logging system and therefore format, have been homogenized.
 
+## August 2nd, 2024. Release 4.3.0
 
 ### Change of git repository
 
