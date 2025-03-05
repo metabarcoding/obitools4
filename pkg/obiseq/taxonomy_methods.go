@@ -205,7 +205,7 @@ func (sequence *BioSequence) SetScientificName(taxonomy *obitax.Taxonomy) string
 	taxon := sequence.Taxon(taxonomy)
 	name := taxon.ScientificName()
 
-	sequence.SetAttribute("scienctific_name", name)
+	sequence.SetAttribute("scientific_name", name)
 
 	return name
 }
