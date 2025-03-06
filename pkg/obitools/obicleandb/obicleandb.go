@@ -258,7 +258,7 @@ func ICleanDB(itertator obiiter.IBioSequence) obiiter.IBioSequence {
 		)).And(obiseq.HasRequiredRank(taxonomy, "family"))
 	}
 
-	goodTaxa := obiseq.IsAValidTaxon(taxonomy, CLIUpdateTaxids()).And(rankPredicate)
+	goodTaxa := obiseq.IsAValidTaxon(taxonomy, obidefault.UpdateTaxid()).And(rankPredicate)
 
 	usable := unique.FilterOn(goodTaxa,
 		obidefault.BatchSize(),
