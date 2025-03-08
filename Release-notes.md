@@ -16,6 +16,12 @@
 - A new option **--csv** is added to every obitools to indicate that the input
   format is CSV
 
+- The new version of obitools are now printing the taxids in a fancy way
+  including the scientific name and the taxonomic rank (`"taxon:9606 [Homo
+  sapiens]@species"`). But if you need the old fashion raw taxid, a new option
+  **--raw-taxid** has been added to get obitools printing the taxids without any
+  decorations (`"9606"`).
+
 
 ## March 1st, 2025. Release 4.4.0
 

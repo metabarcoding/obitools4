@@ -186,6 +186,10 @@ func LoadTaxonomyOptionSet(options *getoptions.GetOpt, required, alternatiive bo
 	options.BoolVar(obidefault.UpdateTaxidPtr(), "update-taxid", obidefault.UpdateTaxid(),
 		options.Description("Make obitools automatically updating the taxid that are declared merged to a newest one."),
 	)
+
+	options.BoolVar(obidefault.UseRawTaxidsPtr(), "raw-taxid", obidefault.UseRawTaxids(),
+		options.Description("When set, taxids are printed in files with any supplementary information (taxon name and rank)"),
+	)
 }
 
 // CLIIsDebugMode returns whether the CLI is in debug mode.

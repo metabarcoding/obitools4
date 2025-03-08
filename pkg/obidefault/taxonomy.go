@@ -4,6 +4,15 @@ var __taxonomy__ = ""
 var __alternative_name__ = false
 var __fail_on_taxonomy__ = false
 var __update_taxid__ = false
+var __raw_taxid__ = false
+
+func UseRawTaxids() bool {
+	return __raw_taxid__
+}
+
+func UseRawTaxidsPtr() *bool {
+	return &__raw_taxid__
+}
 
 func SelectedTaxonomy() string {
 	return __taxonomy__
