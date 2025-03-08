@@ -23,6 +23,7 @@ var __input_embl_format__ = false
 var __input_genbank_format__ = false
 var __input_fastq_format__ = false
 var __input_fasta_format__ = false
+var __input_csv_format__ = false
 
 var __output_in_fasta__ = false
 var __output_in_fastq__ = false
@@ -64,6 +65,9 @@ func InputOptionSet(options *getoptions.GetOpt) {
 
 	options.BoolVar(&__input_fasta_format__, "fasta", __input_fasta_format__,
 		options.Description("Read data following the fasta format."))
+
+	options.BoolVar(&__input_csv_format__, "csv", __input_csv_format__,
+		options.Description("Read data following the CSV format."))
 
 	options.BoolVar(&__no_ordered_input__, "no-order", __no_ordered_input__,
 		options.Description("When several input files are provided, "+
@@ -139,6 +143,8 @@ func CLIInputFormat() string {
 		return "embl"
 	case __input_genbank_format__:
 		return "genbank"
+	case __input_csv_format__:
+		return "csv"
 	default:
 		return "guessed"
 	}
