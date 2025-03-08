@@ -28,7 +28,7 @@ values. This is a first step towards an easy way to handle other taxonomy
 databases soon, such as the GBIF or Catalog of Life taxonomies. This version
 is able to handle files containing taxonomic information created by previous
 versions of OBITools, but files created by this new version may have some
-problems to be analysed by previous versions, at least for the taxonomic
+problems to be analyzed by previous versions, at least for the taxonomic
 information.
 
 

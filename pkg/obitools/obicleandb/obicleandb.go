@@ -163,7 +163,7 @@ func SequenceTrustSlice(sequences obiseq.BioSequenceSlice) (obiseq.BioSequenceSl
 
 		for i, sa := range sequences {
 			ss := make([]float64, 0, n-1)
-			for j, _ := range sequences {
+			for j := range sequences {
 				if i == j {
 					continue
 				}
