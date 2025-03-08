@@ -66,7 +66,7 @@ test:
 
 obitests: 
 	@for t in $$(find obitests -name test.sh -print) ; do \
-		bash $${t} ;\
+		bash $${t} || exit 1;\
 	done 
 
 githubtests: obitools obitests
