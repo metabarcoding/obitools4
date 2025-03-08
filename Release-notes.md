@@ -1,13 +1,35 @@
 # OBITools release notes
 
+## New changes
+
+### Bug fixes
+
+- The file type guesser was not using enough data to be able to correctly detect
+  file format when sequences were too long in fastq and fasta or when lines were
+  to long in CSV files. That's now corrected
+
+- Options **--fasta** or **--fastq** usable to specify input format were ignored.
+  They are now correctly considered
+  
+### Enhancement
+
+- A new option **--csv** is added to every obitools to indicate that the input
+  format is CSV
+
+
 ## March 1st, 2025. Release 4.4.0
 
 A new documentation website is available at https://obitools4.metabarcoding.org.
 Its development is still in progress. 
 
-The biggest step forward in this new version is taxonomy management.
-The new version is now able to handle taxonomic identifiers that are not just integer values. This is a first step towards an easy way to handle other taxonomy databases soon, such as the GBIF or Catalogue of Life taxonomies.
-This version is able to handle files containing taxonomic information created by previous versions of OBITools, but files created by this new version may have some problems to be analysed by previous versions, at least for the taxonomic information.
+The biggest step forward in this new version is taxonomy management. The new
+version is now able to handle taxonomic identifiers that are not just integer
+values. This is a first step towards an easy way to handle other taxonomy
+databases soon, such as the GBIF or Catalog of Life taxonomies. This version
+is able to handle files containing taxonomic information created by previous
+versions of OBITools, but files created by this new version may have some
+problems to be analysed by previous versions, at least for the taxonomic
+information.
 
 
 ### Breaking changes
