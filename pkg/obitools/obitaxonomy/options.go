@@ -18,7 +18,6 @@ var __with_query__ = false
 var __without_rank__ = false
 var __without_parent__ = false
 var __without_scientific_name__ = false
-var __raw_taxid__ = false
 var __taxid_path__ = "NA"
 var __taxid_sons__ = "NA"
 var __restrict_rank__ = ""
@@ -67,8 +66,6 @@ func OptionSet(options *getoptions.GetOpt) {
 	options.BoolVar(&__without_scientific_name__, "without-scientific-name", __without_scientific_name__,
 		options.Alias("S"),
 		options.Description("Supress the column containing the scientific name from the output."))
-	options.BoolVar(&__raw_taxid__, "raw-taxid", false,
-		options.Description("Displays the raw taxid for each displayed taxon."))
 	options.StringVar(&__to_dump__, "dump", __to_dump__,
 		options.Alias("D"),
 		options.ArgName("TAXID"),
@@ -130,10 +127,6 @@ func CLIWithRank() bool {
 
 func CLIWithScientificName() bool {
 	return !__without_scientific_name__
-}
-
-func CLIRawTaxid() bool {
-	return __raw_taxid__
 }
 
 func CLIRankRestriction() string {

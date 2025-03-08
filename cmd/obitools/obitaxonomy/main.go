@@ -20,6 +20,19 @@ func main() {
 
 	var iterator *obitax.ITaxon
 
+	if obitaxonomy.CLIDownloadNCBI() {
+		err := obitaxonomy.CLIDownloadNCBITaxdump()
+		if err != nil {
+			log.Errorf("Cannot download NCBI taxonomy: %s", err.Error())
+			os.Exit(1)
+		}
+		os.Exit(0)
+	}
+
+	if !obidefault.HasSelectedTaxonomy() {
+		log.Fatal("you must indicate a taxonomy using the -t or --taxonomy option")
+	}
+
 	switch {
 	case obitaxonomy.CLIDownloadNCBI():
 		err := obitaxonomy.CLIDownloadNCBITaxdump()

@@ -68,7 +68,7 @@ func CLICSVTaxaIterator(iterator *obitax.ITaxon) *obiitercsv.ICSVRecord {
 		obitax.OptionsWithRank(CLIWithRank()),
 		obitax.OptionsWithScientificName(CLIWithScientificName()),
 		obitax.OptionsWithPath(CLIWithPath()),
-		obitax.OptionsRawTaxid(CLIRawTaxid()),
+		obitax.OptionsRawTaxid(obidefault.UseRawTaxids()),
 		obitax.OptionsSource(obidefault.SelectedTaxonomy()),
 	)
 
