@@ -1,0 +1,23 @@
+#!/bin/bash
+
+remote="$1"
+#url="$2"
+
+log() {
+    echo -e "[Pre-Push tests @ $(date)] $*" 1>&2
+}
+
+current_branch=$(git symbolic-ref --short head)
+
+cmd="make githubtests"
+
+if [[ $current_branch = "master" ]]; then
+    log "you are on $current_branch, running build test"
+    if ! eval "$cmd"; then
+        log "Pre-push tests failed $cmd" 
+        exit 1
+    fi
+fi
+
+log "Tests are OK, ready to push on $remote"
+exit 0
