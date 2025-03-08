@@ -76,7 +76,7 @@ func GenerateOptionParser(optionset ...func(*getoptions.GetOpt)) ArgumentParser 
 
 		if options.Called("help") {
 			fmt.Fprint(os.Stderr, options.Help())
-			os.Exit(1)
+			os.Exit(0)
 		}
 
 		if options.Called("version") {

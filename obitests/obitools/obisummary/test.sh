@@ -4,8 +4,8 @@
 # Here give the name of the test serie
 #
 
-TEST_NAME=obicount
-CMD=obicount
+TEST_NAME=obisummary
+CMD=obisummary
 
 ######
 #
@@ -98,60 +98,6 @@ else
     ((failed++))
 fi
 
-((ntest++))
-if obicount "${TEST_DIR}/wolf_F.fasta.gz" \
-    > "${TMPDIR}/wolf_F.fasta_count.csv" 
-then
-    log "OBICount: fasta reading OK" 
-    ((success++))
-else
-    log "OBICount: fasta reading failed" 
-    ((failed++))
-fi
-
-((ntest++))
-if obicount "${TEST_DIR}/wolf_F.fastq.gz" \
-    > "${TMPDIR}/wolf_F.fastq_count.csv"
-then
-    log "OBICount: fastq reading OK"
-    ((success++))
-else
-    log "OBICount: fastq reading failed" 
-    ((failed++))
-fi
-
-((ntest++))
-if obicount "${TEST_DIR}/wolf_F.csv.gz" \
-    > "${TMPDIR}/wolf_F.csv_count.csv"
-then
-    log "OBICount: csv reading OK" 
-    ((success++))
-else
-    log "OBICount: csv reading failed"
-    ((failed++))
-fi
-
-((ntest++))
-if diff "${TMPDIR}/wolf_F.fasta_count.csv" \
-        "${TMPDIR}/wolf_F.fastq_count.csv"  > /dev/null
-then
-    log "OBICount: counting on fasta and fastq are identical OK"
-    ((success++))
-else
-    log "OBICount: counting on fasta and fastq are different failed"
-    ((failed++))
-fi
-
-((ntest++))
-if diff "${TMPDIR}/wolf_F.fasta_count.csv" \
-        "${TMPDIR}/wolf_F.csv_count.csv" > /dev/null
-then
-    log "OBICount: counting on fasta and csv are identical OK"
-    ((success++))
-else
-    log "OBICount: counting on fasta and csv are different failed"
-    ((failed++))
-fi
 
 #########################################
 #
