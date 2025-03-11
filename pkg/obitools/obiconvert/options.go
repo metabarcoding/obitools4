@@ -80,7 +80,7 @@ func OutputModeOptionSet(options *getoptions.GetOpt, compressed bool) {
 		options.Description("Disable the progress bar printing"))
 
 	if compressed {
-		options.BoolVar(obidefault.CompressedPtr(), "compressed", obidefault.CompressOutput(),
+		options.BoolVar(obidefault.CompressOutputPtr(), "compress", obidefault.CompressOutput(),
 			options.Alias("Z"),
 			options.Description("Compress all the result using gzip"))
 

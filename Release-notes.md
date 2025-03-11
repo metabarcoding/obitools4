@@ -10,6 +10,14 @@
 
 - Options **--fasta** or **--fastq** usable to specify input format were ignored.
   They are now correctly considered
+
+- The `obiannotate` command were crashing when a selection option was used but
+  no editing option.
+  
+- The `--fail-on-taxonomy` led to an error on merged taxa even when the
+  `--update-taxid` option was used.
+
+- The `--compressed` option was not correctly named. It was renamed to `--compress`
   
 ### Enhancement
 

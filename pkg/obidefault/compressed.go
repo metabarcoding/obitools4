@@ -1,15 +1,15 @@
 package obidefault
 
-var __compressed__ = false
+var __compress__ = false
 
 func CompressOutput() bool {
-	return __compressed__
+	return __compress__
 }
 
 func SetCompressOutput(b bool) {
-	__compressed__ = b
+	__compress__ = b
 }
 
-func CompressedPtr() *bool {
-	return &__compressed__
+func CompressOutputPtr() *bool {
+	return &__compress__
 }
