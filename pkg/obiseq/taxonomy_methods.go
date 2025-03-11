@@ -50,18 +50,17 @@ func (s *BioSequence) SetTaxid(taxid string, rank ...string) {
 			}
 
 			if isAlias {
-				if obidefault.FailOnTaxonomy() {
-					log.Fatalf("%s: Taxid: %v is an alias from taxonomy (%v) to %s",
-						s.Id(), taxid, taxonomy.Name(), taxon.String())
+				if obidefault.UpdateTaxid() {
+					log.Warnf("%s: Taxid: %v is updated to %s",
+						s.Id(), taxid, taxon.String())
+					taxid = taxon.String()
 				} else {
-					if obidefault.UpdateTaxid() {
-						log.Warnf("%s: Taxid: %v is updated to %s",
-							s.Id(), taxid, taxon.String())
-						taxid = taxon.String()
-					} else {
-						log.Warnf("%s: Taxid %v has to be updated to %s",
-							s.Id(), taxid, taxon.String())
+					if obidefault.FailOnTaxonomy() {
+						log.Fatalf("%s: Taxid: %v is an alias from taxonomy (%v) to %s",
+							s.Id(), taxid, taxonomy.Name(), taxon.String())
 					}
+					log.Warnf("%s: Taxid %v has to be updated to %s",
+						s.Id(), taxid, taxon.String())
 				}
 
 			} else {
