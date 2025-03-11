@@ -63,6 +63,11 @@ func (iterator IBioSequence) MakeIConditionalWorker(predicate obiseq.SequencePre
 //
 // The function returns a new IBioSequence containing the modified slices.
 func (iterator IBioSequence) MakeISliceWorker(worker obiseq.SeqSliceWorker, breakOnError bool, sizes ...int) IBioSequence {
+
+	if worker == nil {
+		return iterator
+	}
+
 	nworkers := obidefault.ParallelWorkers()
 
 	if len(sizes) > 0 {

@@ -133,6 +133,34 @@ func SeqToSliceWorker(worker SeqWorker,
 	return f
 }
 
+func SeqToSliceFilterOnWorker(condition SequencePredicate,
+	breakOnError bool) SeqSliceWorker {
+
+	if condition == nil {
+		return func(slice BioSequenceSlice) (BioSequenceSlice, error) {
+			return slice, nil
+		}
+	}
+
+	f := func(input BioSequenceSlice) (BioSequenceSlice, error) {
+		output := MakeBioSequenceSlice(len(input))
+
+		i := 0
+
+		for _, s := range input {
+			if condition(s) {
+				output[i] = s
+				i++
+			}
+		}
+
+		return output[0:i], nil
+	}
+
+	return f
+
+}
+
 // SeqToSliceConditionalWorker creates a new SeqSliceWorker that processes each sequence in a slice based on a condition. It takes a SequencePredicate and a worker function as arguments. The worker function is only applied to sequences that satisfy the condition.
 // If `condition` is nil, this function just behaves like SeqToSliceWorker with the provided `worker`.
 // If `breakOnError` is true, the pipeline will stop and return an error if any sequence processing fails. Otherwise, it will log a warning message for each failed sequence.
@@ -151,6 +179,10 @@ func SeqToSliceConditionalWorker(
 
 	if condition == nil {
 		return SeqToSliceWorker(worker, breakOnError)
+	}
+
+	if worker == nil {
+		return nil
 	}
 
 	f := func(input BioSequenceSlice) (BioSequenceSlice, error) {
@@ -180,6 +212,9 @@ func SeqToSliceConditionalWorker(
 							s.Id(), err)
 					}
 				}
+			} else {
+				output[i] = s
+				i++
 			}
 		}
 
