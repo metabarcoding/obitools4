@@ -21,6 +21,12 @@
   
 ### Enhancement
 
+- Some sequences in the Genbank and EMBL databases are several gigabases long. The 
+  sequence parser had to reallocate and recopy memory many times to read them, 
+  resulting in a complexity of O(N^2) for reading such large sequences. 
+  The new file chunk reader has a linear algorithm that speeds up the reading 
+  of very long sequences.
+
 - A new option **--csv** is added to every obitools to indicate that the input
   format is CSV
 
