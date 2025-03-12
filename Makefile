@@ -2,8 +2,9 @@
 #export GOBIN=$(GOPATH)/bin
 #export PATH=$(GOBIN):$(shell echo $${PATH})
 
+GOFLAGS=
 GOCMD=go
-GOBUILD=$(GOCMD) build -buildvcs=false
+GOBUILD=$(GOCMD) build $(GOFLAGS)
 GOGENERATE=$(GOCMD) generate
 GOCLEAN=$(GOCMD) clean
 GOTEST=$(GOCMD) test
