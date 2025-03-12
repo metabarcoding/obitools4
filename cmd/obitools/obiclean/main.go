@@ -11,7 +11,10 @@ import (
 )
 
 func main() {
-	optionParser := obioptions.GenerateOptionParser(obiclean.OptionSet)
+	optionParser := obioptions.GenerateOptionParser(
+		"obiclean",
+		"",
+		obiclean.OptionSet)
 
 	_, args := optionParser(os.Args)
 

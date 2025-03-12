@@ -10,7 +10,10 @@ import (
 )
 
 func main() {
-	optionParser := obioptions.GenerateOptionParser(obicsv.OptionSet)
+	optionParser := obioptions.GenerateOptionParser(
+		"obicsv",
+		"converts sequence files to CSV format",
+		obicsv.OptionSet)
 
 	_, args := optionParser(os.Args)
 

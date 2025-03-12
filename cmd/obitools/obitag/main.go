@@ -39,7 +39,10 @@ func main() {
 	obidefault.SetStrictWriteWorker(1)
 	obidefault.SetBatchSize(10)
 
-	optionParser := obioptions.GenerateOptionParser(obitag.OptionSet)
+	optionParser := obioptions.GenerateOptionParser(
+		"obitag",
+		"realizes taxonomic assignment",
+		obitag.OptionSet)
 
 	_, args := optionParser(os.Args)
 

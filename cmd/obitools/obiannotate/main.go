@@ -30,7 +30,11 @@ func main() {
 	// trace.Start(ftrace)
 	// defer trace.Stop()
 
-	optionParser := obioptions.GenerateOptionParser(obiannotate.OptionSet)
+	optionParser := obioptions.GenerateOptionParser(
+		"obiannotate",
+		"edits the sequence annotations",
+		obiannotate.OptionSet,
+	)
 
 	_, args := optionParser(os.Args)
 

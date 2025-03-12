@@ -33,7 +33,10 @@ func main() {
 	// trace.Start(ftrace)
 	// defer trace.Stop()
 
-	optionParser := obioptions.GenerateOptionParser(obisummary.OptionSet)
+	optionParser := obioptions.GenerateOptionParser(
+		"obisummary",
+		"resume main information from a sequence file",
+		obisummary.OptionSet)
 
 	_, args := optionParser(os.Args)
 

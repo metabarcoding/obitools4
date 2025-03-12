@@ -30,7 +30,10 @@ func main() {
 	// trace.Start(ftrace)
 	// defer trace.Stop()
 
-	optionParser := obioptions.GenerateOptionParser(obipairing.OptionSet)
+	optionParser := obioptions.GenerateOptionParser(
+		"obipairing",
+		"align forward with reverse reads with paired reads",
+		obipairing.OptionSet)
 
 	optionParser(os.Args)
 

@@ -14,7 +14,10 @@ import (
 func main() {
 	obidefault.SetBatchSize(10)
 
-	optionParser := obioptions.GenerateOptionParser(obicleandb.OptionSet)
+	optionParser := obioptions.GenerateOptionParser(
+		"obicleandb",
+		"clean-up reference databases",
+		obicleandb.OptionSet)
 
 	_, args := optionParser(os.Args)
 

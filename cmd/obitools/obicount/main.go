@@ -28,6 +28,8 @@ func main() {
 	// defer trace.Stop()
 
 	optionParser := obioptions.GenerateOptionParser(
+		"obicount",
+		"counts the sequences present in a file of sequences",
 		obiconvert.InputOptionSet,
 		obicount.OptionSet,
 	)

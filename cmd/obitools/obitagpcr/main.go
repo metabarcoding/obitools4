@@ -33,7 +33,10 @@ func main() {
 
 	obidefault.SetWorkerPerCore(1)
 
-	optionParser := obioptions.GenerateOptionParser(obitagpcr.OptionSet)
+	optionParser := obioptions.GenerateOptionParser(
+		"obitagpcr",
+		"split a paired raw read data set per sample",
+		obitagpcr.OptionSet)
 
 	optionParser(os.Args)
 	pairs, err := obipairing.CLIPairedSequence()

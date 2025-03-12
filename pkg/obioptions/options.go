@@ -22,9 +22,12 @@ var _PprofGoroutine = 6060
 
 type ArgumentParser func([]string) (*getoptions.GetOpt, []string)
 
-func GenerateOptionParser(optionset ...func(*getoptions.GetOpt)) ArgumentParser {
+func GenerateOptionParser(program string,
+	documentation string,
+	optionset ...func(*getoptions.GetOpt)) ArgumentParser {
 
 	options := getoptions.New()
+	options.Self(program, documentation)
 	options.SetMode(getoptions.Bundling)
 	options.SetUnknownMode(getoptions.Fail)
 	options.Bool("help", false, options.Alias("h", "?"))

@@ -15,7 +15,10 @@ func main() {
 	obidefault.SetStrictReadWorker(2)
 	obidefault.SetStrictWriteWorker(2)
 
-	optionParser := obioptions.GenerateOptionParser(obijoin.OptionSet)
+	optionParser := obioptions.GenerateOptionParser(
+		"obijoin",
+		"merge annotations contained in a file to another file",
+		obijoin.OptionSet)
 
 	_, args := optionParser(os.Args)
 

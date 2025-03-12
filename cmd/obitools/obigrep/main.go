@@ -30,7 +30,10 @@ func main() {
 	// trace.Start(ftrace)
 	// defer trace.Stop()
 
-	optionParser := obioptions.GenerateOptionParser(obigrep.OptionSet)
+	optionParser := obioptions.GenerateOptionParser(
+		"obigrep",
+		"select a subset of sequences on various criteria",
+		obigrep.OptionSet)
 
 	_, args := optionParser(os.Args)
 

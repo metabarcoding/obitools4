@@ -29,7 +29,10 @@ func main() {
 	obidefault.SetParallelFilesRead(obidefault.ParallelWorkers() / 4)
 	obidefault.SetBatchSize(10)
 
-	optionParser := obioptions.GenerateOptionParser(obipcr.OptionSet)
+	optionParser := obioptions.GenerateOptionParser(
+		"obipcr",
+		"simulates a PCR on a sequence files",
+		obipcr.OptionSet)
 
 	_, args := optionParser(os.Args)
 

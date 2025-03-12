@@ -14,7 +14,10 @@ import (
 )
 
 func main() {
-	optionParser := obioptions.GenerateOptionParser(obitaxonomy.OptionSet)
+	optionParser := obioptions.GenerateOptionParser(
+		"obitaxonomy",
+		"manipulates and queries taxonomy",
+		obitaxonomy.OptionSet)
 
 	_, args := optionParser(os.Args)
 

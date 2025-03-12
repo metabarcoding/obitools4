@@ -30,7 +30,10 @@ func main() {
 	// trace.Start(ftrace)
 	// defer trace.Stop()
 
-	optionParser := obioptions.GenerateOptionParser(obimicrosat.OptionSet)
+	optionParser := obioptions.GenerateOptionParser(
+		"obimicrosat",
+		"looks for microsatellites sequences in a sequence file",
+		obimicrosat.OptionSet)
 
 	_, args := optionParser(os.Args)
 

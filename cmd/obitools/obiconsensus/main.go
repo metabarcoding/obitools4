@@ -11,7 +11,10 @@ import (
 )
 
 func main() {
-	optionParser := obioptions.GenerateOptionParser(obiconsensus.OptionSet)
+	optionParser := obioptions.GenerateOptionParser(
+		"obiconsensus",
+		"ONT reads denoising",
+		obiconsensus.OptionSet)
 
 	_, args := optionParser(os.Args)
 

@@ -32,7 +32,10 @@ func main() {
 	// trace.Start(ftrace)
 	// defer trace.Stop()
 
-	optionParser := obioptions.GenerateOptionParser(obikmersim.CountOptionSet)
+	optionParser := obioptions.GenerateOptionParser(
+		"obikmersimcount",
+		"",
+		obikmersim.CountOptionSet)
 
 	_, args := optionParser(os.Args)
 
