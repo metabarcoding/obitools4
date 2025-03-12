@@ -105,6 +105,10 @@ curl "$GOURL" \
 
 PATH="$(pwd)/go/bin:$PATH"
 export PATH
+GOPATH="$(pwd)/go"
+export GOPATH
+
+
 
 curl -L "$OBIURL4" > master.zip
 unzip master.zip
@@ -112,11 +116,12 @@ unzip master.zip
 echo "Install OBITOOLS from : $OBIURL4"
 
 cd obitools4-master || exit
+mkdir vendor
 
 if [[ -z "$OBITOOLS_PREFIX" ]] ; then
-  make
+  make GOFLAGS="-buildvcs=false" 
 else
-  make OBITOOLS_PREFIX="${OBITOOLS_PREFIX}"
+  make GOFLAGS="-buildvcs=false" OBITOOLS_PREFIX="${OBITOOLS_PREFIX}"
 fi
 
 (cp build/* "${INSTALL_DIR}/bin" 2> /dev/null) \
@@ -125,5 +130,6 @@ fi
 
 popd || exit
 
+chmod -R +w "$WORK_DIR"
 rm -rf "$WORK_DIR"
 
