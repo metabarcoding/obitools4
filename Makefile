@@ -3,7 +3,7 @@
 #export PATH=$(GOBIN):$(shell echo $${PATH})
 
 GOCMD=go
-GOBUILD=$(GOCMD) build # -compiler gccgo -gccgoflags -O3
+GOBUILD=$(GOCMD) build -buildvcs=false
 GOGENERATE=$(GOCMD) generate
 GOCLEAN=$(GOCMD) clean
 GOTEST=$(GOCMD) test
