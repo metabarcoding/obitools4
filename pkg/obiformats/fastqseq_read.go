@@ -327,13 +327,12 @@ func ReadFastq(reader io.Reader, options ...WithOption) (obiiter.IBioSequence, e
 
 	nworker := opt.ParallelWorkers()
 
-	buff := make([]byte, 1024*1024)
-
 	chkchan := ReadFileChunk(
 		opt.Source(),
 		reader,
-		buff,
+		1024*1024,
 		EndOfLastFastqEntry,
+		"\n@",
 	)
 
 	for i := 0; i < nworker; i++ {

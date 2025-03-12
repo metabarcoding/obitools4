@@ -187,13 +187,12 @@ func _ParseEmblFile(
 func ReadEMBL(reader io.Reader, options ...WithOption) (obiiter.IBioSequence, error) {
 	opt := MakeOptions(options)
 
-	buff := make([]byte, 1024*1024*128) // 128 MB
-
 	entry_channel := ReadFileChunk(
 		opt.Source(),
 		reader,
-		buff,
+		1024*1024*128,
 		EndOfLastFlatFileEntry,
+		"\nID   ",
 	)
 
 	newIter := obiiter.MakeIBioSequence()

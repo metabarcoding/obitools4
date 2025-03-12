@@ -13,6 +13,11 @@ CMD=obiconvert
 #
 ######
 TEST_DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
+
+if [ -z "$TEST_DIR" ] ; then
+   TEST_DIR="."
+fi
+
 OBITOOLS_DIR="${TEST_DIR/obitest*/}build"
 export PATH="${OBITOOLS_DIR}:${PATH}"
 
@@ -98,6 +103,36 @@ else
     ((failed++))
 fi
 
+
+((ntest++))
+if obiconvert -Z "${TEST_DIR}/gbpln1088.4Mb.fasta.gz" \
+                 > "${TMPDIR}/xxx.fasta.gz" && \
+   zdiff "${TEST_DIR}/gbpln1088.4Mb.fasta.gz" \
+                 "${TMPDIR}/xxx.fasta.gz" 
+then
+    log "$MCMD: converting large fasta file to fasta OK" 
+    ((success++))
+else
+    log "$MCMD: converting large fasta file to fasta failed" 
+    ((failed++))
+fi
+ 
+((ntest++))
+if obiconvert -Z --fastq-output \
+              "${TEST_DIR}/gbpln1088.4Mb.fasta.gz" \
+                 > "${TMPDIR}/xxx.fastq.gz" && \
+   obiconvert -Z --fasta-output \
+              "${TMPDIR}/xxx.fastq.gz" \
+              > "${TMPDIR}/yyy.fasta.gz" && \
+   zdiff "${TEST_DIR}/gbpln1088.4Mb.fasta.gz" \
+                 "${TMPDIR}/yyy.fasta.gz" 
+then
+    log "$MCMD: converting large file between fasta and fastq OK" 
+    ((success++))
+else
+    log "$MCMD: converting large file between fasta and fastq failed" 
+    ((failed++))
+fi
 
 #########################################
 #
