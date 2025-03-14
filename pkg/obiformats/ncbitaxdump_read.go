@@ -1,4 +1,4 @@
-package obitax
+package obiformats
 
 import (
 	"bufio"
@@ -11,6 +11,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 )
 
@@ -27,7 +28,7 @@ import (
 // The function reads each record from the input, trims whitespace from the taxid, parent, and rank,
 // and adds the taxon to the taxonomy. If an error occurs while adding a taxon, the function logs
 // a fatal error and terminates the program.
-func loadNodeTable(reader io.Reader, taxonomy *Taxonomy) {
+func loadNodeTable(reader io.Reader, taxonomy *obitax.Taxonomy) {
 	file := csv.NewReader(reader)
 	file.Comma = '|'
 	file.Comment = '#'
@@ -65,7 +66,7 @@ func loadNodeTable(reader io.Reader, taxonomy *Taxonomy) {
 //	The number of taxon names successfully loaded into the taxonomy. If a line is too long, -1 is returned.
 //	The function processes each line, trims whitespace from the taxid, name, and class name, and sets
 //	the name in the taxonomy if the conditions are met.
-func loadNameTable(reader io.Reader, taxonomy *Taxonomy, onlysn bool) int {
+func loadNameTable(reader io.Reader, taxonomy *obitax.Taxonomy, onlysn bool) int {
 	// file := csv.NewReader(reader)
 	// file.Comma = '|'
 	// file.Comment = '#'
@@ -117,7 +118,7 @@ func loadNameTable(reader io.Reader, taxonomy *Taxonomy, onlysn bool) int {
 //
 //	The number of alias mappings successfully loaded into the taxonomy. The function processes
 //	each record, trims whitespace from the old and new taxid, and adds the alias to the taxonomy.
-func loadMergedTable(reader io.Reader, taxonomy *Taxonomy) int {
+func loadMergedTable(reader io.Reader, taxonomy *obitax.Taxonomy) int {
 	file := csv.NewReader(reader)
 	file.Comma = '|'
 	file.Comment = '#'
@@ -148,9 +149,9 @@ func loadMergedTable(reader io.Reader, taxonomy *Taxonomy) int {
 // Returns:
 //   - A pointer to the obitax.Taxonomy object containing the loaded taxonomy data, or an error
 //     if any of the files cannot be opened or read.
-func LoadNCBITaxDump(directory string, onlysn bool) (*Taxonomy, error) {
+func LoadNCBITaxDump(directory string, onlysn bool) (*obitax.Taxonomy, error) {
 
-	taxonomy := NewTaxonomy("NCBI Taxonomy", "taxon", obiutils.AsciiDigitSet)
+	taxonomy := obitax.NewTaxonomy("NCBI Taxonomy", "taxon", obiutils.AsciiDigitSet)
 
 	//
 	// Load the Taxonomy nodes

@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"sync"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiformats"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/DavidGamba/go-getoptions"
@@ -19,6 +21,8 @@ var _BatchSize = 2000
 var _Pprof = false
 var _PprofMudex = 10
 var _PprofGoroutine = 6060
+
+var __defaut_taxonomy_mutex__ sync.Mutex
 
 type ArgumentParser func([]string) (*getoptions.GetOpt, []string)
 
@@ -85,6 +89,22 @@ func GenerateOptionParser(program string,
 		if options.Called("version") {
 			fmt.Fprintf(os.Stderr, "OBITools %s\n", VersionString())
 			os.Exit(0)
+		}
+
+		if options.Called("taxonomy") {
+			__defaut_taxonomy_mutex__.Lock()
+			defer __defaut_taxonomy_mutex__.Unlock()
+			taxonomy, err := obiformats.LoadTaxonomy(
+				obidefault.SelectedTaxonomy(),
+				!obidefault.AreAlternativeNamesSelected(),
+			)
+
+			if err != nil {
+				log.Fatalf("Cannot load default taxonomy: %v", err)
+
+			}
+
+			taxonomy.SetAsDefault()
 		}
 
 		log.SetLevel(log.InfoLevel)

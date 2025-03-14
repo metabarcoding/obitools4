@@ -224,3 +224,9 @@ func (taxonomy *Taxonomy) ISubTaxonomy(taxid string) *ITaxon {
 
 	return taxon.ISubTaxonomy()
 }
+
+func (iterator *ITaxon) Consume() {
+	for iterator.Next() {
+		iterator.Get()
+	}
+}

@@ -115,7 +115,12 @@ func main() {
 	}
 
 	iterator = obitaxonomy.CLITaxonRestrictions(iterator)
-	obitaxonomy.CLICSVTaxaWriter(iterator, true)
+
+	if obitaxonomy.CLIAsNewick() {
+		obitaxonomy.CLINewickWriter(iterator, true)
+	} else {
+		obitaxonomy.CLICSVTaxaWriter(iterator, true)
+	}
 
 	obiutils.WaitForLastPipe()
 

@@ -1,6 +1,8 @@
 package obiformats
 
 import (
+	"slices"
+
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 )
@@ -34,6 +36,14 @@ type __options__ struct {
 	paired_filename       string
 	source                string
 	with_feature_table    bool
+	with_pattern          bool
+	with_parent           bool
+	with_path             bool
+	with_rank             bool
+	with_taxid            bool
+	with_scientific_name  bool
+	raw_taxid             bool
+	with_metadata         []string
 }
 
 type Options struct {
@@ -72,6 +82,13 @@ func MakeOptions(setters []WithOption) Options {
 		paired_filename:       "",
 		source:                "unknown",
 		with_feature_table:    false,
+		with_pattern:          true,
+		with_parent:           false,
+		with_path:             false,
+		with_rank:             true,
+		with_taxid:            true,
+		with_scientific_name:  false,
+		raw_taxid:             false,
 	}
 
 	opt := Options{&o}
@@ -197,6 +214,60 @@ func (opt Options) Source() string {
 
 func (opt Options) WithFeatureTable() bool {
 	return opt.pointer.with_feature_table
+}
+
+// WithPattern returns whether the pattern option is enabled.
+// It retrieves the setting from the underlying options.
+func (o *Options) WithPattern() bool {
+	return o.pointer.with_pattern
+}
+
+// WithParent returns whether the parent option is enabled.
+// It retrieves the setting from the underlying options.
+func (o *Options) WithParent() bool {
+	return o.pointer.with_parent
+}
+
+// WithPath returns whether the path option is enabled.
+// It retrieves the setting from the underlying options.
+func (o *Options) WithPath() bool {
+	return o.pointer.with_path
+}
+
+// WithRank returns whether the rank option is enabled.
+// It retrieves the setting from the underlying options.
+func (o *Options) WithRank() bool {
+	return o.pointer.with_rank
+}
+
+func (o *Options) WithTaxid() bool {
+	return o.pointer.with_taxid
+}
+
+// WithScientificName returns whether the scientific name option is enabled.
+// It retrieves the setting from the underlying options.
+func (o *Options) WithScientificName() bool {
+	return o.pointer.with_scientific_name
+}
+
+// RawTaxid returns whether the raw taxid option is enabled.
+// It retrieves the setting from the underlying options.
+func (o *Options) RawTaxid() bool {
+	return o.pointer.raw_taxid
+}
+
+// WithMetadata returns a slice of strings containing the metadata
+// associated with the Options instance. It retrieves the metadata
+// from the pointer's with_metadata field.
+func (o *Options) WithMetadata() []string {
+	if o.WithPattern() {
+		idx := slices.Index(o.pointer.with_metadata, "query")
+		if idx >= 0 {
+			o.pointer.with_metadata = slices.Delete(o.pointer.with_metadata, idx, idx+1)
+		}
+	}
+
+	return o.pointer.with_metadata
 }
 
 func OptionCloseFile() WithOption {
@@ -454,5 +525,68 @@ func WithFeatureTable(with bool) WithOption {
 		opt.pointer.with_feature_table = with
 	})
 
+	return f
+}
+
+func OptionsWithPattern(value bool) WithOption {
+	f := WithOption(func(opt Options) {
+		opt.pointer.with_pattern = value
+	})
+
+	return f
+}
+
+func OptionsWithParent(value bool) WithOption {
+	f := WithOption(func(opt Options) {
+		opt.pointer.with_parent = value
+	})
+
+	return f
+}
+
+func OptionsWithPath(value bool) WithOption {
+	f := WithOption(func(opt Options) {
+		opt.pointer.with_path = value
+	})
+
+	return f
+}
+
+func OptionsWithRank(value bool) WithOption {
+	f := WithOption(func(opt Options) {
+		opt.pointer.with_rank = value
+	})
+
+	return f
+}
+
+func OptionsWithTaxid(value bool) WithOption {
+	f := WithOption(func(opt Options) {
+		opt.pointer.with_taxid = value
+	})
+
+	return f
+}
+
+func OptionsWithScientificName(value bool) WithOption {
+	f := WithOption(func(opt Options) {
+		opt.pointer.with_scientific_name = value
+	})
+
+	return f
+}
+
+func OptionsRawTaxid(value bool) WithOption {
+	f := WithOption(func(opt Options) {
+		opt.pointer.raw_taxid = value
+	})
+
+	return f
+}
+
+func OptionsWithMetadata(values ...string) WithOption {
+	f := WithOption(func(opt Options) {
+		opt.pointer.with_metadata = values
+	})
 	return f
 }

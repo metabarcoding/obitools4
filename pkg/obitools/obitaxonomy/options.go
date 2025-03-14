@@ -24,6 +24,7 @@ var __restrict_rank__ = ""
 var __to_dump__ = ""
 var __download_ncbi__ = false
 var __extract_taxonomy__ = false
+var __newick__ = false
 
 func FilterTaxonomyOptionSet(options *getoptions.GetOpt) {
 	options.BoolVar(&__rank_list__, "rank-list", false,
@@ -77,6 +78,10 @@ func OptionSet(options *getoptions.GetOpt) {
 	options.BoolVar(&__extract_taxonomy__, "extract-taxonomy", __extract_taxonomy__,
 		options.Description("Extract taxonomy from a sequence file"),
 	)
+	options.BoolVar(&__newick__, "newick", __newick__,
+		options.Description("Format the resulting taxonomy as a newick tree"),
+	)
+
 }
 
 func CLITaxonomicalRestrictions() (*obitax.TaxonSet, error) {
@@ -155,4 +160,8 @@ func CLIDownloadNCBI() bool {
 
 func CLIExtractTaxonomy() bool {
 	return __extract_taxonomy__
+}
+
+func CLIAsNewick() bool {
+	return __newick__
 }

@@ -1,15 +1,16 @@
-package obitax
+package obiformats
 
 import (
 	"encoding/csv"
 	"errors"
 	"strings"
 
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 	log "github.com/sirupsen/logrus"
 )
 
-func LoadCSVTaxonomy(path string, onlysn bool) (*Taxonomy, error) {
+func LoadCSVTaxonomy(path string, onlysn bool) (*obitax.Taxonomy, error) {
 
 	log.Infof("Loading taxonomy from csv file: %s", path)
 
@@ -85,10 +86,10 @@ func LoadCSVTaxonomy(path string, onlysn bool) (*Taxonomy, error) {
 	log.Infof("Taxonomy name: %s", name)
 	log.Infof("Taxon code: %s", short)
 
-	taxonomy := NewTaxonomy(name, short, obiutils.AsciiAlphaNumSet)
+	taxonomy := obitax.NewTaxonomy(name, short, obiutils.AsciiAlphaNumSet)
 
 	root := true
-	var taxon *Taxon
+	var taxon *obitax.Taxon
 
 	for err == nil {
 		taxid := line[taxidColIndex]

@@ -15,6 +15,7 @@ import (
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obingslibrary"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 	"github.com/gabriel-vasile/mimetype"
 )
 
@@ -87,7 +88,7 @@ func _parseMainNGSFilter(text string) (obingslibrary.PrimerPair, obingslibrary.T
 }
 
 func NGSFilterCsvDetector(raw []byte, limit uint32) bool {
-	r := csv.NewReader(bytes.NewReader(dropLastLine(raw, limit)))
+	r := csv.NewReader(bytes.NewReader(obiutils.DropLastLine(raw, limit)))
 	r.Comma = ','
 	r.ReuseRecord = true
 	r.LazyQuotes = true
@@ -119,18 +120,6 @@ func NGSFilterCsvDetector(raw []byte, limit uint32) bool {
 
 	return nfields > 1 && lines > 1
 
-}
-
-func dropLastLine(b []byte, readLimit uint32) []byte {
-	if readLimit == 0 || uint32(len(b)) < readLimit {
-		return b
-	}
-	for i := len(b) - 1; i > 0; i-- {
-		if b[i] == '\n' {
-			return b[:i]
-		}
-	}
-	return b
 }
 
 func OBIMimeNGSFilterTypeGuesser(stream io.Reader) (*mimetype.MIME, io.Reader, error) {

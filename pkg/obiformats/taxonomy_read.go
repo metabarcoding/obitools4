@@ -1,16 +1,17 @@
-package obitax
+package obiformats
 
 import (
 	"fmt"
 	"os"
 
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 	"github.com/gabriel-vasile/mimetype"
 
 	log "github.com/sirupsen/logrus"
 )
 
-type TaxonomyLoader func(path string, onlysn bool) (*Taxonomy, error)
+type TaxonomyLoader func(path string, onlysn bool) (*obitax.Taxonomy, error)
 
 func DetectTaxonomyTarFormat(path string) (TaxonomyLoader, error) {
 
@@ -24,6 +25,8 @@ func DetectTaxonomyTarFormat(path string) (TaxonomyLoader, error) {
 }
 
 func DetectTaxonomyFormat(path string) (TaxonomyLoader, error) {
+
+	obiutils.RegisterOBIMimeType()
 
 	file, err := os.Open(path)
 	if err != nil {
@@ -63,6 +66,28 @@ func DetectTaxonomyFormat(path string) (TaxonomyLoader, error) {
 			return LoadCSVTaxonomy, nil
 		case "application/x-tar":
 			return DetectTaxonomyTarFormat(path)
+		case "text/fasta":
+			return func(path string, onlysn bool) (*obitax.Taxonomy, error) {
+				input, err := ReadFastaFromFile(path)
+
+				if err != nil {
+					return nil, err
+				}
+				_, data := input.Load()
+
+				return data.ExtractTaxonomy(nil)
+			}, nil
+		case "text/fastq":
+			return func(path string, onlysn bool) (*obitax.Taxonomy, error) {
+				input, err := ReadFastqFromFile(path)
+
+				if err != nil {
+					return nil, err
+				}
+				_, data := input.Load()
+
+				return data.ExtractTaxonomy(nil)
+			}, nil
 		}
 
 		log.Fatalf("Detected file format: %s", mimetype.String())
@@ -71,7 +96,7 @@ func DetectTaxonomyFormat(path string) (TaxonomyLoader, error) {
 	return nil, nil
 }
 
-func LoadTaxonomy(path string, onlysn bool) (*Taxonomy, error) {
+func LoadTaxonomy(path string, onlysn bool) (*obitax.Taxonomy, error) {
 	loader, err := DetectTaxonomyFormat(path)
 
 	if err != nil {
