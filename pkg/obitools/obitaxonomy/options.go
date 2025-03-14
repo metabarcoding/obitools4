@@ -78,7 +78,7 @@ func OptionSet(options *getoptions.GetOpt) {
 	options.BoolVar(&__extract_taxonomy__, "extract-taxonomy", __extract_taxonomy__,
 		options.Description("Extract taxonomy from a sequence file"),
 	)
-	options.BoolVar(&__newick__, "newick", __newick__,
+	options.BoolVar(&__newick__, "newick-output", __newick__,
 		options.Description("Format the resulting taxonomy as a newick tree"),
 	)
 
