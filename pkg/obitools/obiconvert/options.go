@@ -33,6 +33,7 @@ var __output_fastobi_format__ = false
 
 var __no_progress_bar__ = false
 var __skip_empty__ = false
+var __skip_on_error__ = false
 
 var __output_file_name__ = "-"
 var __paired_file_name__ = ""
@@ -96,6 +97,9 @@ func OutputModeOptionSet(options *getoptions.GetOpt, compressed bool) {
 func OutputOptionSet(options *getoptions.GetOpt) {
 	options.BoolVar(&__skip_empty__, "skip-empty", __skip_empty__,
 		options.Description("Sequences of length equal to zero are suppressed from the output"))
+
+	// options.BoolVar(&__skip_on_error__, "skip-on-error", __skip_on_error__,
+	// 	options.Description("Skip sequence with parsing error"))
 
 	options.BoolVar(&__output_in_fasta__, "fasta-output", false,
 		options.Description("Write sequence in fasta format (default if no quality data available)."))
@@ -170,6 +174,10 @@ func CLIOutputFormat() string {
 
 func CLISkipEmpty() bool {
 	return __skip_empty__
+}
+
+func CLISkipOnError() bool {
+	return __skip_on_error__
 }
 
 func CLIInputFastHeaderFormat() string {

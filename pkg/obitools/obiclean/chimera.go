@@ -2,10 +2,12 @@ package obiclean
 
 import (
 	"fmt"
+	"os"
 	"sort"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
+	"github.com/schollz/progressbar/v3"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -119,8 +121,20 @@ func AnnotateChimera(samples map[string]*[]*seqPCR) {
 
 	}
 
+	pbopt := make([]progressbar.Option, 0, 5)
+	pbopt = append(pbopt,
+		progressbar.OptionSetWriter(os.Stderr),
+		progressbar.OptionSetWidth(15),
+		progressbar.OptionShowIts(),
+		progressbar.OptionSetPredictTime(true),
+		progressbar.OptionSetDescription("[Chimera detection]"),
+	)
+
+	bar := progressbar.NewOptions(len(samples), pbopt...)
+
 	for sn, sqs := range samples {
 		w(sn, sqs)
+		bar.Add(1)
 	}
 
 }

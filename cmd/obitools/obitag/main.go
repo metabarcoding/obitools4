@@ -73,10 +73,12 @@ func main() {
 
 	var identified obiiter.IBioSequence
 
+	fsrb := fs.Rebatch(obidefault.BatchSize())
+
 	if obitag.CLIGeometricMode() {
-		identified = obitag.CLIGeomAssignTaxonomy(fs, references, taxo)
+		identified = obitag.CLIGeomAssignTaxonomy(fsrb, references, taxo)
 	} else {
-		identified = obitag.CLIAssignTaxonomy(fs, references, taxo)
+		identified = obitag.CLIAssignTaxonomy(fsrb, references, taxo)
 	}
 
 	obiconvert.CLIWriteBioSequences(identified, true)
