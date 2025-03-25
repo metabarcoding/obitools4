@@ -6,6 +6,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obilog"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 )
@@ -41,7 +42,7 @@ func (s *BioSequence) SetTaxid(taxid string, rank ...string) {
 			taxon, isAlias, err = taxonomy.Taxon(taxid)
 
 			if err != nil {
-				logger := log.Warnf
+				logger := obilog.Warnf
 				if obidefault.FailOnTaxonomy() {
 					logger = log.Fatalf
 				}
@@ -51,7 +52,7 @@ func (s *BioSequence) SetTaxid(taxid string, rank ...string) {
 
 			if isAlias {
 				if obidefault.UpdateTaxid() {
-					log.Warnf("%s: Taxid: %v is updated to %s",
+					obilog.Warnf("%s: Taxid: %v is updated to %s",
 						s.Id(), taxid, taxon.String())
 					taxid = taxon.String()
 				} else {
@@ -59,7 +60,7 @@ func (s *BioSequence) SetTaxid(taxid string, rank ...string) {
 						log.Fatalf("%s: Taxid: %v is an alias from taxonomy (%v) to %s",
 							s.Id(), taxid, taxonomy.Name(), taxon.String())
 					}
-					log.Warnf("%s: Taxid %v has to be updated to %s",
+					obilog.Warnf("%s: Taxid %v has to be updated to %s",
 						s.Id(), taxid, taxon.String())
 				}
 

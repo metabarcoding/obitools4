@@ -53,7 +53,7 @@ func commonSuffix(a, b *obiseq.BioSequence) int {
 	if obiutils.UnsafeString(as[i+1:]) != obiutils.UnsafeString(bs[j+1:]) {
 		log.Fatalf("i: %d, j: %d (%s/%s)", i, j, as[i+1:], bs[j+1:])
 	}
-	// log.Warnf("i: %d, j: %d (%s)", i, j, as[i+1:])
+	// obilog.Warnf("i: %d, j: %d (%s)", i, j, as[i+1:])
 
 	return l
 }

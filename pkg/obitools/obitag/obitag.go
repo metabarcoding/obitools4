@@ -11,6 +11,7 @@ import (
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obikmer"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obilog"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obirefidx"
@@ -260,7 +261,7 @@ func CLIAssignTaxonomy(iterator obiiter.IBioSequence,
 		if taxon != nil {
 			j++
 		} else {
-			log.Warnf("Taxid %s is not described in the taxonomy %s."+
+			obilog.Warnf("Taxid %s is not described in the taxonomy %s."+
 				" Sequence %s is discared from the reference database",
 				seq.Taxid(), taxo.Name(), seq.Id())
 		}

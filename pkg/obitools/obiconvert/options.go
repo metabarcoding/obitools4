@@ -126,11 +126,16 @@ func PairedFilesOptionSet(options *getoptions.GetOpt) {
 	)
 }
 
-func OptionSet(options *getoptions.GetOpt) {
-	obioptions.LoadTaxonomyOptionSet(options, false, false)
-	InputOptionSet(options)
-	OutputOptionSet(options)
-	PairedFilesOptionSet(options)
+func OptionSet(allow_paired bool) func(options *getoptions.GetOpt) {
+	f := func(options *getoptions.GetOpt) {
+		obioptions.LoadTaxonomyOptionSet(options, false, false)
+		InputOptionSet(options)
+		OutputOptionSet(options)
+		if allow_paired {
+			PairedFilesOptionSet(options)
+		}
+	}
+	return f
 }
 
 // Returns true if the number of reads described in the

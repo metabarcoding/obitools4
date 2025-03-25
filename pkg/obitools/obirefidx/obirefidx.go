@@ -88,7 +88,7 @@ func IndexSequence(seqidx int,
 	// Initialize a matrix to store alignment scores
 	var matrix []uint64
 
-	// log.Warnf("%s : %s", sequence.Id(), pseq.String())
+	// obilog.Warnf("%s : %s", sequence.Id(), pseq.String())
 	for idx_path := 1; idx_path < path_len; idx_path++ {
 		mini := -1
 		seqidcs := refs[pseq.Taxon(idx_path).Node]
@@ -144,8 +144,8 @@ func IndexSequence(seqidx int,
 				}
 
 				if mini == 0 {
-					// log.Warnf("%s: %s", sequence.Id(), sequence.String())
-					// log.Warnf("%s: %s", suject.Id(), suject.String())
+					// obilog.Warnf("%s: %s", sequence.Id(), sequence.String())
+					// obilog.Warnf("%s: %s", suject.Id(), suject.String())
 					break
 				}
 			}
@@ -158,7 +158,7 @@ func IndexSequence(seqidx int,
 			// insure than closest is strictly increasing
 			for k := idx_path - 1; k >= 0 && mini < closest[k]; k-- {
 				closest[k] = mini
-				// log.Warnf("(%s,%s) Smaller alignment found than previous (%d,%d). Resetting closest.", sequence.Id(), pseq.Taxon(idx_path).String(), mini, closest[k])
+				// obilog.Warnf("(%s,%s) Smaller alignment found than previous (%d,%d). Resetting closest.", sequence.Id(), pseq.Taxon(idx_path).String(), mini, closest[k])
 			}
 		} else {
 			closest[idx_path] = seq_len
@@ -167,7 +167,7 @@ func IndexSequence(seqidx int,
 
 	obitag_index := make(map[int]string, pseq.Len())
 
-	// log.Warnf("(%s,%s): %v", sequence.Id(), pseq.Taxon(0).String(), closest)
+	// obilog.Warnf("(%s,%s): %v", sequence.Id(), pseq.Taxon(0).String(), closest)
 	for i, d := range closest {
 		if i < (len(closest)-1) && d < closest[i+1] {
 			current_taxon := pseq.Taxon(i)

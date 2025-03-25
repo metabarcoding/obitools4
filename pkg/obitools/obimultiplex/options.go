@@ -54,7 +54,7 @@ func MultiplexOptionSet(options *getoptions.GetOpt) {
 }
 
 func OptionSet(options *getoptions.GetOpt) {
-	obiconvert.OptionSet(options)
+	obiconvert.OptionSet(false)(options)
 	MultiplexOptionSet(options)
 }
 

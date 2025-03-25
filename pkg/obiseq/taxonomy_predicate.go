@@ -3,6 +3,7 @@ package obiseq
 import (
 	log "github.com/sirupsen/logrus"
 
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obilog"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 )
@@ -66,7 +67,7 @@ func IsSubCladeOfSlot(taxonomy *obitax.Taxonomy, key string) SequencePredicate {
 			parent, _, err := taxonomy.Taxon(val)
 
 			if err != nil {
-				log.Warnf("%s: %s is unkown from the taxonomy (%v)", sequence.Id(), val, err)
+				obilog.Warnf("%s: %s is unkown from the taxonomy (%v)", sequence.Id(), val, err)
 			}
 
 			taxon := sequence.Taxon(taxonomy)

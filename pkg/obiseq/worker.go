@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"slices"
 
-	log "github.com/sirupsen/logrus"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obilog"
 )
 
 type SeqAnnotator func(*BioSequence)
@@ -119,7 +119,7 @@ func SeqToSliceWorker(worker SeqWorker,
 							s.Id(), err)
 						return BioSequenceSlice{}, err
 					} else {
-						log.Warnf("got an error on sequence %s processing : %v",
+						obilog.Warnf("got an error on sequence %s processing : %v",
 							s.Id(), err)
 					}
 				}
@@ -208,7 +208,7 @@ func SeqToSliceConditionalWorker(
 							s.Id(), err)
 						return BioSequenceSlice{}, err
 					} else {
-						log.Warnf("got an error on sequence %s processing : %v",
+						obilog.Warnf("got an error on sequence %s processing : %v",
 							s.Id(), err)
 					}
 				}

@@ -166,7 +166,7 @@ func SequenceSelectionOptionSet(options *getoptions.GetOpt) {
 // OptionSet adds to the basic option set every options declared for
 // the obipcr command
 func OptionSet(options *getoptions.GetOpt) {
-	obiconvert.OptionSet(options)
+	obiconvert.OptionSet(true)(options)
 	SequenceSelectionOptionSet(options)
 
 	options.StringVar(&_SaveRejected, "save-discarded", _SaveRejected,

@@ -322,7 +322,7 @@ func CLIAnnotationWorker() obiseq.SeqWorker {
 
 	if CLIHasCut() {
 		from, to := CLICut()
-		w := CutSequenceWorker(from, to, false)
+		w := CutSequenceWorker(from, to, true)
 
 		annotator = annotator.ChainWorkers(w)
 	}

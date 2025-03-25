@@ -73,6 +73,11 @@ func GenerateOptionParser(program string,
 		options.GetEnv("OBISOLEXA"),
 		options.Description("Decodes quality string according to the Solexa specification."))
 
+	options.BoolVar(obidefault.SilentWarningPtr(), "silent-warning", obidefault.SilentWarning(),
+		options.GetEnv("OBIWARNING"),
+		options.Description("Stop printing of the warning message"),
+	)
+
 	for _, o := range optionset {
 		o(options)
 	}

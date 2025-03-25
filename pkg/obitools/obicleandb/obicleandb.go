@@ -113,10 +113,10 @@ func MakeSequenceFamilyGenusWorker(references obiseq.BioSequenceSlice) obiseq.Se
 			}
 
 			// level, _ := sequence.GetAttribute("obicleandb_level")
-			// log.Warnf("%s - level: %v", sequence.Id(), level)
-			// log.Warnf("%s - gdist: %v", sequence.Id(), indist)
-			// log.Warnf("%s - fdist: %v", sequence.Id(), outdist)
-			// log.Warnf("%s - pval: %f", sequence.Id(), pval)
+			// obilog.Warnf("%s - level: %v", sequence.Id(), level)
+			// obilog.Warnf("%s - gdist: %v", sequence.Id(), indist)
+			// obilog.Warnf("%s - fdist: %v", sequence.Id(), outdist)
+			// obilog.Warnf("%s - pval: %f", sequence.Id(), pval)
 		}
 
 		if pval < 0.0 {

@@ -9,6 +9,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obilog"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 )
@@ -75,7 +76,7 @@ func FormatFastqBatch(batch obiiter.BioSequenceBatch,
 
 		} else {
 			if skipEmpty {
-				log.Warnf("Sequence %s is empty and skiped in output", seq.Id())
+				obilog.Warnf("Sequence %s is empty and skiped in output", seq.Id())
 			} else {
 				log.Fatalf("Sequence %s is empty", seq.Id())
 			}

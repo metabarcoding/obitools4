@@ -39,7 +39,7 @@ func SplitOptionSet(options *getoptions.GetOpt) {
 
 func OptionSet(options *getoptions.GetOpt) {
 	SplitOptionSet(options)
-	obiconvert.OptionSet(options)
+	obiconvert.OptionSet(false)(options)
 }
 
 func CLIHasConfig() bool {

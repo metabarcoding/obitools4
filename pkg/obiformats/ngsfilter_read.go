@@ -13,6 +13,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obilog"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obingslibrary"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
@@ -663,7 +664,7 @@ func ReadCSVNGSFilter(reader io.Reader) (*obingslibrary.NGSLibrary, error) {
 		if ok {
 			setparam(&ngsfilter, data...)
 		} else {
-			log.Warnf("At line %d: Skipping unknown parameter %s: %v", i, param, data)
+			obilog.Warnf("At line %d: Skipping unknown parameter %s: %v", i, param, data)
 		}
 	}
 

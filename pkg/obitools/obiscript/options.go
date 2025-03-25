@@ -26,7 +26,7 @@ func ScriptOptionSet(options *getoptions.GetOpt) {
 
 func OptionSet(options *getoptions.GetOpt) {
 	ScriptOptionSet(options)
-	obiconvert.OptionSet(options)
+	obiconvert.OptionSet(false)(options)
 	obigrep.SequenceSelectionOptionSet(options)
 }
 

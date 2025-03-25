@@ -152,7 +152,7 @@ func LocatePattern(id string, pattern, sequence []byte) (int, int, int) {
 
 	}
 
-	// log.Warnf("from : %d to: %d error: %d match: %v",
+	// obilog.Warnf("from : %d to: %d error: %d match: %v",
 	// 	i, end+1, -buffer[buffIndex(len(sequence)-1, len(pattern)-1, width)],
 	// 	string(sequence[i:(end+1)]))
 	return i, end + 1, -buffer[buffIndex(len(sequence)-1, len(pattern)-1, width)]

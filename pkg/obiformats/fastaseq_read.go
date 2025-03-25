@@ -213,7 +213,7 @@ func _ParseFastaFile(
 
 	for chunks := range input {
 		sequences, err := parser(chunks.Source, chunks.Raw)
-		// log.Warnf("Chunck(%d:%d) -%d- ", chunks.Order, l, sequences.Len())
+		// obilog.Warnf("Chunck(%d:%d) -%d- ", chunks.Order, l, sequences.Len())
 
 		if err != nil {
 			log.Fatalf("File %s : Cannot parse the fasta file : %v", chunks.Source, err)

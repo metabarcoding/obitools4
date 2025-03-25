@@ -8,6 +8,7 @@ import (
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obilog"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	log "github.com/sirupsen/logrus"
 	lua "github.com/yuin/gopher-lua"
@@ -230,7 +231,7 @@ func LuaProcessor(iterator obiiter.IBioSequence, name, program string, breakOnEr
 				if breakOnError {
 					log.Fatalf("Error during Lua sequence processing : %v", err)
 				} else {
-					log.Warnf("Error during Lua sequence processing : %v", err)
+					obilog.Warnf("Error during Lua sequence processing : %v", err)
 				}
 			}
 

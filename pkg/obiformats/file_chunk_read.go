@@ -172,7 +172,7 @@ func ReadFileChunk(
 				} else {
 					end = -1
 				}
-				// log.Warnf("Splitter not found, attempting %d to read in %d B increments : len(buff) = %d/%d", ic, fileChunkSize, len(extbuff), len(buff))
+				// obilog.Warnf("Splitter not found, attempting %d to read in %d B increments : len(buff) = %d/%d", ic, fileChunkSize, len(extbuff), len(buff))
 			}
 
 			pieces = pieces.Head().Pack()
@@ -204,7 +204,7 @@ func ReadFileChunk(
 				}
 
 				if len(pieces.data) > 0 {
-					// log.Warnf("chuck %d :Read %d bytes from file %s", i, io.Len(), source)
+					// obilog.Warnf("chuck %d :Read %d bytes from file %s", i, io.Len(), source)
 					chunk_channel <- pieces.FileChunk(source, i)
 					i++
 				}

@@ -3,8 +3,8 @@ package obiiter
 import (
 	"runtime"
 
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obilog"
 	"github.com/pbnjay/memory"
-	log "github.com/sirupsen/logrus"
 )
 
 func (iterator IBioSequence) LimitMemory(fraction float64) IBioSequence {
@@ -25,11 +25,11 @@ func (iterator IBioSequence) LimitMemory(fraction float64) IBioSequence {
 				runtime.Gosched()
 				nwait++
 				if nwait%1000 == 0 {
-					log.Warnf("Wait for memory limit %f/%f", fracLoad(), fraction)
+					obilog.Warnf("Wait for memory limit %f/%f", fracLoad(), fraction)
 
 				}
 				if nwait > 10000 {
-					log.Warnf("Very long wait for memory limit %f/%f", fracLoad(), fraction)
+					obilog.Warnf("Very long wait for memory limit %f/%f", fracLoad(), fraction)
 					break
 				}
 			}

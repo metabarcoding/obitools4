@@ -169,7 +169,7 @@ func BuildQualityConsensus(seqA, seqB *obiseq.BioSequence, path []int, statOnMis
 
 	right = len(*bufferQA) - right
 
-	// log.Warnf("BuildQualityConsensus: left = %d right = %d\n", left, right)
+	// obilog.Warnf("BuildQualityConsensus: left = %d right = %d\n", left, right)
 
 	for i, qA = range *bufferQA {
 		nA := (*bufferSA)[i]

@@ -17,7 +17,7 @@ import (
 func EndOfLastFastqEntry(buffer []byte) int {
 	var i int
 
-	// log.Warnf("EndOfLastFastqEntry(%d): %s", len(buffer), string(buffer[0:20]))
+	// obilog.Warnf("EndOfLastFastqEntry(%d): %s", len(buffer), string(buffer[0:20]))
 	imax := len(buffer)
 	state := 0
 	restart := imax - 1
@@ -74,7 +74,7 @@ func EndOfLastFastqEntry(buffer []byte) int {
 				state = 3
 			} else {
 				// it was not the sequence part
-				// log.Warnf("it was not the sequence part : %c", C)
+				// obilog.Warnf("it was not the sequence part : %c", C)
 				state = 0
 				i = restart
 			}
@@ -101,7 +101,7 @@ func EndOfLastFastqEntry(buffer []byte) int {
 				// log.Warn("====> End of the last sequence")
 				state = 7
 			} else {
-				// log.Warnf("%s: Strange it was not the end of the last sequence : %c : %s", string(buffer[0:40]), C, string(buffer[i-20:i+5]))
+				// obilog.Warnf("%s: Strange it was not the end of the last sequence : %c : %s", string(buffer[0:40]), C, string(buffer[i-20:i+5]))
 				state = 5
 			}
 		}

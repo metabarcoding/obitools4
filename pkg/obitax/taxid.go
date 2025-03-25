@@ -35,7 +35,7 @@ func (f *TaxidFactory) FromString(taxid string) (Taxid, error) {
 	if len(part2) == 0 {
 		taxid = part1
 	} else {
-		//log.Warnf("TaxidFactory.FromString: taxid %s -> -%s- -%s- ", taxid, part1, part2)
+		//obilog.Warnf("TaxidFactory.FromString: taxid %s -> -%s- -%s- ", taxid, part1, part2)
 		if part1 != f.code {
 			return nil, fmt.Errorf("taxid %s string does not start with taxonomy code %s", taxid, f.code)
 		}

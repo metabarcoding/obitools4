@@ -1,6 +1,7 @@
 package obiseq
 
 import (
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obilog"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 	log "github.com/sirupsen/logrus"
@@ -61,7 +62,7 @@ func (s *BioSequenceSlice) EnsureCapacity(capacity int) *BioSequenceSlice {
 		if c < capacity {
 			n++
 			if n < 4 {
-				log.Warnf("cannot allocate a Biosequence Slice of size %d (only %d from %d)", capacity, c, old_c)
+				obilog.Warnf("cannot allocate a Biosequence Slice of size %d (only %d from %d)", capacity, c, old_c)
 			} else {
 				log.Panicf("cannot allocate a Biosequence Slice of size %d (only %d from %d)", capacity, c, old_c)
 			}

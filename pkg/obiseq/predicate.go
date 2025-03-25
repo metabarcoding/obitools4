@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"regexp"
 
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obilog"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -278,9 +279,10 @@ func ExpressionPredicat(expression string) SequencePredicate {
 		)
 
 		if err != nil {
-			log.Fatalf("Expression '%s' cannot be evaluated on sequence %s",
+			obilog.Warnf("Expression '%s' cannot be evaluated on sequence %s",
 				expression,
 				sequence.Id())
+			return false
 		}
 
 		return value

@@ -117,7 +117,7 @@ func _MatchScoreRatio(QF, QR byte) (float64, float64) {
 	term1 := _Logaddexp(qF, qR)
 	term2 := _Logdiffexp(term1, qF+qR)
 
-	// log.Warnf("MatchScoreRatio: %v, %v , %v, %v", QF, QR, term1, term2)
+	// obilog.Warnf("MatchScoreRatio: %v, %v , %v, %v", QF, QR, term1, term2)
 
 	match_logp := _Log1mexp(term2 + l3 - l4)
 	match_score := match_logp - _Log1mexp(match_logp)

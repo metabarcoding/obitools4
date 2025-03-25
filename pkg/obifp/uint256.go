@@ -4,6 +4,7 @@ import (
 	"math"
 	"math/bits"
 
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obilog"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -51,7 +52,7 @@ func (u Uint256) IsZero() bool {
 // Returns a Uint64 value.
 func (u Uint256) Uint64() Uint64 {
 	if u.w3 != 0 || u.w2 != 0 || u.w1 != 0 {
-		log.Warnf("Uint256 overflow at Uint64(%v)", u)
+		obilog.Warnf("Uint256 overflow at Uint64(%v)", u)
 	}
 	return Uint64{w0: u.w0}
 }
@@ -64,7 +65,7 @@ func (u Uint256) Uint64() Uint64 {
 // Returns a Uint128 value.
 func (u Uint256) Uint128() Uint128 {
 	if u.w3 != 0 || u.w2 != 0 {
-		log.Warnf("Uint256 overflow at Uint128(%v)", u)
+		obilog.Warnf("Uint256 overflow at Uint128(%v)", u)
 	}
 	return Uint128{u.w1, u.w0}
 }

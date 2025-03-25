@@ -87,7 +87,7 @@ func lookForTag(seq string, delimiter byte) string {
 
 	i := len(seq) - 1
 
-	// log.Warnf("Provided fragment : %s", string(seq))
+	// obilog.Warnf("Provided fragment : %s", string(seq))
 
 	for i >= 0 && seq[i] != delimiter {
 		i--
@@ -109,7 +109,7 @@ func lookForTag(seq string, delimiter byte) string {
 		return ""
 	}
 
-	// log.Warnf("extracted : %s", string(seq[begin:end]))
+	// obilog.Warnf("extracted : %s", string(seq[begin:end]))
 	return seq[begin:end]
 }
 
@@ -340,8 +340,8 @@ func (marker *Marker) beginTagExtractor(
 	sequence *obiseq.BioSequence,
 	begin int,
 	forward bool) string {
-	// log.Warnf("Forward : %v -> %d %c", forward, marker.Forward_spacer, marker.Forward_tag_delimiter)
-	// log.Warnf("Forward : %v -> %d %c", forward, marker.Reverse_spacer, marker.Reverse_tag_delimiter)
+	// obilog.Warnf("Forward : %v -> %d %c", forward, marker.Forward_spacer, marker.Forward_tag_delimiter)
+	// obilog.Warnf("Forward : %v -> %d %c", forward, marker.Reverse_spacer, marker.Reverse_tag_delimiter)
 	if forward {
 		if marker.Forward_tag_length == 0 {
 			return ""
@@ -351,10 +351,10 @@ func (marker *Marker) beginTagExtractor(
 			return marker.beginFixedTagExtractor(sequence, begin, forward)
 		} else {
 			if marker.Forward_tag_indels == 0 {
-				// log.Warnf("Delimited tag for forward primers %s", marker.forward.String())
+				// obilog.Warnf("Delimited tag for forward primers %s", marker.forward.String())
 				return marker.beginDelimitedTagExtractor(sequence, begin, forward)
 			} else {
-				// log.Warnf("Rescue tag for forward primers %s", marker.forward.String())
+				// obilog.Warnf("Rescue tag for forward primers %s", marker.forward.String())
 				return marker.beginRescueTagExtractor(sequence, begin, forward)
 			}
 		}
@@ -367,10 +367,10 @@ func (marker *Marker) beginTagExtractor(
 			return marker.beginFixedTagExtractor(sequence, begin, forward)
 		} else {
 			if marker.Reverse_tag_indels == 0 {
-				// log.Warnf("Delimited tag for reverse/complement primers %s", marker.creverse.String())
+				// obilog.Warnf("Delimited tag for reverse/complement primers %s", marker.creverse.String())
 				return marker.beginDelimitedTagExtractor(sequence, begin, forward)
 			} else {
-				// log.Warnf("Rescue tag for reverse/complement primers %s", marker.creverse.String())
+				// obilog.Warnf("Rescue tag for reverse/complement primers %s", marker.creverse.String())
 				return marker.beginRescueTagExtractor(sequence, begin, forward)
 			}
 		}
@@ -390,10 +390,10 @@ func (marker *Marker) endTagExtractor(
 			return marker.endFixedTagExtractor(sequence, end, forward)
 		} else {
 			if marker.Reverse_tag_indels == 0 {
-				// log.Warnf("Delimited tag for reverse primers %s", marker.reverse.String())
+				// obilog.Warnf("Delimited tag for reverse primers %s", marker.reverse.String())
 				return marker.endDelimitedTagExtractor(sequence, end, forward)
 			} else {
-				// log.Warnf("Rescue tag for reverse primers %s", marker.reverse.String())
+				// obilog.Warnf("Rescue tag for reverse primers %s", marker.reverse.String())
 				return marker.endRescueTagExtractor(sequence, end, forward)
 			}
 		}
@@ -406,10 +406,10 @@ func (marker *Marker) endTagExtractor(
 			return marker.endFixedTagExtractor(sequence, end, forward)
 		} else {
 			if marker.Forward_tag_indels == 0 {
-				// log.Warnf("Delimited tag for forward/complement primers %s", marker.cforward.String())
+				// obilog.Warnf("Delimited tag for forward/complement primers %s", marker.cforward.String())
 				return marker.endDelimitedTagExtractor(sequence, end, forward)
 			} else {
-				// log.Warnf("Rescue tag for forward/complement primers %s", marker.cforward.String())
+				// obilog.Warnf("Rescue tag for forward/complement primers %s", marker.cforward.String())
 				return marker.endRescueTagExtractor(sequence, end, forward)
 			}
 		}

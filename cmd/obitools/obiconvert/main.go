@@ -17,7 +17,7 @@ func main() {
 	optionParser := obioptions.GenerateOptionParser(
 		"obiconvert",
 		"convertion of sequence files to various formats",
-		obiconvert.OptionSet)
+		obiconvert.OptionSet(true))
 
 	_, args := optionParser(os.Args)
 
