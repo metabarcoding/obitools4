@@ -18,6 +18,7 @@ import (
 
 var __obi_header_value_string_pattern__ = regexp.MustCompile(`^'\s*([^']*'|"[^"]*")\s*;`)
 var __obi_header_value_numeric_pattern__ = regexp.MustCompile(`^\s*([+-]?\.\d+|[+-]?\d+(\.\d*)?([eE][+-]?\d+)?)\s*;`)
+var __obi_header_map_int_key__ = regexp.MustCompile("([{,])([0-9]+):")
 
 func __match__dict__(text []byte) []int {
 
@@ -212,6 +213,7 @@ func ParseOBIFeatures(text string, annotations obiseq.Annotation) string {
 				if len(m) > 0 {
 					bvalue = bytes.TrimSpace(part[m[0]:(m[1] - 1)])
 					j := bytes.ReplaceAll(bvalue, []byte("'"), []byte(`"`))
+					j = __obi_header_map_int_key__.ReplaceAll(j, []byte(`$1"$2":`))
 					var err error
 					switch {
 					case strings.HasPrefix(key, "merged_") ||
