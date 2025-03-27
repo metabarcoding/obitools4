@@ -145,3 +145,18 @@ func (slice *TaxonSlice) Set(index int, taxon *Taxon) *TaxonSlice {
 
 	return slice
 }
+
+func (slice *TaxonSlice) Push(taxon *Taxon) *TaxonSlice {
+	if slice.taxonomy != taxon.Taxonomy {
+		log.Panic("Cannot add taxon from a different taxonomy")
+	}
+
+	slice.slice = append(slice.slice, taxon.Node)
+
+	return slice
+}
+
+func (slice *TaxonSlice) ReduceToSize(size int) *TaxonSlice {
+	slice.slice = slice.slice[:size]
+	return slice
+}

@@ -68,11 +68,11 @@ if [[ ! -d "${INSTALL_DIR}/bin" ]]; then
   exit 1
 fi
 
-INSTALL_DIR="$(cd $INSTALL_DIR && pwd)"
+INSTALL_DIR="$(cd ${INSTALL_DIR} && pwd)"
 
-echo WORK_DIR=$WORK_DIR  1>&2
-echo INSTALL_DIR=$INSTALL_DIR  1>&2
-echo OBITOOLS_PREFIX=$OBITOOLS_PREFIX  1>&2
+echo "WORK_DIR=$WORK_DIR"  1>&2
+echo "INSTALL_DIR=$INSTALL_DIR"  1>&2
+echo "OBITOOLS_PREFIX=$OBITOOLS_PREFIX"  1>&2
 
 pushd "$WORK_DIR"|| exit
 

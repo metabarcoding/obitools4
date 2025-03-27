@@ -249,16 +249,16 @@ func CLIAssignTaxonomy(iterator obiiter.IBioSequence,
 		[]*obikmer.Table4mer,
 		len(references))
 
-	taxa := taxo.NewTaxonSlice(references.Len(), references.Len())
+	taxa := taxo.NewTaxonSlice(0, references.Len())
 	buffer := make([]byte, 0, 1000)
 
 	j := 0
 	for _, seq := range references {
-		references[j] = seq
-		refcounts[j] = obikmer.Count4Mer(seq, &buffer, nil)
 		taxon := seq.Taxon(taxo)
-		if taxon != nil {
-			taxa.Set(j, taxon)
+		if taxon != nil && taxon.Node != nil {
+			references[j] = seq
+			refcounts[j] = obikmer.Count4Mer(seq, &buffer, nil)
+			taxa.Push(taxon)
 			j++
 		} else {
 			obilog.Warnf("Taxid %s is not described in the taxonomy %s."+
@@ -267,6 +267,7 @@ func CLIAssignTaxonomy(iterator obiiter.IBioSequence,
 		}
 	}
 
+	log.Infof("%d reference sequences conserved on %d", j, len(references))
 	references = references[:j]
 	refcounts = refcounts[:j]
 
