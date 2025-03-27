@@ -257,8 +257,8 @@ func CLIAssignTaxonomy(iterator obiiter.IBioSequence,
 		references[j] = seq
 		refcounts[j] = obikmer.Count4Mer(seq, &buffer, nil)
 		taxon := seq.Taxon(taxo)
-		taxa.Set(j, taxon)
 		if taxon != nil {
+			taxa.Set(j, taxon)
 			j++
 		} else {
 			obilog.Warnf("Taxid %s is not described in the taxonomy %s."+
