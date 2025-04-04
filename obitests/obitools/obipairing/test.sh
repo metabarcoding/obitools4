@@ -110,8 +110,8 @@ fi
 
 ((ntest++))
 if obicsv -Z -s -i \
-          -k ali_dir -k ali_length -k paring_fast_count \
-          -k paring_fast_overlap -k paring_fast_score \
+          -k ali_dir -k ali_length -k pairing_fast_count \
+          -k pairing_fast_overlap -k pairing_fast_score \
           -k score -k score_norm -k seq_a_single \
           -k seq_b_single -k seq_ab_match \
           "${TMPDIR}/wolf_paired_alignment.fastq.gz" \
