@@ -4,6 +4,15 @@
 
 ### Bug fixes
 
+- In `obipairing` correct the misspelling of the `obiparing_*` tags where the `i`
+  was missing to `obipairing_`.  
+
+- In `obigrep` the **-C** option that excludes sequences too abundant was not 
+  functional.
+
+- In `obitaxonomy` the **-l** option that lists all the taxonomic rank defined by
+  a taxonomy was not functional
+
 - The file type guesser was not using enough data to be able to correctly detect
   file format when sequences were too long in fastq and fasta or when lines were
   to long in CSV files. That's now corrected

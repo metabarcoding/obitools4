@@ -223,7 +223,7 @@ func CLISequenceCountPredicate() obiseq.SequencePredicate {
 		return p
 	}
 
-	if _MaximumLength != int(2e9) {
+	if _MaximumCount != int(2e9) {
 		return obiseq.IsLessAbundantOrEqualTo(_MaximumCount)
 	}
 

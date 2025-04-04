@@ -165,3 +165,7 @@ func CLIExtractTaxonomy() bool {
 func CLIAsNewick() bool {
 	return __newick__
 }
+
+func CLIAskForRankList() bool {
+	return __rank_list__
+}

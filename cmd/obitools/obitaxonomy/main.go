@@ -4,9 +4,11 @@ import (
 	"os"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiitercsv"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obicsv"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obitaxonomy"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 
@@ -37,13 +39,25 @@ func main() {
 	}
 
 	switch {
-	case obitaxonomy.CLIDownloadNCBI():
-		err := obitaxonomy.CLIDownloadNCBITaxdump()
-		if err != nil {
-			log.Errorf("Cannot download NCBI taxonomy: %s", err.Error())
-			os.Exit(1)
-		}
+	case obitaxonomy.CLIAskForRankList():
+		newIter := obiitercsv.NewICSVRecord()
+		newIter.Add(1)
+		newIter.AppendField("rank")
+		go func() {
+			ranks := obitax.DefaultTaxonomy().RankList()
+			data := make([]obiitercsv.CSVRecord, len(ranks))
 
+			for i, rank := range ranks {
+				record := make(obiitercsv.CSVRecord)
+				record["rank"] = rank
+				data[i] = record
+			}
+			newIter.Push(obiitercsv.MakeCSVRecordBatch(obitax.DefaultTaxonomy().Name(), 0, data))
+			newIter.Close()
+			newIter.Done()
+		}()
+		obicsv.CLICSVWriter(newIter, true)
+		obiutils.WaitForLastPipe()
 		os.Exit(0)
 
 	case obitaxonomy.CLIExtractTaxonomy():
