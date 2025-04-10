@@ -1,11 +1,12 @@
 module git.metabarcoding.org/obitools/obitools4/obitools4
 
-go 1.23.1
+go 1.23.4
+
+toolchain go1.24.2
 
 require (
 	github.com/DavidGamba/go-getoptions v0.28.0
 	github.com/PaesslerAG/gval v1.2.2
-	github.com/TuftsBCB/io v0.0.0-20140121014543-22b94e9b23f9
 	github.com/barkimedes/go-deepcopy v0.0.0-20220514131651-17c30cfc62df
 	github.com/buger/jsonparser v1.1.1
 	github.com/chen3feng/stl4go v0.1.1
@@ -19,7 +20,7 @@ require (
 	github.com/stretchr/testify v1.8.4
 	github.com/tevino/abool/v2 v2.1.0
 	github.com/yuin/gopher-lua v1.1.1
-	golang.org/x/exp v0.0.0-20231006140011-7918f672742d
+	golang.org/x/exp v0.0.0-20231110203233-9a3e6036ecaa
 	gonum.org/v1/gonum v0.14.0
 	gopkg.in/yaml.v3 v3.0.1
 	scientificgo.org/special v0.0.0
@@ -28,10 +29,10 @@ require (
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/goombaio/orderedmap v0.0.0-20180924084748-ba921b7e2419 // indirect
-	github.com/kr/pretty v0.3.0 // indirect
+	github.com/kr/pretty v0.3.1 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/rogpeppe/go-internal v1.6.1 // indirect
+	github.com/rogpeppe/go-internal v1.12.0 // indirect
 )
 
 require (
@@ -44,8 +45,8 @@ require (
 	github.com/rivo/uniseg v0.4.4 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/ulikunitz/xz v0.5.11
-	golang.org/x/net v0.17.0 // indirect
-	golang.org/x/sys v0.17.0 // indirect
-	golang.org/x/term v0.13.0 // indirect
+	golang.org/x/net v0.35.0 // indirect
+	golang.org/x/sys v0.30.0 // indirect
+	golang.org/x/term v0.29.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c
 )
