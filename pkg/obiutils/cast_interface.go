@@ -3,6 +3,7 @@ package obiutils
 import (
 	"fmt"
 	"reflect"
+	"strconv"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -125,6 +126,12 @@ func InterfaceToInt(i interface{}) (val int, err error) {
 		val = int(t) // standardizes across systems
 	case uint64:
 		val = int(t) // standardizes across systems
+	case string:
+		rep, err := strconv.ParseInt(t, 10, 64)
+		if err != nil {
+			err = &NotAnFloat64{"value attribute cannot be casted to an int value"}
+		}
+		val = int(rep)
 	default:
 		err = &NotAnInteger{"value attribute cannot be casted to an integer"}
 	}
@@ -162,6 +169,11 @@ func InterfaceToFloat64(i interface{}) (val float64, err error) {
 		val = float64(t) // standardizes across systems
 	case uint64:
 		val = float64(t) // standardizes across systems
+	case string:
+		val, err = strconv.ParseFloat(t, 10)
+		if err != nil {
+			err = &NotAnFloat64{"value attribute cannot be casted to a float value"}
+		}
 	default:
 		err = &NotAnFloat64{"value attribute cannot be casted to a float value"}
 	}

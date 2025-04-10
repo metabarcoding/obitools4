@@ -3,6 +3,7 @@ package obiseq
 import (
 	"fmt"
 	"reflect"
+	"regexp"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -204,6 +205,8 @@ var OBILang = gval.NewLanguage(
 		return scomp, nil
 	}),
 	gval.Function("replace", func(args ...interface{}) (interface{}, error) {
-		return strings.ReplaceAll(args[0].(string), args[1].(string), args[2].(string)), nil
+		pattern := regexp.MustCompile(args[1].(string))
+		results := pattern.ReplaceAllString(args[0].(string), args[2].(string))
+		return results, nil
 	}),
 )
