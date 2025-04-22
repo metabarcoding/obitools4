@@ -32,6 +32,7 @@ var _cut = ""
 var _taxonomicPath = false
 var _withRank = false
 var _withScientificName = false
+var _withNumbering = false
 
 func SequenceAnnotationOptionSet(options *getoptions.GetOpt) {
 	// options.BoolVar(&_addRank, "seq-rank", _addRank,
@@ -44,6 +45,10 @@ func SequenceAnnotationOptionSet(options *getoptions.GetOpt) {
 
 	options.BoolVar(&_setSeqLength, "length", _setSeqLength,
 		options.Description("Adds attribute with seq_length as a key and sequence length as a value."),
+	)
+
+	options.BoolVar(&_withNumbering, "number", _withNumbering,
+		options.Description("Adds an attribute with seq_number as a key and an ordinal number starting from 1 as a value."),
 	)
 
 	options.StringVar(&_ahoCorazick, "aho-corasick", _ahoCorazick,
@@ -201,6 +206,10 @@ func CLITaxonAtRank() []string {
 
 func CLIHasSetLengthFlag() bool {
 	return _setSeqLength
+}
+
+func CLIHasSetNumberFlag() bool {
+	return _withNumbering
 }
 
 func CLIHasClearAllFlag() bool {

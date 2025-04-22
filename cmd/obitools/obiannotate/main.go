@@ -42,6 +42,11 @@ func main() {
 	obiconvert.OpenSequenceDataErrorMessage(args, err)
 
 	annotator := obiannotate.CLIAnnotationPipeline()
+
+	if obiannotate.CLIHasSetNumberFlag() {
+		sequences = sequences.NumberSequences(1, !obiconvert.CLINoInputOrder())
+	}
+
 	obiconvert.CLIWriteBioSequences(sequences.Pipe(annotator), true)
 
 	obiutils.WaitForLastPipe()

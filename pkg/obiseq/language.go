@@ -145,7 +145,7 @@ var OBILang = gval.NewLanguage(
 		ismap := obiutils.IsAMap(args[0])
 		return ismap, nil
 	}),
-	gval.Function("printf", func(args ...interface{}) (interface{}, error) {
+	gval.Function("sprintf", func(args ...interface{}) (interface{}, error) {
 		text := fmt.Sprintf(args[0].(string), args[1:]...)
 		return text, nil
 	}),
