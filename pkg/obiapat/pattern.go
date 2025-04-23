@@ -26,7 +26,7 @@ var _AllocatedApaPattern = 0
 // ApatPattern stores a regular pattern usable by the
 // Apat algorithm functions and methods
 type _ApatPattern struct {
-	pointer *C.Pattern
+	pointer C.PatternPtr
 	pattern string
 }
 
@@ -159,7 +159,7 @@ func (pattern ApatPattern) Free() {
 // Print method prints the ApatPattern to the standard output.
 // This is mainly a debug method.
 func (pattern ApatPattern) Print() {
-	C.PrintDebugPattern(C.PatternPtr(pattern.pointer.pointer))
+	C.PrintDebugPattern((*C.Pattern)(pattern.pointer.pointer))
 }
 
 // MakeApatSequence casts an obiseq.BioSequence to an ApatSequence.
