@@ -108,6 +108,9 @@ export PATH
 GOPATH="$(pwd)/go"
 export GOPATH
 
+export GOCACHE="$(cd ${WORK_DIR}/cache && pwd)"
+echo "GOCACHE=$GOCACHE" 1>&2@
+mkdir -p "$GOCACHE"
 
 
 curl -L "$OBIURL4" > master.zip
