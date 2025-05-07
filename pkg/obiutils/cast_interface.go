@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -14,7 +15,12 @@ import (
 // It returns the string representation and an error if any occurred during the conversion process.
 func InterfaceToString(i interface{}) (val string, err error) {
 	err = nil
-	val = fmt.Sprintf("%v", i)
+	if vc, ok := i.(interface{ String() string }); ok {
+		val = vc.String()
+	} else {
+		val = fmt.Sprintf("%v", i)
+	}
+
 	return
 }
 
@@ -67,6 +73,10 @@ func InterfaceToBool(i interface{}) (val bool, err error) {
 		val = t != 0 // standardizes across systems
 	case uint64:
 		val = t != 0 // standardizes across systems
+	case string:
+		val = strings.ToLower(t) == "true" || t == "1" || strings.ToLower(t) == "yes" || strings.ToLower(t) == "on" || strings.ToLower(t) == "t"
+	case nil:
+		val = false
 	default:
 		err = &NotABoolean{"value attribute cannot be casted to a boolean"}
 	}
