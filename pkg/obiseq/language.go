@@ -135,6 +135,12 @@ var OBILang = gval.NewLanguage(
 		length := obiutils.Len(args[0])
 		return (float64)(length), nil
 	}),
+	gval.Function("min", func(args ...interface{}) (interface{}, error) {
+		return obiutils.Min(args[0])
+	}),
+	gval.Function("max", func(args ...interface{}) (interface{}, error) {
+		return obiutils.Max(args[0])
+	}),
 	gval.Function("contains", func(args ...interface{}) (interface{}, error) {
 		if obiutils.IsAMap(args[0]) {
 			val := reflect.ValueOf(args[0]).MapIndex(reflect.ValueOf(args[1]))

@@ -268,7 +268,11 @@ func (marker *Marker) CheckTagLength() error {
 		reverse_length[len(tags.Reverse)]++
 	}
 
-	maxfl, _ := obiutils.MaxMap(forward_length)
+	maxfl, _, err := obiutils.MaxMap(forward_length)
+
+	if err != nil {
+		return err
+	}
 
 	if len(forward_length) > 1 {
 		others := make([]int, 0)
@@ -280,7 +284,11 @@ func (marker *Marker) CheckTagLength() error {
 		return fmt.Errorf("forward tag length %d is not the same for all the PCRs : %v", maxfl, others)
 	}
 
-	maxrl, _ := obiutils.MaxMap(reverse_length)
+	maxrl, _, err := obiutils.MaxMap(reverse_length)
+
+	if err != nil {
+		return err
+	}
 
 	if len(reverse_length) > 1 {
 		others := make([]int, 0)
