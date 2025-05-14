@@ -8,12 +8,33 @@ import (
 	"regexp"
 
 	"github.com/gabriel-vasile/mimetype"
+	log "github.com/sirupsen/logrus"
 )
 
-func DropLastLine(b []byte, readLimit uint32) []byte {
-	if readLimit == 0 || uint32(len(b)) < readLimit {
-		return b
+func HasBOM(data []byte) bool {
+	switch {
+	case bytes.HasPrefix(data, []byte{0xEF, 0xBB, 0xBF}):
+		log.Infoln("BOM detected: UTF-8 (EF BB BF)")
+		return true
+	case bytes.HasPrefix(data, []byte{0xFE, 0xFF}):
+		log.Infoln("BOM detected: UTF-16 Big Endian (FE FF)")
+		return true
+	case bytes.HasPrefix(data, []byte{0xFF, 0xFE}):
+		log.Infoln("BOM detected: UTF-16 Little Endian (FF FE)")
+		return true
+	case bytes.HasPrefix(data, []byte{0x00, 0x00, 0xFE, 0xFF}):
+		log.Infoln("BOM detected: UTF-32 Big Endian (00 00 FE FF)")
+		return true
+	case bytes.HasPrefix(data, []byte{0xFF, 0xFE, 0x00, 0x00}):
+		log.Infoln("BOM detected: UTF-32 Little Endian (FF FE 00 00)")
+		return true
+	default:
+		log.Infoln("No BOM detected")
+		return false
 	}
+}
+
+func DropLastLine(b []byte) []byte {
 	for i := len(b) - 1; i > 0; i-- {
 		if b[i] == '\n' {
 			return b[:i]
@@ -27,7 +48,7 @@ var __obimimetype_registred__ = false
 func RegisterOBIMimeType() {
 	if !__obimimetype_registred__ {
 		csv := func(in []byte, limit uint32) bool {
-			in = DropLastLine(in, limit)
+			in = DropLastLine(in)
 
 			br := bytes.NewReader(in)
 			r := csv.NewReader(br)

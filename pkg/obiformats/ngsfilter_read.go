@@ -89,7 +89,7 @@ func _parseMainNGSFilter(text string) (obingslibrary.PrimerPair, obingslibrary.T
 }
 
 func NGSFilterCsvDetector(raw []byte, limit uint32) bool {
-	r := csv.NewReader(bytes.NewReader(obiutils.DropLastLine(raw, limit)))
+	r := csv.NewReader(bytes.NewReader(obiutils.DropLastLine(raw)))
 	r.Comma = ','
 	r.ReuseRecord = true
 	r.LazyQuotes = true
@@ -110,7 +110,6 @@ func NGSFilterCsvDetector(raw []byte, limit uint32) bool {
 		if err != nil {
 			return false
 		}
-
 		if nfields == 0 {
 			nfields = len(rec)
 		} else if nfields != len(rec) {
@@ -133,16 +132,20 @@ func OBIMimeNGSFilterTypeGuesser(stream io.Reader) (*mimetype.MIME, io.Reader, e
 		return nil, nil, err
 	}
 
+	buf = buf[:n]
+
+	obiutils.HasBOM(buf)
+
 	mimetype.Lookup("text/plain").Extend(NGSFilterCsvDetector, "text/ngsfilter-csv", ".csv")
 
 	// Detect the MIME type using the mimetype library
-	mimeType := mimetype.Detect(buf[:n])
+	mimeType := mimetype.Detect(buf)
 	if mimeType == nil {
 		return nil, nil, err
 	}
 
 	// Create a new reader based on the read data
-	newReader := io.Reader(bytes.NewReader(buf[:n]))
+	newReader := io.Reader(bytes.NewReader(buf))
 
 	if err == nil {
 		newReader = io.MultiReader(newReader, stream)
