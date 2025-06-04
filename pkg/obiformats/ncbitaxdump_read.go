@@ -149,7 +149,7 @@ func loadMergedTable(reader io.Reader, taxonomy *obitax.Taxonomy) int {
 // Returns:
 //   - A pointer to the obitax.Taxonomy object containing the loaded taxonomy data, or an error
 //     if any of the files cannot be opened or read.
-func LoadNCBITaxDump(directory string, onlysn bool) (*obitax.Taxonomy, error) {
+func LoadNCBITaxDump(directory string, onlysn, seqAsTaxa bool) (*obitax.Taxonomy, error) {
 
 	taxonomy := obitax.NewTaxonomy("NCBI Taxonomy", "taxon", obiutils.AsciiDigitSet)
 

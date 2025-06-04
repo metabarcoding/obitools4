@@ -25,6 +25,8 @@ var __to_dump__ = ""
 var __download_ncbi__ = false
 var __extract_taxonomy__ = false
 var __newick__ = false
+var __newick_with_leaves__ = false
+var __newick_without_root__ = false
 
 func FilterTaxonomyOptionSet(options *getoptions.GetOpt) {
 	options.BoolVar(&__rank_list__, "rank-list", false,
@@ -80,6 +82,9 @@ func OptionSet(options *getoptions.GetOpt) {
 	)
 	options.BoolVar(&__newick__, "newick-output", __newick__,
 		options.Description("Format the resulting taxonomy as a newick tree"),
+	)
+	options.BoolVar(&__newick_without_root__, "without-root", __newick_without_root__,
+		options.Description("If used, do not include the non-branched path to the root in the output"),
 	)
 
 }
@@ -164,6 +169,14 @@ func CLIExtractTaxonomy() bool {
 
 func CLIAsNewick() bool {
 	return __newick__
+}
+
+func CLINewickWithLeaves() bool {
+	return __newick_with_leaves__
+}
+
+func CLINewickWithoutRoot() bool {
+	return __newick_without_root__
 }
 
 func CLIAskForRankList() bool {

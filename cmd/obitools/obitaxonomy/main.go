@@ -62,12 +62,13 @@ func main() {
 
 	case obitaxonomy.CLIExtractTaxonomy():
 		iter, err := obiconvert.CLIReadBioSequences(args...)
+		iter = iter.NumberSequences(1, true)
 
 		if err != nil {
 			log.Fatalf("Cannot extract taxonomy: %v", err)
 		}
 
-		taxonomy, err := iter.ExtractTaxonomy()
+		taxonomy, err := iter.ExtractTaxonomy(obitaxonomy.CLINewickWithLeaves())
 
 		if err != nil {
 			log.Fatalf("Cannot extract taxonomy: %v", err)

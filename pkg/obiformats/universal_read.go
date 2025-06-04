@@ -154,8 +154,7 @@ func ReadSequencesFromFile(filename string,
 	return obiiter.NilIBioSequence, nil
 }
 
-// func ReadSequencesFromStdin(options ...WithOption) obiiter.IBioSequence {
-
-// 	options = append(options, OptionsSource("stdin"))
-
-// }
+func ReadSequencesFromStdin(options ...WithOption) (obiiter.IBioSequence, error) {
+	options = append(options, OptionCloseFile())
+	return ReadSequencesFromFile("-", options...)
+}

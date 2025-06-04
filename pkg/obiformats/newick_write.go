@@ -54,7 +54,7 @@ func (tree *Tree) Newick(level int, taxid, scientific_name, rank bool) string {
 		if scientific_name {
 			buffer.WriteByte(' ')
 		}
-		buffer.WriteByte('-')
+		// buffer.WriteByte('-')
 		if taxid {
 			buffer.WriteString(*tree.TaxNode.Id())
 			if rank {
@@ -64,7 +64,7 @@ func (tree *Tree) Newick(level int, taxid, scientific_name, rank bool) string {
 		if rank {
 			buffer.WriteString(tree.TaxNode.Rank())
 		}
-		buffer.WriteByte('-')
+		//buffer.WriteByte('-')
 	}
 	if scientific_name || taxid || rank {
 		buffer.WriteByte('\'')
@@ -85,24 +85,14 @@ func Newick(taxa *obitax.TaxonSet, taxid, scientific_name, rank bool) string {
 		return ""
 	}
 
-	iterator := taxa.Sort().Iterator()
+	root := taxa.Sort().Get(0)
+	tree, err := taxa.AsPhyloTree(root)
 
-	nodes := make(map[*string]*Tree, taxa.Len())
-	trees := make([]*Tree, 0)
-
-	for iterator.Next() {
-		taxon := iterator.Get()
-
-		tree := &Tree{TaxNode: taxon.Node}
-		if parent, ok := nodes[taxon.Parent().Node.Id()]; ok {
-			parent.Children = append(parent.Children, tree)
-		} else {
-			trees = append(trees, tree)
-		}
-		nodes[taxon.Node.Id()] = tree
+	if err != nil {
+		log.Fatalf("Cannot build taxonomy tree: %v", err)
 	}
 
-	return trees[0].Newick(0, taxid, scientific_name, rank)
+	return tree.Newick(0)
 }
 
 func WriteNewick(iterator *obitax.ITaxon,

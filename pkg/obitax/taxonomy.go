@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiphylo"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 )
 
@@ -414,4 +415,11 @@ func (taxonomy *Taxonomy) InsertPathString(path []string) (*Taxonomy, error) {
 	}
 
 	return taxonomy, nil
+}
+
+func (taxo *Taxonomy) AsPhyloTree() (*obiphylo.PhyloNode, error) {
+	root := taxo.Root().Node
+	taxa := taxo.AsTaxonSet()
+
+	return taxa.AsPhyloTree(root)
 }

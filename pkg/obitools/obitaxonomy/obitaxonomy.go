@@ -91,6 +91,7 @@ func CLINewickWriter(iterator *obitax.ITaxon,
 		obiformats.OptionsWithRank(CLIWithRank()),
 		obiformats.OptionsWithScientificName(CLIWithScientificName()),
 		obiformats.OptionsWithTaxid(true),
+		obiformats.OptionWithoutRootPath(CLINewickWithoutRoot()),
 	)
 
 	filename := obiconvert.CLIOutPutFileName()

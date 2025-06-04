@@ -63,7 +63,7 @@ func IsNCBITarTaxDump(path string) bool {
 	return citations && division && gencode && names && delnodes && gc && merged && nodes
 }
 
-func LoadNCBITarTaxDump(path string, onlysn bool) (*obitax.Taxonomy, error) {
+func LoadNCBITarTaxDump(path string, onlysn, seqAsTaxa bool) (*obitax.Taxonomy, error) {
 
 	taxonomy := obitax.NewTaxonomy("NCBI Taxonomy", "taxon", obiutils.AsciiDigitSet)
 

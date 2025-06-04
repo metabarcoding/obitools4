@@ -133,7 +133,7 @@ func CLIReadBioSequences(filenames ...string) (obiiter.IBioSequence, error) {
 		case "csv":
 			iterator, err = obiformats.ReadCSV(os.Stdin, opts...)
 		default:
-			iterator = obiformats.ReadFastSeqFromStdin(opts...)
+			iterator, err = obiformats.ReadSequencesFromStdin(opts...)
 		}
 
 		if err != nil {

@@ -189,7 +189,11 @@ func (sequence *BioSequence) Path() []string {
 	path, ok := sequence.GetAttribute("taxonomic_path")
 
 	if !ok {
-		return nil
+		if taxo := obitax.DefaultTaxonomy(); taxo != nil {
+			path = sequence.SetPath(taxo)
+		} else {
+			return nil
+		}
 	}
 
 	slice, err := obiutils.InterfaceToStringSlice(path)

@@ -10,7 +10,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func LoadCSVTaxonomy(path string, onlysn bool) (*obitax.Taxonomy, error) {
+func LoadCSVTaxonomy(path string, onlysn, seqAsTaxa bool) (*obitax.Taxonomy, error) {
 
 	log.Infof("Loading taxonomy from csv file: %s", path)
 

@@ -186,6 +186,9 @@ func Identify(sequence *obiseq.BioSequence,
 				// log.Debugln("Need of indexing")
 				newidx++
 				idx = obirefidx.IndexSequence(seqidxs[i], references, &refcounts, taxa, taxo)
+				if len(idx) == 0 {
+					log.Panicf("%s idx: %v", references[seqidxs[i]].Id(), idx)
+				}
 				references[seqidxs[i]].SetOBITagRefIndex(idx)
 				log.Debugln(references[seqidxs[i]].Id(), idx)
 			}

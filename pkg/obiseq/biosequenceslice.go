@@ -1,6 +1,9 @@
 package obiseq
 
 import (
+	"errors"
+	"fmt"
+
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obilog"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
@@ -182,11 +185,26 @@ func (s *BioSequenceSlice) SortOnLength(reverse bool) {
 	})
 }
 
-func (s *BioSequenceSlice) ExtractTaxonomy(taxonomy *obitax.Taxonomy) (*obitax.Taxonomy, error) {
+func (s *BioSequenceSlice) ExtractTaxonomy(taxonomy *obitax.Taxonomy, seqAsTaxa bool) (*obitax.Taxonomy, error) {
 	var err error
 
 	for _, s := range *s {
-		taxonomy, err = taxonomy.InsertPathString(s.Path())
+		path := s.Path()
+		if seqAsTaxa {
+			if len(path) == 0 {
+				return nil, fmt.Errorf("sequence %v has no path", s.Id())
+			}
+			last := path[len(path)-1]
+			taxname, _ := obiutils.SplitInTwo(last, ':')
+			if idx, ok := s.GetIntAttribute("seq_number"); !ok {
+				return nil, errors.New("sequences are not numbered")
+			} else {
+				path = append(path, fmt.Sprintf("%s:SEQ%010d [%s]@sequence", taxname, idx, s.Id()))
+			}
+
+		}
+
+		taxonomy, err = taxonomy.InsertPathString(path)
 
 		if err != nil {
 			return nil, err

@@ -17,10 +17,10 @@ import (
 )
 
 var _Debug = false
-var _BatchSize = 2000
 var _Pprof = false
 var _PprofMudex = 10
 var _PprofGoroutine = 6060
+var __seq_as_taxa__ = false
 
 var __defaut_taxonomy_mutex__ sync.Mutex
 
@@ -102,6 +102,7 @@ func GenerateOptionParser(program string,
 			taxonomy, err := obiformats.LoadTaxonomy(
 				obidefault.SelectedTaxonomy(),
 				!obidefault.AreAlternativeNamesSelected(),
+				SeqAsTaxa(),
 			)
 
 			if err != nil {
@@ -218,6 +219,9 @@ func LoadTaxonomyOptionSet(options *getoptions.GetOpt, required, alternatiive bo
 	options.BoolVar(obidefault.UseRawTaxidsPtr(), "raw-taxid", obidefault.UseRawTaxids(),
 		options.Description("When set, taxids are printed in files with any supplementary information (taxon name and rank)"),
 	)
+	options.BoolVar(&__seq_as_taxa__, "with-leaves", __seq_as_taxa__,
+		options.Description("If taxonomy is extracted from a sequence file, sequences are added as leave of their taxid annotation"),
+	)
 }
 
 // CLIIsDebugMode returns whether the CLI is in debug mode.
@@ -230,6 +234,10 @@ func LoadTaxonomyOptionSet(options *getoptions.GetOpt, required, alternatiive bo
 // Returns a boolean indicating if the CLI is in debug mode.
 func CLIIsDebugMode() bool {
 	return _Debug
+}
+
+func SeqAsTaxa() bool {
+	return __seq_as_taxa__
 }
 
 // SetDebugOn sets the debug mode on.
