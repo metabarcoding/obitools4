@@ -56,8 +56,6 @@ func IndexSequence(seqidx int,
 		refs[pseq.Taxon(i).Node] = &temp
 	}
 
-	// log.Infof("%s length of path: %d", sequence.Id(), len(refs))
-
 	n := taxa.Len()
 	lcaCache := make(map[*obitax.TaxNode]*obitax.TaxNode, n)
 
@@ -89,10 +87,10 @@ func IndexSequence(seqidx int,
 	var matrix []uint64
 
 	// obilog.Warnf("%s : %s", sequence.Id(), pseq.String())
+
 	for idx_path := 1; idx_path < path_len; idx_path++ {
 		mini := -1
 		seqidcs := refs[pseq.Taxon(idx_path).Node]
-
 		ns := len(*seqidcs)
 
 		if ns > 0 {
@@ -167,12 +165,15 @@ func IndexSequence(seqidx int,
 
 	obitag_index := make(map[int]string, pseq.Len())
 
-	// obilog.Warnf("(%s,%s): %v", sequence.Id(), pseq.Taxon(0).String(), closest)
 	for i, d := range closest {
 		if i < (len(closest)-1) && d < closest[i+1] {
 			current_taxon := pseq.Taxon(i)
 			obitag_index[d] = current_taxon.String()
 		}
+	}
+
+	if len(obitag_index) == 0 {
+		obitag_index[0] = pseq.Taxon(pseq.Len() - 1).String()
 	}
 
 	/*

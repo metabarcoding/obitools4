@@ -213,6 +213,10 @@ func Identify(sequence *obiseq.BioSequence,
 				taxon = match_taxon
 			}
 
+			if taxon.IsRoot() {
+				break
+			}
+
 		}
 
 		log.Debugln(sequence.Id(), "Best matches:", len(bests), "New index:", newidx)
