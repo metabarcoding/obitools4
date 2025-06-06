@@ -42,6 +42,8 @@ type Taxonomy struct {
 	index       map[*string]*TaxonSet
 }
 
+var DefaultTaxidAlphabet = obiutils.AsciiAlphaNumSet.Union(obiutils.AsciiUnderScore)
+
 // NewTaxonomy creates and initializes a new Taxonomy instance with the specified name and code.
 // It sets up the necessary internal structures, including ranks, nodes, aliases, and an index.
 //
@@ -365,7 +367,7 @@ func (taxonomy *Taxonomy) InsertPathString(path []string) (*Taxonomy, error) {
 	code, taxid, scientific_name, rank, err := ParseTaxonString(path[0])
 
 	if taxonomy == nil {
-		taxonomy = NewTaxonomy(code, code, obiutils.AsciiAlphaNumSet)
+		taxonomy = NewTaxonomy(code, code, DefaultTaxidAlphabet)
 	}
 
 	if err != nil {
