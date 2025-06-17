@@ -174,12 +174,15 @@ func (sequence *BioSequence) StatsPlusOne(desc StatsOnDescription, toAdd *BioSeq
 
 	}
 
+	sequence.annot_lock.Lock()
 	old, ok := stats[sval]
 	if !ok {
 		old = 0
 	}
 
 	stats[sval] = old + desc.Weight(toAdd)
+	sequence.annot_lock.Unlock()
+
 	sequence.SetAttribute(StatsOnSlotName(desc.Name), stats) // TODO: check if this is necessary
 	return retval
 }
@@ -228,7 +231,9 @@ func (sequence *BioSequence) Merge(tomerge *BioSequence, na string, inplace bool
 			smk := sequence.StatsOn(desc, na)
 			mmk := tomerge.StatsOn(desc, na)
 
+			sequence.annot_lock.Lock()
 			annotations[StatsOnSlotName(key)] = smk.Merge(mmk)
+			sequence.annot_lock.Unlock()
 		} else {
 			sequence.StatsPlusOne(desc, tomerge, na)
 		}
