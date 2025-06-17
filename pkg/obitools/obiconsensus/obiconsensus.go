@@ -151,7 +151,7 @@ func SampleWeight(seqs *obiseq.BioSequenceSlice, sample, sample_key string) func
 			log.Panicf("Sample %s not found in sequence %d", sample, i)
 		}
 
-		if value, ok := stats[sample]; ok {
+		if value, ok := stats.Get(sample); ok {
 			return float64(value)
 		}
 
@@ -176,7 +176,8 @@ func SeqBySamples(seqs obiseq.BioSequenceSlice, sample_key string) map[string]*o
 	for _, s := range seqs {
 		if s.HasStatsOn(sample_key) {
 			stats := s.StatsOn(obiseq.MakeStatsOnDescription(sample_key), "NA")
-			for k := range stats {
+			stats.RLock()
+			for k := range stats.Map() {
 				if seqset, ok := samples[k]; ok {
 					*seqset = append(*seqset, s)
 					samples[k] = seqset
@@ -184,6 +185,7 @@ func SeqBySamples(seqs obiseq.BioSequenceSlice, sample_key string) map[string]*o
 					samples[k] = &obiseq.BioSequenceSlice{s}
 				}
 			}
+			stats.RUnlock()
 		} else {
 			if k, ok := s.GetStringAttribute(sample_key); ok {
 				if seqset, ok := samples[k]; ok {
@@ -295,56 +297,79 @@ func MinionDenoise(graph *obigraph.Graph[*obiseq.BioSequence, Mutation],
 		bar = progressbar.NewOptions(len(*graph.Vertices), pbopt...)
 	}
 
-	for i, v := range *graph.Vertices {
+	wg := &sync.WaitGroup{}
+	seqidxchan := make(chan int)
+	build := func() {
 		var err error
 		var clean *obiseq.BioSequence
-		degree := graph.Degree(i)
-		if degree > 4 {
-			pack := obiseq.MakeBioSequenceSlice(degree + 1)
-			for k, j := range graph.Neighbors(i) {
-				pack[k] = (*graph.Vertices)[j]
-			}
-			pack[degree] = v
-			clean, err = BuildConsensus(pack,
-				fmt.Sprintf("%s_consensus", v.Id()),
-				kmer_size, CLILowCoverage(),
-				CLISaveGraphToFiles(), CLIGraphFilesDirectory())
 
-			if err != nil {
-				log.Warning(err)
-				clean = (*graph.Vertices)[i].Copy()
+		for i := range seqidxchan {
+			v := (*graph.Vertices)[i]
+
+			degree := graph.Degree(i)
+			if degree > 4 {
+				pack := obiseq.MakeBioSequenceSlice(degree + 1)
+				for k, j := range graph.Neighbors(i) {
+					pack[k] = (*graph.Vertices)[j]
+				}
+				pack[degree] = v
+				clean, err = BuildConsensus(pack,
+					fmt.Sprintf("%s_consensus", v.Id()),
+					kmer_size, CLILowCoverage(),
+					CLISaveGraphToFiles(), CLIGraphFilesDirectory())
+
+				if err != nil {
+					log.Warning(err)
+					clean = (*graph.Vertices)[i].Copy()
+					clean.SetAttribute("obiconsensus_consensus", false)
+
+				}
+
+			} else {
+				clean = obiseq.NewBioSequence(v.Id(), v.Sequence(), v.Definition())
 				clean.SetAttribute("obiconsensus_consensus", false)
-
 			}
 
-		} else {
-			clean = obiseq.NewBioSequence(v.Id(), v.Sequence(), v.Definition())
-			clean.SetAttribute("obiconsensus_consensus", false)
-		}
+			clean.SetCount(int(graph.VertexWeight(i)))
+			clean.SetAttribute(sample_key, graph.Name)
 
-		clean.SetCount(int(graph.VertexWeight(i)))
-		clean.SetAttribute(sample_key, graph.Name)
+			if !clean.HasAttribute("obiconsensus_weight") {
+				clean.SetAttribute("obiconsensus_weight", int(1))
+			}
 
-		if !clean.HasAttribute("obiconsensus_weight") {
-			clean.SetAttribute("obiconsensus_weight", int(1))
-		}
+			annotations := v.Annotations()
 
-		annotations := v.Annotations()
+			staton := obiseq.StatsOnSlotName(sample_key)
+			for k, v := range annotations {
+				if !clean.HasAttribute(k) && k != staton {
+					clean.SetAttribute(k, v)
+				}
+			}
 
-		staton := obiseq.StatsOnSlotName(sample_key)
-		for k, v := range annotations {
-			if !clean.HasAttribute(k) && k != staton {
-				clean.SetAttribute(k, v)
+			denoised[i] = clean
+
+			if bar != nil {
+				bar.Add(1)
 			}
 		}
 
-		denoised[i] = clean
-
-		if bar != nil {
-			bar.Add(1)
-		}
-
+		wg.Done()
 	}
+
+	nworkers := obidefault.ParallelWorkers()
+	wg.Add(nworkers)
+
+	for j := 0; j < nworkers; j++ {
+		go build()
+	}
+
+	for i := range *graph.Vertices {
+		seqidxchan <- i
+	}
+
+	close(seqidxchan)
+
+	wg.Wait()
 
 	return denoised
 }

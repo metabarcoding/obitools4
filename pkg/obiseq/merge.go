@@ -5,12 +5,18 @@ import (
 	"math"
 	"reflect"
 	"strings"
+	"sync"
 
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
+	"github.com/goccy/go-json"
+
 	log "github.com/sirupsen/logrus"
 )
 
-type StatsOnValues map[string]int
+type StatsOnValues struct {
+	counts map[string]int
+	lock   sync.RWMutex
+}
+
 type StatsOnWeights func(sequence *BioSequence) int
 type StatsOnDescription struct {
 	Name   string
@@ -51,6 +57,108 @@ func MakeStatsOnDescription(descriptor string) StatsOnDescription {
 
 var _merge_prefix = "merged_"
 
+func NewStatOnValues() *StatsOnValues {
+	v := StatsOnValues{
+		counts: make(map[string]int),
+		lock:   sync.RWMutex{},
+	}
+
+	return &v
+}
+
+func MapAsStatsOnValues(m map[string]int) *StatsOnValues {
+	v := StatsOnValues{
+		counts: m,
+		lock:   sync.RWMutex{},
+	}
+
+	return &v
+
+}
+func (sov *StatsOnValues) RLock() {
+	sov.lock.RLock()
+}
+
+func (sov *StatsOnValues) RUnlock() {
+	sov.lock.RUnlock()
+}
+
+func (sov *StatsOnValues) Lock() {
+	sov.lock.Lock()
+}
+
+func (sov *StatsOnValues) Unlock() {
+	sov.lock.Unlock()
+}
+
+func (sov *StatsOnValues) Get(key string) (int, bool) {
+	if sov == nil {
+		return -1, false
+	}
+
+	sov.RLock()
+	defer sov.RUnlock()
+	v, ok := sov.counts[key]
+	if !ok {
+		v = 0
+	}
+	return v, ok
+}
+
+func (sov *StatsOnValues) Map() map[string]int {
+	return sov.counts
+}
+
+func (sov *StatsOnValues) Set(key string, value int) {
+	if sov == nil {
+		return
+	}
+
+	sov.Lock()
+	defer sov.Unlock()
+	sov.counts[key] = value
+}
+
+func (sov *StatsOnValues) Add(key string, value int) int {
+	if sov == nil {
+		return -1
+	}
+
+	sov.Lock()
+	defer sov.Unlock()
+
+	v, ok := sov.counts[key]
+	if !ok {
+		v = 0
+	}
+	v += value
+	sov.counts[key] = v
+
+	return v
+}
+
+func (sov *StatsOnValues) Len() int {
+	sov.RLock()
+	defer sov.RUnlock()
+	return len(sov.counts)
+}
+
+func (sov *StatsOnValues) Keys() []string {
+	v := make([]string, 0, sov.Len())
+	sov.RLock()
+	defer sov.RUnlock()
+	for k := range sov.counts {
+		v = append(v, k)
+	}
+	return v
+}
+
+func (sov *StatsOnValues) MarshalJSON() ([]byte, error) {
+	sov.RLock()
+	defer sov.RUnlock()
+	return json.Marshal(sov.Map())
+}
+
 // StatsOnSlotName returns the name of the slot that summarizes statistics of occurrence for a given attribute.
 //
 // Parameters:
@@ -89,41 +197,24 @@ func (sequence *BioSequence) HasStatsOn(key string) bool {
 //
 // Return type:
 // - StatsOnValues
-func (sequence *BioSequence) StatsOn(desc StatsOnDescription, na string) StatsOnValues {
+func (sequence *BioSequence) StatsOn(desc StatsOnDescription, na string) *StatsOnValues {
+	var stats *StatsOnValues
+	var newstat bool
+
 	mkey := StatsOnSlotName(desc.Name)
 	istat, ok := sequence.GetAttribute(mkey)
 
-	var stats StatsOnValues
-	var newstat bool
-
-	if ok {
-		switch istat := istat.(type) {
-		case StatsOnValues:
-			stats = istat
-			newstat = false
-		case map[string]int:
-			stats = istat
-			newstat = false
-		case map[string]interface{}:
-			stats = make(StatsOnValues, len(istat))
-			newstat = false
-			var err error
-			for k, v := range istat {
-				stats[k], err = obiutils.InterfaceToInt(v)
-				if err != nil {
-					log.Panicf("In sequence %s : %s stat tag not only containing integer values %s",
-						sequence.Id(), mkey, istat)
-				}
-			}
-		default:
-			stats = make(StatsOnValues)
-			sequence.SetAttribute(mkey, stats)
-			newstat = true
-		}
-	} else {
-		stats = make(StatsOnValues)
+	if !ok {
+		stats = NewStatOnValues()
 		sequence.SetAttribute(mkey, stats)
 		newstat = true
+	} else {
+		stats, ok = istat.(*StatsOnValues)
+
+		if !ok {
+			log.Panicf("In sequence %s : %s is not a StatsOnValues type %T", sequence.Id(), mkey, istat)
+		}
+		newstat = false
 	}
 
 	if newstat {
@@ -174,17 +265,7 @@ func (sequence *BioSequence) StatsPlusOne(desc StatsOnDescription, toAdd *BioSeq
 
 	}
 
-	dw := desc.Weight(toAdd)
-	sequence.annot_lock.Lock()
-	old, ok := stats[sval]
-	if !ok {
-		old = 0
-	}
-
-	stats[sval] = old + dw
-	sequence.annot_lock.Unlock()
-
-	sequence.SetAttribute(StatsOnSlotName(desc.Name), stats) // TODO: check if this is necessary
+	stats.Add(sval, desc.Weight(toAdd))
 	return retval
 }
 
@@ -192,13 +273,18 @@ func (sequence *BioSequence) StatsPlusOne(desc StatsOnDescription, toAdd *BioSeq
 //
 // It takes a parameter `toMerged` of type StatsOnValues, which represents the StatsOnValues to be merged.
 // It returns a value of type StatsOnValues, which represents the merged StatsOnValues.
-func (stats StatsOnValues) Merge(toMerged StatsOnValues) StatsOnValues {
-	for k, val := range toMerged {
-		old, ok := stats[k]
+func (stats *StatsOnValues) Merge(toMerged *StatsOnValues) *StatsOnValues {
+	toMerged.RLock()
+	defer toMerged.RUnlock()
+	stats.Lock()
+	defer stats.Unlock()
+
+	for k, val := range toMerged.counts {
+		old, ok := stats.counts[k]
 		if !ok {
 			old = 0
 		}
-		stats[k] = old + val
+		stats.counts[k] = old + val
 	}
 
 	return stats

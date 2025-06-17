@@ -216,11 +216,14 @@ func ParseOBIFeatures(text string, annotations obiseq.Annotation) string {
 					j = __obi_header_map_int_key__.ReplaceAll(j, []byte(`$1"$2":`))
 					var err error
 					switch {
-					case strings.HasPrefix(key, "merged_") ||
-						strings.HasSuffix(key, "_count"):
+					case strings.HasSuffix(key, "_count"):
 						dict := make(map[string]int)
 						err = json.Unmarshal(j, &dict)
 						value = dict
+					case strings.HasPrefix(key, "merged_"):
+						dict := make(map[string]int)
+						err = json.Unmarshal(j, &dict)
+						value = obiseq.MapAsStatsOnValues(dict)
 					case strings.HasSuffix(key, "_status") ||
 						strings.HasSuffix(key, "_mutation"):
 						dict := make(map[string]string)
@@ -313,10 +316,20 @@ func WriteFastSeqOBIHeade(buffer *bytes.Buffer, sequence *obiseq.BioSequence) {
 				switch t := value.(type) {
 				case string:
 					buffer.WriteString(fmt.Sprintf("%s=%s; ", key, t))
+				case *obiseq.StatsOnValues:
+					t.RLock()
+					tv, err := obiutils.JsonMarshal(t.Map())
+					t.RUnlock()
+					if err != nil {
+						log.Fatalf("Cannot convert %v value", value)
+					}
+					tv = bytes.ReplaceAll(tv, []byte(`"`), []byte("'"))
+					buffer.WriteString(fmt.Sprintf("%s=", key))
+					buffer.Write(tv)
+					buffer.WriteString("; ")
 				case map[string]int,
 					map[string]string,
-					map[string]interface{},
-					obiseq.StatsOnValues:
+					map[string]interface{}:
 					tv, err := obiutils.JsonMarshal(t)
 					if err != nil {
 						log.Fatalf("Cannot convert %v value", value)

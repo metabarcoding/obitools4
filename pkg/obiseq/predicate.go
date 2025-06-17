@@ -201,7 +201,7 @@ func OccurInAtleast(sample string, n int) SequencePredicate {
 	desc := MakeStatsOnDescription(sample)
 	f := func(sequence *BioSequence) bool {
 		stats := sequence.StatsOn(desc, "NA")
-		return len(stats) >= n
+		return stats.Len() >= n
 	}
 
 	return f

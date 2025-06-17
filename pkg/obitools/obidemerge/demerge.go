@@ -13,10 +13,12 @@ func MakeDemergeWorker(key string) obiseq.SeqWorker {
 		if sequence.HasStatsOn(key) {
 			stats := sequence.StatsOn(desc, "NA")
 			sequence.DeleteAttribute(obiseq.StatsOnSlotName(key))
-			slice := obiseq.NewBioSequenceSlice(len(stats))
+			slice := obiseq.NewBioSequenceSlice(stats.Len())
 			i := 0
 
-			for k, v := range stats {
+			stats.RLock()
+			defer stats.RUnlock()
+			for k, v := range stats.Map() {
 				(*slice)[i] = sequence.Copy()
 				(*slice)[i].SetAttribute(key, k)
 				(*slice)[i].SetCount(v)

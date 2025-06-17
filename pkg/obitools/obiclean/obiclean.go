@@ -2,7 +2,6 @@ package obiclean
 
 import (
 	"fmt"
-	"maps"
 	"os"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
@@ -38,7 +37,9 @@ func buildSamples(dataset obiseq.BioSequenceSlice,
 	for _, s := range dataset {
 		stats := s.StatsOn(obiseq.MakeStatsOnDescription(tag), NAValue)
 
-		for k, v := range stats {
+		stats.RLock()
+		defer stats.RUnlock()
+		for k, v := range stats.Map() {
 			pcr, ok := samples[k]
 
 			if !ok {
@@ -123,9 +124,10 @@ func NotAlwaysChimera(tag string) obiseq.SequencePredicate {
 		if !ok || len(chimera) == 0 {
 			return true
 		}
-		samples := maps.Keys(sequence.StatsOn(descriptor, "NA"))
 
-		for s := range samples {
+		samples := sequence.StatsOn(descriptor, "NA").Keys()
+
+		for _, s := range samples {
 			if _, ok := chimera[s]; !ok {
 				return true
 			}
