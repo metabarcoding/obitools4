@@ -8,7 +8,7 @@ import (
 // corresponds to the last commit, and not the one when the file will be
 // commited
 
-var _Commit = "7b23985"
+var _Commit = "38dcd98"
 var _Version = "Release 4.4.0"
 
 // Version returns the version of the obitools package.

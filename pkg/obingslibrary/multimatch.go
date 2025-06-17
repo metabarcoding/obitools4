@@ -237,6 +237,14 @@ func (marker *Marker) beginFixedTagExtractor(
 		return ""
 	}
 
+	fe := begin - spacer
+	if fb > fe {
+		log.Panicf("On sequence: %s, begin %d is greater than end %d for a tag length of %d - begin:%d spacer:%d",
+			sequence.Id(),
+			fb, fe, taglength, begin, spacer,
+		)
+	}
+
 	return sequence.String()[fb:(begin - spacer)]
 }
 
