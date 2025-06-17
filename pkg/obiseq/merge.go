@@ -174,13 +174,14 @@ func (sequence *BioSequence) StatsPlusOne(desc StatsOnDescription, toAdd *BioSeq
 
 	}
 
+	dw := desc.Weight(toAdd)
 	sequence.annot_lock.Lock()
 	old, ok := stats[sval]
 	if !ok {
 		old = 0
 	}
 
-	stats[sval] = old + desc.Weight(toAdd)
+	stats[sval] = old + dw
 	sequence.annot_lock.Unlock()
 
 	sequence.SetAttribute(StatsOnSlotName(desc.Name), stats) // TODO: check if this is necessary
