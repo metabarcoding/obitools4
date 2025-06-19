@@ -2,6 +2,7 @@ package obiutils
 
 import (
 	"fmt"
+	"maps"
 	"reflect"
 	"strconv"
 	"strings"
@@ -90,7 +91,21 @@ func InterfaceToBool(i interface{}) (val bool, err error) {
 // It returns a map[string]interface{} which is the converted map. If the input map is not of type map[string]interface{},
 // it panics and logs an error message.
 func MapToMapInterface(m interface{}) map[string]interface{} {
-	if IsAMap(m) {
+	type hasMap interface {
+		Map() map[string]int
+		RLock()
+		RUnlock()
+		Len() int
+	}
+
+	if v, ok := m.(hasMap); ok {
+		val := make(map[string]interface{}, v.Len())
+		v.RLock()
+		defer v.RUnlock()
+		for k, v := range v.Map() {
+			val[k] = v
+		}
+	} else if IsAMap(m) {
 		reflectMap := reflect.ValueOf(m)
 		keys := reflectMap.MapKeys()
 		val := make(map[string]interface{}, len(keys))
@@ -193,9 +208,19 @@ func InterfaceToFloat64(i interface{}) (val float64, err error) {
 func InterfaceToIntMap(i interface{}) (val map[string]int, err error) {
 	err = nil
 
+	type hasMap interface {
+		Map() map[string]int
+		RLock()
+		RUnlock()
+	}
+
 	switch i := i.(type) {
 	case map[string]int:
 		val = i
+	case hasMap:
+		i.RLock()
+		defer i.RUnlock()
+		val = maps.Clone(i.Map())
 	case map[string]interface{}:
 		val = make(map[string]int, len(i))
 		for k, v := range i {
@@ -219,9 +244,23 @@ func InterfaceToIntMap(i interface{}) (val map[string]int, err error) {
 func InterfaceToStringMap(i interface{}) (val map[string]string, err error) {
 	err = nil
 
+	type hasMap interface {
+		Map() map[string]int
+		RLock()
+		RUnlock()
+		Len() int
+	}
+
 	switch i := i.(type) {
 	case map[string]string:
 		val = i
+	case hasMap:
+		val = make(map[string]string, i.Len())
+		i.RLock()
+		defer i.RUnlock()
+		for k, v := range i.Map() {
+			val[k] = strconv.Itoa(v)
+		}
 	case map[string]interface{}:
 		val = make(map[string]string, len(i))
 		for k, v := range i {
