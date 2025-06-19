@@ -78,6 +78,12 @@ func MinMap[K comparable, T constraints.Ordered](values map[K]T) (K, T, error) {
 // Returns an error if the container is empty or the type is unsupported.
 func Min(data interface{}) (interface{}, error) {
 	v := reflect.ValueOf(data)
+	method := v.MethodByName("Min")
+	if method.IsValid() {
+		result := method.Call(nil)[0].Interface()
+		return result, nil
+	}
+
 	switch v.Kind() {
 	case reflect.Slice, reflect.Array:
 		if v.Len() == 0 {
@@ -103,6 +109,13 @@ func Min(data interface{}) (interface{}, error) {
 // Returns an error if the container is empty or the type is unsupported.
 func Max(data interface{}) (interface{}, error) {
 	v := reflect.ValueOf(data)
+
+	method := v.MethodByName("Max")
+	if method.IsValid() {
+		result := method.Call(nil)[0].Interface()
+		return result, nil
+	}
+
 	switch v.Kind() {
 	case reflect.Slice, reflect.Array:
 		if v.Len() == 0 {

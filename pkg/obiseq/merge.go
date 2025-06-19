@@ -7,6 +7,7 @@ import (
 	"strings"
 	"sync"
 
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 	"github.com/goccy/go-json"
 
 	log "github.com/sirupsen/logrus"
@@ -107,6 +108,24 @@ func (sov *StatsOnValues) Get(key string) (int, bool) {
 
 func (sov *StatsOnValues) Map() map[string]int {
 	return sov.counts
+}
+
+func (sov *StatsOnValues) Max() int {
+	data, err := obiutils.Max(sov.counts)
+	if err != nil {
+		return -1
+	}
+
+	return data.(int)
+}
+
+func (sov *StatsOnValues) Min() int {
+	data, err := obiutils.Min(sov.counts)
+	if err != nil {
+		return -1
+	}
+
+	return data.(int)
 }
 
 func (sov *StatsOnValues) Set(key string, value int) {
