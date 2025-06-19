@@ -79,7 +79,11 @@ func (data1 *MatrixData) MergeMatrixData(data2 *MatrixData) *MatrixData {
 // - *MatrixData: The updated MatrixData object.
 func (data *MatrixData) Update(s *obiseq.BioSequence, mapkey string) *MatrixData {
 	if v, ok := s.GetAttribute(mapkey); ok {
-		if obiutils.IsAMap(v) {
+		if m, ok := v.(*obiseq.StatsOnValues); ok {
+			m.RLock()
+			(*data)[s.Id()] = obiutils.MapToMapInterface(m.Map())
+			m.RUnlock()
+		} else if obiutils.IsAMap(v) {
 			(*data)[s.Id()] = obiutils.MapToMapInterface(v)
 		} else {
 			log.Panicf("Attribute %s is not a map in the sequence %s", mapkey, s.Id())
