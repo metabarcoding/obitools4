@@ -98,6 +98,49 @@ else
     ((failed++))
 fi
 
+((ntest++))
+if obisummary "${TEST_DIR}/some_uniq_seq.fasta" \
+              > "${TMPDIR}/some_uniq_seq.json"
+then
+    log "$MCMD: formating json execution OK" 
+    ((success++))
+else
+    log "$MCMD: formating json execution failed" 
+    ((failed++))
+fi
+
+((ntest++))
+if diff "${TEST_DIR}/some_uniq_seq.json" \
+        "${TMPDIR}/some_uniq_seq.json" > /dev/null
+then
+    log "$MCMD: formating json OK" 
+    ((success++))
+else
+    log "$MCMD: formating json failed" 
+    ((failed++))
+fi
+
+((ntest++))
+if obisummary --yaml "${TEST_DIR}/some_uniq_seq.fasta" \
+              > "${TMPDIR}/some_uniq_seq.yaml"
+then
+    log "$MCMD: formating yaml execution OK" 
+    ((success++))
+else
+    log "$MCMD: formating yaml execution failed" 
+    ((failed++))
+fi
+
+((ntest++))
+if diff "${TEST_DIR}/some_uniq_seq.yaml" \
+        "${TMPDIR}/some_uniq_seq.yaml" > /dev/null
+then
+    log "$MCMD: formating yaml OK" 
+    ((success++))
+else
+    log "$MCMD: formating yaml failed" 
+    ((failed++))
+fi
 
 #########################################
 #

@@ -1,0 +1,35 @@
+{
+  "annotations": {
+    "keys": {
+      "map": {
+        "merged_sample": 3
+      },
+      "scalar": {
+        "count": 3
+      }
+    },
+    "map_attributes": 1,
+    "scalar_attributes": 1,
+    "vector_attributes": 0
+  },
+  "count": {
+    "reads": 46,
+    "total_length": 300,
+    "variants": 3
+  },
+  "samples": {
+    "sample_count": 2,
+    "sample_stats": {
+      "15a_F730814": {
+        "reads": 28,
+        "singletons": 1,
+        "variants": 3
+      },
+      "29a_F260619": {
+        "reads": 18,
+        "singletons": 1,
+        "variants": 3
+      }
+    }
+  }
+}
