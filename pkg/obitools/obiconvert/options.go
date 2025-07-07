@@ -40,6 +40,8 @@ var __paired_file_name__ = ""
 
 var __full_file_batch__ = false
 
+var __U_to_T = false
+
 func InputOptionSet(options *getoptions.GetOpt) {
 	// options.IntVar(&__skipped_entries__, "skip", __skipped_entries__,
 	// 	options.Description("The N first sequence records of the file are discarded from the analysis and not reported to the output file."))
@@ -73,6 +75,9 @@ func InputOptionSet(options *getoptions.GetOpt) {
 	options.BoolVar(&__no_ordered_input__, "no-order", __no_ordered_input__,
 		options.Description("When several input files are provided, "+
 			"indicates that there is no order among them."))
+
+	options.BoolVar(&__U_to_T, "u-to-t", __U_to_T,
+		options.Description("Convert Uracil to Thymine."))
 
 }
 
@@ -237,6 +242,10 @@ func CLIHasPairedFile() bool {
 }
 func CLIPairedFileName() string {
 	return __paired_file_name__
+}
+
+func CLIUtoT() bool {
+	return __U_to_T
 }
 
 func SetFullFileBatch() {

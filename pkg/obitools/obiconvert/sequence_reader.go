@@ -112,6 +112,7 @@ func CLIReadBioSequences(filenames ...string) (obiiter.IBioSequence, error) {
 	opts = append(opts, obiformats.OptionsBatchSize(obidefault.BatchSize()))
 
 	opts = append(opts, obiformats.OptionsFullFileBatch(FullFileBatch()))
+	opts = append(opts, obiformats.OptionsUtoT(CLIUtoT()))
 
 	if len(filenames) == 0 {
 		log.Printf("Reading sequences from stdin in %s\n", CLIInputFormat())
