@@ -386,7 +386,7 @@ func (taxonomy *Taxonomy) InsertPathString(path []string) (*Taxonomy, error) {
 		if err != nil {
 			return nil, err
 		}
-		root.SetName(scientific_name, "scientificName")
+		root.SetName(scientific_name, "scientific name")
 	}
 
 	var current *Taxon

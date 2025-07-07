@@ -26,7 +26,7 @@ func (taxonomy *Taxonomy) OrDefault(panicOnNil bool) *Taxonomy {
 	return taxonomy
 }
 
-func IsDefaultTaxonomyDefined() bool {
+func HasDefaultTaxonomyDefined() bool {
 	return __defaut_taxonomy__ != nil
 }
 

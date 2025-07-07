@@ -44,6 +44,7 @@ type __options__ struct {
 	with_scientific_name  bool
 	without_root_path     bool
 	raw_taxid             bool
+	u_to_t                bool
 	with_metadata         []string
 }
 
@@ -88,6 +89,7 @@ func MakeOptions(setters []WithOption) Options {
 		with_path:             false,
 		with_rank:             true,
 		with_taxid:            true,
+		u_to_t:                false,
 		with_scientific_name:  false,
 		without_root_path:     false,
 		raw_taxid:             false,
@@ -261,6 +263,10 @@ func (o *Options) WithoutRootPath() bool {
 // It retrieves the setting from the underlying options.
 func (o *Options) RawTaxid() bool {
 	return o.pointer.raw_taxid
+}
+
+func (o *Options) UtoT() bool {
+	return o.pointer.u_to_t
 }
 
 // WithMetadata returns a slice of strings containing the metadata
@@ -593,6 +599,14 @@ func OptionWithoutRootPath(value bool) WithOption {
 func OptionsRawTaxid(value bool) WithOption {
 	f := WithOption(func(opt Options) {
 		opt.pointer.raw_taxid = value
+	})
+
+	return f
+}
+
+func OptionsUtoT(value bool) WithOption {
+	f := WithOption(func(opt Options) {
+		opt.pointer.u_to_t = value
 	})
 
 	return f
