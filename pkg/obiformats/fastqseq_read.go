@@ -131,7 +131,7 @@ func _storeSequenceQuality(bytes *bytes.Buffer, out *obiseq.BioSequence, quality
 	out.SetQualities(q)
 }
 
-func FastqChunkParser(quality_shift byte, with_quality bool) func(string, io.Reader) (obiseq.BioSequenceSlice, error) {
+func FastqChunkParser(quality_shift byte, with_quality bool, UtoT bool) func(string, io.Reader) (obiseq.BioSequenceSlice, error) {
 	parser := func(source string, input io.Reader) (obiseq.BioSequenceSlice, error) {
 
 		var identifier string
@@ -209,6 +209,9 @@ func FastqChunkParser(quality_shift byte, with_quality bool) func(string, io.Rea
 					if C >= 'A' && C <= 'Z' {
 						C = C + 'a' - 'A'
 					}
+					if C == 'u' && UtoT {
+						C = 't'
+					}
 					seqBytes.Reset()
 					seqBytes.WriteByte(C)
 					state = 6
@@ -227,6 +230,9 @@ func FastqChunkParser(quality_shift byte, with_quality bool) func(string, io.Rea
 				} else {
 					if C >= 'A' && C <= 'Z' {
 						C = C + 'a' - 'A'
+					}
+					if C == 'u' && UtoT {
+						C = 't'
 					}
 					if (C >= 'a' && C <= 'z') || C == '-' || C == '.' || C == '[' || C == ']' {
 						seqBytes.WriteByte(C)
@@ -301,10 +307,10 @@ func _ParseFastqFile(
 	input ChannelFileChunk,
 	out obiiter.IBioSequence,
 	quality_shift byte,
-	with_quality bool,
+	with_quality, UtoT bool,
 ) {
 
-	parser := FastqChunkParser(quality_shift, with_quality)
+	parser := FastqChunkParser(quality_shift, with_quality, UtoT)
 
 	for chunks := range input {
 		sequences, err := parser(chunks.Source, chunks.Raw)
@@ -342,6 +348,7 @@ func ReadFastq(reader io.Reader, options ...WithOption) (obiiter.IBioSequence, e
 			out,
 			obidefault.ReadQualitiesShift(),
 			opt.ReadQualities(),
+			opt.UtoT(),
 		)
 	}
 

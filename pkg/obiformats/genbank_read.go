@@ -29,7 +29,7 @@ const (
 
 var _seqlenght_rx = regexp.MustCompile(" +([0-9]+) bp")
 
-func GenbankChunkParser(withFeatureTable bool) func(string, io.Reader) (obiseq.BioSequenceSlice, error) {
+func GenbankChunkParser(withFeatureTable, UtoT bool) func(string, io.Reader) (obiseq.BioSequenceSlice, error) {
 	return func(source string, input io.Reader) (obiseq.BioSequenceSlice, error) {
 		state := inHeader
 		scanner := bufio.NewReader(input)
@@ -165,6 +165,9 @@ func GenbankChunkParser(withFeatureTable bool) func(string, io.Reader) (obiseq.B
 					parts := strings.SplitN(line[10:], " ", 6)
 					lparts := len(parts)
 					for i := 0; i < lparts; i++ {
+						if UtoT {
+							parts[i] = strings.ReplaceAll(parts[i], "u", "t")
+						}
 						seqBytes.WriteString(parts[i])
 					}
 					processed = true
@@ -200,9 +203,9 @@ func GenbankChunkParser(withFeatureTable bool) func(string, io.Reader) (obiseq.B
 
 func _ParseGenbankFile(input ChannelFileChunk,
 	out obiiter.IBioSequence,
-	withFeatureTable bool) {
+	withFeatureTable, UtoT bool) {
 
-	parser := GenbankChunkParser(withFeatureTable)
+	parser := GenbankChunkParser(withFeatureTable, UtoT)
 
 	for chunks := range input {
 		sequences, err := parser(chunks.Source, chunks.Raw)
@@ -242,6 +245,7 @@ func ReadGenbank(reader io.Reader, options ...WithOption) (obiiter.IBioSequence,
 			entry_channel,
 			newIter,
 			opt.WithFeatureTable(),
+			opt.UtoT(),
 		)
 	}
 

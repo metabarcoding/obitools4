@@ -87,7 +87,7 @@ func EndOfLastFlatFileEntry(buff []byte) int {
 	return -1
 }
 
-func EmblChunkParser(withFeatureTable bool) func(string, io.Reader) (obiseq.BioSequenceSlice, error) {
+func EmblChunkParser(withFeatureTable, UtoT bool) func(string, io.Reader) (obiseq.BioSequenceSlice, error) {
 	parser := func(source string, input io.Reader) (obiseq.BioSequenceSlice, error) {
 		scanner := bufio.NewScanner(input)
 		sequences := make(obiseq.BioSequenceSlice, 0, 100)
@@ -128,6 +128,9 @@ func EmblChunkParser(withFeatureTable bool) func(string, io.Reader) (obiseq.BioS
 				parts := strings.SplitN(line[5:], " ", 7)
 				np := len(parts) - 1
 				for i := 0; i < np; i++ {
+					if UtoT {
+						parts[i] = strings.ReplaceAll(parts[i], "u", "t")
+					}
 					seqBytes.WriteString(parts[i])
 				}
 			case line == "//":
@@ -161,10 +164,10 @@ func EmblChunkParser(withFeatureTable bool) func(string, io.Reader) (obiseq.BioS
 func _ParseEmblFile(
 	input ChannelFileChunk,
 	out obiiter.IBioSequence,
-	withFeatureTable bool,
+	withFeatureTable, UtoT bool,
 ) {
 
-	parser := EmblChunkParser(withFeatureTable)
+	parser := EmblChunkParser(withFeatureTable, UtoT)
 
 	for chunks := range input {
 		order := chunks.Order
@@ -206,6 +209,7 @@ func ReadEMBL(reader io.Reader, options ...WithOption) (obiiter.IBioSequence, er
 			entry_channel,
 			newIter,
 			opt.WithFeatureTable(),
+			opt.UtoT(),
 		)
 	}
 

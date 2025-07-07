@@ -39,7 +39,7 @@ func EndOfLastFastaEntry(buffer []byte) int {
 	return last
 }
 
-func FastaChunkParser() func(string, io.Reader) (obiseq.BioSequenceSlice, error) {
+func FastaChunkParser(UtoT bool) func(string, io.Reader) (obiseq.BioSequenceSlice, error) {
 
 	parser := func(source string, input io.Reader) (obiseq.BioSequenceSlice, error) {
 		var identifier string
@@ -131,7 +131,9 @@ func FastaChunkParser() func(string, io.Reader) (obiseq.BioSequenceSlice, error)
 					if C >= 'A' && C <= 'Z' {
 						C = C + 'a' - 'A'
 					}
-
+					if UtoT && C == 'u' {
+						C = 't'
+					}
 					if (C >= 'a' && C <= 'z') || C == '-' || C == '.' || C == '[' || C == ']' {
 						seqBytes.WriteByte(C)
 					} else {
@@ -170,6 +172,9 @@ func FastaChunkParser() func(string, io.Reader) (obiseq.BioSequenceSlice, error)
 					if C >= 'A' && C <= 'Z' {
 						C = C + 'a' - 'A'
 					}
+					if UtoT && C == 'u' {
+						C = 't'
+					}
 					// Removing white space from the sequence
 					if (C >= 'a' && C <= 'z') || C == '-' || C == '.' || C == '[' || C == ']' {
 						seqBytes.WriteByte(C)
@@ -207,9 +212,10 @@ func FastaChunkParser() func(string, io.Reader) (obiseq.BioSequenceSlice, error)
 func _ParseFastaFile(
 	input ChannelFileChunk,
 	out obiiter.IBioSequence,
+	UtoT bool,
 ) {
 
-	parser := FastaChunkParser()
+	parser := FastaChunkParser(UtoT)
 
 	for chunks := range input {
 		sequences, err := parser(chunks.Source, chunks.Raw)
@@ -243,7 +249,7 @@ func ReadFasta(reader io.Reader, options ...WithOption) (obiiter.IBioSequence, e
 
 	for i := 0; i < nworker; i++ {
 		out.Add(1)
-		go _ParseFastaFile(chkchan, out)
+		go _ParseFastaFile(chkchan, out, opt.UtoT())
 	}
 
 	go func() {
