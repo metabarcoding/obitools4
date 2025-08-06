@@ -54,8 +54,8 @@ func GenerateOptionParser(program string,
 		options.GetEnv("OBIMAXCPU"),
 		options.Description("Number of parallele threads computing the result"))
 
-	options.BoolVar(&_Pprof, "force-one-cpu", false,
-		options.Description("Force to use only one cpu core for parallel processing"))
+	// options.BoolVar(&_Pprof, "force-one-cpu", false,
+	// 	options.Description("Force to use only one cpu core for parallel processing"))
 
 	options.IntVar(&_PprofMudex, "pprof-mutex", _PprofMudex,
 		options.GetEnv("OBIPPROFMUTEX"),
@@ -152,23 +152,27 @@ func GenerateOptionParser(program string,
 			os.Exit(1)
 		}
 
-		// Setup the maximum number of CPU usable by the program
-		if obidefault.MaxCPU() == 1 {
-			log.Warn("Limitating the Maximum number of CPU to 1 is not recommanded")
-			log.Warn("The number of CPU requested has been set to 2")
-			obidefault.SetMaxCPU(2)
-		}
+		// // Setup the maximum number of CPU usable by the program
+		// if obidefault.MaxCPU() == 1 {
+		// 	log.Warn("Limitating the Maximum number of CPU to 1 is not recommanded")
+		// 	log.Warn("The number of CPU requested has been set to 2")
+		// 	obidefault.SetMaxCPU(2)
+		// }
 
-		if options.Called("force-one-cpu") {
-			log.Warn("Limitating the Maximum number of CPU to 1 is not recommanded")
-			log.Warn("The number of CPU has been forced to 1")
-			log.Warn("This can lead to unexpected behavior")
-			obidefault.SetMaxCPU(1)
-		}
+		// if options.Called("force-one-cpu") {
+		// 	log.Warn("Limitating the Maximum number of CPU to 1 is not recommanded")
+		// 	log.Warn("The number of CPU has been forced to 1")
+		// 	log.Warn("This can lead to unexpected behavior")
+		// 	obidefault.SetMaxCPU(1)
+		// }
 
 		runtime.GOMAXPROCS(obidefault.MaxCPU())
 
-		if options.Called("max-cpu") || options.Called("force-one-cpu") {
+		// if options.Called("max-cpu") || options.Called("force-one-cpu") {
+		// 	log.Printf("CPU number limited to %d", obidefault.MaxCPU())
+		// }
+
+		if options.Called("max-cpu") {
 			log.Printf("CPU number limited to %d", obidefault.MaxCPU())
 		}
 
