@@ -9,7 +9,7 @@ import (
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 )
 
-// ISequenceChunkMemory processes a sequence iterator by distributing the sequences
+// ISequenceChunkOnMemory processes a sequence iterator by distributing the sequences
 // into chunks in memory. It uses a classifier to determine how to distribute
 // the sequences and returns a new iterator for the processed sequences.
 //
@@ -22,7 +22,7 @@ import (
 // An iterator of biosequences representing the processed chunks.
 //
 // The function operates asynchronously.
-func ISequenceChunkMemory(iterator obiiter.IBioSequence,
+func ISequenceChunkOnMemory(iterator obiiter.IBioSequence,
 	classifier *obiseq.BioSequenceClassifier) (obiiter.IBioSequence, error) {
 
 	newIter := obiiter.MakeIBioSequence()

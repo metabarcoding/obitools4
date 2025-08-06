@@ -35,7 +35,7 @@ func IUniqueSequence(iterator obiiter.IBioSequence,
 		}
 
 	} else {
-		iterator, err = ISequenceChunkMemory(iterator,
+		iterator, err = ISequenceChunkOnMemory(iterator,
 			obiseq.HashClassifier(opts.BatchCount()))
 
 		if err != nil {
