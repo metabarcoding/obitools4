@@ -354,20 +354,22 @@ func extendSimilarityGraph(seqs *[]*seqPCR, step int, workers int) int {
 		son := (*seqs)[i]
 		for j := i + 1; j < nseq; j++ {
 			father := (*seqs)[j]
-			d, _, _, _ := obialign.D1Or0(son.Sequence, father.Sequence)
+			if father.Count > son.Count {
+				d, _, _, _ := obialign.D1Or0(son.Sequence, father.Sequence)
 
-			if d < 0 {
-				lcs, lali := obialign.FastLCSScore(son.Sequence, father.Sequence,
-					step,
-					matrix)
-				d := (lali - lcs)
-				if lcs >= 0 && d <= step && step > 0 {
-					son.Edges = append(son.Edges, makeEdge(j, d, -1, '-', '-'))
-					father.SonCount++
-					//a, b := minMax((*seqs)[i].Count, (*seqs)[j].Count)
+				if d < 0 {
+					lcs, lali := obialign.FastLCSScore(son.Sequence, father.Sequence,
+						step,
+						matrix)
+					d := (lali - lcs)
+					if lcs >= 0 && d <= step && step > 0 {
+						son.Edges = append(son.Edges, makeEdge(j, d, -1, '-', '-'))
+						father.SonCount++
+						//a, b := minMax((*seqs)[i].Count, (*seqs)[j].Count)
+					}
 				}
-			}
 
+			}
 		}
 	}
 
@@ -411,7 +413,10 @@ func FilterGraphOnRatio(seqs *[]*seqPCR, ratio float64) {
 		j := 0
 		for i, s2 := range e {
 			e[j] = e[i]
-			if (c1 / float64((*seqs)[s2.Father].Weight)) <= math.Pow(ratio, float64(e[i].Dist)) {
+			// log.Warnf("ratio %f, dist: %d, threshold %f",
+			// 	c1/float64((*seqs)[s2.Father].Weight),
+			// 	e[i].Dist, math.Pow(ratio, float64(e[i].Dist)))
+			if (c1 / float64((*seqs)[s2.Father].Weight)) < math.Pow(ratio, float64(e[i].Dist)) {
 				j++
 			} else {
 				(*seqs)[s2.Father].SonCount--
