@@ -78,7 +78,11 @@ func RegisterOBIMimeType() {
 		}
 
 		fastqDetector := func(raw []byte, limit uint32) bool {
-			ok, err := regexp.Match("^@[^ ].*\n[A-Za-z.-]+\n\\+", raw)
+			ok, err := regexp.Match("^@[^ ].*\n[A-Za-z.-]+", raw)
+			if ok && err == nil {
+				ok, err = regexp.Match("^@param,[^ ]", raw)
+				ok = !ok
+			}
 			return ok && err == nil
 		}
 

@@ -568,6 +568,8 @@ func ReadCSVNGSFilter(reader io.Reader) (*obingslibrary.NGSLibrary, error) {
 	for i = 0; i < len(records) && records[i][0] == "@param"; i++ {
 	}
 
+	log.Infof("%d parameters found", i)
+
 	params := records[0:i]
 	records = records[i:]
 
