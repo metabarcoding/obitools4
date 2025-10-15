@@ -59,6 +59,11 @@ if [[ ! "$WORK_DIR" || ! -d "$WORK_DIR" ]]; then
   exit 1
 fi
 
+mkdir -p "${WORK_DIR}/cache" \
+  || (echo "Cannot create ${WORK_DIR}/cache directory" 1>&2  
+      exit 1)
+      
+
 mkdir -p "${INSTALL_DIR}/bin" 2> /dev/null \
   || (echo "Please enter your password for installing obitools in ${INSTALL_DIR}"  1>&2
       sudo mkdir -p "${INSTALL_DIR}/bin")
