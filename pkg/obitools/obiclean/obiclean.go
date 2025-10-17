@@ -1,9 +1,13 @@
 package obiclean
 
 import (
+	"encoding/csv"
 	"fmt"
 	"maps"
 	"os"
+	"sort"
+	"strconv"
+	"strings"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
@@ -310,6 +314,123 @@ func Weight(sequence *obiseq.BioSequence) map[string]int {
 	return weight
 }
 
+// DumpOutputTable writes the merged CSV output across all samples.
+func DumpOutputTable(filename string, samples map[string]*[]*seqPCR) error {
+	// Create file and CSV writer
+	f, err := os.Create(filename)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	w := csv.NewWriter(f)
+	defer w.Flush()
+
+	// Collect and sort sample names
+	sampleNames := make([]string, 0, len(samples))
+	for name := range samples {
+		sampleNames = append(sampleNames, name)
+	}
+	sort.Strings(sampleNames)
+
+	// Determine sequences that are head in at least one sample
+	headSeqs := make(map[string]*obiseq.BioSequence)
+	for sname, seqs := range samples {
+		for _, pcr := range *seqs {
+			st := Status(pcr.Sequence)
+			if v, ok := st[sname]; ok && v == "h" {
+				headSeqs[pcr.Sequence.Id()] = pcr.Sequence
+			}
+		}
+	}
+
+	// Build a map of chimera status per sample for each sequence
+	// chimericInSample[seqID][sampleName] = true if sequence is chimeric in that sample
+	chimericInSample := make(map[string]map[string]bool)
+	for id, seq := range headSeqs {
+		if cm, ok := seq.GetStringMap("chimera"); ok && len(cm) > 0 {
+			chimericInSample[id] = make(map[string]bool)
+			for sname, v := range cm {
+				if v != "0" && v != "" {
+					chimericInSample[id][sname] = true
+				}
+			}
+		}
+	}
+
+	// Build header: first column is sequences (nucleotide string), then one column per sample
+	header := make([]string, 0, len(sampleNames)+1)
+	header = append(header, "sequences")
+	header = append(header, sampleNames...)
+	if err := w.Write(header); err != nil {
+		return err
+	}
+
+	// Prepare sorted list of sequences by sequence string
+	type seqPair struct {
+		id  string
+		seq string
+	}
+
+	seqList := make([]seqPair, 0, len(headSeqs))
+	for id, s := range headSeqs {
+		seqList = append(seqList, seqPair{id: id, seq: strings.ToUpper(string(s.Sequence()))})
+	}
+
+	// Sort lexicographically by sequence string
+	sort.Slice(seqList, func(i, j int) bool {
+		return seqList[i].seq < seqList[j].seq
+	})
+
+	// Get minimum sample count threshold
+	minSampleCount := MinSampleCount()
+
+	// Write one row per sequence
+	for _, pair := range seqList {
+		seq := headSeqs[pair.id]
+		seqStr := pair.seq
+
+		statusMap := Status(seq)
+		weightMap := Weight(seq)
+
+		// Build row and count valid samples simultaneously
+		row := make([]string, 0, len(sampleNames)+1)
+		row = append(row, seqStr)
+		validSampleCount := 0
+
+		for _, sname := range sampleNames {
+			val := 0
+			// Check if sequence is head in this sample
+			if st, ok := statusMap[sname]; ok && st == "h" {
+				// Check if sequence is chimeric in this specific sample
+				isChimericHere := false
+				if sampleChimeras, ok := chimericInSample[pair.id]; ok {
+					isChimericHere = sampleChimeras[sname]
+				}
+				// Only include weight if not chimeric in this sample
+				if !isChimericHere {
+					if wv, ok := weightMap[sname]; ok {
+						val = wv
+						validSampleCount++
+					}
+				}
+			}
+			row = append(row, strconv.Itoa(val))
+		}
+
+		// Skip sequences that don't meet minimum sample count
+		if validSampleCount < minSampleCount {
+			continue
+		}
+
+		if err := w.Write(row); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func CLIOBIClean(itertator obiiter.IBioSequence) obiiter.IBioSequence {
 
 	source, db := itertator.Load()
@@ -391,6 +512,15 @@ func CLIOBIClean(itertator obiiter.IBioSequence) obiiter.IBioSequence {
 	if IsSaveRatioTable() {
 		all_ratio := EstimateRatio(samples, MinCountToEvalMutationRate())
 		EmpiricalDistCsv(RatioTableFilename(), all_ratio, obidefault.CompressOutput())
+	}
+
+	if IsOutputTable() {
+		err := DumpOutputTable(OutputTable(), samples)
+		if err != nil {
+			log.Errorf("cannot write output table: %v", err)
+		} else {
+			log.Infof("Output table written to %s", OutputTable())
+		}
 	}
 
 	iter := annotateOBIClean(source, db)

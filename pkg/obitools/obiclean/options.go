@@ -18,6 +18,7 @@ var _saveGraph = "__@@NOSAVE@@__"
 var _saveRatio = "__@@NOSAVE@@__"
 var _minSample = 1
 var _detectChimera = false
+var _outputTable = "__@@NOSAVE@@__"
 
 func ObicleanOptionSet(options *getoptions.GetOpt) {
 	options.StringVar(&_sampleAttribute, "sample", _sampleAttribute,
@@ -63,6 +64,9 @@ func ObicleanOptionSet(options *getoptions.GetOpt) {
 
 	options.BoolVar(&_detectChimera, "detect-chimera", _detectChimera,
 		options.Description("Detect chimera sequences."),
+	)
+	options.StringVar(&_outputTable, "output-table", _outputTable,
+		options.Description("Output the results table to the specified file in addition to writing to standard output."),
 	)
 }
 
@@ -129,4 +133,14 @@ func MinSampleCount() int {
 // It returns true if chimera detection is enabled
 func DetectChimera() bool {
 	return _detectChimera
+}
+
+// It returns the name of the output table file if specified
+func OutputTable() string {
+	return _outputTable
+}
+
+// Returns true if an output table file is specified
+func IsOutputTable() bool {
+	return _outputTable != "__@@NOSAVE@@__"
 }
