@@ -84,6 +84,8 @@ func (data *MatrixData) Update(s *obiseq.BioSequence, mapkey string) *MatrixData
 		} else {
 			log.Panicf("Attribute %s is not a map in the sequence %s", mapkey, s.Id())
 		}
+		// I think this should be an error because the attribute can be get even if it is
+		// not present in every sequence
 	} else {
 		log.Panicf("Attribute %s does not exist in the sequence %s", mapkey, s.Id())
 	}

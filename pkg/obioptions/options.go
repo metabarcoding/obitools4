@@ -15,7 +15,7 @@ import (
 )
 
 var _Debug = false
-var _BatchSize = 2000
+var _BatchSize = 2000 // var seems not used ...?
 var _Pprof = false
 var _PprofMudex = 10
 var _PprofGoroutine = 6060
