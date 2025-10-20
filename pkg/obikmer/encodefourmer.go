@@ -23,6 +23,10 @@ var __single_base_code__ = []byte{0,
 	0, 0, 0,
 }
 
+func EncodeNucleotide(b byte) byte {
+	return __single_base_code__[b&31]
+}
+
 // Encode4mer transforms an obiseq.BioSequence into a sequence
 // of kmer of length 4. Each letter of the sequence not belonging
 // A, C, G, T, U are considered as a A. The kmer is encoded as a byte
@@ -54,7 +58,7 @@ func Encode4mer(seq *obiseq.BioSequence, buffer *[]byte) []byte {
 	code = 0
 	for ; i < 4; i++ {
 		code <<= 2
-		code += __single_base_code__[rawseq[i]&31]
+		code += EncodeNucleotide(rawseq[i])
 	}
 
 	*buffer = append((*buffer), code)
