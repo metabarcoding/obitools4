@@ -265,17 +265,18 @@ func CLIWriteCSVToStdout(matrix *MatrixData) {
 
 	osamples := samples.Members()
 	sort.Strings(osamples)
-
 	columns := make([]string, 0, len(osamples)+len(matrix.attributeList))
 	columns = append(columns, matrix.attributeList...)
 	columns = append(columns, osamples...)
+
+	header := slices.Clone(columns)
 
 	csvwriter.Write(columns)
 	nattribs := len(matrix.attributeList)
 
 	for k, data := range matrix.matrix {
 		attrs := matrix.attributes[k]
-		for i, kk := range osamples {
+		for i, kk := range header {
 			if i < nattribs {
 				if v, ok := attrs[kk]; ok {
 					vs, err := obiutils.InterfaceToString(v)
