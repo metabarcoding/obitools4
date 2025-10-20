@@ -4,33 +4,6 @@ import (
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 )
 
-var _iupac = [26]byte{
-	//  a   b  c  d   e  f
-	1, 14, 2, 13, 0, 0,
-	//  g   h  i  j  k   l
-	4, 11, 0, 0, 12, 0,
-	//  m   n  o  p  q  r
-	3, 15, 0, 0, 0, 5,
-	//  s  t  u   v  w  x
-	6, 8, 8, 13, 9, 0,
-	//  y   z
-	10, 0,
-}
-
-func _samenuc(a, b byte) bool {
-	if (a >= 'A') && (a <= 'Z') {
-		a |= 32
-	}
-	if (b >= 'A') && (b <= 'Z') {
-		b |= 32
-	}
-
-	if (a >= 'a') && (a <= 'z') && (b >= 'a') && (b <= 'z') {
-		return (_iupac[a-'a'] & _iupac[b-'a']) > 0
-	}
-	return a == b
-}
-
 // FastLCSEGFScoreByte calculates the score of the Longest Common Subsequence (LCS) between two byte slices.
 //
 // The score is calculated using the following scoring matrix:
@@ -165,7 +138,7 @@ func FastLCSEGFScoreByte(bA, bB []byte, maxError int, endgapfree bool, buffer *[
 			default:
 				// We are in the middle of the matrix
 				Sdiag = _incpath(previous[x])
-				if _samenuc(bA[j-1], bB[i-1]) {
+				if obiseq.SameIUPACNuc(bA[j-1], bB[i-1]) {
 					Sdiag = _incscore(Sdiag)
 				}
 
@@ -265,7 +238,7 @@ func FastLCSEGFScoreByte(bA, bB []byte, maxError int, endgapfree bool, buffer *[
 				Sleft = _notavail
 			default:
 				Sdiag = _incpath(previous[x])
-				if _samenuc(bA[j-1], bB[i-1]) {
+				if obiseq.SameIUPACNuc(bA[j-1], bB[i-1]) {
 					Sdiag = _incscore(Sdiag)
 				}
 
