@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiformats"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiitercsv"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
@@ -60,23 +61,63 @@ func CLICSVTaxaIterator(iterator *obitax.ITaxon) *obiitercsv.ICSVRecord {
 		return nil
 	}
 
-	options := make([]obitax.WithOption, 0)
+	options := make([]obiformats.WithOption, 0)
 
 	options = append(options,
-		obitax.OptionsWithPattern(CLIWithQuery()),
-		obitax.OptionsWithParent(CLIWithParent()),
-		obitax.OptionsWithRank(CLIWithRank()),
-		obitax.OptionsWithScientificName(CLIWithScientificName()),
-		obitax.OptionsWithPath(CLIWithPath()),
-		obitax.OptionsRawTaxid(CLIRawTaxid()),
-		obitax.OptionsSource(obidefault.SelectedTaxonomy()),
+		obiformats.OptionsWithPattern(CLIWithQuery()),
+		obiformats.OptionsWithParent(CLIWithParent()),
+		obiformats.OptionsWithRank(CLIWithRank()),
+		obiformats.OptionsWithScientificName(CLIWithScientificName()),
+		obiformats.OptionsWithPath(CLIWithPath()),
+		obiformats.OptionsRawTaxid(obidefault.UseRawTaxids()),
+		obiformats.OptionsSource(obidefault.SelectedTaxonomy()),
 	)
 
-	return iterator.CSVTaxaIterator(options...)
+	return obiformats.CSVTaxaIterator(iterator, options...)
 }
 
 func CLICSVTaxaWriter(iterator *obitax.ITaxon, terminalAction bool) *obiitercsv.ICSVRecord {
 	return obicsv.CLICSVWriter(CLICSVTaxaIterator(iterator), terminalAction)
+}
+
+func CLINewickWriter(iterator *obitax.ITaxon,
+	terminalAction bool) *obitax.ITaxon {
+
+	var err error
+	var newIter *obitax.ITaxon
+
+	options := make([]obiformats.WithOption, 0)
+	options = append(options, obiformats.OptionsCompressed(obidefault.CompressOutput()),
+		obiformats.OptionsWithRank(CLIWithRank()),
+		obiformats.OptionsWithScientificName(CLIWithScientificName()),
+		obiformats.OptionsWithTaxid(true),
+		obiformats.OptionWithoutRootPath(CLINewickWithoutRoot()),
+	)
+
+	filename := obiconvert.CLIOutPutFileName()
+
+	if filename != "-" {
+		newIter, err = obiformats.WriteNewickToFile(iterator, filename, options...)
+
+		if err != nil {
+			log.Fatalf("Cannot write to file : %+v", err)
+		}
+
+	} else {
+		newIter, err = obiformats.WriteNewickToStdout(iterator, options...)
+
+		if err != nil {
+			log.Fatalf("Cannot write to stdout : %+v", err)
+		}
+
+	}
+
+	if terminalAction {
+		newIter.Consume()
+		return nil
+	}
+
+	return newIter
 }
 
 func CLIDownloadNCBITaxdump() error {

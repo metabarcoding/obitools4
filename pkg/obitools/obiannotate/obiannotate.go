@@ -194,11 +194,7 @@ func EvalAttributeWorker(expression map[string]string) obiseq.SeqWorker {
 	w = nil
 
 	for a, e := range expression {
-		if w == nil {
-			w = obiseq.EditAttributeWorker(a, e)
-		} else {
-			w.ChainWorkers(obiseq.EditAttributeWorker(a, e))
-		}
+		w = w.ChainWorkers(obiseq.EditAttributeWorker(a, e))
 	}
 
 	return w
@@ -322,7 +318,7 @@ func CLIAnnotationWorker() obiseq.SeqWorker {
 
 	if CLIHasCut() {
 		from, to := CLICut()
-		w := CutSequenceWorker(from, to, false)
+		w := CutSequenceWorker(from, to, true)
 
 		annotator = annotator.ChainWorkers(w)
 	}

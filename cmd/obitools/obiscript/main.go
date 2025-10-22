@@ -31,7 +31,10 @@ func main() {
 	// trace.Start(ftrace)
 	// defer trace.Stop()
 
-	optionParser := obioptions.GenerateOptionParser(obiscript.OptionSet)
+	optionParser := obioptions.GenerateOptionParser(
+		"obiscript",
+		"executes a lua script on the input sequences",
+		obiscript.OptionSet)
 
 	_, args := optionParser(os.Args)
 

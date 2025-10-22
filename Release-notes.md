@@ -1,13 +1,64 @@
 # OBITools release notes
 
+## New changes
+
+### Bug fixes
+
+- In `obipairing` correct the misspelling of the `obiparing_*` tags where the `i`
+  was missing to `obipairing_`.  
+
+- In `obigrep` the **-C** option that excludes sequences too abundant was not 
+  functional.
+
+- In `obitaxonomy` the **-l** option that lists all the taxonomic rank defined by
+  a taxonomy was not functional
+
+- The file type guesser was not using enough data to be able to correctly detect
+  file format when sequences were too long in fastq and fasta or when lines were
+  to long in CSV files. That's now corrected
+
+- Options **--fasta** or **--fastq** usable to specify input format were ignored.
+  They are now correctly considered
+
+- The `obiannotate` command were crashing when a selection option was used but
+  no editing option.
+  
+- The `--fail-on-taxonomy` led to an error on merged taxa even when the
+  `--update-taxid` option was used.
+
+- The `--compressed` option was not correctly named. It was renamed to `--compress`
+  
+### Enhancement
+
+- Some sequences in the Genbank and EMBL databases are several gigabases long. The 
+  sequence parser had to reallocate and recopy memory many times to read them, 
+  resulting in a complexity of O(N^2) for reading such large sequences. 
+  The new file chunk reader has a linear algorithm that speeds up the reading 
+  of very long sequences.
+
+- A new option **--csv** is added to every obitools to indicate that the input
+  format is CSV
+
+- The new version of obitools are now printing the taxids in a fancy way
+  including the scientific name and the taxonomic rank (`"taxon:9606 [Homo
+  sapiens]@species"`). But if you need the old fashion raw taxid, a new option
+  **--raw-taxid** has been added to get obitools printing the taxids without any
+  decorations (`"9606"`).
+
+
 ## March 1st, 2025. Release 4.4.0
 
 A new documentation website is available at https://obitools4.metabarcoding.org.
 Its development is still in progress. 
 
-The biggest step forward in this new version is taxonomy management.
-The new version is now able to handle taxonomic identifiers that are not just integer values. This is a first step towards an easy way to handle other taxonomy databases soon, such as the GBIF or Catalogue of Life taxonomies.
-This version is able to handle files containing taxonomic information created by previous versions of OBITools, but files created by this new version may have some problems to be analysed by previous versions, at least for the taxonomic information.
+The biggest step forward in this new version is taxonomy management. The new
+version is now able to handle taxonomic identifiers that are not just integer
+values. This is a first step towards an easy way to handle other taxonomy
+databases soon, such as the GBIF or Catalog of Life taxonomies. This version
+is able to handle files containing taxonomic information created by previous
+versions of OBITools, but files created by this new version may have some
+problems to be analyzed by previous versions, at least for the taxonomic
+information.
 
 
 ### Breaking changes

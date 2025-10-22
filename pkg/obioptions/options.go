@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"sync"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiformats"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/DavidGamba/go-getoptions"
@@ -15,16 +17,21 @@ import (
 )
 
 var _Debug = false
-var _BatchSize = 2000 // var seems not used ...?
 var _Pprof = false
 var _PprofMudex = 10
 var _PprofGoroutine = 6060
+var __seq_as_taxa__ = false
+
+var __defaut_taxonomy_mutex__ sync.Mutex
 
 type ArgumentParser func([]string) (*getoptions.GetOpt, []string)
 
-func GenerateOptionParser(optionset ...func(*getoptions.GetOpt)) ArgumentParser {
+func GenerateOptionParser(program string,
+	documentation string,
+	optionset ...func(*getoptions.GetOpt)) ArgumentParser {
 
 	options := getoptions.New()
+	options.Self(program, documentation)
 	options.SetMode(getoptions.Bundling)
 	options.SetUnknownMode(getoptions.Fail)
 	options.Bool("help", false, options.Alias("h", "?"))
@@ -47,8 +54,8 @@ func GenerateOptionParser(optionset ...func(*getoptions.GetOpt)) ArgumentParser 
 		options.GetEnv("OBIMAXCPU"),
 		options.Description("Number of parallele threads computing the result"))
 
-	options.BoolVar(&_Pprof, "force-one-cpu", false,
-		options.Description("Force to use only one cpu core for parallel processing"))
+	// options.BoolVar(&_Pprof, "force-one-cpu", false,
+	// 	options.Description("Force to use only one cpu core for parallel processing"))
 
 	options.IntVar(&_PprofMudex, "pprof-mutex", _PprofMudex,
 		options.GetEnv("OBIPPROFMUTEX"),
@@ -66,6 +73,11 @@ func GenerateOptionParser(optionset ...func(*getoptions.GetOpt)) ArgumentParser 
 		options.GetEnv("OBISOLEXA"),
 		options.Description("Decodes quality string according to the Solexa specification."))
 
+	options.BoolVar(obidefault.SilentWarningPtr(), "silent-warning", obidefault.SilentWarning(),
+		options.GetEnv("OBIWARNING"),
+		options.Description("Stop printing of the warning message"),
+	)
+
 	for _, o := range optionset {
 		o(options)
 	}
@@ -76,12 +88,29 @@ func GenerateOptionParser(optionset ...func(*getoptions.GetOpt)) ArgumentParser 
 
 		if options.Called("help") {
 			fmt.Fprint(os.Stderr, options.Help())
-			os.Exit(1)
+			os.Exit(0)
 		}
 
 		if options.Called("version") {
 			fmt.Fprintf(os.Stderr, "OBITools %s\n", VersionString())
 			os.Exit(0)
+		}
+
+		if options.Called("taxonomy") {
+			__defaut_taxonomy_mutex__.Lock()
+			defer __defaut_taxonomy_mutex__.Unlock()
+			taxonomy, err := obiformats.LoadTaxonomy(
+				obidefault.SelectedTaxonomy(),
+				!obidefault.AreAlternativeNamesSelected(),
+				SeqAsTaxa(),
+			)
+
+			if err != nil {
+				log.Fatalf("Cannot load default taxonomy: %v", err)
+
+			}
+
+			taxonomy.SetAsDefault()
 		}
 
 		log.SetLevel(log.InfoLevel)
@@ -123,23 +152,27 @@ func GenerateOptionParser(optionset ...func(*getoptions.GetOpt)) ArgumentParser 
 			os.Exit(1)
 		}
 
-		// Setup the maximum number of CPU usable by the program
-		if obidefault.MaxCPU() == 1 {
-			log.Warn("Limitating the Maximum number of CPU to 1 is not recommanded")
-			log.Warn("The number of CPU requested has been set to 2")
-			obidefault.SetMaxCPU(2)
-		}
+		// // Setup the maximum number of CPU usable by the program
+		// if obidefault.MaxCPU() == 1 {
+		// 	log.Warn("Limitating the Maximum number of CPU to 1 is not recommanded")
+		// 	log.Warn("The number of CPU requested has been set to 2")
+		// 	obidefault.SetMaxCPU(2)
+		// }
 
-		if options.Called("force-one-cpu") {
-			log.Warn("Limitating the Maximum number of CPU to 1 is not recommanded")
-			log.Warn("The number of CPU has been forced to 1")
-			log.Warn("This can lead to unexpected behavior")
-			obidefault.SetMaxCPU(1)
-		}
+		// if options.Called("force-one-cpu") {
+		// 	log.Warn("Limitating the Maximum number of CPU to 1 is not recommanded")
+		// 	log.Warn("The number of CPU has been forced to 1")
+		// 	log.Warn("This can lead to unexpected behavior")
+		// 	obidefault.SetMaxCPU(1)
+		// }
 
 		runtime.GOMAXPROCS(obidefault.MaxCPU())
 
-		if options.Called("max-cpu") || options.Called("force-one-cpu") {
+		// if options.Called("max-cpu") || options.Called("force-one-cpu") {
+		// 	log.Printf("CPU number limited to %d", obidefault.MaxCPU())
+		// }
+
+		if options.Called("max-cpu") {
 			log.Printf("CPU number limited to %d", obidefault.MaxCPU())
 		}
 
@@ -186,6 +219,13 @@ func LoadTaxonomyOptionSet(options *getoptions.GetOpt, required, alternatiive bo
 	options.BoolVar(obidefault.UpdateTaxidPtr(), "update-taxid", obidefault.UpdateTaxid(),
 		options.Description("Make obitools automatically updating the taxid that are declared merged to a newest one."),
 	)
+
+	options.BoolVar(obidefault.UseRawTaxidsPtr(), "raw-taxid", obidefault.UseRawTaxids(),
+		options.Description("When set, taxids are printed in files with any supplementary information (taxon name and rank)"),
+	)
+	options.BoolVar(&__seq_as_taxa__, "with-leaves", __seq_as_taxa__,
+		options.Description("If taxonomy is extracted from a sequence file, sequences are added as leave of their taxid annotation"),
+	)
 }
 
 // CLIIsDebugMode returns whether the CLI is in debug mode.
@@ -198,6 +238,10 @@ func LoadTaxonomyOptionSet(options *getoptions.GetOpt, required, alternatiive bo
 // Returns a boolean indicating if the CLI is in debug mode.
 func CLIIsDebugMode() bool {
 	return _Debug
+}
+
+func SeqAsTaxa() bool {
+	return __seq_as_taxa__
 }
 
 // SetDebugOn sets the debug mode on.

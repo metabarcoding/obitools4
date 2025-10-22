@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiphylo"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 )
 
@@ -40,6 +41,8 @@ type Taxonomy struct {
 	root        *TaxNode
 	index       map[*string]*TaxonSet
 }
+
+var DefaultTaxidAlphabet = obiutils.AsciiAlphaNumSet.Union(obiutils.AsciiUnderScore)
 
 // NewTaxonomy creates and initializes a new Taxonomy instance with the specified name and code.
 // It sets up the necessary internal structures, including ranks, nodes, aliases, and an index.
@@ -364,7 +367,7 @@ func (taxonomy *Taxonomy) InsertPathString(path []string) (*Taxonomy, error) {
 	code, taxid, scientific_name, rank, err := ParseTaxonString(path[0])
 
 	if taxonomy == nil {
-		taxonomy = NewTaxonomy(code, code, obiutils.AsciiAlphaNumSet)
+		taxonomy = NewTaxonomy(code, code, DefaultTaxidAlphabet)
 	}
 
 	if err != nil {
@@ -383,7 +386,7 @@ func (taxonomy *Taxonomy) InsertPathString(path []string) (*Taxonomy, error) {
 		if err != nil {
 			return nil, err
 		}
-		root.SetName(scientific_name, "scientificName")
+		root.SetName(scientific_name, "scientific name")
 	}
 
 	var current *Taxon
@@ -414,4 +417,11 @@ func (taxonomy *Taxonomy) InsertPathString(path []string) (*Taxonomy, error) {
 	}
 
 	return taxonomy, nil
+}
+
+func (taxo *Taxonomy) AsPhyloTree() (*obiphylo.PhyloNode, error) {
+	root := taxo.Root().Node
+	taxa := taxo.AsTaxonSet()
+
+	return taxa.AsPhyloTree(root)
 }

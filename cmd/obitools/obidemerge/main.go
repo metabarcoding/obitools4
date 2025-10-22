@@ -15,7 +15,10 @@ func main() {
 	obidefault.SetStrictReadWorker(2)
 	obidefault.SetStrictWriteWorker(2)
 
-	optionParser := obioptions.GenerateOptionParser(obidemerge.OptionSet)
+	optionParser := obioptions.GenerateOptionParser(
+		"obidemerge",
+		"",
+		obidemerge.OptionSet)
 
 	_, args := optionParser(os.Args)
 

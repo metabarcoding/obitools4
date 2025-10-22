@@ -45,13 +45,12 @@ func UniqueOptionSet(options *getoptions.GetOpt) {
 
 }
 
-
 // OptionSet adds to the basic option set every options declared for
 // the obiuniq command
 //
 // It takes a pointer to a GetOpt struct as its parameter and does not return anything.
 func OptionSet(options *getoptions.GetOpt) {
-	obiconvert.OptionSet(options)
+	obiconvert.OptionSet(false)(options)
 	UniqueOptionSet(options)
 }
 

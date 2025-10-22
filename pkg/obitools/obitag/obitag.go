@@ -11,6 +11,7 @@ import (
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obikmer"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obilog"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obirefidx"
@@ -185,6 +186,9 @@ func Identify(sequence *obiseq.BioSequence,
 				// log.Debugln("Need of indexing")
 				newidx++
 				idx = obirefidx.IndexSequence(seqidxs[i], references, &refcounts, taxa, taxo)
+				if len(idx) == 0 {
+					log.Panicf("%s idx: %v", references[seqidxs[i]].Id(), idx)
+				}
 				references[seqidxs[i]].SetOBITagRefIndex(idx)
 				log.Debugln(references[seqidxs[i]].Id(), idx)
 			}
@@ -207,6 +211,10 @@ func Identify(sequence *obiseq.BioSequence,
 				taxon, _ = taxon.LCA(match_taxon)
 			} else {
 				taxon = match_taxon
+			}
+
+			if taxon.IsRoot() {
+				break
 			}
 
 		}
@@ -248,24 +256,25 @@ func CLIAssignTaxonomy(iterator obiiter.IBioSequence,
 		[]*obikmer.Table4mer,
 		len(references))
 
-	taxa := taxo.NewTaxonSlice(references.Len(), references.Len())
+	taxa := taxo.NewTaxonSlice(0, references.Len())
 	buffer := make([]byte, 0, 1000)
 
 	j := 0
 	for _, seq := range references {
-		references[j] = seq
-		refcounts[j] = obikmer.Count4Mer(seq, &buffer, nil)
 		taxon := seq.Taxon(taxo)
-		taxa.Set(j, taxon)
-		if taxon != nil {
+		if taxon != nil && taxon.Node != nil {
+			references[j] = seq
+			refcounts[j] = obikmer.Count4Mer(seq, &buffer, nil)
+			taxa.Push(taxon)
 			j++
 		} else {
-			log.Warnf("Taxid %s is not described in the taxonomy %s."+
+			obilog.Warnf("Taxid %s is not described in the taxonomy %s."+
 				" Sequence %s is discared from the reference database",
 				seq.Taxid(), taxo.Name(), seq.Id())
 		}
 	}
 
+	log.Infof("%d reference sequences conserved on %d", j, len(references))
 	references = references[:j]
 	refcounts = refcounts[:j]
 

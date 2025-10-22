@@ -6,6 +6,7 @@ package obimatrix
 
 import (
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obicsv"
 	"github.com/DavidGamba/go-getoptions"
 )
 
@@ -14,7 +15,8 @@ var __transpose__ = true
 var __mapAttribute__ = "merged_sample"
 var __valueName__ = "count"
 var __sampleName__ = "sample"
-var __NAValue__ = "0"
+var __MapNAValue__ = "0"
+var __AllowEmpty__ = false
 
 func MatrixOptionSet(options *getoptions.GetOpt) {
 	options.BoolVar(&__threeColumns__, "three-columns", false,
@@ -32,12 +34,16 @@ func MatrixOptionSet(options *getoptions.GetOpt) {
 	options.StringVar(&__sampleName__, "sample-name", __sampleName__,
 		options.Description("Name of the coulumn containing the sample names in the three column format."))
 
-	options.StringVar(&__NAValue__, "na-value", __NAValue__,
+	options.StringVar(&__MapNAValue__, "map-na-value", __MapNAValue__,
 		options.Description("Value used when the map attribute is not defined for a sequence."))
+
+	options.BoolVar(&__AllowEmpty__, "allow-empty", __AllowEmpty__,
+		options.Description("Allow sequences with empty map"))
 }
 
 func OptionSet(options *getoptions.GetOpt) {
 	MatrixOptionSet(options)
+	obicsv.CSVOptionSet(options)
 	obiconvert.InputOptionSet(options)
 }
 
@@ -57,8 +63,8 @@ func CLISampleName() string {
 	return __sampleName__
 }
 
-func CLINaValue() string {
-	return __NAValue__
+func CLIMapNaValue() string {
+	return __MapNAValue__
 }
 
 func CLIMapAttribute() string {
@@ -67,4 +73,8 @@ func CLIMapAttribute() string {
 
 func CLITranspose() bool {
 	return __transpose__
+}
+
+func CLIStrict() bool {
+	return !__AllowEmpty__
 }

@@ -9,35 +9,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// Bitmasks over A,C,G,T
-// A=1, C=2, G=4, T/U=8
-var iupacMask = [256]uint8{
-	'A': 1, 'a': 1,
-	'C': 2, 'c': 2,
-	'G': 4, 'g': 4,
-	'T': 8, 't': 8,
-	'U': 8, 'u': 8,
-	'R': 1 | 4, 'r': 1 | 4, // A or G
-	'Y': 2 | 8, 'y': 2 | 8, // C or T
-	'S': 2 | 4, 's': 2 | 4, // G or C
-	'W': 1 | 8, 'w': 1 | 8, // A or T
-	'K': 4 | 8, 'k': 4 | 8, // G or T
-	'M': 1 | 2, 'm': 1 | 2, // A or C
-	'B': 2 | 4 | 8, 'b': 2 | 4 | 8, // C or G or T
-	'D': 1 | 4 | 8, 'd': 1 | 4 | 8, // A or G or T
-	'H': 1 | 2 | 8, 'h': 1 | 2 | 8, // A or C or T
-	'V': 1 | 2 | 4, 'v': 1 | 2 | 4, // A or C or G
-	'N': 1 | 2 | 4 | 8, 'n': 1 | 2 | 4 | 8, // any
-	// Optional: treat '.', '-', '?' as unknowns
-	'.': 1 | 2 | 4 | 8,
-	'-': 1 | 2 | 4 | 8,
-	'?': 1 | 2 | 4 | 8,
-}
-
-func iupacCompatible(a, b byte) bool {
-	return (iupacMask[a] & iupacMask[b]) != 0
-}
-
 func commonPrefix(a, b *obiseq.BioSequence) int {
 	i := 0
 	l := min(a.Len(), b.Len())
@@ -48,7 +19,7 @@ func commonPrefix(a, b *obiseq.BioSequence) int {
 	as := a.Sequence()
 	bs := b.Sequence()
 
-	for i < l && iupacCompatible(as[i], bs[i]) {
+	for i < l && obiseq.SameIUPACNuc(as[i], bs[i]) {
 		i++
 	}
 
@@ -71,7 +42,7 @@ func commonSuffix(a, b *obiseq.BioSequence) int {
 	bs := b.Sequence()
 
 	l := 0
-	for i >= 0 && j >= 0 && iupacCompatible(as[i], bs[j]) {
+	for i >= 0 && j >= 0 && obiseq.SameIUPACNuc(as[i], bs[j]) {
 		i--
 		j--
 		l++

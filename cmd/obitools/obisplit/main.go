@@ -31,7 +31,10 @@ func main() {
 	// trace.Start(ftrace)
 	// defer trace.Stop()
 
-	optionParser := obioptions.GenerateOptionParser(obisplit.OptionSet)
+	optionParser := obioptions.GenerateOptionParser(
+		"obisplit",
+		"",
+		obisplit.OptionSet)
 
 	_, args := optionParser(os.Args)
 

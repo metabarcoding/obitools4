@@ -280,7 +280,7 @@ func _parse_json_header_(header string, sequence *obiseq.BioSequence) string {
 					if err != nil {
 						log.Fatalf("%s: Cannot parse merged slot %s: %v", sequence.Id(), skey, err)
 					} else {
-						annotations[skey] = data
+						annotations[skey] = obiseq.MapAsStatsOnValues(data)
 					}
 				} else {
 					log.Fatalf("%s: Cannot parse merged slot %s", sequence.Id(), skey)

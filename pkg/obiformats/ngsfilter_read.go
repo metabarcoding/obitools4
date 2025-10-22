@@ -13,8 +13,10 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obilog"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obingslibrary"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 	"github.com/gabriel-vasile/mimetype"
 )
 
@@ -87,7 +89,7 @@ func _parseMainNGSFilter(text string) (obingslibrary.PrimerPair, obingslibrary.T
 }
 
 func NGSFilterCsvDetector(raw []byte, limit uint32) bool {
-	r := csv.NewReader(bytes.NewReader(dropLastLine(raw, limit)))
+	r := csv.NewReader(bytes.NewReader(obiutils.DropLastLine(raw)))
 	r.Comma = ','
 	r.ReuseRecord = true
 	r.LazyQuotes = true
@@ -108,7 +110,6 @@ func NGSFilterCsvDetector(raw []byte, limit uint32) bool {
 		if err != nil {
 			return false
 		}
-
 		if nfields == 0 {
 			nfields = len(rec)
 		} else if nfields != len(rec) {
@@ -121,18 +122,6 @@ func NGSFilterCsvDetector(raw []byte, limit uint32) bool {
 
 }
 
-func dropLastLine(b []byte, readLimit uint32) []byte {
-	if readLimit == 0 || uint32(len(b)) < readLimit {
-		return b
-	}
-	for i := len(b) - 1; i > 0; i-- {
-		if b[i] == '\n' {
-			return b[:i]
-		}
-	}
-	return b
-}
-
 func OBIMimeNGSFilterTypeGuesser(stream io.Reader) (*mimetype.MIME, io.Reader, error) {
 
 	// Create a buffer to store the read data
@@ -143,16 +132,20 @@ func OBIMimeNGSFilterTypeGuesser(stream io.Reader) (*mimetype.MIME, io.Reader, e
 		return nil, nil, err
 	}
 
+	buf = buf[:n]
+
+	obiutils.HasBOM(buf)
+
 	mimetype.Lookup("text/plain").Extend(NGSFilterCsvDetector, "text/ngsfilter-csv", ".csv")
 
 	// Detect the MIME type using the mimetype library
-	mimeType := mimetype.Detect(buf[:n])
+	mimeType := mimetype.Detect(buf)
 	if mimeType == nil {
 		return nil, nil, err
 	}
 
 	// Create a new reader based on the read data
-	newReader := io.Reader(bytes.NewReader(buf[:n]))
+	newReader := io.Reader(bytes.NewReader(buf))
 
 	if err == nil {
 		newReader = io.MultiReader(newReader, stream)
@@ -575,6 +568,8 @@ func ReadCSVNGSFilter(reader io.Reader) (*obingslibrary.NGSLibrary, error) {
 	for i = 0; i < len(records) && records[i][0] == "@param"; i++ {
 	}
 
+	log.Infof("%d parameters found", i)
+
 	params := records[0:i]
 	records = records[i:]
 
@@ -674,7 +669,7 @@ func ReadCSVNGSFilter(reader io.Reader) (*obingslibrary.NGSLibrary, error) {
 		if ok {
 			setparam(&ngsfilter, data...)
 		} else {
-			log.Warnf("At line %d: Skipping unknown parameter %s: %v", i, param, data)
+			obilog.Warnf("At line %d: Skipping unknown parameter %s: %v", i, param, data)
 		}
 	}
 

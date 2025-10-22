@@ -139,7 +139,10 @@ func (data *DataSummary) Update(s *obiseq.BioSequence) *DataSummary {
 	}
 
 	for k, v := range s.Annotations() {
+		_, isSov := v.(*obiseq.StatsOnValues)
 		switch {
+		case isSov:
+			plusOneUpdateIntMap(data.map_tags, k)
 		case obiutils.IsAMap(v):
 			plusOneUpdateIntMap(data.map_tags, k)
 		case obiutils.IsASlice(v):

@@ -1,0 +1,9 @@
+>Seq_1 {"count":2,"merged_sample":{"15a_F730814":1,"29a_F260619":1}}
+ttagccctaaacacaagtaattaatataacaaaattattcgccagagtactaccggcaat
+agctyaaaactcaaaggacttggcggtgctttataccctt
+>Seq_2 {"count":22,"merged_sample":{"15a_F730814":12,"29a_F260619":10}}
+ttagccctaaacacaagtaattaatataacaaaattattcgccagagtactaccggcaat
+atcttaaaactcaaaggacttggcggtgctttataccctt
+>Seq_3 {"count":22,"merged_sample":{"15a_F730814":15,"29a_F260619":7}}
+ttagccctaaacacaagtaattaatataacaaaattattcgccagagtactaccggcgat
+agcttaaaactcaaaggacttggcggtgctttataccctt

@@ -28,7 +28,10 @@ func main() {
 	// trace.Start(ftrace)
 	// defer trace.Stop()
 
-	optionParser := obioptions.GenerateOptionParser(obimultiplex.OptionSet)
+	optionParser := obioptions.GenerateOptionParser(
+		"obimultiplex",
+		"demultiplex amplicons",
+		obimultiplex.OptionSet)
 
 	_, args := optionParser(os.Args)
 

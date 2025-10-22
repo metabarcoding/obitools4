@@ -8,6 +8,7 @@ import (
 type AsciiSet [256]bool
 
 var AsciiSpaceSet = AsciiSetFromString("\t\n\v\f\r ")
+var AsciiUnderScore = AsciiSetFromString("_")
 var AsciiDigitSet = AsciiSetFromString("0123456789")
 var AsciiUpperSet = AsciiSetFromString("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 var AsciiLowerSet = AsciiSetFromString("abcdefghijklmnopqrstuvwxyz")

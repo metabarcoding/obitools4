@@ -4,7 +4,8 @@
 # Here give the name of the test serie
 #
 
-TEST_NAME=obiparing
+TEST_NAME=obipcr
+CMD=obipcr
 
 ######
 #
@@ -15,6 +16,7 @@ TEST_DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 OBITOOLS_DIR="${TEST_DIR/obitest*/}build"
 export PATH="${OBITOOLS_DIR}:${PATH}"
 
+MCMD="$(echo "${CMD:0:4}" | tr '[:lower:]' '[:upper:]')$(echo "${CMD:4}" | tr '[:upper:]' '[:lower:]')"
 
 TMPDIR="$(mktemp -d)"
 ntest=0
@@ -38,8 +40,13 @@ cleanup() {
 
     if [ $failed -gt 0 ]; then
        log "$TEST_NAME tests failed" 
+        log
+        log
        exit 1
     fi
+
+    log
+    log
 
     exit 0
 }
@@ -79,50 +86,18 @@ log "files: $(find $TEST_DIR | awk -F'/' '{print $NF}' | tail -n +2)"
 ####
 ######################################################################
 
+
+
 ((ntest++))
-if obipairing -F "${TEST_DIR}/wolf_F.fastq.gz" \
-              -R "${TEST_DIR}/wolf_R.fastq.gz" \
-    | obidistribute -Z -c mode \
-                    -p "${TMPDIR}/wolf_paired_%s.fastq.gz" 
+if $CMD -h > "${TMPDIR}/help.txt" 2>&1 
 then
-    log "OBIPairing: sequence pairing OK" 
+    log "$MCMD: printing help OK" 
     ((success++))
 else
-    log "OBIPairing: sequence pairing failed" 
+    log "$MCMD: printing help failed" 
     ((failed++))
 fi
 
-((ntest++))
-if obicsv -Z -s -i \
-          -k ali_dir -k ali_length -k paring_fast_count \
-          -k paring_fast_overlap -k paring_fast_score \
-          -k score -k score_norm -k seq_a_single \
-          -k seq_b_single -k seq_ab_match \
-          "${TMPDIR}/wolf_paired_alignment.fastq.gz" \
-    > "${TMPDIR}/wolf_paired_alignment.csv.gz" \
-    && zdiff -c "${TEST_DIR}/wolf_paired_alignment.csv.gz" \
-                "${TMPDIR}/wolf_paired_alignment.csv.gz" 
-then
-    log "OBIPairing: check aligned sequences OK" 
-    ((success++))
-else
-    log "OBIPairing: check aligned sequences failed" 
-    ((failed++))
-fi
-
-((ntest++))
-if obicsv -Z -s -i \
-          "${TMPDIR}/wolf_paired_join.fastq.gz" \
-    > "${TMPDIR}/wolf_paired_join.csv.gz" \
-    && zdiff -c "${TEST_DIR}/wolf_paired_join.csv.gz" \
-                "${TMPDIR}/wolf_paired_join.csv.gz"
-then
-    log "OBIPairing: check joined sequences OK" 
-    ((success++))
-else
-    log "OBIPairing: check joined sequences failed" 
-    ((failed++))
-fi
 
 #########################################
 #

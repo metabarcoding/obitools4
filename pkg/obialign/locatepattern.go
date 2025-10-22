@@ -1,6 +1,9 @@
 package obialign
 
-import log "github.com/sirupsen/logrus"
+import (
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
+	log "github.com/sirupsen/logrus"
+)
 
 // buffIndex converts a pair of coordinates (i, j) into a linear index in a matrix
 // of size width x width. The coordinates are (-1)-indexed, and the linear index
@@ -69,7 +72,7 @@ func LocatePattern(id string, pattern, sequence []byte) (int, int, int) {
 			// Mismatch score = -1
 			// Match score = 0
 			match := -1
-			if _samenuc(pattern[j], sequence[i]) {
+			if obiseq.SameIUPACNuc(pattern[j], sequence[i]) {
 				match = 0
 			}
 
@@ -103,7 +106,7 @@ func LocatePattern(id string, pattern, sequence []byte) (int, int, int) {
 		// Mismatch score = -1
 		// Match score = 0
 		match := -1
-		if _samenuc(pattern[jmax], sequence[i]) {
+		if obiseq.SameIUPACNuc(pattern[jmax], sequence[i]) {
 			match = 0
 		}
 
@@ -152,7 +155,7 @@ func LocatePattern(id string, pattern, sequence []byte) (int, int, int) {
 
 	}
 
-	// log.Warnf("from : %d to: %d error: %d match: %v",
+	// obilog.Warnf("from : %d to: %d error: %d match: %v",
 	// 	i, end+1, -buffer[buffIndex(len(sequence)-1, len(pattern)-1, width)],
 	// 	string(sequence[i:(end+1)]))
 	return i, end + 1, -buffer[buffIndex(len(sequence)-1, len(pattern)-1, width)]

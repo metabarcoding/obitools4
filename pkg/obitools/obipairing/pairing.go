@@ -137,9 +137,9 @@ func AssemblePESequences(seqA, seqB *obiseq.BioSequence,
 	annot := cons.Annotations()
 
 	if fastAlign {
-		annot["paring_fast_count"] = fastcount
-		annot["paring_fast_score"] = math.Round(fastscore*1000) / 1000
-		annot["paring_fast_overlap"] = over
+		annot["pairing_fast_count"] = fastcount
+		annot["pairing_fast_score"] = math.Round(fastscore*1000) / 1000
+		annot["pairing_fast_overlap"] = over
 	}
 
 	if aliLength >= minOverlap && identity >= minIdentity {

@@ -112,6 +112,7 @@ func CLIReadBioSequences(filenames ...string) (obiiter.IBioSequence, error) {
 	opts = append(opts, obiformats.OptionsBatchSize(obidefault.BatchSize()))
 
 	opts = append(opts, obiformats.OptionsFullFileBatch(FullFileBatch()))
+	opts = append(opts, obiformats.OptionsUtoT(CLIUtoT()))
 
 	if len(filenames) == 0 {
 		log.Printf("Reading sequences from stdin in %s\n", CLIInputFormat())
@@ -126,8 +127,14 @@ func CLIReadBioSequences(filenames ...string) (obiiter.IBioSequence, error) {
 			iterator, err = obiformats.ReadEMBL(os.Stdin, opts...)
 		case "genbank":
 			iterator, err = obiformats.ReadGenbank(os.Stdin, opts...)
+		case "fasta":
+			iterator, err = obiformats.ReadFasta(os.Stdin, opts...)
+		case "fastq":
+			iterator, err = obiformats.ReadFastq(os.Stdin, opts...)
+		case "csv":
+			iterator, err = obiformats.ReadCSV(os.Stdin, opts...)
 		default:
-			iterator = obiformats.ReadFastSeqFromStdin(opts...)
+			iterator, err = obiformats.ReadSequencesFromStdin(opts...)
 		}
 
 		if err != nil {
@@ -146,6 +153,8 @@ func CLIReadBioSequences(filenames ...string) (obiiter.IBioSequence, error) {
 			reader = obiformats.ReadFastqFromFile
 		case "fasta":
 			reader = obiformats.ReadFastaFromFile
+		case "csv":
+			reader = obiformats.ReadCSVFromFile
 		case "ecopcr":
 			reader = obiformats.ReadEcoPCRFromFile
 		case "embl":

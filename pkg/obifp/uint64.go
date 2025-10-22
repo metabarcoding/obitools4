@@ -4,6 +4,7 @@ import (
 	"math"
 	"math/bits"
 
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obilog"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -100,7 +101,7 @@ func (u Uint64) LeftShift64(n uint, carryIn uint64) (value, carry uint64) {
 
 	}
 
-	log.Warnf("Uint64 overflow at LeftShift64(%v, %v)", u, n)
+	obilog.Warnf("Uint64 overflow at LeftShift64(%v, %v)", u, n)
 	return 0, 0
 }
 
@@ -129,7 +130,7 @@ func (u Uint64) RightShift64(n uint, carryIn uint64) (value, carry uint64) {
 		return carryIn, u.w0 >> (n - 64)
 	}
 
-	log.Warnf("Uint64 overflow at RightShift64(%v, %v)", u, n)
+	obilog.Warnf("Uint64 overflow at RightShift64(%v, %v)", u, n)
 	return 0, 0
 }
 

@@ -26,7 +26,7 @@ var _AllocatedApaPattern = 0
 // ApatPattern stores a regular pattern usable by the
 // Apat algorithm functions and methods
 type _ApatPattern struct {
-	pointer *C.Pattern
+	pointer C.PatternPtr
 	pattern string
 }
 
@@ -159,7 +159,7 @@ func (pattern ApatPattern) Free() {
 // Print method prints the ApatPattern to the standard output.
 // This is mainly a debug method.
 func (pattern ApatPattern) Print() {
-	C.PrintDebugPattern(C.PatternPtr(pattern.pointer.pointer))
+	C.PrintDebugPattern((*C.Pattern)(pattern.pointer.pointer))
 }
 
 // MakeApatSequence casts an obiseq.BioSequence to an ApatSequence.
@@ -410,8 +410,8 @@ func (pattern ApatPattern) FilterBestMatch(sequence ApatSequence, begin, length 
 
 	best := [3]int{0, 0, 10000}
 	for _, m := range res {
-		// log.Warnf("Current : Begin : %d End : %d Err : %d", m[0], m[1], m[2])
-		// log.Warnf("Best    : Begin : %d End : %d Err : %d", best[0], best[1], best[2])
+		// obilog.Warnf("Current : Begin : %d End : %d Err : %d", m[0], m[1], m[2])
+		// obilog.Warnf("Best    : Begin : %d End : %d Err : %d", best[0], best[1], best[2])
 		if (m[0] - m[2]) < best[1]+best[2] {
 			// match are overlapping
 			// log.Warnln("overlap")
@@ -467,7 +467,7 @@ func (pattern ApatPattern) AllMatches(sequence ApatSequence, begin, length int) 
 		// Recompute the start and end position of the match
 		// when the pattern allows for indels
 		if m[2] > 0 && pattern.pointer.pointer.hasIndel {
-			// log.Warnf("Locating indel on sequence %s[%s]", sequence.pointer.reference.Id(), pattern.String())
+			// obilog.Warnf("Locating indel on sequence %s[%s]", sequence.pointer.reference.Id(), pattern.String())
 			start := m[0] - m[2]*2
 			start = max(start, 0)
 			end := start + int(pattern.pointer.pointer.patlen) + 4*m[2]
@@ -489,7 +489,7 @@ func (pattern ApatPattern) AllMatches(sequence ApatSequence, begin, length int) 
 			m[0] = start + pb
 			m[1] = start + pe
 
-			// log.Warnf("seq[%d@%d:%d] %d: %s %d - %s:%s:%s", i, m[0], m[1], olderr, sequence.pointer.reference.Id(), score,
+			// obilog.Warnf("seq[%d@%d:%d] %d: %s %d - %s:%s:%s", i, m[0], m[1], olderr, sequence.pointer.reference.Id(), score,
 			// 	frg, (*cpattern)[0:int(pattern.pointer.pointer.patlen)], sequence.pointer.reference.Sequence()[m[0]:m[1]])
 		}
 

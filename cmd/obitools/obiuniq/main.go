@@ -33,7 +33,10 @@ func main() {
 
 	obidefault.SetBatchSize(10)
 	obidefault.SetReadQualities(false)
-	optionParser := obioptions.GenerateOptionParser(obiuniq.OptionSet)
+	optionParser := obioptions.GenerateOptionParser(
+		"obiuniq",
+		"dereplicate sequence data sets",
+		obiuniq.OptionSet)
 
 	_, args := optionParser(os.Args)
 

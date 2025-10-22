@@ -20,8 +20,10 @@
 .rhistory
 /.vscode
 /build
+/bugs
 
 /ncbitaxo
 
 !/obitests/**
 !/sample/**
+LLM/** 

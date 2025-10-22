@@ -53,10 +53,10 @@ func ReadAlign(seqA, seqB *obiseq.BioSequence,
 		over = min(seqA.Len(), seqB.Len())
 	}
 
-	// log.Warnf("fw/fw: %v shift=%d fastCount=%d/over=%d fastScore=%f",
+	// obilog.Warnf("fw/fw: %v shift=%d fastCount=%d/over=%d fastScore=%f",
 	// 	directAlignment, shift, fastCount, over, fastScore)
 
-	// log.Warnf(("seqA: %s\nseqB: %s\n"), seqA.String(), seqB.String())
+	// obilog.Warnf(("seqA: %s\nseqB: %s\n"), seqA.String(), seqB.String())
 
 	// At least one mismatch exists in the overlaping region
 	if fastCount+3 < over {

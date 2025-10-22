@@ -11,7 +11,10 @@ import (
 )
 
 func main() {
-	optionParser := obioptions.GenerateOptionParser(obiconvert.OptionSet)
+	optionParser := obioptions.GenerateOptionParser(
+		"obicomplement",
+		"reverse complement of sequences",
+		obiconvert.OptionSet(true))
 
 	_, args := optionParser(os.Args)
 

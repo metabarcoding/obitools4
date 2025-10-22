@@ -3,11 +3,8 @@ package obiformats
 import (
 	"bufio"
 	"bytes"
-	"encoding/csv"
-	"errors"
 	"io"
 	"path"
-	"regexp"
 
 	"github.com/gabriel-vasile/mimetype"
 
@@ -41,72 +38,10 @@ type SequenceReader func(reader io.Reader, options ...WithOption) (obiiter.IBioS
 // - io.Reader: A modified reader with the read data.
 // - error: Any error encountered during the process.
 func OBIMimeTypeGuesser(stream io.Reader) (*mimetype.MIME, io.Reader, error) {
-	csv := func(in []byte, limit uint32) bool {
-		in = dropLastLine(in, limit)
-
-		br := bytes.NewReader(in)
-		r := csv.NewReader(br)
-		r.Comma = ','
-		r.ReuseRecord = true
-		r.LazyQuotes = true
-		r.Comment = '#'
-
-		lines := 0
-		for {
-			_, err := r.Read()
-			if errors.Is(err, io.EOF) {
-				break
-			}
-			if err != nil {
-				return false
-			}
-			lines++
-		}
-
-		return r.FieldsPerRecord > 1 && lines > 1
-	}
-
-	fastaDetector := func(raw []byte, limit uint32) bool {
-		ok, err := regexp.Match("^>[^ ]", raw)
-		return ok && err == nil
-	}
-
-	fastqDetector := func(raw []byte, limit uint32) bool {
-		ok, err := regexp.Match("^@[^ ].*\n[A-Za-z.-]+", raw)
-		return ok && err == nil
-	}
-
-	ecoPCR2Detector := func(raw []byte, limit uint32) bool {
-		ok := bytes.HasPrefix(raw, []byte("#@ecopcr-v2"))
-		return ok
-	}
-
-	genbankDetector := func(raw []byte, limit uint32) bool {
-		ok2 := bytes.HasPrefix(raw, []byte("LOCUS       "))
-		ok1, err := regexp.Match("^[^ ]* +Genetic Sequence Data Bank *\n", raw)
-		return ok2 || (ok1 && err == nil)
-	}
-
-	emblDetector := func(raw []byte, limit uint32) bool {
-		ok := bytes.HasPrefix(raw, []byte("ID   "))
-		return ok
-	}
-
-	mimetype.Lookup("text/plain").Extend(fastaDetector, "text/fasta", ".fasta")
-	mimetype.Lookup("text/plain").Extend(fastqDetector, "text/fastq", ".fastq")
-	mimetype.Lookup("text/plain").Extend(ecoPCR2Detector, "text/ecopcr2", ".ecopcr")
-	mimetype.Lookup("text/plain").Extend(genbankDetector, "text/genbank", ".seq")
-	mimetype.Lookup("text/plain").Extend(emblDetector, "text/embl", ".dat")
-	mimetype.Lookup("text/plain").Extend(csv, "text/csv", ".csv")
-
-	mimetype.Lookup("application/octet-stream").Extend(fastaDetector, "text/fasta", ".fasta")
-	mimetype.Lookup("application/octet-stream").Extend(fastqDetector, "text/fastq", ".fastq")
-	mimetype.Lookup("application/octet-stream").Extend(ecoPCR2Detector, "text/ecopcr2", ".ecopcr")
-	mimetype.Lookup("application/octet-stream").Extend(genbankDetector, "text/genbank", ".seq")
-	mimetype.Lookup("application/octet-stream").Extend(emblDetector, "text/embl", ".dat")
-	mimetype.Lookup("application/octet-stream").Extend(csv, "text/csv", ".csv")
+	obiutils.RegisterOBIMimeType()
 
 	// Create a buffer to store the read data
+	mimetype.SetLimit(1024 * 1024)
 	buf := make([]byte, 1024*1024)
 	n, err := io.ReadFull(stream, buf)
 
@@ -219,8 +154,7 @@ func ReadSequencesFromFile(filename string,
 	return obiiter.NilIBioSequence, nil
 }
 
-// func ReadSequencesFromStdin(options ...WithOption) obiiter.IBioSequence {
-
-// 	options = append(options, OptionsSource("stdin"))
-
-// }
+func ReadSequencesFromStdin(options ...WithOption) (obiiter.IBioSequence, error) {
+	options = append(options, OptionCloseFile())
+	return ReadSequencesFromFile("-", options...)
+}

@@ -1,10 +1,11 @@
-package obitax
+package obiformats
 
 import (
 	"archive/tar"
 	"bufio"
 	"fmt"
 
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 
 	log "github.com/sirupsen/logrus"
@@ -62,9 +63,9 @@ func IsNCBITarTaxDump(path string) bool {
 	return citations && division && gencode && names && delnodes && gc && merged && nodes
 }
 
-func LoadNCBITarTaxDump(path string, onlysn bool) (*Taxonomy, error) {
+func LoadNCBITarTaxDump(path string, onlysn, seqAsTaxa bool) (*obitax.Taxonomy, error) {
 
-	taxonomy := NewTaxonomy("NCBI Taxonomy", "taxon", obiutils.AsciiDigitSet)
+	taxonomy := obitax.NewTaxonomy("NCBI Taxonomy", "taxon", obiutils.AsciiDigitSet)
 
 	//
 	// Load the Taxonomy nodes

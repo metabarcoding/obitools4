@@ -8,6 +8,7 @@ import (
 	"golang.org/x/exp/rand"
 	"gonum.org/v1/gonum/stat/sampleuv"
 
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obilog"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 	log "github.com/sirupsen/logrus"
 )
@@ -280,7 +281,7 @@ func (clustering *KmeansClustering) AssignToClass() {
 	nreset := clustering.ResetEmptyCenters()
 
 	if nreset > 0 {
-		log.Warnf("Reseted %d empty centers", nreset)
+		obilog.Warnf("Reseted %d empty centers", nreset)
 	}
 }
 

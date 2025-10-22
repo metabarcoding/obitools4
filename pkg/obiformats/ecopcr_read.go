@@ -4,12 +4,9 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
-	"os"
 	"path"
 	"strconv"
 	"strings"
-
-	gzip "github.com/klauspost/pgzip"
 
 	log "github.com/sirupsen/logrus"
 
@@ -177,8 +174,10 @@ func ReadEcoPCR(reader io.Reader, options ...WithOption) (obiiter.IBioSequence, 
 	}()
 
 	go func() {
+		var err error = nil
+		var seq *obiseq.BioSequence
 
-		seq, err := __read_ecopcr_bioseq__(&ecopcr)
+		seq, err = __read_ecopcr_bioseq__(&ecopcr)
 		seq.SetSource(opt.Source())
 		slice := make(obiseq.BioSequenceSlice, 0, opt.BatchSize())
 		i := 0
@@ -194,7 +193,12 @@ func ReadEcoPCR(reader io.Reader, options ...WithOption) (obiiter.IBioSequence, 
 			}
 
 			seq, err = __read_ecopcr_bioseq__(&ecopcr)
-			seq.SetSource(opt.Source())
+
+			if err == nil {
+				seq.SetSource(opt.Source())
+			} else if err != io.EOF {
+				log.Panicf("%+v", err)
+			}
 		}
 
 		if len(slice) > 0 {
@@ -218,21 +222,20 @@ func ReadEcoPCR(reader io.Reader, options ...WithOption) (obiiter.IBioSequence, 
 
 func ReadEcoPCRFromFile(filename string, options ...WithOption) (obiiter.IBioSequence, error) {
 	var reader io.Reader
-	var greader io.Reader
 	var err error
 
 	options = append(options, OptionsSource(obiutils.RemoveAllExt((path.Base(filename)))))
 
-	reader, err = os.Open(filename)
+	reader, err = obiutils.Ropen(filename)
+
+	if err == obiutils.ErrNoContent {
+		log.Infof("file %s is empty", filename)
+		return ReadEmptyFile(options...)
+	}
+
 	if err != nil {
 		log.Printf("open file error: %+v", err)
 		return obiiter.NilIBioSequence, err
-	}
-
-	// Test if the flux is compressed by gzip
-	greader, err = gzip.NewReader(reader)
-	if err == nil {
-		reader = greader
 	}
 
 	return ReadEcoPCR(reader, options...)

@@ -18,13 +18,15 @@ var __with_query__ = false
 var __without_rank__ = false
 var __without_parent__ = false
 var __without_scientific_name__ = false
-var __raw_taxid__ = false
 var __taxid_path__ = "NA"
 var __taxid_sons__ = "NA"
 var __restrict_rank__ = ""
 var __to_dump__ = ""
 var __download_ncbi__ = false
 var __extract_taxonomy__ = false
+var __newick__ = false
+var __newick_with_leaves__ = false
+var __newick_without_root__ = false
 
 func FilterTaxonomyOptionSet(options *getoptions.GetOpt) {
 	options.BoolVar(&__rank_list__, "rank-list", false,
@@ -67,8 +69,6 @@ func OptionSet(options *getoptions.GetOpt) {
 	options.BoolVar(&__without_scientific_name__, "without-scientific-name", __without_scientific_name__,
 		options.Alias("S"),
 		options.Description("Supress the column containing the scientific name from the output."))
-	options.BoolVar(&__raw_taxid__, "raw-taxid", false,
-		options.Description("Displays the raw taxid for each displayed taxon."))
 	options.StringVar(&__to_dump__, "dump", __to_dump__,
 		options.Alias("D"),
 		options.ArgName("TAXID"),
@@ -80,6 +80,13 @@ func OptionSet(options *getoptions.GetOpt) {
 	options.BoolVar(&__extract_taxonomy__, "extract-taxonomy", __extract_taxonomy__,
 		options.Description("Extract taxonomy from a sequence file"),
 	)
+	options.BoolVar(&__newick__, "newick-output", __newick__,
+		options.Description("Format the resulting taxonomy as a newick tree"),
+	)
+	options.BoolVar(&__newick_without_root__, "without-root", __newick_without_root__,
+		options.Description("If used, do not include the non-branched path to the root in the output"),
+	)
+
 }
 
 func CLITaxonomicalRestrictions() (*obitax.TaxonSet, error) {
@@ -132,10 +139,6 @@ func CLIWithScientificName() bool {
 	return !__without_scientific_name__
 }
 
-func CLIRawTaxid() bool {
-	return __raw_taxid__
-}
-
 func CLIRankRestriction() string {
 	return __restrict_rank__
 }
@@ -162,4 +165,20 @@ func CLIDownloadNCBI() bool {
 
 func CLIExtractTaxonomy() bool {
 	return __extract_taxonomy__
+}
+
+func CLIAsNewick() bool {
+	return __newick__
+}
+
+func CLINewickWithLeaves() bool {
+	return __newick_with_leaves__
+}
+
+func CLINewickWithoutRoot() bool {
+	return __newick_without_root__
+}
+
+func CLIAskForRankList() bool {
+	return __rank_list__
 }

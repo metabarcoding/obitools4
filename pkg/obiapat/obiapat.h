@@ -116,13 +116,13 @@ ecoseq_t *new_ecoseq_with_data( char *AC,
 
 
 
-int32_t  delete_apatseq(SeqPtr pseq, 
+int32_t  delete_apatseq(Seq *pseq, 
 				   int *errno, char **errmsg);
-PatternPtr buildPattern(const char *pat, int32_t error_max, uint8_t hasIndel, int *errno, char **errmsg);
-PatternPtr complementPattern(PatternPtr pat, int *errno, char **errmsg);
+Pattern *buildPattern(const char *pat, int32_t error_max, uint8_t hasIndel, int *errno, char **errmsg);
+Pattern *complementPattern(Pattern *pat, int *errno, char **errmsg);
 
-SeqPtr new_apatseq(const char *in,int32_t circular, int32_t seqlen,
-                    SeqPtr out, 
+Seq *new_apatseq(const char *in,int32_t circular, int32_t seqlen,
+                    Seq *out, 
 					int *errno, char **errmsg);
 					
 char *ecoComplementPattern(char *nucAcSeq);

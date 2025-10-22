@@ -29,7 +29,7 @@ const (
 
 var _seqlenght_rx = regexp.MustCompile(" +([0-9]+) bp")
 
-func GenbankChunkParser(withFeatureTable bool) func(string, io.Reader) (obiseq.BioSequenceSlice, error) {
+func GenbankChunkParser(withFeatureTable, UtoT bool) func(string, io.Reader) (obiseq.BioSequenceSlice, error) {
 	return func(source string, input io.Reader) (obiseq.BioSequenceSlice, error) {
 		state := inHeader
 		scanner := bufio.NewReader(input)
@@ -56,7 +56,7 @@ func GenbankChunkParser(withFeatureTable bool) func(string, io.Reader) (obiseq.B
 
 				case strings.HasPrefix(line, "LOCUS       "):
 					if state != inHeader {
-						log.Fatalf("Unexpected state %d while reading LOCUS: %s", state, line)
+						log.Fatalf("Line %d - Unexpected state %d while reading LOCUS: %s", nl, state, line)
 					}
 					id = strings.SplitN(line[12:], " ", 2)[0]
 					match_length := _seqlenght_rx.FindStringSubmatch(line)
@@ -76,7 +76,7 @@ func GenbankChunkParser(withFeatureTable bool) func(string, io.Reader) (obiseq.B
 
 				case strings.HasPrefix(line, "DEFINITION  "):
 					if state != inEntry {
-						log.Fatalf("Unexpected state %d while reading DEFINITION: %s", state, line)
+						log.Fatalf("Line %d - Unexpected state %d while reading DEFINITION: %s", nl, state, line)
 					}
 					defBytes.WriteString(strings.TrimSpace(line[12:]))
 					state = inDefinition
@@ -93,29 +93,29 @@ func GenbankChunkParser(withFeatureTable bool) func(string, io.Reader) (obiseq.B
 
 				case strings.HasPrefix(line, "SOURCE      "):
 					if state != inEntry {
-						log.Fatalf("Unexpected state %d while reading SOURCE: %s", state, line)
+						log.Fatalf("Line %d - Unexpected state %d while reading SOURCE: %s", nl, state, line)
 					}
 					scientificName = strings.TrimSpace(line[12:])
 					processed = true
 
 				case strings.HasPrefix(line, "FEATURES    "):
 					if state != inEntry {
-						log.Fatalf("Unexpected state %d while reading FEATURES: %s", state, line)
+						log.Fatalf("Line %d - Unexpected state %d while reading FEATURES: %s", nl, state, line)
 					}
 					featBytes.WriteString(line)
 					state = inFeature
 					processed = true
 
 				case strings.HasPrefix(line, "ORIGIN"):
-					if state != inFeature {
-						log.Fatalf("Unexpected state %d while reading ORIGIN: %s", state, line)
+					if state != inFeature && state != inContig {
+						log.Fatalf("Line %d - Unexpected state %d while reading ORIGIN: %s", nl, state, line)
 					}
 					state = inSequence
 					processed = true
 
 				case strings.HasPrefix(line, "CONTIG"):
 					if state != inFeature && state != inContig {
-						log.Fatalf("Unexpected state %d while reading ORIGIN: %s", state, line)
+						log.Fatalf("Line %d - Unexpected state %d while reading ORIGIN: %s", nl, state, line)
 					}
 					state = inContig
 					processed = true
@@ -123,7 +123,7 @@ func GenbankChunkParser(withFeatureTable bool) func(string, io.Reader) (obiseq.B
 				case line == "//":
 
 					if state != inSequence && state != inContig {
-						log.Fatalf("Unexpected state %d while reading end of record %s", state, id)
+						log.Fatalf("Line %d - Unexpected state %d while reading end of record %s", nl, state, id)
 					}
 					// log.Debugln("Total lines := ", nl)
 					if id == "" {
@@ -165,6 +165,9 @@ func GenbankChunkParser(withFeatureTable bool) func(string, io.Reader) (obiseq.B
 					parts := strings.SplitN(line[10:], " ", 6)
 					lparts := len(parts)
 					for i := 0; i < lparts; i++ {
+						if UtoT {
+							parts[i] = strings.ReplaceAll(parts[i], "u", "t")
+						}
 						seqBytes.WriteString(parts[i])
 					}
 					processed = true
@@ -200,9 +203,9 @@ func GenbankChunkParser(withFeatureTable bool) func(string, io.Reader) (obiseq.B
 
 func _ParseGenbankFile(input ChannelFileChunk,
 	out obiiter.IBioSequence,
-	withFeatureTable bool) {
+	withFeatureTable, UtoT bool) {
 
-	parser := GenbankChunkParser(withFeatureTable)
+	parser := GenbankChunkParser(withFeatureTable, UtoT)
 
 	for chunks := range input {
 		sequences, err := parser(chunks.Source, chunks.Raw)
@@ -223,13 +226,12 @@ func ReadGenbank(reader io.Reader, options ...WithOption) (obiiter.IBioSequence,
 	opt := MakeOptions(options)
 	// entry_channel := make(chan _FileChunk)
 
-	buff := make([]byte, 1024*1024*128) // 128 MB
-
 	entry_channel := ReadFileChunk(
 		opt.Source(),
 		reader,
-		buff,
+		1024*1024*128,
 		EndOfLastFlatFileEntry,
+		"\nLOCUS       ",
 	)
 
 	newIter := obiiter.MakeIBioSequence()
@@ -243,6 +245,7 @@ func ReadGenbank(reader io.Reader, options ...WithOption) (obiiter.IBioSequence,
 			entry_channel,
 			newIter,
 			opt.WithFeatureTable(),
+			opt.UtoT(),
 		)
 	}
 

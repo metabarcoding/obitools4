@@ -149,9 +149,9 @@ char *LowerSequence(char *seq)
         char *cseq;
 
         for (cseq = seq ; *cseq ; cseq++) 
-            if (IS_UPPER(*cseq))
+            if (IS_UPPER(*cseq)) {
                 *cseq = TO_LOWER(*cseq);
-
+			}
 		return seq;
 }
  
@@ -299,14 +299,14 @@ int32_t delete_apatseq(SeqPtr pseq,
         return 1;
 }
 
-PatternPtr buildPattern(const char *pat, int32_t error_max, uint8_t hasIndel, 
+Pattern *buildPattern(const char *pat, int32_t error_max, uint8_t hasIndel, 
 						int *errno, char **errmsg)
 {
-	PatternPtr pattern;
+	Pattern *pattern;
 	int32_t    patlen;
 	int32_t    patlen2;
 
-	patlen  = strlen(pat);
+	patlen  = (int32_t)strlen(pat);
 	patlen2 = lenPattern(pat);
 
 	pattern = ECOMALLOC(sizeof(Pattern) +                   // Space for struct Pattern
@@ -341,10 +341,10 @@ PatternPtr buildPattern(const char *pat, int32_t error_max, uint8_t hasIndel,
 		
 }
 
-PatternPtr complementPattern(PatternPtr pat, int *errno, 
+Pattern *complementPattern(Pattern *pat, int *errno, 
 								char **errmsg)
 {
-	PatternPtr pattern;
+	Pattern *pattern;
 	
 	pattern = ECOMALLOC(sizeof(Pattern) + 
 							sizeof(char)      * strlen(pat->cpat) + 1 +

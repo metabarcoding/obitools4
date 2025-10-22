@@ -11,7 +11,10 @@ import (
 )
 
 func main() {
-	optionParser := obioptions.GenerateOptionParser(obidistribute.OptionSet)
+	optionParser := obioptions.GenerateOptionParser(
+		"obidistribute",
+		"divided an input set of sequences into subsets",
+		obidistribute.OptionSet)
 
 	_, args := optionParser(os.Args)
 

@@ -113,10 +113,10 @@ func MakeSequenceFamilyGenusWorker(references obiseq.BioSequenceSlice) obiseq.Se
 			}
 
 			// level, _ := sequence.GetAttribute("obicleandb_level")
-			// log.Warnf("%s - level: %v", sequence.Id(), level)
-			// log.Warnf("%s - gdist: %v", sequence.Id(), indist)
-			// log.Warnf("%s - fdist: %v", sequence.Id(), outdist)
-			// log.Warnf("%s - pval: %f", sequence.Id(), pval)
+			// obilog.Warnf("%s - level: %v", sequence.Id(), level)
+			// obilog.Warnf("%s - gdist: %v", sequence.Id(), indist)
+			// obilog.Warnf("%s - fdist: %v", sequence.Id(), outdist)
+			// obilog.Warnf("%s - pval: %f", sequence.Id(), pval)
 		}
 
 		if pval < 0.0 {
@@ -163,7 +163,7 @@ func SequenceTrustSlice(sequences obiseq.BioSequenceSlice) (obiseq.BioSequenceSl
 
 		for i, sa := range sequences {
 			ss := make([]float64, 0, n-1)
-			for j, _ := range sequences {
+			for j := range sequences {
 				if i == j {
 					continue
 				}
@@ -258,7 +258,7 @@ func ICleanDB(itertator obiiter.IBioSequence) obiiter.IBioSequence {
 		)).And(obiseq.HasRequiredRank(taxonomy, "family"))
 	}
 
-	goodTaxa := obiseq.IsAValidTaxon(taxonomy, CLIUpdateTaxids()).And(rankPredicate)
+	goodTaxa := obiseq.IsAValidTaxon(taxonomy, obidefault.UpdateTaxid()).And(rankPredicate)
 
 	usable := unique.FilterOn(goodTaxa,
 		obidefault.BatchSize(),

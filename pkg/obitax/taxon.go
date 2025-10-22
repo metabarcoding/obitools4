@@ -27,7 +27,7 @@ type Taxon struct {
 // Returns:
 //   - A formatted string representing the Taxon in the form "taxonomy_code:taxon_id [scientific_name]".
 func (taxon *Taxon) String() string {
-	if taxon == nil {
+	if taxon == nil || taxon.Node == nil {
 		return "NA"
 	}
 	return taxon.Node.String(taxon.Taxonomy.code)

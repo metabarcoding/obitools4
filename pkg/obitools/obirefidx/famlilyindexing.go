@@ -166,7 +166,7 @@ func IndexFamilyDB(iterator obiiter.IBioSequence) obiiter.IBioSequence {
 		obidefault.ParallelWorkers(),
 	)
 
-	family_iterator, err := obichunk.ISequenceChunk(
+	family_iterator, err := obichunk.ISequenceChunkOnMemory(
 		partof,
 		obiseq.AnnotationClassifier("family_taxid", "NA"),
 	)

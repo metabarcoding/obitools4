@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obilog"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 	log "github.com/sirupsen/logrus"
 )
@@ -136,7 +137,12 @@ func (s *BioSequence) SetAttribute(key string, value interface{}) {
 	}
 
 	if key == "sequence" {
-		s.SetSequence(value.([]byte))
+		data, err := obiutils.InterfaceToString(value)
+		if err != nil {
+			obilog.Warnf("%s: cannot convert value %v to sequence", s.Id(), value)
+			return
+		}
+		s.SetSequence([]byte(data))
 		return
 	}
 

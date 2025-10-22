@@ -76,12 +76,12 @@ func KmerSimMatchOptionSet(options *getoptions.GetOpt) {
 }
 
 func CountOptionSet(options *getoptions.GetOpt) {
-	obiconvert.OptionSet(options)
+	obiconvert.OptionSet(false)(options)
 	KmerSimCountOptionSet(options)
 }
 
 func MatchOptionSet(options *getoptions.GetOpt) {
-	obiconvert.OptionSet(options)
+	obiconvert.OptionSet(false)(options)
 	KmerSimCountOptionSet(options)
 	KmerSimMatchOptionSet(options)
 }

@@ -11,6 +11,7 @@ import (
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obitag"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obitaxonomy"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
@@ -39,7 +40,10 @@ func main() {
 	obidefault.SetStrictWriteWorker(1)
 	obidefault.SetBatchSize(10)
 
-	optionParser := obioptions.GenerateOptionParser(obitag.OptionSet)
+	optionParser := obioptions.GenerateOptionParser(
+		"obitag",
+		"realizes taxonomic assignment",
+		obitag.OptionSet)
 
 	_, args := optionParser(os.Args)
 
@@ -55,7 +59,7 @@ func main() {
 	}
 
 	if taxo == nil {
-		taxo, err = references.ExtractTaxonomy(nil)
+		taxo, err = references.ExtractTaxonomy(nil, obitaxonomy.CLINewickWithLeaves())
 
 		if err != nil {
 			log.Fatalf("No taxonomy specified or extractable from reference database: %v", err)
@@ -70,10 +74,12 @@ func main() {
 
 	var identified obiiter.IBioSequence
 
+	fsrb := fs.Rebatch(obidefault.BatchSize())
+
 	if obitag.CLIGeometricMode() {
-		identified = obitag.CLIGeomAssignTaxonomy(fs, references, taxo)
+		identified = obitag.CLIGeomAssignTaxonomy(fsrb, references, taxo)
 	} else {
-		identified = obitag.CLIAssignTaxonomy(fs, references, taxo)
+		identified = obitag.CLIAssignTaxonomy(fsrb, references, taxo)
 	}
 
 	obiconvert.CLIWriteBioSequences(identified, true)

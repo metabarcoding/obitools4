@@ -28,21 +28,22 @@ func NewITaxon() *ITaxon {
 // Iterator creates a new ITaxon iterator for the TaxonSet.
 // It starts a goroutine to send Taxon instances from the set to the iterator's source channel.
 func (set *TaxonSet) Iterator() *ITaxon {
-	i := NewITaxon()
+	return set.Sort().Iterator()
+	// i := NewITaxon()
 
-	go func() {
-		for _, t := range set.set {
-			taxon := &Taxon{
-				Taxonomy: set.taxonomy,
-				Metadata: nil,
-				Node:     t,
-			}
-			i.Push(taxon)
-		}
-		close(i.source)
-	}()
+	// go func() {
+	// 	for _, t := range set.set {
+	// 		taxon := &Taxon{
+	// 			Taxonomy: set.taxonomy,
+	// 			Metadata: nil,
+	// 			Node:     t,
+	// 		}
+	// 		i.Push(taxon)
+	// 	}
+	// 	close(i.source)
+	// }()
 
-	return i
+	// return i
 }
 
 // Iterator creates a new ITaxon iterator for the TaxonSlice.
@@ -223,4 +224,10 @@ func (taxonomy *Taxonomy) ISubTaxonomy(taxid string) *ITaxon {
 	}
 
 	return taxon.ISubTaxonomy()
+}
+
+func (iterator *ITaxon) Consume() {
+	for iterator.Next() {
+		iterator.Get()
+	}
 }

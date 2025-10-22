@@ -59,6 +59,11 @@ if [[ ! "$WORK_DIR" || ! -d "$WORK_DIR" ]]; then
   exit 1
 fi
 
+mkdir -p "${WORK_DIR}/cache" \
+  || (echo "Cannot create ${WORK_DIR}/cache directory" 1>&2  
+      exit 1)
+      
+
 mkdir -p "${INSTALL_DIR}/bin" 2> /dev/null \
   || (echo "Please enter your password for installing obitools in ${INSTALL_DIR}"  1>&2
       sudo mkdir -p "${INSTALL_DIR}/bin")
@@ -68,11 +73,11 @@ if [[ ! -d "${INSTALL_DIR}/bin" ]]; then
   exit 1
 fi
 
-INSTALL_DIR="$(cd $INSTALL_DIR && pwd)"
+INSTALL_DIR="$(cd ${INSTALL_DIR} && pwd)"
 
-echo WORK_DIR=$WORK_DIR  1>&2
-echo INSTALL_DIR=$INSTALL_DIR  1>&2
-echo OBITOOLS_PREFIX=$OBITOOLS_PREFIX  1>&2
+echo "WORK_DIR=$WORK_DIR"  1>&2
+echo "INSTALL_DIR=$INSTALL_DIR"  1>&2
+echo "OBITOOLS_PREFIX=$OBITOOLS_PREFIX"  1>&2
 
 pushd "$WORK_DIR"|| exit
 
@@ -105,6 +110,13 @@ curl "$GOURL" \
 
 PATH="$(pwd)/go/bin:$PATH"
 export PATH
+GOPATH="$(pwd)/go"
+export GOPATH
+
+export GOCACHE="$(cd ${WORK_DIR}/cache && pwd)"
+echo "GOCACHE=$GOCACHE" 1>&2@
+mkdir -p "$GOCACHE"
+
 
 curl -L "$OBIURL4" > master.zip
 unzip master.zip
@@ -112,11 +124,12 @@ unzip master.zip
 echo "Install OBITOOLS from : $OBIURL4"
 
 cd obitools4-master || exit
+mkdir vendor
 
 if [[ -z "$OBITOOLS_PREFIX" ]] ; then
-  make
+  make GOFLAGS="-buildvcs=false" 
 else
-  make OBITOOLS_PREFIX="${OBITOOLS_PREFIX}"
+  make GOFLAGS="-buildvcs=false" OBITOOLS_PREFIX="${OBITOOLS_PREFIX}"
 fi
 
 (cp build/* "${INSTALL_DIR}/bin" 2> /dev/null) \
@@ -125,5 +138,6 @@ fi
 
 popd || exit
 
+chmod -R +w "$WORK_DIR"
 rm -rf "$WORK_DIR"
 

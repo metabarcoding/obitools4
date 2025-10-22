@@ -7,7 +7,12 @@ corresponding TaxNode instances, along with methods for managing and querying th
 
 package obitax
 
-import log "github.com/sirupsen/logrus"
+import (
+	"fmt"
+
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiphylo"
+	log "github.com/sirupsen/logrus"
+)
 
 // TaxonSet represents a collection of taxa within a taxonomy.
 // It holds a mapping of taxon identifiers to their corresponding TaxNode instances,
@@ -223,4 +228,37 @@ func (set *TaxonSet) Sort() *TaxonSlice {
 	}
 
 	return taxa
+}
+
+func (taxo *TaxonSet) AsPhyloTree(root *TaxNode) (*obiphylo.PhyloNode, error) {
+	nodes := make(map[*string]*obiphylo.PhyloNode, taxo.Len())
+	tsi := taxo.Iterator()
+
+	log.Warnf("Coucou")
+	for tsi.Next() {
+		taxon := tsi.Get()
+		id := taxon.Node.Id()
+		node := obiphylo.NewPhyloNode()
+		rank := taxon.Rank()
+		node.Name = fmt.Sprintf("%s -%s@%s-", taxon.ScientificName(), *id, rank)
+		node.SetAttribute("rank", rank)
+		node.SetAttribute("parent", taxon.Parent().Node.Id())
+		nodes[id] = node
+	}
+
+	for id, node := range nodes {
+		if id == root.Id() {
+			continue
+		}
+		pid := node.GetAttribute("parent").(*string)
+		parent := nodes[pid]
+		if parent != nil {
+			parent.AddChild(node, 1)
+		} else {
+			return nil, fmt.Errorf("cannot find parent node for %s", *pid)
+		}
+	}
+
+	rid := root.Id()
+	return nodes[rid], nil
 }

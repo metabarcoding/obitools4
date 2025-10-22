@@ -23,6 +23,7 @@ var __input_embl_format__ = false
 var __input_genbank_format__ = false
 var __input_fastq_format__ = false
 var __input_fasta_format__ = false
+var __input_csv_format__ = false
 
 var __output_in_fasta__ = false
 var __output_in_fastq__ = false
@@ -32,11 +33,14 @@ var __output_fastobi_format__ = false
 
 var __no_progress_bar__ = false
 var __skip_empty__ = false
+var __skip_on_error__ = false
 
 var __output_file_name__ = "-"
 var __paired_file_name__ = ""
 
 var __full_file_batch__ = false
+
+var __U_to_T = false
 
 func InputOptionSet(options *getoptions.GetOpt) {
 	// options.IntVar(&__skipped_entries__, "skip", __skipped_entries__,
@@ -65,9 +69,15 @@ func InputOptionSet(options *getoptions.GetOpt) {
 	options.BoolVar(&__input_fasta_format__, "fasta", __input_fasta_format__,
 		options.Description("Read data following the fasta format."))
 
+	options.BoolVar(&__input_csv_format__, "csv", __input_csv_format__,
+		options.Description("Read data following the CSV format."))
+
 	options.BoolVar(&__no_ordered_input__, "no-order", __no_ordered_input__,
 		options.Description("When several input files are provided, "+
 			"indicates that there is no order among them."))
+
+	options.BoolVar(&__U_to_T, "u-to-t", __U_to_T,
+		options.Description("Convert Uracil to Thymine."))
 
 }
 
@@ -76,7 +86,7 @@ func OutputModeOptionSet(options *getoptions.GetOpt, compressed bool) {
 		options.Description("Disable the progress bar printing"))
 
 	if compressed {
-		options.BoolVar(obidefault.CompressedPtr(), "compressed", obidefault.CompressOutput(),
+		options.BoolVar(obidefault.CompressOutputPtr(), "compress", obidefault.CompressOutput(),
 			options.Alias("Z"),
 			options.Description("Compress all the result using gzip"))
 
@@ -92,6 +102,9 @@ func OutputModeOptionSet(options *getoptions.GetOpt, compressed bool) {
 func OutputOptionSet(options *getoptions.GetOpt) {
 	options.BoolVar(&__skip_empty__, "skip-empty", __skip_empty__,
 		options.Description("Sequences of length equal to zero are suppressed from the output"))
+
+	// options.BoolVar(&__skip_on_error__, "skip-on-error", __skip_on_error__,
+	// 	options.Description("Skip sequence with parsing error"))
 
 	options.BoolVar(&__output_in_fasta__, "fasta-output", false,
 		options.Description("Write sequence in fasta format (default if no quality data available)."))
@@ -118,11 +131,16 @@ func PairedFilesOptionSet(options *getoptions.GetOpt) {
 	)
 }
 
-func OptionSet(options *getoptions.GetOpt) {
-	obioptions.LoadTaxonomyOptionSet(options, false, false)
-	InputOptionSet(options)
-	OutputOptionSet(options)
-	PairedFilesOptionSet(options)
+func OptionSet(allow_paired bool) func(options *getoptions.GetOpt) {
+	f := func(options *getoptions.GetOpt) {
+		obioptions.LoadTaxonomyOptionSet(options, false, false)
+		InputOptionSet(options)
+		OutputOptionSet(options)
+		if allow_paired {
+			PairedFilesOptionSet(options)
+		}
+	}
+	return f
 }
 
 // Returns true if the number of reads described in the
@@ -139,6 +157,8 @@ func CLIInputFormat() string {
 		return "embl"
 	case __input_genbank_format__:
 		return "genbank"
+	case __input_csv_format__:
+		return "csv"
 	default:
 		return "guessed"
 	}
@@ -164,6 +184,10 @@ func CLIOutputFormat() string {
 
 func CLISkipEmpty() bool {
 	return __skip_empty__
+}
+
+func CLISkipOnError() bool {
+	return __skip_on_error__
 }
 
 func CLIInputFastHeaderFormat() string {
@@ -218,6 +242,10 @@ func CLIHasPairedFile() bool {
 }
 func CLIPairedFileName() string {
 	return __paired_file_name__
+}
+
+func CLIUtoT() bool {
+	return __U_to_T
 }
 
 func SetFullFileBatch() {

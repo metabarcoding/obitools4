@@ -4,9 +4,11 @@ import (
 	"os"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiitercsv"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obicsv"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obitaxonomy"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 
@@ -14,30 +16,59 @@ import (
 )
 
 func main() {
-	optionParser := obioptions.GenerateOptionParser(obitaxonomy.OptionSet)
+	optionParser := obioptions.GenerateOptionParser(
+		"obitaxonomy",
+		"manipulates and queries taxonomy",
+		obitaxonomy.OptionSet)
 
 	_, args := optionParser(os.Args)
 
 	var iterator *obitax.ITaxon
 
-	switch {
-	case obitaxonomy.CLIDownloadNCBI():
+	if obitaxonomy.CLIDownloadNCBI() {
 		err := obitaxonomy.CLIDownloadNCBITaxdump()
 		if err != nil {
 			log.Errorf("Cannot download NCBI taxonomy: %s", err.Error())
 			os.Exit(1)
 		}
+		os.Exit(0)
+	}
 
+	if !obidefault.HasSelectedTaxonomy() {
+		log.Fatal("you must indicate a taxonomy using the -t or --taxonomy option")
+	}
+
+	switch {
+	case obitaxonomy.CLIAskForRankList():
+		newIter := obiitercsv.NewICSVRecord()
+		newIter.Add(1)
+		newIter.AppendField("rank")
+		go func() {
+			ranks := obitax.DefaultTaxonomy().RankList()
+			data := make([]obiitercsv.CSVRecord, len(ranks))
+
+			for i, rank := range ranks {
+				record := make(obiitercsv.CSVRecord)
+				record["rank"] = rank
+				data[i] = record
+			}
+			newIter.Push(obiitercsv.MakeCSVRecordBatch(obitax.DefaultTaxonomy().Name(), 0, data))
+			newIter.Close()
+			newIter.Done()
+		}()
+		obicsv.CLICSVWriter(newIter, true)
+		obiutils.WaitForLastPipe()
 		os.Exit(0)
 
 	case obitaxonomy.CLIExtractTaxonomy():
 		iter, err := obiconvert.CLIReadBioSequences(args...)
+		iter = iter.NumberSequences(1, true)
 
 		if err != nil {
 			log.Fatalf("Cannot extract taxonomy: %v", err)
 		}
 
-		taxonomy, err := iter.ExtractTaxonomy()
+		taxonomy, err := iter.ExtractTaxonomy(obitaxonomy.CLINewickWithLeaves())
 
 		if err != nil {
 			log.Fatalf("Cannot extract taxonomy: %v", err)
@@ -99,7 +130,12 @@ func main() {
 	}
 
 	iterator = obitaxonomy.CLITaxonRestrictions(iterator)
-	obitaxonomy.CLICSVTaxaWriter(iterator, true)
+
+	if obitaxonomy.CLIAsNewick() {
+		obitaxonomy.CLINewickWriter(iterator, true)
+	} else {
+		obitaxonomy.CLICSVTaxaWriter(iterator, true)
+	}
 
 	obiutils.WaitForLastPipe()
 

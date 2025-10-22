@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"slices"
 
-	log "github.com/sirupsen/logrus"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obilog"
 )
 
 type SeqAnnotator func(*BioSequence)
@@ -119,7 +119,7 @@ func SeqToSliceWorker(worker SeqWorker,
 							s.Id(), err)
 						return BioSequenceSlice{}, err
 					} else {
-						log.Warnf("got an error on sequence %s processing : %v",
+						obilog.Warnf("got an error on sequence %s processing : %v",
 							s.Id(), err)
 					}
 				}
@@ -131,6 +131,34 @@ func SeqToSliceWorker(worker SeqWorker,
 	}
 
 	return f
+}
+
+func SeqToSliceFilterOnWorker(condition SequencePredicate,
+	breakOnError bool) SeqSliceWorker {
+
+	if condition == nil {
+		return func(slice BioSequenceSlice) (BioSequenceSlice, error) {
+			return slice, nil
+		}
+	}
+
+	f := func(input BioSequenceSlice) (BioSequenceSlice, error) {
+		output := MakeBioSequenceSlice(len(input))
+
+		i := 0
+
+		for _, s := range input {
+			if condition(s) {
+				output[i] = s
+				i++
+			}
+		}
+
+		return output[0:i], nil
+	}
+
+	return f
+
 }
 
 // SeqToSliceConditionalWorker creates a new SeqSliceWorker that processes each sequence in a slice based on a condition. It takes a SequencePredicate and a worker function as arguments. The worker function is only applied to sequences that satisfy the condition.
@@ -151,6 +179,10 @@ func SeqToSliceConditionalWorker(
 
 	if condition == nil {
 		return SeqToSliceWorker(worker, breakOnError)
+	}
+
+	if worker == nil {
+		return nil
 	}
 
 	f := func(input BioSequenceSlice) (BioSequenceSlice, error) {
@@ -176,10 +208,13 @@ func SeqToSliceConditionalWorker(
 							s.Id(), err)
 						return BioSequenceSlice{}, err
 					} else {
-						log.Warnf("got an error on sequence %s processing : %v",
+						obilog.Warnf("got an error on sequence %s processing : %v",
 							s.Id(), err)
 					}
 				}
+			} else {
+				output[i] = s
+				i++
 			}
 		}
 

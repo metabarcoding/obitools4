@@ -11,11 +11,13 @@ import (
 
 func (sequence *BioSequence) TaxonomicDistribution(taxonomy *obitax.Taxonomy) map[*obitax.TaxNode]int {
 	taxids := sequence.StatsOn(MakeStatsOnDescription("taxid"), "na")
-	taxons := make(map[*obitax.TaxNode]int, len(taxids))
+	taxons := make(map[*obitax.TaxNode]int, taxids.Len())
 
 	taxonomy = taxonomy.OrDefault(true)
 
-	for taxid, v := range taxids {
+	taxids.RLock()
+	defer taxids.RUnlock()
+	for taxid, v := range taxids.Map() {
 		t, isAlias, err := taxonomy.Taxon(taxid)
 		if err != nil {
 			log.Fatalf(

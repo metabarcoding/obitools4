@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strings"
 
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -37,6 +38,10 @@ type TaxNode struct {
 // Returns:
 //   - A formatted string representing the TaxNode in the form "taxonomyCode:id [scientificName]@rank".
 func (node *TaxNode) String(taxonomyCode string) string {
+	if obidefault.UseRawTaxids() {
+		return *node.id
+	}
+
 	if node.HasScientificName() {
 		return fmt.Sprintf("%s:%v [%s]@%s",
 			taxonomyCode,

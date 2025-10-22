@@ -31,7 +31,10 @@ func main() {
 	// trace.Start(ftrace)
 	// defer trace.Stop()
 
-	optionParser := obioptions.GenerateOptionParser(obikmersim.MatchOptionSet)
+	optionParser := obioptions.GenerateOptionParser(
+		"obikmermatch",
+		"",
+		obikmersim.MatchOptionSet)
 
 	_, args := optionParser(os.Args)
 

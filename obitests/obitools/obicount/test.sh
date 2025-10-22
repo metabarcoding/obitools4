@@ -5,6 +5,7 @@
 #
 
 TEST_NAME=obicount
+CMD=obicount
 
 ######
 #
@@ -15,6 +16,7 @@ TEST_DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 OBITOOLS_DIR="${TEST_DIR/obitest*/}build"
 export PATH="${OBITOOLS_DIR}:${PATH}"
 
+MCMD="$(echo "${CMD:0:4}" | tr '[:lower:]' '[:upper:]')$(echo "${CMD:4}" | tr '[:upper:]' '[:lower:]')"
 
 TMPDIR="$(mktemp -d)"
 ntest=0
@@ -38,8 +40,13 @@ cleanup() {
 
     if [ $failed -gt 0 ]; then
        log "$TEST_NAME tests failed" 
+        log
+        log
        exit 1
     fi
+
+    log
+    log
 
     exit 0
 }
@@ -78,6 +85,18 @@ log "files: $(find $TEST_DIR | awk -F'/' '{print $NF}' | tail -n +2)"
 ####  - increment the variable failed
 ####
 ######################################################################
+
+
+
+((ntest++))
+if $CMD -h > "${TMPDIR}/help.txt" 2>&1 
+then
+    log "$MCMD: printing help OK" 
+    ((success++))
+else
+    log "$MCMD: printing help failed" 
+    ((failed++))
+fi
 
 ((ntest++))
 if obicount "${TEST_DIR}/wolf_F.fasta.gz" \

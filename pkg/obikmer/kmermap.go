@@ -6,9 +6,9 @@ import (
 	"unsafe"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obifp"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obilog"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	"github.com/schollz/progressbar/v3"
-	log "github.com/sirupsen/logrus"
 )
 
 type KmerMap[T obifp.FPUint[T]] struct {
@@ -226,12 +226,12 @@ func NewKmerMap[T obifp.FPUint[T]](
 	sparseAt := -1
 
 	if sparse && kmersize%2 == 0 {
-		log.Warnf("Kmer size must be odd when using sparse mode")
+		obilog.Warnf("Kmer size must be odd when using sparse mode")
 		kmersize++
 	}
 
 	if !sparse && kmersize%2 == 1 {
-		log.Warnf("Kmer size must be even when not using sparse mode")
+		obilog.Warnf("Kmer size must be even when not using sparse mode")
 		kmersize--
 
 	}

@@ -444,6 +444,15 @@ func (s *BioSequence) SetSequence(sequence []byte) {
 	s.sequence = obiutils.InPlaceToLower(CopySlice(sequence))
 }
 
+func (s *BioSequence) HasValidSequence() bool {
+	for _, c := range s.sequence {
+		if !((c >= 'a' && c <= 'z') || c == '-' || c == '.' || c == '[' || c == ']') {
+			return false
+		}
+	}
+	return true
+}
+
 // Setting the qualities of the BioSequence.
 func (s *BioSequence) SetQualities(qualities Quality) {
 	if s.qualities != nil {

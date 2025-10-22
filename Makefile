@@ -2,8 +2,9 @@
 #export GOBIN=$(GOPATH)/bin
 #export PATH=$(GOBIN):$(shell echo $${PATH})
 
+GOFLAGS=
 GOCMD=go
-GOBUILD=$(GOCMD) build # -compiler gccgo -gccgoflags -O3
+GOBUILD=$(GOCMD) build $(GOFLAGS)
 GOGENERATE=$(GOCMD) generate
 GOCLEAN=$(GOCMD) clean
 GOTEST=$(GOCMD) test
@@ -15,6 +16,12 @@ OBITOOLS_PREFIX:=
 PACKAGES_SRC:= $(wildcard pkg/*/*.go pkg/*/*/*.go)
 PACKAGE_DIRS:=$(sort $(patsubst %/,%,$(dir $(PACKAGES_SRC))))
 PACKAGES:=$(notdir $(PACKAGE_DIRS))
+
+GITHOOK_SRC_DIR=git-hooks
+GITHOOKS_SRC:=$(wildcard $(GITHOOK_SRC_DIR)/*)
+
+GITHOOK_DIR=.git/hooks
+GITHOOKS:=$(patsubst $(GITHOOK_SRC_DIR)/%,$(GITHOOK_DIR)/%,$(GITHOOKS_SRC))
 
 OBITOOLS_SRC:= $(wildcard cmd/obitools/*/*.go)
 OBITOOLS_DIRS:=$(sort $(patsubst %/,%,$(dir $(OBITOOLS_SRC))))
@@ -53,34 +60,31 @@ endif
 
 OUTPUT:=$(shell mktemp)
 
-all: obitools
+all: install-githook obitools
 
-packages: $(patsubst %,pkg-%,$(PACKAGES))
 obitools: $(patsubst %,$(OBITOOLS_PREFIX)%,$(OBITOOLS)) 
+
+install-githook: $(GITHOOKS)
+	
+$(GITHOOK_DIR)/%: $(GITHOOK_SRC_DIR)/%
+	@echo installing $$(basename $@)...
+	@mkdir -p $(GITHOOK_DIR)
+	@cp $< $@
+	@chmod +x $@
+
 
 update-deps:
 	go get -u ./...
 
-test:
+test: .FORCE
 	$(GOTEST) ./...
 
 obitests: 
 	@for t in $$(find obitests -name test.sh -print) ; do \
-		bash $${t} ;\
+		bash $${t} || exit 1;\
 	done 
 
 githubtests: obitools obitests
-	
-man: 
-	make -C doc man
-obibook: 
-	make -C doc obibook
-doc: man obibook
-
-macos-pkg: 
-	@bash pkgs/macos/macos-installer-builder-master/macOS-x64/build-macos-x64.sh \
-		OBITools \
-		0.0.1
 
 $(BUILD_DIR):
 	mkdir -p $@
@@ -104,5 +108,5 @@ ifneq ($(strip $(COMMIT_ID)),)
 	@rm -f $(OUTPUT)
 endif
 
-.PHONY: all packages obitools man obibook doc update-deps obitests githubtests .FORCE
+.PHONY: all obitools update-deps obitests githubtests .FORCE
 .FORCE:

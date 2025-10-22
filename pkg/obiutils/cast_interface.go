@@ -2,7 +2,10 @@ package obiutils
 
 import (
 	"fmt"
+	"maps"
 	"reflect"
+	"strconv"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -13,7 +16,12 @@ import (
 // It returns the string representation and an error if any occurred during the conversion process.
 func InterfaceToString(i interface{}) (val string, err error) {
 	err = nil
-	val = fmt.Sprintf("%v", i)
+	if vc, ok := i.(interface{ String() string }); ok {
+		val = vc.String()
+	} else {
+		val = fmt.Sprintf("%v", i)
+	}
+
 	return
 }
 
@@ -66,6 +74,10 @@ func InterfaceToBool(i interface{}) (val bool, err error) {
 		val = t != 0 // standardizes across systems
 	case uint64:
 		val = t != 0 // standardizes across systems
+	case string:
+		val = strings.ToLower(t) == "true" || t == "1" || strings.ToLower(t) == "yes" || strings.ToLower(t) == "on" || strings.ToLower(t) == "t"
+	case nil:
+		val = false
 	default:
 		err = &NotABoolean{"value attribute cannot be casted to a boolean"}
 	}
@@ -79,7 +91,21 @@ func InterfaceToBool(i interface{}) (val bool, err error) {
 // It returns a map[string]interface{} which is the converted map. If the input map is not of type map[string]interface{},
 // it panics and logs an error message.
 func MapToMapInterface(m interface{}) map[string]interface{} {
-	if IsAMap(m) {
+	type hasMap interface {
+		Map() map[string]int
+		RLock()
+		RUnlock()
+		Len() int
+	}
+
+	if v, ok := m.(hasMap); ok {
+		val := make(map[string]interface{}, v.Len())
+		v.RLock()
+		defer v.RUnlock()
+		for k, v := range v.Map() {
+			val[k] = v
+		}
+	} else if IsAMap(m) {
 		reflectMap := reflect.ValueOf(m)
 		keys := reflectMap.MapKeys()
 		val := make(map[string]interface{}, len(keys))
@@ -125,6 +151,12 @@ func InterfaceToInt(i interface{}) (val int, err error) {
 		val = int(t) // standardizes across systems
 	case uint64:
 		val = int(t) // standardizes across systems
+	case string:
+		rep, err := strconv.ParseInt(t, 10, 64)
+		if err != nil {
+			err = &NotAnFloat64{"value attribute cannot be casted to an int value"}
+		}
+		val = int(rep)
 	default:
 		err = &NotAnInteger{"value attribute cannot be casted to an integer"}
 	}
@@ -162,6 +194,11 @@ func InterfaceToFloat64(i interface{}) (val float64, err error) {
 		val = float64(t) // standardizes across systems
 	case uint64:
 		val = float64(t) // standardizes across systems
+	case string:
+		val, err = strconv.ParseFloat(t, 10)
+		if err != nil {
+			err = &NotAnFloat64{"value attribute cannot be casted to a float value"}
+		}
 	default:
 		err = &NotAnFloat64{"value attribute cannot be casted to a float value"}
 	}
@@ -171,9 +208,19 @@ func InterfaceToFloat64(i interface{}) (val float64, err error) {
 func InterfaceToIntMap(i interface{}) (val map[string]int, err error) {
 	err = nil
 
+	type hasMap interface {
+		Map() map[string]int
+		RLock()
+		RUnlock()
+	}
+
 	switch i := i.(type) {
 	case map[string]int:
 		val = i
+	case hasMap:
+		i.RLock()
+		defer i.RUnlock()
+		val = maps.Clone(i.Map())
 	case map[string]interface{}:
 		val = make(map[string]int, len(i))
 		for k, v := range i {
@@ -197,9 +244,23 @@ func InterfaceToIntMap(i interface{}) (val map[string]int, err error) {
 func InterfaceToStringMap(i interface{}) (val map[string]string, err error) {
 	err = nil
 
+	type hasMap interface {
+		Map() map[string]int
+		RLock()
+		RUnlock()
+		Len() int
+	}
+
 	switch i := i.(type) {
 	case map[string]string:
 		val = i
+	case hasMap:
+		val = make(map[string]string, i.Len())
+		i.RLock()
+		defer i.RUnlock()
+		for k, v := range i.Map() {
+			val[k] = strconv.Itoa(v)
+		}
 	case map[string]interface{}:
 		val = make(map[string]string, len(i))
 		for k, v := range i {

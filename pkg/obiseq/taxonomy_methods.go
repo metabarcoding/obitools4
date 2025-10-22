@@ -6,6 +6,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obilog"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 )
@@ -41,7 +42,7 @@ func (s *BioSequence) SetTaxid(taxid string, rank ...string) {
 			taxon, isAlias, err = taxonomy.Taxon(taxid)
 
 			if err != nil {
-				logger := log.Warnf
+				logger := obilog.Warnf
 				if obidefault.FailOnTaxonomy() {
 					logger = log.Fatalf
 				}
@@ -50,18 +51,17 @@ func (s *BioSequence) SetTaxid(taxid string, rank ...string) {
 			}
 
 			if isAlias {
-				if obidefault.FailOnTaxonomy() {
-					log.Fatalf("%s: Taxid: %v is an alias from taxonomy (%v) to %s",
-						s.Id(), taxid, taxonomy.Name(), taxon.String())
+				if obidefault.UpdateTaxid() {
+					obilog.Warnf("%s: Taxid: %v is updated to %s",
+						s.Id(), taxid, taxon.String())
+					taxid = taxon.String()
 				} else {
-					if obidefault.UpdateTaxid() {
-						log.Warnf("%s: Taxid: %v is updated to %s",
-							s.Id(), taxid, taxon.String())
-						taxid = taxon.String()
-					} else {
-						log.Warnf("%s: Taxid %v has to be updated to %s",
-							s.Id(), taxid, taxon.String())
+					if obidefault.FailOnTaxonomy() {
+						log.Fatalf("%s: Taxid: %v is an alias from taxonomy (%v) to %s",
+							s.Id(), taxid, taxonomy.Name(), taxon.String())
 					}
+					obilog.Warnf("%s: Taxid %v has to be updated to %s",
+						s.Id(), taxid, taxon.String())
 				}
 
 			} else {
@@ -189,7 +189,11 @@ func (sequence *BioSequence) Path() []string {
 	path, ok := sequence.GetAttribute("taxonomic_path")
 
 	if !ok {
-		return nil
+		if taxo := obitax.DefaultTaxonomy(); taxo != nil {
+			path = sequence.SetPath(taxo)
+		} else {
+			return nil
+		}
 	}
 
 	slice, err := obiutils.InterfaceToStringSlice(path)
@@ -205,7 +209,7 @@ func (sequence *BioSequence) SetScientificName(taxonomy *obitax.Taxonomy) string
 	taxon := sequence.Taxon(taxonomy)
 	name := taxon.ScientificName()
 
-	sequence.SetAttribute("scienctific_name", name)
+	sequence.SetAttribute("scientific_name", name)
 
 	return name
 }

@@ -39,7 +39,7 @@ func EndOfLastFastaEntry(buffer []byte) int {
 	return last
 }
 
-func FastaChunkParser() func(string, io.Reader) (obiseq.BioSequenceSlice, error) {
+func FastaChunkParser(UtoT bool) func(string, io.Reader) (obiseq.BioSequenceSlice, error) {
 
 	parser := func(source string, input io.Reader) (obiseq.BioSequenceSlice, error) {
 		var identifier string
@@ -131,7 +131,9 @@ func FastaChunkParser() func(string, io.Reader) (obiseq.BioSequenceSlice, error)
 					if C >= 'A' && C <= 'Z' {
 						C = C + 'a' - 'A'
 					}
-
+					if UtoT && C == 'u' {
+						C = 't'
+					}
 					if (C >= 'a' && C <= 'z') || C == '-' || C == '.' || C == '[' || C == ']' {
 						seqBytes.WriteByte(C)
 					} else {
@@ -170,6 +172,9 @@ func FastaChunkParser() func(string, io.Reader) (obiseq.BioSequenceSlice, error)
 					if C >= 'A' && C <= 'Z' {
 						C = C + 'a' - 'A'
 					}
+					if UtoT && C == 'u' {
+						C = 't'
+					}
 					// Removing white space from the sequence
 					if (C >= 'a' && C <= 'z') || C == '-' || C == '.' || C == '[' || C == ']' {
 						seqBytes.WriteByte(C)
@@ -207,13 +212,14 @@ func FastaChunkParser() func(string, io.Reader) (obiseq.BioSequenceSlice, error)
 func _ParseFastaFile(
 	input ChannelFileChunk,
 	out obiiter.IBioSequence,
+	UtoT bool,
 ) {
 
-	parser := FastaChunkParser()
+	parser := FastaChunkParser(UtoT)
 
 	for chunks := range input {
 		sequences, err := parser(chunks.Source, chunks.Raw)
-		// log.Warnf("Chunck(%d:%d) -%d- ", chunks.Order, l, sequences.Len())
+		// obilog.Warnf("Chunck(%d:%d) -%d- ", chunks.Order, l, sequences.Len())
 
 		if err != nil {
 			log.Fatalf("File %s : Cannot parse the fasta file : %v", chunks.Source, err)
@@ -233,18 +239,17 @@ func ReadFasta(reader io.Reader, options ...WithOption) (obiiter.IBioSequence, e
 
 	nworker := opt.ParallelWorkers()
 
-	buff := make([]byte, 1024*1024)
-
 	chkchan := ReadFileChunk(
 		opt.Source(),
 		reader,
-		buff,
+		1024*1024,
 		EndOfLastFastaEntry,
+		"\n>",
 	)
 
 	for i := 0; i < nworker; i++ {
 		out.Add(1)
-		go _ParseFastaFile(chkchan, out)
+		go _ParseFastaFile(chkchan, out, opt.UtoT())
 	}
 
 	go func() {

@@ -31,6 +31,8 @@ func main() {
 	// defer trace.Stop()
 
 	optionParser := obioptions.GenerateOptionParser(
+		"obimatrix",
+		"",
 		obimatrix.OptionSet,
 	)
 
