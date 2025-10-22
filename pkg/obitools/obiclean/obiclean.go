@@ -314,8 +314,16 @@ func Weight(sequence *obiseq.BioSequence) map[string]int {
 	return weight
 }
 
-// DumpOutputTable writes the merged CSV output across all samples.
 func DumpOutputTable(filename string, samples map[string]*[]*seqPCR) error {
+
+	// DumpOutputTable writes the merged CSV output across all samples.
+	// For each sequence that is a head in at least one sample, the table
+	// contains one row with the sequence string and the weight in each sample.
+	// Sequences that are chimeric in a sample have weight 0 in that sample.
+	// Sequences that do not reach the minimum sample count threshold
+	// are not included in the output table. For the weight to be included,
+	// the sequence must be a head or a singleton in that sample.
+
 	// Create file and CSV writer
 	f, err := os.Create(filename)
 	if err != nil {
@@ -333,7 +341,7 @@ func DumpOutputTable(filename string, samples map[string]*[]*seqPCR) error {
 	}
 	sort.Strings(sampleNames)
 
-	// Determine sequences that are head in at least one sample
+	// Determine sequences that are head in at least one sample and not chimera
 	headSeqs := make(map[string]*obiseq.BioSequence)
 	for sname, seqs := range samples {
 		for _, pcr := range *seqs {
@@ -377,9 +385,24 @@ func DumpOutputTable(filename string, samples map[string]*[]*seqPCR) error {
 		seqList = append(seqList, seqPair{id: id, seq: strings.ToUpper(string(s.Sequence()))})
 	}
 
-	// Sort lexicographically by sequence string
+	// Sort sequences by decreasing total weight across samples
 	sort.Slice(seqList, func(i, j int) bool {
-		return seqList[i].seq < seqList[j].seq
+		weightI := 0
+		weightJ := 0
+
+		weightMapI := Weight(headSeqs[seqList[i].id])
+		weightMapJ := Weight(headSeqs[seqList[j].id])
+
+		for _, sname := range sampleNames {
+			if wv, ok := weightMapI[sname]; ok {
+				weightI += wv
+			}
+			if wv, ok := weightMapJ[sname]; ok {
+				weightJ += wv
+			}
+		}
+
+		return weightI > weightJ
 	})
 
 	// Get minimum sample count threshold
