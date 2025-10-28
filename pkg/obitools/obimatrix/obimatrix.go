@@ -123,7 +123,7 @@ func (data *MatrixData) Update(s *obiseq.BioSequence, mapkey string, strict bool
 		ok := false
 		switch attrname {
 		case "id":
-			value = s.Id
+			value = s.Id()
 			ok = true
 		case "count":
 			value = s.Count()
