@@ -10,6 +10,7 @@ import (
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiformats"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 )
 
 // tempDir creates a temporary directory with a prefix "obiseq_chunks_"
@@ -74,6 +75,7 @@ func find(root, ext string) []string {
 // status of each batch.
 func ISequenceChunkOnDisk(iterator obiiter.IBioSequence,
 	classifier *obiseq.BioSequenceClassifier) (obiiter.IBioSequence, error) {
+	obiutils.RegisterAPipe()
 	dir, err := tempDir()
 	if err != nil {
 		return obiiter.NilIBioSequence, err
@@ -86,7 +88,7 @@ func ISequenceChunkOnDisk(iterator obiiter.IBioSequence,
 	go func() {
 		defer func() {
 			os.RemoveAll(dir)
-			log.Debugln("Clear the cache directory")
+			obiutils.UnregisterPipe()
 		}()
 
 		newIter.Wait()
