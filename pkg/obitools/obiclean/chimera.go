@@ -186,8 +186,8 @@ func AnnotateChimera(samples map[string]*[]*seqPCR) {
 			}
 
 			// Select parents with longuest prefix/suffix
-			// Condition prefix+suffix covers the sequence and sequence not include into parent
-			if maxLeft >= L-maxRight && maxLeft > 0 && maxRight < L {
+			// Condition prefix+suffix covers the sequence and sequence not include into parent and parents different
+			if maxLeft >= L-maxRight && maxLeft > 0 && maxRight < L && nameLeft != nameRight {
 
 				chimeraMap := GetChimera(s.Sequence)
 				// overlap sequence
