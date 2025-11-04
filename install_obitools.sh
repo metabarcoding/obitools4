@@ -113,7 +113,7 @@ export PATH
 GOPATH="$(pwd)/go"
 export GOPATH
 
-export GOCACHE="$(cd ${WORK_DIR}/cache && pwd)"
+export GOCACHE="$(pwd)/cache"
 echo "GOCACHE=$GOCACHE" 1>&2@
 mkdir -p "$GOCACHE"
 
