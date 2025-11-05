@@ -145,7 +145,6 @@ func (taxonomy *Taxonomy) Taxon(taxid string) (*Taxon, bool, error) {
 	}
 
 	taxon := taxonomy.nodes.Get(id)
-	isAlias := taxon.Node.id != id
 
 	if taxon == nil {
 		return nil,
@@ -154,6 +153,8 @@ func (taxonomy *Taxonomy) Taxon(taxid string) (*Taxon, bool, error) {
 				taxid,
 				taxonomy.name)
 	}
+
+	isAlias := taxon.Node.id != id
 
 	return taxon, isAlias, nil
 }
