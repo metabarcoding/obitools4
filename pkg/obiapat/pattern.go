@@ -72,6 +72,7 @@ var NilApatSequence = ApatSequence{nil}
 //
 // Returns an ApatPattern object and an error if the pattern is invalid.
 func MakeApatPattern(pattern string, errormax int, allowsIndel bool) (ApatPattern, error) {
+
 	cpattern := C.CString(pattern)
 	defer C.free(unsafe.Pointer(cpattern))
 	cerrormax := C.int32_t(errormax)
