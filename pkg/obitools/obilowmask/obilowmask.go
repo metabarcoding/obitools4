@@ -141,6 +141,8 @@ func LowMaskWorker(kmer_size int, level_max int, threshold float64, mode Masking
 				minimier.Add(v)
 			}
 
+			// log.Warnf("taille du minimier %d @ %d", minimier.Len(), i)
+
 			// Retrieve and store current minimum
 			var ok bool
 			if data[i], ok = minimier.Min(); !ok {
@@ -302,9 +304,11 @@ func LowMaskWorker(kmer_size int, level_max int, threshold float64, mode Masking
 
 			// Store entropy for position corresponding to start of k-mer
 			if s >= nwords && maskPositions[i-nwords+1] >= 0 {
-				if entropy == 0 {
-					log.Errorf("Zero entropy @ positon %d", i-nwords+1)
+				if entropy < 0 {
+					entropy = 0
+
 				}
+				entropy = math.Round(entropy*10000) / 10000
 				entropies[i-nwords+1] = entropy
 			}
 		}
@@ -327,10 +331,11 @@ func LowMaskWorker(kmer_size int, level_max int, threshold float64, mode Masking
 		sequenceBytes := seqCopy.Sequence()
 
 		// Mask identified positions
-		for i := 0; i < len(sequenceBytes); i++ {
+		for i := range sequenceBytes {
 			if maskPositions[i] {
 				// Operation &^ 32 converts to UPPERCASE (clears bit 5)
-				sequenceBytes[i] = sequenceBytes[i] &^ 32
+				// sequenceBytes[i] = sequenceBytes[i] &^ 32
+				sequenceBytes[i] = mask
 			}
 		}
 
@@ -343,6 +348,15 @@ func LowMaskWorker(kmer_size int, level_max int, threshold float64, mode Masking
 	// Calculates entropies at all scales and masks positions
 	// whose minimum entropy is below the threshold.
 	masking := func(sequence *obiseq.BioSequence) (obiseq.BioSequenceSlice, error) {
+		if sequence.Len() < kmer_size {
+			sequence.SetAttribute("obilowmask_error", "Sequence too short")
+			remove := make([]bool, sequence.Len())
+			for i := range remove {
+				remove[i] = true
+			}
+			return applyMaskMode(sequence, remove, maskChar)
+		}
+
 		bseq := sequence.Sequence()
 
 		// Identify ambiguities
