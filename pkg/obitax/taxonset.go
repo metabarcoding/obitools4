@@ -234,7 +234,6 @@ func (taxo *TaxonSet) AsPhyloTree(root *TaxNode) (*obiphylo.PhyloNode, error) {
 	nodes := make(map[*string]*obiphylo.PhyloNode, taxo.Len())
 	tsi := taxo.Iterator()
 
-	log.Warnf("Coucou")
 	for tsi.Next() {
 		taxon := tsi.Get()
 		id := taxon.Node.Id()

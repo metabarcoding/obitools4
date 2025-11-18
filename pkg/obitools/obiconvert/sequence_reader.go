@@ -19,6 +19,13 @@ func ExpandListOfFiles(check_ext bool, filenames ...string) ([]string, error) {
 	list_of_files := orderedset.NewOrderedSet()
 	for _, fn := range filenames {
 
+		if strings.HasPrefix(fn, "http://") ||
+			strings.HasPrefix(fn, "https://") ||
+			strings.HasPrefix(fn, "ftp://") {
+			list_of_files.Add(fn)
+			continue
+		}
+
 		err = filepath.Walk(fn,
 			func(path string, info os.FileInfo, err error) error {
 				var e error
@@ -147,7 +154,6 @@ func CLIReadBioSequences(filenames ...string) (obiiter.IBioSequence, error) {
 		if err != nil {
 			return obiiter.NilIBioSequence, err
 		}
-
 		switch CLIInputFormat() {
 		case "fastq", "fq":
 			reader = obiformats.ReadFastqFromFile
@@ -178,8 +184,10 @@ func CLIReadBioSequences(filenames ...string) (obiiter.IBioSequence, error) {
 				nreader,
 				opts...,
 			)
+
 		} else {
 			if len(list_of_files) > 0 {
+
 				iterator, err = reader(list_of_files[0], opts...)
 
 				if err != nil {

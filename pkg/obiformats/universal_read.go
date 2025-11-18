@@ -112,7 +112,6 @@ func ReadSequencesFromFile(filename string,
 	var err error
 
 	options = append(options, OptionsSource(obiutils.RemoveAllExt((path.Base(filename)))))
-
 	file, err = obiutils.Ropen(filename)
 
 	if err == obiutils.ErrNoContent {
