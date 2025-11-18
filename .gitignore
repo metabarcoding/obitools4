@@ -16,6 +16,7 @@
 **/*.tgz
 **/*.yaml
 **/*.csv
+xx
 
 .rhistory
 /.vscode
@@ -27,3 +28,6 @@
 !/obitests/**
 !/sample/**
 LLM/** 
+*_files
+
+entropy.html
