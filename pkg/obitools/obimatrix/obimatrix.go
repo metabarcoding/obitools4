@@ -54,13 +54,13 @@ func NewMatrixData(naValue string, attributes ...string) *MatrixData {
 // It returns a pointer to the transposed MatrixData.
 func (matrix *MatrixData) TransposeMatrixData() *MatrixData {
 	m := MakeMatrixData(matrix.naValue, "id")
-	for k, v := range *&matrix.matrix {
+	for k, v := range matrix.matrix {
 		for kk, vv := range v {
 			if _, ok := m.matrix[kk]; !ok {
 				m.matrix[kk] = make(map[string]interface{})
 			}
 			m.matrix[kk][k] = vv
-			m.attributes[kk] = map[string]interface{}{"id": k}
+			m.attributes[kk] = map[string]interface{}{"id": kk}
 		}
 	}
 	return &m
