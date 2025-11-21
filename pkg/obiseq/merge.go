@@ -76,6 +76,12 @@ func MapAsStatsOnValues(m map[string]int) *StatsOnValues {
 	return &v
 
 }
+
+func IsStatsOnValues(value interface{}) bool {
+	_, ok := value.(*StatsOnValues)
+	return ok
+}
+
 func (sov *StatsOnValues) RLock() {
 	sov.lock.RLock()
 }

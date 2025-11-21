@@ -21,7 +21,7 @@ func (s *BioSequence) AttributeKeys(skip_container, skip_definition bool) obiuti
 	keys := obiutils.MakeSet[string]()
 
 	for k, v := range s.Annotations() {
-		if !((skip_container && obiutils.IsAContainer(v)) ||
+		if !((skip_container && (obiutils.IsAContainer(v) || IsStatsOnValues(v))) ||
 			(skip_definition && k == "definition")) {
 			keys.Add(k)
 		}
