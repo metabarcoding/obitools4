@@ -1,6 +1,7 @@
 package obilowmask
 
 import (
+	"fmt"
 	"math"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
@@ -17,6 +18,7 @@ type MaskingMode int
 const (
 	Mask  MaskingMode = iota // Mask mode: replace low-complexity regions with masked characters
 	Split                    // Split mode: split sequence into high-complexity fragments
+	Extract
 )
 
 // LowMaskWorker creates a worker to mask low-complexity regions in DNA sequences.
@@ -342,6 +344,76 @@ func LowMaskWorker(kmer_size int, level_max int, threshold float64, mode Masking
 		return obiseq.BioSequenceSlice{seqCopy}, nil
 	}
 
+	selectMasked := func(sequence *obiseq.BioSequence, maskPosition []bool) (obiseq.BioSequenceSlice, error) {
+		rep := obiseq.NewBioSequenceSlice()
+
+		inlow := false
+		fromlow := -1
+		for i, masked := range maskPosition {
+			if masked && !inlow {
+				fromlow = i
+				inlow = true
+			}
+			if inlow && !masked {
+				if fromlow >= 0 {
+					frg, err := sequence.Subsequence(fromlow, i, false)
+					if err != nil {
+						return nil, err
+					}
+					rep.Push(frg)
+				}
+				inlow = false
+				fromlow = -1
+			}
+		}
+
+		// Handle the case where we end in a masked region
+		if inlow && fromlow >= 0 {
+			frg, err := sequence.Subsequence(fromlow, len(maskPosition), false)
+			if err != nil {
+				return nil, err
+			}
+			rep.Push(frg)
+		}
+
+		return *rep, nil
+	}
+
+	selectunmasked := func(sequence *obiseq.BioSequence, maskPosition []bool) (obiseq.BioSequenceSlice, error) {
+		rep := obiseq.NewBioSequenceSlice()
+
+		inhigh := false
+		fromhigh := -1
+		for i, masked := range maskPosition {
+			if !masked && !inhigh {
+				fromhigh = i
+				inhigh = true
+			}
+			if inhigh && masked {
+				if fromhigh >= 0 {
+					frg, err := sequence.Subsequence(fromhigh, i, false)
+					if err != nil {
+						return nil, err
+					}
+					rep.Push(frg)
+				}
+				inhigh = false
+				fromhigh = -1
+			}
+		}
+
+		// Handle the case where we end in an unmasked region
+		if inhigh && fromhigh >= 0 {
+			frg, err := sequence.Subsequence(fromhigh, len(maskPosition), false)
+			if err != nil {
+				return nil, err
+			}
+			rep.Push(frg)
+		}
+
+		return *rep, nil
+	}
+
 	// ========================================================================
 	// FUNCTION 7: masking - Main masking function
 	// ========================================================================
@@ -425,7 +497,15 @@ func LowMaskWorker(kmer_size int, level_max int, threshold float64, mode Masking
 		sequence.SetAttribute("mask", mask)
 		sequence.SetAttribute("Entropies", entropies)
 
-		return applyMaskMode(sequence, remove, maskChar)
+		switch mode {
+		case Mask:
+			return applyMaskMode(sequence, remove, maskChar)
+		case Split:
+			return selectunmasked(sequence, remove)
+		case Extract:
+			return selectMasked(sequence, remove)
+		}
+		return nil, fmt.Errorf("Unknown mode %d", mode)
 	}
 
 	return masking
