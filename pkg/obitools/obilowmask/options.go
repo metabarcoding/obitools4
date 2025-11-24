@@ -13,6 +13,7 @@ var __kmer_size__ = 31
 var __level_max__ = 6
 var __threshold__ = 0.5
 var __split_mode__ = false
+var __low_mode__ = false
 var __mask__ = "."
 
 func LowMaskOptionSet(options *getoptions.GetOpt) {
@@ -29,11 +30,15 @@ func LowMaskOptionSet(options *getoptions.GetOpt) {
 		options.Description("entropy theshold used to mask a kmer"),
 	)
 
-	options.BoolVar(&__split_mode__, "--split-mode", __split_mode__,
+	options.BoolVar(&__split_mode__, "split-mode", __split_mode__,
 		options.Description("in split mode, input sequences are splitted to remove masked regions"),
 	)
 
-	options.StringVar(&__mask__, "--masking-char", __mask__,
+	options.BoolVar(&__low_mode__, "low-mode", __low_mode__,
+		options.Description("in split mode, input sequences are splitted to remove masked regions"),
+	)
+
+	options.StringVar(&__mask__, "masking-char", __mask__,
 		options.Description("Character used to mask low complexity region"),
 	)
 }
@@ -41,6 +46,7 @@ func LowMaskOptionSet(options *getoptions.GetOpt) {
 func OptionSet(options *getoptions.GetOpt) {
 	LowMaskOptionSet(options)
 	obiconvert.InputOptionSet(options)
+	obiconvert.OutputOptionSet(options)
 }
 
 func CLIKmerSize() int {
@@ -56,9 +62,12 @@ func CLIThreshold() float64 {
 }
 
 func CLIMaskingMode() MaskingMode {
-	if __split_mode__ {
+	switch {
+	case __low_mode__:
+		return Extract
+	case __split_mode__:
 		return Split
-	} else {
+	default:
 		return Mask
 	}
 }
