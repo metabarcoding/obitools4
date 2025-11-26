@@ -46,6 +46,7 @@ func LowMaskOptionSet(options *getoptions.GetOpt) {
 func OptionSet(options *getoptions.GetOpt) {
 	LowMaskOptionSet(options)
 	obiconvert.InputOptionSet(options)
+	obiconvert.OutputOptionSet(options)
 }
 
 func CLIKmerSize() int {
