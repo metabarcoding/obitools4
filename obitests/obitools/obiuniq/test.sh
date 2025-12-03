@@ -98,6 +98,102 @@ else
     ((failed++))
 fi
 
+((ntest++))
+if obiuniq "${TEST_DIR}/touniq.fasta" \
+    > "${TMPDIR}/touniq_u.fasta"
+then
+    log "OBIUniq simple: running OK" 
+    ((success++))
+else
+    log "OBIUniq simple: running failed"
+    ((failed++))
+fi
+
+obicsv -s --auto ${TEST_DIR}/touniq_u.fasta \
+| tail -n +2 \
+| sort \
+> "${TMPDIR}/touniq_u_ref.csv"
+
+obicsv -s --auto ${TMPDIR}/touniq_u.fasta \
+| tail -n +2 \
+| sort \
+> "${TMPDIR}/touniq_u.csv"
+
+((ntest++))
+if diff "${TMPDIR}/touniq_u_ref.csv" \
+        "${TMPDIR}/touniq_u.csv"  > /dev/null
+then
+    log "OBIUniq simple: result OK"
+    ((success++))
+else
+    log "OBIUniq simple: result failed"
+    ((failed++))
+fi
+
+((ntest++))
+if obiuniq -c a "${TEST_DIR}/touniq.fasta" \
+    > "${TMPDIR}/touniq_u_a.fasta"
+then
+    log "OBIUniq one category: running OK" 
+    ((success++))
+else
+    log "OBIUniq one category: running failed"
+    ((failed++))
+fi
+
+obicsv -s --auto ${TEST_DIR}/touniq_u_a.fasta \
+| tail -n +2 \
+| sort \
+> "${TMPDIR}/touniq_u_a_ref.csv"
+
+obicsv -s --auto ${TMPDIR}/touniq_u_a.fasta \
+| tail -n +2 \
+| sort \
+> "${TMPDIR}/touniq_u_a.csv"
+
+
+((ntest++))
+if diff "${TMPDIR}/touniq_u_a_ref.csv" \
+        "${TMPDIR}/touniq_u_a.csv"  > /dev/null
+then
+    log "OBIUniq one category: result OK"
+    ((success++))
+else
+    log "OBIUniq one category: result failed"
+    ((failed++))
+fi
+
+((ntest++))
+if obiuniq -c a -c b "${TEST_DIR}/touniq.fasta" \
+    > "${TMPDIR}/touniq_u_a_b.fasta"
+then
+    log "OBIUniq two categories: running OK" 
+    ((success++))
+else
+    log "OBIUniq two categories: running failed"
+    ((failed++))
+fi
+
+obicsv -s --auto ${TEST_DIR}/touniq_u_a_b.fasta \
+| tail -n +2 \
+| sort \
+> "${TMPDIR}/touniq_u_a_b_ref.csv"
+
+obicsv -s --auto ${TMPDIR}/touniq_u_a_b.fasta \
+| tail -n +2 \
+| sort \
+> "${TMPDIR}/touniq_u_a_b.csv"
+
+((ntest++))
+if diff "${TMPDIR}/touniq_u_a_b_ref.csv" \
+        "${TMPDIR}/touniq_u_a_b.csv"  > /dev/null
+then
+    log "OBIUniq two categories: result OK"
+    ((success++))
+else
+    log "OBIUniq two categories: result failed"
+    ((failed++))
+fi
 
 #########################################
 #

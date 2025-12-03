@@ -1,0 +1,8 @@
+>seq5 {"a":2,"b":4,"c":5,"count":1}
+aaacccgggtttca
+>seq6 {"a":3,"count":3}
+aaacccgggtttca
+>seq1 {"a":2,"b":4,"c":5,"count":1}
+aaacccgggttt
+>seq2 {"a":3,"count":3}
+aaacccgggttt

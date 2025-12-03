@@ -74,7 +74,11 @@ func find(root, ext string) []string {
 // is removed. The function logs the number of batches created and the processing
 // status of each batch.
 func ISequenceChunkOnDisk(iterator obiiter.IBioSequence,
-	classifier *obiseq.BioSequenceClassifier) (obiiter.IBioSequence, error) {
+	classifier *obiseq.BioSequenceClassifier,
+	dereplicate bool,
+	na string,
+	statsOn obiseq.StatsOnDescriptions,
+) (obiiter.IBioSequence, error) {
 	obiutils.RegisterAPipe()
 	dir, err := tempDir()
 	if err != nil {
@@ -113,11 +117,42 @@ func ISequenceChunkOnDisk(iterator obiiter.IBioSequence,
 				panic(err)
 			}
 
-			source, chunk := iseq.Load()
+			if dereplicate {
+				u := make(map[string]*obiseq.BioSequence)
+				var source string
+				var chunk obiseq.BioSequenceSlice
 
-			newIter.Push(obiiter.MakeBioSequenceBatch(source, order, chunk))
-			log.Infof("Start processing of batch %d/%d : %d sequences",
-				order, nbatch, len(chunk))
+				for iseq.Next() {
+					batch := iseq.Get()
+					source = batch.Source()
+
+					for _, seq := range batch.Slice() {
+						sstring := seq.String()
+						prev, ok := u[sstring]
+						if ok {
+							prev.Merge(seq, na, true, statsOn)
+						} else {
+							u[sstring] = seq
+						}
+					}
+
+					chunk = obiseq.MakeBioSequenceSlice(len(u))
+					i := 0
+
+					for _, seq := range u {
+						chunk[i] = seq
+					}
+
+				}
+				newIter.Push(obiiter.MakeBioSequenceBatch(source, order, chunk))
+
+			} else {
+				source, chunk := iseq.Load()
+
+				newIter.Push(obiiter.MakeBioSequenceBatch(source, order, chunk))
+				log.Infof("Start processing of batch %d/%d : %d sequences",
+					order+1, nbatch, len(chunk))
+			}
 
 		}
 
