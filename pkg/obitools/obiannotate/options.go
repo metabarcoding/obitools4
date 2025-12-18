@@ -1,6 +1,7 @@
 package obiannotate
 
 import (
+	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -266,6 +267,7 @@ func CLICut() (int, int) {
 		return 0, 0
 	}
 	values := strings.Split(_cut, ":")
+	log.Warnf("values: %v (%d-%d)", values, len(values), len(values[1]))
 
 	if len(values) != 2 {
 		log.Fatalf("Invalid cut value %s. value should be of the form start:end", _cut)
@@ -274,12 +276,20 @@ func CLICut() (int, int) {
 	start, err := strconv.Atoi(values[0])
 
 	if err != nil {
-		log.Fatalf("Invalid cut value %s. value %s should be an integer", _cut, values[0])
+		if len(values[0]) == 0 {
+			start = 1
+		} else {
+			log.Fatalf("Invalid start cut value %s. value %s should be an integer", _cut, values[0])
+		}
 	}
 	end, err := strconv.Atoi(values[1])
 
 	if err != nil {
-		log.Fatalf("Invalid cut value %s. value %s should be an integer", _cut, values[1])
+		if len(values[1]) == 0 {
+			end = math.MaxInt
+		} else {
+			log.Fatalf("Invalid end cut value %s. value %s should be an integer", _cut, values[1])
+		}
 	}
 
 	return start, end
