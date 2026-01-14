@@ -78,6 +78,7 @@ func ISequenceChunkOnDisk(iterator obiiter.IBioSequence,
 	dereplicate bool,
 	na string,
 	statsOn obiseq.StatsOnDescriptions,
+	uniqueClassifier *obiseq.BioSequenceClassifier,
 ) (obiiter.IBioSequence, error) {
 	obiutils.RegisterAPipe()
 	dir, err := tempDir()
@@ -120,18 +121,21 @@ func ISequenceChunkOnDisk(iterator obiiter.IBioSequence,
 			if dereplicate {
 				u := make(map[string]*obiseq.BioSequence)
 				var source string
+				uniqueClassifier.Reset()
 
 				for iseq.Next() {
 					batch := iseq.Get()
 					source = batch.Source()
 
 					for _, seq := range batch.Slice() {
-						sstring := seq.String()
-						prev, ok := u[sstring]
+						// Use composite key: sequence + categories
+						code := uniqueClassifier.Code(seq)
+						key := uniqueClassifier.Value(code)
+						prev, ok := u[key]
 						if ok {
 							prev.Merge(seq, na, true, statsOn)
 						} else {
-							u[sstring] = seq
+							u[key] = seq
 						}
 					}
 				}
