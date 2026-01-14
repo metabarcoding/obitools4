@@ -28,29 +28,32 @@ func IUniqueSequence(iterator obiiter.IBioSequence,
 	cat := opts.Categories()
 	na := opts.NAValue()
 
-	var classifier *obiseq.BioSequenceClassifier
+	// Classifier for bucketing: Hash only to control number of chunks
+	bucketClassifier := obiseq.HashClassifier(opts.BatchCount())
 
+	// Classifier for uniqueness: Sequence + categories
+	var uniqueClassifier *obiseq.BioSequenceClassifier
 	if len(cat) > 0 {
 		cls := make([]*obiseq.BioSequenceClassifier, len(cat)+1)
+		cls[0] = obiseq.SequenceClassifier()
 		for i, c := range cat {
 			cls[i+1] = obiseq.AnnotationClassifier(c, na)
 		}
-		cls[0] = obiseq.HashClassifier(opts.BatchCount())
-		classifier = obiseq.CompositeClassifier(cls...)
+		uniqueClassifier = obiseq.CompositeClassifier(cls...)
 	} else {
-		classifier = obiseq.HashClassifier(opts.BatchCount())
+		uniqueClassifier = obiseq.SequenceClassifier()
 	}
 
 	if opts.SortOnDisk() {
 		nworkers = 1
-		iterator, err = ISequenceChunkOnDisk(iterator, classifier, true, na, opts.StatsOn())
+		iterator, err = ISequenceChunkOnDisk(iterator, bucketClassifier, true, na, opts.StatsOn(), uniqueClassifier)
 
 		if err != nil {
 			return obiiter.NilIBioSequence, err
 		}
 
 	} else {
-		iterator, err = ISequenceChunkOnMemory(iterator, classifier)
+		iterator, err = ISequenceChunkOnMemory(iterator, bucketClassifier)
 
 		if err != nil {
 			return obiiter.NilIBioSequence, err
@@ -93,9 +96,9 @@ func IUniqueSequence(iterator obiiter.IBioSequence,
 	}
 
 	for i := 0; i < nworkers-1; i++ {
-		go ff(iterator.Split(), obiseq.SequenceClassifier())
+		go ff(iterator.Split(), uniqueClassifier.Clone())
 	}
-	go ff(iterator, obiseq.SequenceClassifier())
+	go ff(iterator, uniqueClassifier)
 
 	iMerged := iUnique.IMergeSequenceBatch(opts.NAValue(),
 		opts.StatsOn(),

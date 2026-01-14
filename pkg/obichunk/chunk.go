@@ -11,11 +11,12 @@ func ISequenceChunk(iterator obiiter.IBioSequence,
 	dereplicate bool,
 	na string,
 	statsOn obiseq.StatsOnDescriptions,
+	uniqueClassifier *obiseq.BioSequenceClassifier,
 ) (obiiter.IBioSequence, error) {
 
 	if onMemory {
 		return ISequenceChunkOnMemory(iterator, classifier)
 	} else {
-		return ISequenceChunkOnDisk(iterator, classifier, dereplicate, na, statsOn)
+		return ISequenceChunkOnDisk(iterator, classifier, dereplicate, na, statsOn, uniqueClassifier)
 	}
 }
