@@ -120,7 +120,6 @@ func ISequenceChunkOnDisk(iterator obiiter.IBioSequence,
 			if dereplicate {
 				u := make(map[string]*obiseq.BioSequence)
 				var source string
-				var chunk obiseq.BioSequenceSlice
 
 				for iseq.Next() {
 					batch := iseq.Get()
@@ -135,15 +134,16 @@ func ISequenceChunkOnDisk(iterator obiiter.IBioSequence,
 							u[sstring] = seq
 						}
 					}
-
-					chunk = obiseq.MakeBioSequenceSlice(len(u))
-					i := 0
-
-					for _, seq := range u {
-						chunk[i] = seq
-					}
-
 				}
+
+				chunk := obiseq.MakeBioSequenceSlice(len(u))
+				i := 0
+
+				for _, seq := range u {
+					chunk[i] = seq
+					i++
+				}
+
 				newIter.Push(obiiter.MakeBioSequenceBatch(source, order, chunk))
 
 			} else {
