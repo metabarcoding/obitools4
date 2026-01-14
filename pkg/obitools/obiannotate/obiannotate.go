@@ -134,12 +134,12 @@ func CutSequenceWorker(from, to int, breakOnError bool) obiseq.SeqWorker {
 			t = to
 		}
 
-		if from < 0 {
-			from = 0
+		if f < 0 {
+			f = 0
 		}
 
-		if to >= s.Len() {
-			to = s.Len()
+		if t >= s.Len() {
+			t = s.Len()
 		}
 
 		rep, err := s.Subsequence(f, t, false)
@@ -147,7 +147,7 @@ func CutSequenceWorker(from, to int, breakOnError bool) obiseq.SeqWorker {
 			if breakOnError {
 				log.Fatalf("Cannot cut sequence %s (%v)", s.Id(), err)
 			} else {
-				err = fmt.Errorf("Cannot cut sequence %s (%v), sequence discarded", s.Id(), err)
+				err = fmt.Errorf("cannot cut sequence %s (%v), sequence discarded", s.Id(), err)
 			}
 		}
 		return obiseq.BioSequenceSlice{rep}, err

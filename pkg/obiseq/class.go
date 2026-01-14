@@ -316,3 +316,77 @@ func RotateClassifier(size int) *BioSequenceClassifier {
 	c := BioSequenceClassifier{code, value, reset, clone, "RotateClassifier"}
 	return &c
 }
+
+func CompositeClassifier(classifiers ...*BioSequenceClassifier) *BioSequenceClassifier {
+	encode := make(map[string]int, 1000)
+	decode := make([]string, 0, 1000)
+	locke := sync.RWMutex{}
+	maxcode := 0
+	initbufsize := len(classifiers) * 6
+
+	code := func(sequence *BioSequence) int {
+		buf := make([]byte, 0, initbufsize)
+		for _, cl := range classifiers {
+			if cl == nil {
+				continue
+			}
+			rep := cl.Code(sequence)
+			buf = strconv.AppendInt(buf, int64(rep), 10)
+			buf = append(buf, ':')
+		}
+
+		locke.Lock()
+		defer locke.Unlock()
+
+		sval := string(buf)
+
+		k, ok := encode[sval]
+
+		if !ok {
+			k = maxcode
+			maxcode++
+			encode[sval] = k
+			decode = append(decode, sval)
+		}
+
+		return k
+	}
+
+	value := func(k int) string {
+		locke.RLock()
+		defer locke.RUnlock()
+
+		if k >= maxcode {
+			log.Fatalf("value %d not register", k)
+		}
+		return decode[k]
+	}
+
+	reset := func() {
+		locke.Lock()
+		defer locke.Unlock()
+
+		encode = make(map[string]int)
+		decode = decode[:0]
+		maxcode = 0
+	}
+
+	clone := func() *BioSequenceClassifier {
+		clones := make([]*BioSequenceClassifier, 0, len(classifiers))
+		for _, cl := range classifiers {
+			if cl == nil {
+				continue
+			}
+			if cl.Clone != nil {
+				clones = append(clones, cl.Clone())
+			} else {
+				clones = append(clones, cl)
+			}
+		}
+		return CompositeClassifier(clones...)
+	}
+
+	c := BioSequenceClassifier{code, value, reset, clone, "CompositeClassifier"}
+	return &c
+
+}

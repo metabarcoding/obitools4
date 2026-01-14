@@ -1,0 +1,12 @@
+>seq5 {"a":2,"b":4,"c":5,"count":1}
+aaacccgggtttca
+>seq6 {"a":3,"b":4,"c":5,"count":1}
+aaacccgggtttca
+>seq7 {"a":3,"b":5,"count":2}
+aaacccgggtttca
+>seq1 {"a":2,"b":4,"c":5,"count":1}
+aaacccgggttt
+>seq2 {"a":3,"b":4,"c":5,"count":1}
+aaacccgggttt
+>seq3 {"a":3,"b":5,"count":2}
+aaacccgggttt
