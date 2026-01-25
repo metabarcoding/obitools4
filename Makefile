@@ -108,5 +108,27 @@ ifneq ($(strip $(COMMIT_ID)),)
 	@rm -f $(OUTPUT)
 endif
 
-.PHONY: all obitools update-deps obitests githubtests .FORCE
+jjnew:
+	@echo "$(YELLOW)→ Creating a new commit...$(NC)"
+	@echo "$(BLUE)→ Documenting current commit...$(NC)"
+	@jj auto-describe
+	@echo "$(BLUE)→ Done.$(NC)"
+	@jj new
+	@echo "$(GREEN)✓ New commit created$(NC)"
+
+jjpush: 
+	@echo "$(YELLOW)→ Pushing commit to repository...$(NC)"
+	@echo "$(BLUE)→ Documenting current commit...$(NC)"
+	@jj auto-describe
+	@echo "$(BLUE)→ Done.$(NC)"
+	@jj git push --change @
+	@echo "$(GREEN)✓ Commit pushed to repository$(NC)"
+
+jjfetch:
+	@echo "$(YELLOW)→ Pulling latest commits...$(NC)"
+	@jj git fetch
+	@jj new master@origin
+	@echo "$(GREEN)✓ Latest commits pulled$(NC)"
+
+.PHONY: all obitools update-deps obitests githubtests jjnew jjpush jjfetch .FORCE
 .FORCE:
