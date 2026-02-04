@@ -2,6 +2,27 @@ package obikmer
 
 import "iter"
 
+var __single_base_code_err__ = []byte{0,
+	//     A,     B,     C,     D,
+	0, 0xFF, 1, 0xFF,
+	//     E,     F,     G,     H,
+	0xFF, 0xFF, 2, 0xFF,
+	//     I,     J,     K,     L,
+	0xFF, 0xFF, 0xFF, 0xFF,
+	//     M,     N,     O,     P,
+	0xFF, 0xFF, 0xFF, 0xFF,
+	//     Q,     R,     S,     T,
+	0xFF, 0xFF, 0xFF, 3,
+	//     U,     V,     W,     X,
+	3, 0xFF, 0xFF, 0xFF,
+	//     Y,     Z,     .,     .,
+	0xFF, 0xFF, 0xFF, 0xFF,
+	0xFF, 0xFF, 0xFF,
+}
+
+const ambiguousBaseCode = byte(0xFF)
+
+
 // Error markers for k-mers of odd length ≤ 31
 // For odd k ≤ 31, only k*2 bits are used (max 62 bits), leaving 2 high bits
 // available for error coding in the top 2 bits (bits 62-63).
@@ -147,6 +168,137 @@ func IterKmers(seq []byte, k int) iter.Seq[uint64] {
 			kmer &= mask
 
 			if !yield(kmer) {
+				return
+			}
+		}
+	}
+}
+
+// IterNormalizedKmersWithErrors returns an iterator over all normalized k-mers
+// with error markers for ambiguous bases. No intermediate slice is allocated.
+//
+// Ambiguous bases (N, R, Y, W, S, K, M, B, D, H, V) are encoded as 0xFF and detected
+// during k-mer construction. The error code in bits 62-63 indicates the number of
+// ambiguous bases in each k-mer (0=clean, 1-3=error count).
+//
+// Only valid for odd k ≤ 31 where 2 bits remain unused for error markers.
+//
+// Parameters:
+//   - seq: DNA sequence as a byte slice (case insensitive, supports A, C, G, T, U, and ambiguous bases)
+//   - k: k-mer size (must be odd, between 1 and 31)
+//
+// Returns:
+//   - iterator yielding uint64 normalized k-mers with error markers
+//
+// Example:
+//   for kmer := range IterNormalizedKmersWithErrors(seq, 21) {
+//       if GetKmerError(kmer) == 0 {
+//           bitmap.Add(kmer) // Only add clean k-mers
+//       }
+//   }
+func IterNormalizedKmersWithErrors(seq []byte, k int) iter.Seq[uint64] {
+	return func(yield func(uint64) bool) {
+		// Only valid for odd k ≤ 31
+		if k < 1 || k > 31 || k%2 == 0 || len(seq) < k {
+			return
+		}
+
+		// Mask to keep only k*2 bits
+		mask := uint64(1)<<(k*2) - 1
+
+		// Shift amount for adding to reverse complement (high position)
+		rcShift := uint((k - 1) * 2)
+
+		// Track ambiguous base count in sliding window
+		ambiguousCount := 0
+		const ambiguousCode = byte(0xFF)
+
+		// Build the first k-mer (forward and reverse complement)
+		var fwd, rvc uint64
+		hasError := false
+		for i := 0; i < k; i++ {
+			code := __single_base_code_err__[seq[i]&31]
+
+			// Check for ambiguous base
+			if code == ambiguousCode {
+				ambiguousCount++
+				hasError = true
+				code = 0 // Encode as A for the sequence bits
+			}
+
+			codeUint := uint64(code)
+			// Forward: shift left and add new code at low end
+			fwd <<= 2
+			fwd |= codeUint
+			// Reverse complement: shift right and add complement at high end
+			rvc >>= 2
+			rvc |= (codeUint ^ 3) << rcShift
+		}
+
+		// Yield normalized k-mer with error marker
+		var canonical uint64
+		if fwd <= rvc {
+			canonical = fwd
+		} else {
+			canonical = rvc
+		}
+
+		// Set error code based on ambiguous count
+		if hasError {
+			errorCode := uint64(ambiguousCount)
+			if errorCode > 3 {
+				errorCode = 3
+			}
+			canonical = SetKmerError(canonical, errorCode)
+		}
+
+		if !yield(canonical) {
+			return
+		}
+
+		// Slide through the rest of the sequence
+		for i := k; i < len(seq); i++ {
+			// Check outgoing base (position i-k)
+			outgoingCode := __single_base_code__[seq[i-k]&31]
+			if outgoingCode == ambiguousCode {
+				ambiguousCount--
+			}
+
+			// Check incoming base (position i)
+			code := __single_base_code__[seq[i]&31]
+			if code == ambiguousCode {
+				ambiguousCount++
+				code = 0 // Encode as A for the sequence bits
+			}
+
+			codeUint := uint64(code)
+
+			// Update forward k-mer: shift left, add new code, mask
+			fwd <<= 2
+			fwd |= codeUint
+			fwd &= mask
+
+			// Update reverse complement: shift right, add complement at high end
+			rvc >>= 2
+			rvc |= (codeUint ^ 3) << rcShift
+
+			// Yield normalized k-mer
+			if fwd <= rvc {
+				canonical = fwd
+			} else {
+				canonical = rvc
+			}
+
+			// Set error code based on ambiguous count
+			if ambiguousCount > 0 {
+				errorCode := uint64(ambiguousCount)
+				if errorCode > 3 {
+					errorCode = 3
+				}
+				canonical = SetKmerError(canonical, errorCode)
+			}
+
+			if !yield(canonical) {
 				return
 			}
 		}
@@ -445,6 +597,139 @@ func NormalizeKmer(kmer uint64, k int) uint64 {
 		return rc
 	}
 	return kmer
+}
+
+// EncodeNormalizedKmersWithErrors converts a DNA sequence to a slice of normalized k-mers
+// with error markers for ambiguous bases (N, R, Y, W, S, K, M, B, D, H, V).
+//
+// Ambiguous bases are encoded as 0xFF by __single_base_code__ and detected during
+// k-mer construction. The error code in bits 62-63 indicates the number of ambiguous
+// bases in each k-mer:
+//   - errorCode 0: no ambiguous bases (clean k-mer)
+//   - errorCode 1: 1 ambiguous base
+//   - errorCode 2: 2 ambiguous bases
+//   - errorCode 3: 3 or more ambiguous bases
+//
+// Only valid for odd k ≤ 31 where 2 bits remain unused for error markers.
+//
+// Parameters:
+//   - seq: DNA sequence as a byte slice (case insensitive, supports A, C, G, T, U, and ambiguous bases)
+//   - k: k-mer size (must be odd, between 1 and 31)
+//   - buffer: optional pre-allocated buffer for results. If nil, a new slice is created.
+//
+// Returns:
+//   - slice of uint64 normalized k-mers with error markers
+//   - nil if sequence is shorter than k, k is invalid, or k is even
+func EncodeNormalizedKmersWithErrors(seq []byte, k int, buffer *[]uint64) []uint64 {
+	// Only valid for odd k ≤ 31
+	if k < 1 || k > 31 || k%2 == 0 || len(seq) < k {
+		return nil
+	}
+
+	n := len(seq) - k + 1
+
+	var result []uint64
+	if buffer == nil {
+		result = make([]uint64, 0, n)
+	} else {
+		result = (*buffer)[:0]
+	}
+
+	// Mask to keep only k*2 bits
+	mask := uint64(1)<<(k*2) - 1
+
+	// Shift amount for adding to reverse complement (high position)
+	rcShift := uint((k - 1) * 2)
+
+	// Track ambiguous base count in sliding window
+	ambiguousCount := 0
+	const ambiguousCode = byte(0xFF)
+
+	// Build the first k-mer (forward and reverse complement)
+	var fwd, rvc uint64
+	hasError := false
+	for i := 0; i < k; i++ {
+		code := __single_base_code_err__[seq[i]&31]
+
+		// Check for ambiguous base
+		if code == ambiguousCode {
+			ambiguousCount++
+			hasError = true
+			code = 0 // Encode as A for the sequence bits
+		}
+
+		codeUint := uint64(code)
+		// Forward: shift left and add new code at low end
+		fwd <<= 2
+		fwd |= codeUint
+		// Reverse complement: shift right and add complement at high end
+		rvc >>= 2
+		rvc |= (codeUint ^ 3) << rcShift
+	}
+
+	// Store the normalized (canonical) k-mer with error marker
+	var canonical uint64
+	if fwd <= rvc {
+		canonical = fwd
+	} else {
+		canonical = rvc
+	}
+
+	// Set error code based on ambiguous count
+	if hasError {
+		errorCode := uint64(ambiguousCount)
+		if errorCode > 3 {
+			errorCode = 3
+		}
+		canonical = SetKmerError(canonical, errorCode)
+	}
+	result = append(result, canonical)
+
+	// Slide through the rest of the sequence
+	for i := k; i < len(seq); i++ {
+		// Check outgoing base (position i-k)
+		outgoingCode := __single_base_code__[seq[i-k]&31]
+		if outgoingCode == ambiguousCode {
+			ambiguousCount--
+		}
+
+		// Check incoming base (position i)
+		code := __single_base_code__[seq[i]&31]
+		if code == ambiguousCode {
+			ambiguousCount++
+			code = 0 // Encode as A for the sequence bits
+		}
+
+		codeUint := uint64(code)
+
+		// Update forward k-mer: shift left, add new code, mask
+		fwd <<= 2
+		fwd |= codeUint
+		fwd &= mask
+
+		// Update reverse complement: shift right, add complement at high end
+		rvc >>= 2
+		rvc |= (codeUint ^ 3) << rcShift
+
+		// Store the normalized k-mer
+		if fwd <= rvc {
+			canonical = fwd
+		} else {
+			canonical = rvc
+		}
+
+		// Set error code based on ambiguous count
+		if ambiguousCount > 0 {
+			errorCode := uint64(ambiguousCount)
+			if errorCode > 3 {
+				errorCode = 3
+			}
+			canonical = SetKmerError(canonical, errorCode)
+		}
+		result = append(result, canonical)
+	}
+
+	return result
 }
 
 // EncodeNormalizedKmers converts a DNA sequence to a slice of normalized k-mers.
