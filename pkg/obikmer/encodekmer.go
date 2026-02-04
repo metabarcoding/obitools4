@@ -1,5 +1,7 @@
 package obikmer
 
+import "iter"
+
 // Error markers for k-mers of odd length ≤ 31
 // For odd k ≤ 31, only k*2 bits are used (max 62 bits), leaving 2 high bits
 // available for error coding in the top 2 bits (bits 62-63).
@@ -101,6 +103,131 @@ func EncodeKmers(seq []byte, k int, buffer *[]uint64) []uint64 {
 	}
 
 	return result
+}
+
+// IterKmers returns an iterator over all k-mers in the sequence.
+// No intermediate slice is allocated, making it memory-efficient for
+// processing k-mers one by one (e.g., adding to a Roaring Bitmap).
+//
+// Parameters:
+//   - seq: DNA sequence as a byte slice (case insensitive, supports A, C, G, T, U)
+//   - k: k-mer size (must be between 1 and 31)
+//
+// Returns:
+//   - iterator yielding uint64 encoded k-mers
+//
+// Example:
+//   for kmer := range IterKmers(seq, 21) {
+//       bitmap.Add(kmer)
+//   }
+func IterKmers(seq []byte, k int) iter.Seq[uint64] {
+	return func(yield func(uint64) bool) {
+		if k < 1 || k > 31 || len(seq) < k {
+			return
+		}
+
+		// Mask to keep only k*2 bits
+		mask := uint64(1)<<(k*2) - 1
+
+		// Build the first k-mer
+		var kmer uint64
+		for i := 0; i < k; i++ {
+			kmer <<= 2
+			kmer |= uint64(__single_base_code__[seq[i]&31])
+		}
+
+		if !yield(kmer) {
+			return
+		}
+
+		// Slide through the rest of the sequence
+		for i := k; i < len(seq); i++ {
+			kmer <<= 2
+			kmer |= uint64(__single_base_code__[seq[i]&31])
+			kmer &= mask
+
+			if !yield(kmer) {
+				return
+			}
+		}
+	}
+}
+
+// IterNormalizedKmers returns an iterator over all normalized (canonical) k-mers.
+// No intermediate slice is allocated, making it memory-efficient.
+//
+// Parameters:
+//   - seq: DNA sequence as a byte slice (case insensitive, supports A, C, G, T, U)
+//   - k: k-mer size (must be between 1 and 31)
+//
+// Returns:
+//   - iterator yielding uint64 normalized k-mers
+//
+// Example:
+//   for canonical := range IterNormalizedKmers(seq, 21) {
+//       bitmap.Add(canonical)
+//   }
+func IterNormalizedKmers(seq []byte, k int) iter.Seq[uint64] {
+	return func(yield func(uint64) bool) {
+		if k < 1 || k > 31 || len(seq) < k {
+			return
+		}
+
+		// Mask to keep only k*2 bits
+		mask := uint64(1)<<(k*2) - 1
+
+		// Shift amount for adding to reverse complement (high position)
+		rcShift := uint((k - 1) * 2)
+
+		// Build the first k-mer (forward and reverse complement)
+		var fwd, rvc uint64
+		for i := 0; i < k; i++ {
+			code := uint64(__single_base_code__[seq[i]&31])
+			// Forward: shift left and add new code at low end
+			fwd <<= 2
+			fwd |= code
+			// Reverse complement: shift right and add complement at high end
+			rvc >>= 2
+			rvc |= (code ^ 3) << rcShift
+		}
+
+		// Yield normalized k-mer
+		var canonical uint64
+		if fwd <= rvc {
+			canonical = fwd
+		} else {
+			canonical = rvc
+		}
+
+		if !yield(canonical) {
+			return
+		}
+
+		// Slide through the rest of the sequence
+		for i := k; i < len(seq); i++ {
+			code := uint64(__single_base_code__[seq[i]&31])
+
+			// Update forward k-mer: shift left, add new code, mask
+			fwd <<= 2
+			fwd |= code
+			fwd &= mask
+
+			// Update reverse complement: shift right, add complement at high end
+			rvc >>= 2
+			rvc |= (code ^ 3) << rcShift
+
+			// Yield normalized k-mer
+			if fwd <= rvc {
+				canonical = fwd
+			} else {
+				canonical = rvc
+			}
+
+			if !yield(canonical) {
+				return
+			}
+		}
+	}
 }
 
 // SuperKmer represents a maximal subsequence where all consecutive k-mers

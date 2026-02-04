@@ -1056,6 +1056,128 @@ func TestKmerErrorMarkersOddKmers(t *testing.T) {
 	}
 }
 
+// TestIterKmers tests the k-mer iterator
+func TestIterKmers(t *testing.T) {
+	seq := []byte("ACGTACGT")
+	k := 4
+
+	// Collect k-mers via iterator
+	var iterKmers []uint64
+	for kmer := range IterKmers(seq, k) {
+		iterKmers = append(iterKmers, kmer)
+	}
+
+	// Compare with slice-based version
+	sliceKmers := EncodeKmers(seq, k, nil)
+
+	if len(iterKmers) != len(sliceKmers) {
+		t.Errorf("length mismatch: iter=%d, slice=%d", len(iterKmers), len(sliceKmers))
+	}
+
+	for i := range iterKmers {
+		if iterKmers[i] != sliceKmers[i] {
+			t.Errorf("position %d: iter=%d, slice=%d", i, iterKmers[i], sliceKmers[i])
+		}
+	}
+}
+
+// TestIterNormalizedKmers tests the normalized k-mer iterator
+func TestIterNormalizedKmers(t *testing.T) {
+	seq := []byte("ACGTACGTACGT")
+	k := 6
+
+	// Collect k-mers via iterator
+	var iterKmers []uint64
+	for kmer := range IterNormalizedKmers(seq, k) {
+		iterKmers = append(iterKmers, kmer)
+	}
+
+	// Compare with slice-based version
+	sliceKmers := EncodeNormalizedKmers(seq, k, nil)
+
+	if len(iterKmers) != len(sliceKmers) {
+		t.Errorf("length mismatch: iter=%d, slice=%d", len(iterKmers), len(sliceKmers))
+	}
+
+	for i := range iterKmers {
+		if iterKmers[i] != sliceKmers[i] {
+			t.Errorf("position %d: iter=%d, slice=%d", i, iterKmers[i], sliceKmers[i])
+		}
+	}
+}
+
+// TestIterKmersEarlyExit tests early exit from iterator
+func TestIterKmersEarlyExit(t *testing.T) {
+	seq := []byte("ACGTACGTACGTACGT")
+	k := 4
+
+	count := 0
+	for range IterKmers(seq, k) {
+		count++
+		if count == 5 {
+			break
+		}
+	}
+
+	if count != 5 {
+		t.Errorf("expected to process 5 k-mers, got %d", count)
+	}
+}
+
+// BenchmarkIterKmers benchmarks the k-mer iterator vs slice-based
+func BenchmarkIterKmers(b *testing.B) {
+	seq := make([]byte, 10000)
+	for i := range seq {
+		seq[i] = "ACGT"[i%4]
+	}
+	k := 21
+
+	b.Run("Iterator", func(b *testing.B) {
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			count := 0
+			for range IterKmers(seq, k) {
+				count++
+			}
+		}
+	})
+
+	b.Run("Slice", func(b *testing.B) {
+		var buffer []uint64
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			buffer = EncodeKmers(seq, k, &buffer)
+		}
+	})
+}
+
+// BenchmarkIterNormalizedKmers benchmarks the normalized iterator
+func BenchmarkIterNormalizedKmers(b *testing.B) {
+	seq := make([]byte, 10000)
+	for i := range seq {
+		seq[i] = "ACGT"[i%4]
+	}
+	k := 21
+
+	b.Run("Iterator", func(b *testing.B) {
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			count := 0
+			for range IterNormalizedKmers(seq, k) {
+				count++
+			}
+		}
+	})
+
+	b.Run("Slice", func(b *testing.B) {
+		var buffer []uint64
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			buffer = EncodeNormalizedKmers(seq, k, &buffer)
+		}
+	})
+}
+
 // BenchmarkExtractSuperKmers benchmarks the super k-mer extraction
 func BenchmarkExtractSuperKmers(b *testing.B) {
 	sizes := []int{100, 1000, 10000, 100000}
