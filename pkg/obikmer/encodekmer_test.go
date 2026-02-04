@@ -516,3 +516,316 @@ func BenchmarkNormalizeKmer(b *testing.B) {
 		NormalizeKmer(kmer, k)
 	}
 }
+
+// TestExtractSuperKmersBasic tests basic super k-mer extraction
+func TestExtractSuperKmersBasic(t *testing.T) {
+	tests := []struct {
+		name     string
+		seq      string
+		k        int
+		m        int
+		validate func(*testing.T, []SuperKmer)
+	}{
+		{
+			name: "simple sequence",
+			seq:  "ACGTACGTACGT",
+			k:    5,
+			m:    3,
+			validate: func(t *testing.T, sks []SuperKmer) {
+				if len(sks) == 0 {
+					t.Error("expected at least one super k-mer")
+				}
+				// Verify all super k-mers cover the sequence
+				totalLen := 0
+				for _, sk := range sks {
+					totalLen += sk.End - sk.Start
+					if string(sk.Sequence) != string([]byte(t.Name())[len(t.Name())-len(sk.Sequence):]) {
+						// Just verify Start/End matches Sequence
+						if string(sk.Sequence) != string([]byte("ACGTACGTACGT")[sk.Start:sk.End]) {
+							t.Errorf("Sequence mismatch: seq[%d:%d] != %s", sk.Start, sk.End, sk.Sequence)
+						}
+					}
+				}
+			},
+		},
+		{
+			name: "single k-mer sequence",
+			seq:  "ACGTACGT",
+			k:    8,
+			m:    4,
+			validate: func(t *testing.T, sks []SuperKmer) {
+				if len(sks) != 1 {
+					t.Errorf("expected exactly 1 super k-mer for len(seq)==k, got %d", len(sks))
+				}
+				if len(sks) > 0 {
+					if sks[0].Start != 0 || sks[0].End != 8 {
+						t.Errorf("expected [0:8], got [%d:%d]", sks[0].Start, sks[0].End)
+					}
+				}
+			},
+		},
+		{
+			name: "repeating sequence",
+			seq:  "AAAAAAAAAA",
+			k:    5,
+			m:    3,
+			validate: func(t *testing.T, sks []SuperKmer) {
+				// Repeating A should have same minimizer (AAA) everywhere
+				if len(sks) != 1 {
+					t.Errorf("expected 1 super k-mer for repeating sequence, got %d", len(sks))
+				}
+				if len(sks) > 0 {
+					if sks[0].Start != 0 || sks[0].End != 10 {
+						t.Errorf("expected super k-mer to cover entire sequence [0:10], got [%d:%d]",
+							sks[0].Start, sks[0].End)
+					}
+				}
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := ExtractSuperKmers([]byte(tt.seq), tt.k, tt.m, nil)
+			tt.validate(t, result)
+		})
+	}
+}
+
+// TestExtractSuperKmersEdgeCases tests edge cases and error handling
+func TestExtractSuperKmersEdgeCases(t *testing.T) {
+	tests := []struct {
+		name      string
+		seq       string
+		k         int
+		m         int
+		expectNil bool
+	}{
+		{"empty sequence", "", 5, 3, true},
+		{"seq shorter than k", "ACG", 5, 3, true},
+		{"m < 1", "ACGTACGT", 5, 0, true},
+		{"m >= k", "ACGTACGT", 5, 5, true},
+		{"m == k-1 (valid)", "ACGTACGT", 5, 4, false},
+		{"k < 2", "ACGTACGT", 1, 1, true},
+		{"k > 32", "ACGTACGTACGTACGTACGTACGTACGTACGTACGT", 33, 16, true},
+		{"k == 32 (valid)", "ACGTACGTACGTACGTACGTACGTACGTACGT", 32, 16, false},
+		{"seq == k (valid)", "ACGTACGT", 8, 4, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := ExtractSuperKmers([]byte(tt.seq), tt.k, tt.m, nil)
+			if tt.expectNil && result != nil {
+				t.Errorf("expected nil, got %v", result)
+			}
+			if !tt.expectNil && result == nil {
+				t.Errorf("expected non-nil result, got nil")
+			}
+		})
+	}
+}
+
+// TestExtractSuperKmersBoundaries verifies Start/End positions
+func TestExtractSuperKmersBoundaries(t *testing.T) {
+	seq := []byte("ACGTACGTGGGGAAAA")
+	k := 6
+	m := 3
+
+	result := ExtractSuperKmers(seq, k, m, nil)
+
+	if result == nil {
+		t.Fatal("expected non-nil result")
+	}
+
+	// Verify each super k-mer
+	for i, sk := range result {
+		// Verify Start < End
+		if sk.Start >= sk.End {
+			t.Errorf("super k-mer %d: Start (%d) >= End (%d)", i, sk.Start, sk.End)
+		}
+
+		// Verify Sequence matches seq[Start:End]
+		expected := string(seq[sk.Start:sk.End])
+		actual := string(sk.Sequence)
+		if actual != expected {
+			t.Errorf("super k-mer %d: Sequence mismatch: got %s, want %s", i, actual, expected)
+		}
+
+		// Verify bounds are within sequence
+		if sk.Start < 0 || sk.End > len(seq) {
+			t.Errorf("super k-mer %d: bounds [%d:%d] outside sequence length %d",
+				i, sk.Start, sk.End, len(seq))
+		}
+
+		// Verify minimum length is k
+		if sk.End-sk.Start < k {
+			t.Errorf("super k-mer %d: length %d < k=%d", i, sk.End-sk.Start, k)
+		}
+	}
+
+	// Verify super k-mers can overlap (by up to k-1 bases) but must be ordered
+	// and the overlap should not exceed k-1
+	for i := 0; i < len(result)-1; i++ {
+		// Next super k-mer should start before or at the end of current one
+		// Overlap is allowed and expected
+		overlap := result[i].End - result[i+1].Start
+		if overlap > k-1 {
+			t.Errorf("super k-mers %d and %d overlap by %d bases (max allowed: %d): [%d:%d] and [%d:%d]",
+				i, i+1, overlap, k-1, result[i].Start, result[i].End, result[i+1].Start, result[i+1].End)
+		}
+		// But the start positions should be ordered
+		if result[i+1].Start < result[i].Start {
+			t.Errorf("super k-mers %d and %d are not ordered: [%d:%d] and [%d:%d]",
+				i, i+1, result[i].Start, result[i].End, result[i+1].Start, result[i+1].End)
+		}
+	}
+}
+
+// TestExtractSuperKmersBufferReuse tests buffer parameter
+func TestExtractSuperKmersBufferReuse(t *testing.T) {
+	seq := []byte("ACGTACGTACGTACGT")
+	k := 6
+	m := 3
+
+	// First call without buffer
+	result1 := ExtractSuperKmers(seq, k, m, nil)
+
+	// Second call with buffer
+	buffer := make([]SuperKmer, 0, 100)
+	result2 := ExtractSuperKmers(seq, k, m, &buffer)
+
+	if len(result1) != len(result2) {
+		t.Errorf("buffer reuse: length mismatch %d vs %d", len(result1), len(result2))
+	}
+
+	for i := range result1 {
+		if result1[i].Minimizer != result2[i].Minimizer {
+			t.Errorf("position %d: minimizer mismatch", i)
+		}
+		if result1[i].Start != result2[i].Start || result1[i].End != result2[i].End {
+			t.Errorf("position %d: boundary mismatch", i)
+		}
+	}
+
+	// Test multiple calls with same buffer
+	for i := 0; i < 10; i++ {
+		result3 := ExtractSuperKmers(seq, k, m, &buffer)
+		if len(result3) != len(result1) {
+			t.Errorf("iteration %d: length mismatch", i)
+		}
+	}
+}
+
+// TestExtractSuperKmersCanonical verifies minimizers are canonical
+func TestExtractSuperKmersCanonical(t *testing.T) {
+	seq := []byte("ACGTACGTACGT")
+	k := 6
+	m := 3
+
+	result := ExtractSuperKmers(seq, k, m, nil)
+
+	if result == nil {
+		t.Fatal("expected non-nil result")
+	}
+
+	for i, sk := range result {
+		// Verify the minimizer is indeed canonical (equal to its normalized form)
+		normalized := NormalizeKmer(sk.Minimizer, m)
+		if sk.Minimizer != normalized {
+			t.Errorf("super k-mer %d: minimizer %d is not canonical (normalized: %d)",
+				i, sk.Minimizer, normalized)
+		}
+
+		// The minimizer should be <= its reverse complement
+		rc := ReverseComplement(sk.Minimizer, m)
+		if sk.Minimizer > rc {
+			t.Errorf("super k-mer %d: minimizer %d > reverse complement %d (not canonical)",
+				i, sk.Minimizer, rc)
+		}
+	}
+}
+
+// TestExtractSuperKmersVariousKM tests various k and m combinations
+func TestExtractSuperKmersVariousKM(t *testing.T) {
+	seq := []byte("ACGTACGTACGTACGTACGTACGT")
+
+	configs := []struct {
+		k int
+		m int
+	}{
+		{5, 3},
+		{8, 4},
+		{10, 5},
+		{16, 8},
+		{21, 11},
+		{6, 5}, // m = k-1
+		{4, 2},
+	}
+
+	for _, cfg := range configs {
+		t.Run("k"+string(rune('0'+cfg.k/10))+string(rune('0'+cfg.k%10))+"_m"+string(rune('0'+cfg.m/10))+string(rune('0'+cfg.m%10)), func(t *testing.T) {
+			if len(seq) < cfg.k {
+				t.Skip("sequence too short for this k")
+			}
+
+			result := ExtractSuperKmers(seq, cfg.k, cfg.m, nil)
+
+			if result == nil {
+				t.Fatal("expected non-nil result for valid parameters")
+			}
+
+			if len(result) == 0 {
+				t.Error("expected at least one super k-mer")
+			}
+
+			// Verify each super k-mer has minimum length k
+			for i, sk := range result {
+				length := sk.End - sk.Start
+				if length < cfg.k {
+					t.Errorf("super k-mer %d has length %d < k=%d", i, length, cfg.k)
+				}
+			}
+		})
+	}
+}
+
+// BenchmarkExtractSuperKmers benchmarks the super k-mer extraction
+func BenchmarkExtractSuperKmers(b *testing.B) {
+	sizes := []int{100, 1000, 10000, 100000}
+	configs := []struct {
+		k int
+		m int
+	}{
+		{21, 11},
+		{31, 15},
+		{16, 8},
+		{10, 5},
+	}
+
+	for _, cfg := range configs {
+		for _, size := range sizes {
+			seq := make([]byte, size)
+			for i := range seq {
+				seq[i] = "ACGT"[i%4]
+			}
+
+			name := "k" + string(rune('0'+cfg.k/10)) + string(rune('0'+cfg.k%10)) +
+				"_m" + string(rune('0'+cfg.m/10)) + string(rune('0'+cfg.m%10)) +
+				"_size" + string(rune('0'+(size/10000)%10)) +
+				string(rune('0'+(size/1000)%10)) +
+				string(rune('0'+(size/100)%10)) +
+				string(rune('0'+(size/10)%10)) +
+				string(rune('0'+size%10))
+
+			b.Run(name, func(b *testing.B) {
+				buffer := make([]SuperKmer, 0, size/cfg.k)
+				b.ResetTimer()
+				b.SetBytes(int64(size))
+
+				for i := 0; i < b.N; i++ {
+					ExtractSuperKmers(seq, cfg.k, cfg.m, &buffer)
+				}
+			})
+		}
+	}
+}

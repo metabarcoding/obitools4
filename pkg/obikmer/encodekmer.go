@@ -54,6 +54,162 @@ func EncodeKmers(seq []byte, k int, buffer *[]uint64) []uint64 {
 	return result
 }
 
+// SuperKmer represents a maximal subsequence where all consecutive k-mers
+// share the same minimizer. A minimizer is the smallest canonical m-mer
+// among the (k-m+1) m-mers contained in a k-mer.
+type SuperKmer struct {
+	Minimizer uint64 // The canonical minimizer value (normalized m-mer)
+	Start     int    // Starting position in the original sequence (0-indexed)
+	End       int    // Ending position (exclusive, like Go slice notation)
+	Sequence  []byte // The actual DNA subsequence [Start:End]
+}
+
+// dequeItem represents an element in the monotone deque used for
+// tracking minimizers in a sliding window.
+type dequeItem struct {
+	position  int    // Position of the m-mer in the sequence
+	canonical uint64 // Canonical (normalized) m-mer value
+}
+
+// ExtractSuperKmers extracts super k-mers from a DNA sequence.
+// A super k-mer is a maximal subsequence where all consecutive k-mers
+// share the same minimizer. The minimizer of a k-mer is the smallest
+// canonical m-mer among its (k-m+1) constituent m-mers.
+//
+// The algorithm uses:
+// - Simultaneous forward/reverse m-mer encoding for O(1) canonical m-mer computation
+// - Monotone deque for O(1) amortized minimizer tracking per position
+//
+// Parameters:
+//   - seq: DNA sequence as a byte slice (case insensitive, supports A, C, G, T, U)
+//   - k: k-mer size (must be between m+1 and 32)
+//   - m: minimizer size (must be between 1 and k-1)
+//   - buffer: optional pre-allocated buffer for results. If nil, a new slice is created.
+//
+// Returns:
+//   - slice of SuperKmer structs representing maximal subsequences
+//   - nil if parameters are invalid or sequence is too short
+//
+// Time complexity: O(n) where n is the sequence length
+// Space complexity: O(k-m+1) for the deque + O(number of super k-mers) for results
+func ExtractSuperKmers(seq []byte, k int, m int, buffer *[]SuperKmer) []SuperKmer {
+	// Validate parameters
+	if m < 1 || m >= k || k < 2 || k > 32 || len(seq) < k {
+		return nil
+	}
+
+	// Initialize result buffer
+	var result []SuperKmer
+	if buffer == nil {
+		// Estimate: worst case is one super k-mer per k nucleotides
+		estimatedSize := len(seq) / k
+		if estimatedSize < 1 {
+			estimatedSize = 1
+		}
+		result = make([]SuperKmer, 0, estimatedSize)
+	} else {
+		result = (*buffer)[:0]
+	}
+
+	// Initialize monotone deque for tracking minimizers
+	deque := make([]dequeItem, 0, k-m+1)
+
+	// Masks for m-mer encoding
+	mMask := uint64(1)<<(m*2) - 1
+	rcShift := uint((m - 1) * 2)
+
+	// Build first m-1 nucleotides (can't form complete m-mer yet)
+	var fwdMmer, rvcMmer uint64
+	for i := 0; i < m-1 && i < len(seq); i++ {
+		code := uint64(__single_base_code__[seq[i]&31])
+		fwdMmer = (fwdMmer << 2) | code
+		rvcMmer = (rvcMmer >> 2) | ((code ^ 3) << rcShift)
+	}
+
+	// Track super k-mer boundaries
+	superKmerStart := 0
+	var currentMinimizer uint64
+	firstKmer := true
+
+	// Slide through sequence, processing each position that completes an m-mer
+	for pos := m - 1; pos < len(seq); pos++ {
+		// Add new nucleotide to m-mer
+		code := uint64(__single_base_code__[seq[pos]&31])
+		fwdMmer = ((fwdMmer << 2) | code) & mMask
+		rvcMmer = (rvcMmer >> 2) | ((code ^ 3) << rcShift)
+
+		// Get canonical m-mer (minimum of forward and reverse complement)
+		canonical := fwdMmer
+		if rvcMmer < fwdMmer {
+			canonical = rvcMmer
+		}
+
+		mmerPos := pos - m + 1
+
+		// Remove m-mers outside the current k-mer window from front of deque
+		// The k-mer at position pos spans from (pos-k+1) to pos
+		// It contains m-mers from position (pos-k+1) to (pos-m+1)
+		if pos >= k-1 {
+			windowStart := pos - k + 1
+			for len(deque) > 0 && deque[0].position < windowStart {
+				deque = deque[1:]
+			}
+		}
+
+		// Maintain monotone property: remove larger values from back
+		for len(deque) > 0 && deque[len(deque)-1].canonical >= canonical {
+			deque = deque[:len(deque)-1]
+		}
+
+		// Add new m-mer to deque
+		deque = append(deque, dequeItem{position: mmerPos, canonical: canonical})
+
+		// Once we have processed the first k nucleotides, we have our first k-mer
+		if pos >= k-1 {
+			// The minimizer is at the front of the deque
+			newMinimizer := deque[0].canonical
+			kmerStart := pos - k + 1 // Start position of current k-mer (ending at pos)
+
+			if firstKmer {
+				// Initialize first super k-mer
+				currentMinimizer = newMinimizer
+				firstKmer = false
+			} else if newMinimizer != currentMinimizer {
+				// Minimizer changed at this k-mer position
+				// Previous k-mer started at position kmerStart-1
+				// That k-mer is seq[kmerStart-1 : kmerStart-1+k] (Go slice notation)
+				// The last base of that k-mer is at kmerStart-1+k-1 = kmerStart+k-2
+				// In Go slice notation (exclusive end): kmerStart+k-1
+				endPos := kmerStart + k - 1
+				superKmer := SuperKmer{
+					Minimizer: currentMinimizer,
+					Start:     superKmerStart,
+					End:       endPos,
+					Sequence:  seq[superKmerStart:endPos],
+				}
+				result = append(result, superKmer)
+
+				// New super k-mer starts at current k-mer position
+				superKmerStart = kmerStart
+				currentMinimizer = newMinimizer
+			}
+		}
+	}
+
+	// Emit final super k-mer
+	if !firstKmer {
+		superKmer := SuperKmer{
+			Minimizer: currentMinimizer,
+			Start:     superKmerStart,
+			End:       len(seq),
+			Sequence:  seq[superKmerStart:],
+		}
+		result = append(result, superKmer)
+	}
+
+	return result
+}
+
 // ReverseComplement computes the reverse complement of an encoded k-mer.
 // The k-mer is encoded with 2 bits per nucleotide (A=00, C=01, G=10, T=11).
 // The complement is: A↔T (00↔11), C↔G (01↔10), which is simply XOR with 11.
