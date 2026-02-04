@@ -50,10 +50,10 @@ func TestEncodeKmersBasic(t *testing.T) {
 			expected: []uint64{0b0001101100011011}, // ACGTACGT
 		},
 		{
-			name:     "32-mer max size",
-			seq:      "ACGTACGTACGTACGTACGTACGTACGTACGT",
-			k:        32,
-			expected: []uint64{0x1B1B1B1B1B1B1B1B}, // ACGTACGT repeated 4 times
+			name:     "31-mer max size",
+			seq:      "ACGTACGTACGTACGTACGTACGTACGTACG",
+			k:        31,
+			expected: []uint64{0x06C6C6C6C6C6C6C6}, // ACGTACGT repeated ~4 times
 		},
 		{
 			name: "longer sequence sliding",
@@ -110,10 +110,10 @@ func TestEncodeKmersEdgeCases(t *testing.T) {
 		t.Errorf("k=0 should return nil, got %v", result)
 	}
 
-	// k > 32
-	result = EncodeKmers([]byte("ACGTACGTACGTACGTACGTACGTACGTACGTACGT"), 33, nil)
+	// k > 31
+	result = EncodeKmers([]byte("ACGTACGTACGTACGTACGTACGTACGTACGTACGT"), 32, nil)
 	if result != nil {
-		t.Errorf("k>32 should return nil, got %v", result)
+		t.Errorf("k>31 should return nil, got %v", result)
 	}
 
 	// k = sequence length (single k-mer)
@@ -204,7 +204,7 @@ func TestEncodeKmersLongSequence(t *testing.T) {
 func BenchmarkEncodeKmers(b *testing.B) {
 	// Create test sequences of various sizes
 	sizes := []int{100, 1000, 10000, 100000}
-	kSizes := []int{8, 16, 32}
+	kSizes := []int{8, 16, 31}
 
 	for _, k := range kSizes {
 		for _, size := range sizes {
@@ -472,7 +472,7 @@ func TestEncodeNormalizedKmersConsistency(t *testing.T) {
 // BenchmarkEncodeNormalizedKmers benchmarks the normalized encoding function
 func BenchmarkEncodeNormalizedKmers(b *testing.B) {
 	sizes := []int{100, 1000, 10000, 100000}
-	kSizes := []int{8, 16, 32}
+	kSizes := []int{8, 16, 31}
 
 	for _, k := range kSizes {
 		for _, size := range sizes {
@@ -497,8 +497,8 @@ func BenchmarkEncodeNormalizedKmers(b *testing.B) {
 
 // BenchmarkReverseComplement benchmarks the reverse complement function
 func BenchmarkReverseComplement(b *testing.B) {
-	kmer := uint64(0x123456789ABCDEF0)
-	k := 32
+	kmer := uint64(0x06C6C6C6C6C6C6C6)
+	k := 31
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -508,8 +508,8 @@ func BenchmarkReverseComplement(b *testing.B) {
 
 // BenchmarkNormalizeKmer benchmarks the normalization function
 func BenchmarkNormalizeKmer(b *testing.B) {
-	kmer := uint64(0x123456789ABCDEF0)
-	k := 32
+	kmer := uint64(0x06C6C6C6C6C6C6C6)
+	k := 31
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -607,8 +607,8 @@ func TestExtractSuperKmersEdgeCases(t *testing.T) {
 		{"m >= k", "ACGTACGT", 5, 5, true},
 		{"m == k-1 (valid)", "ACGTACGT", 5, 4, false},
 		{"k < 2", "ACGTACGT", 1, 1, true},
-		{"k > 32", "ACGTACGTACGTACGTACGTACGTACGTACGTACGT", 33, 16, true},
-		{"k == 32 (valid)", "ACGTACGTACGTACGTACGTACGTACGTACGT", 32, 16, false},
+		{"k > 31", "ACGTACGTACGTACGTACGTACGTACGTACGT", 32, 16, true},
+		{"k == 31 (valid)", "ACGTACGTACGTACGTACGTACGTACGTACG", 31, 16, false},
 		{"seq == k (valid)", "ACGTACGT", 8, 4, false},
 	}
 
@@ -783,6 +783,273 @@ func TestExtractSuperKmersVariousKM(t *testing.T) {
 				length := sk.End - sk.Start
 				if length < cfg.k {
 					t.Errorf("super k-mer %d has length %d < k=%d", i, length, cfg.k)
+				}
+			}
+		})
+	}
+}
+
+// TestKmerErrorMarkers tests the error marker functionality
+func TestKmerErrorMarkers(t *testing.T) {
+	// Test with a 31-mer (max odd k-mer that fits in 62 bits)
+	kmer31 := uint64(0x1FFFFFFFFFFFFFFF) // All 62 bits set (31 * 2)
+
+	tests := []struct {
+		name      string
+		kmer      uint64
+		errorCode uint64
+		expected  uint64
+	}{
+		{
+			name:      "no error",
+			kmer:      kmer31,
+			errorCode: 0,
+			expected:  kmer31,
+		},
+		{
+			name:      "error type 1",
+			kmer:      kmer31,
+			errorCode: 1,
+			expected:  kmer31 | (0b01 << 62),
+		},
+		{
+			name:      "error type 2",
+			kmer:      kmer31,
+			errorCode: 2,
+			expected:  kmer31 | (0b10 << 62),
+		},
+		{
+			name:      "error type 3",
+			kmer:      kmer31,
+			errorCode: 3,
+			expected:  kmer31 | (0b11 << 62),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Set error
+			marked := SetKmerError(tt.kmer, tt.errorCode)
+			if marked != tt.expected {
+				t.Errorf("SetKmerError: got 0x%016X, want 0x%016X", marked, tt.expected)
+			}
+
+			// Get error
+			extractedError := GetKmerError(marked)
+			if extractedError != tt.errorCode {
+				t.Errorf("GetKmerError: got 0x%016X, want 0x%016X", extractedError, tt.errorCode)
+			}
+
+			// Clear error
+			cleared := ClearKmerError(marked)
+			if cleared != tt.kmer {
+				t.Errorf("ClearKmerError: got 0x%016X, want 0x%016X", cleared, tt.kmer)
+			}
+
+			// Verify sequence bits are preserved
+			if (marked & KmerSequenceMask) != tt.kmer {
+				t.Errorf("Sequence bits corrupted: got 0x%016X, want 0x%016X",
+					marked&KmerSequenceMask, tt.kmer)
+			}
+		})
+	}
+}
+
+// TestKmerErrorMarkersWithRealKmers tests error markers with actual k-mer encoding
+func TestKmerErrorMarkersWithRealKmers(t *testing.T) {
+	// Encode a real 31-mer
+	seq := []byte("ACGTACGTACGTACGTACGTACGTACGTACG") // 31 bases
+	k := 31
+
+	kmers := EncodeKmers(seq, k, nil)
+	if len(kmers) != 1 {
+		t.Fatalf("Expected 1 k-mer, got %d", len(kmers))
+	}
+
+	originalKmer := kmers[0]
+
+	// Test each error type
+	for i, errorCode := range []uint64{0, 1, 2, 3} {
+		t.Run("error_code_"+string(rune('0'+i)), func(t *testing.T) {
+			// Mark with error
+			marked := SetKmerError(originalKmer, errorCode)
+
+			// Verify error can be extracted
+			if GetKmerError(marked) != errorCode {
+				t.Errorf("Error code mismatch: got 0x%X, want 0x%X",
+					GetKmerError(marked), errorCode)
+			}
+
+			// Verify sequence is preserved
+			if ClearKmerError(marked) != originalKmer {
+				t.Errorf("Original k-mer not preserved after marking")
+			}
+
+			// Verify normalization works with error bits cleared
+			normalized1 := NormalizeKmer(originalKmer, k)
+			normalized2 := NormalizeKmer(ClearKmerError(marked), k)
+			if normalized1 != normalized2 {
+				t.Errorf("Normalization affected by error bits")
+			}
+		})
+	}
+}
+
+// TestKmerErrorMarkersConstants verifies the mask constant definitions
+func TestKmerErrorMarkersConstants(t *testing.T) {
+	// Verify error mask covers exactly the top 2 bits
+	if KmerErrorMask != (0b11 << 62) {
+		t.Errorf("KmerErrorMask wrong value: 0x%016X", KmerErrorMask)
+	}
+
+	// Verify sequence mask is the complement
+	if KmerSequenceMask != ^KmerErrorMask {
+		t.Errorf("KmerSequenceMask should be complement of KmerErrorMask")
+	}
+
+	// Verify masks are mutually exclusive
+	if (KmerErrorMask & KmerSequenceMask) != 0 {
+		t.Errorf("Masks should be mutually exclusive")
+	}
+
+	// Verify masks cover all bits
+	if (KmerErrorMask | KmerSequenceMask) != ^uint64(0) {
+		t.Errorf("Masks should cover all 64 bits")
+	}
+
+	// Verify error code API
+	testKmer := uint64(0x06C6C6C6C6C6C6C6)
+	for code := uint64(0); code <= 3; code++ {
+		marked := SetKmerError(testKmer, code)
+		extracted := GetKmerError(marked)
+		if extracted != code {
+			t.Errorf("Error code %d not preserved: got %d", code, extracted)
+		}
+	}
+}
+
+// TestReverseComplementPreservesErrorBits tests that RC preserves error markers
+func TestReverseComplementPreservesErrorBits(t *testing.T) {
+	// Test with a 31-mer
+	seq := []byte("ACGTACGTACGTACGTACGTACGTACGTACG")
+	k := 31
+
+	kmers := EncodeKmers(seq, k, nil)
+	if len(kmers) != 1 {
+		t.Fatalf("Expected 1 k-mer, got %d", len(kmers))
+	}
+
+	originalKmer := kmers[0]
+
+	// Test each error code
+	errorCodes := []uint64{0, 1, 2, 3}
+
+	for i, errCode := range errorCodes {
+		t.Run("error_code_"+string(rune('0'+i)), func(t *testing.T) {
+			// Mark k-mer with error
+			marked := SetKmerError(originalKmer, errCode)
+
+			// Compute reverse complement
+			rc := ReverseComplement(marked, k)
+
+			// Verify error bits are preserved
+			extractedError := GetKmerError(rc)
+			if extractedError != errCode {
+				t.Errorf("Error bits not preserved: got 0x%X, want 0x%X", extractedError, errCode)
+			}
+
+			// Verify sequence was reverse complemented correctly
+			// (clear error bits and check RC property)
+			cleanOriginal := ClearKmerError(originalKmer)
+			cleanRC := ClearKmerError(rc)
+			expectedRC := ReverseComplement(cleanOriginal, k)
+
+			if cleanRC != expectedRC {
+				t.Errorf("Sequence not reverse complemented correctly")
+			}
+
+			// Verify RC(RC(x)) = x (involution property with error bits)
+			rcrc := ReverseComplement(rc, k)
+			if rcrc != marked {
+				t.Errorf("RC(RC(x)) != x: got 0x%016X, want 0x%016X", rcrc, marked)
+			}
+		})
+	}
+}
+
+// TestNormalizeKmerWithErrorBits tests that NormalizeKmer works with error bits
+func TestNormalizeKmerWithErrorBits(t *testing.T) {
+	seq := []byte("ACGTACGTACGTACGTACGTACGTACGTACG")
+	k := 31
+
+	kmers := EncodeKmers(seq, k, nil)
+	if len(kmers) != 1 {
+		t.Fatalf("Expected 1 k-mer, got %d", len(kmers))
+	}
+
+	originalKmer := kmers[0]
+
+	// Test with different error codes
+	for i, errCode := range []uint64{1, 2, 3} {
+		t.Run("error_code_"+string(rune('0'+i+1)), func(t *testing.T) {
+			marked := SetKmerError(originalKmer, errCode)
+
+			// Normalize should work on the sequence part
+			normalized := NormalizeKmer(marked, k)
+
+			// Error bits should be preserved
+			if GetKmerError(normalized) != errCode {
+				t.Errorf("Error bits lost during normalization")
+			}
+
+			// The sequence part should be normalized
+			cleanNormalized := ClearKmerError(normalized)
+			expectedNormalized := NormalizeKmer(ClearKmerError(marked), k)
+
+			if cleanNormalized != expectedNormalized {
+				t.Errorf("Normalization incorrect with error bits present")
+			}
+		})
+	}
+}
+
+// TestKmerErrorMarkersOddKmers tests that error markers work for all odd k ≤ 31
+func TestKmerErrorMarkersOddKmers(t *testing.T) {
+	oddKSizes := []int{1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31}
+
+	for _, k := range oddKSizes {
+		t.Run("k="+string(rune('0'+k/10))+string(rune('0'+k%10)), func(t *testing.T) {
+			// Create a sequence of length k
+			seq := make([]byte, k)
+			for i := range seq {
+				seq[i] = "ACGT"[i%4]
+			}
+
+			kmers := EncodeKmers(seq, k, nil)
+			if len(kmers) != 1 {
+				t.Fatalf("Expected 1 k-mer, got %d", len(kmers))
+			}
+
+			originalKmer := kmers[0]
+
+			// Verify that k*2 bits fit in 62 bits (top 2 bits should be free)
+			maxValue := uint64(1)<<(k*2) - 1
+			if originalKmer > maxValue {
+				t.Errorf("k-mer exceeds expected bit range for k=%d", k)
+			}
+
+			// Test all error codes
+			for _, errCode := range []uint64{1, 2, 3} {
+				marked := SetKmerError(originalKmer, errCode)
+
+				// Verify error is set
+				if GetKmerError(marked) != errCode {
+					t.Errorf("Error code not preserved for k=%d", k)
+				}
+
+				// Verify sequence is preserved
+				if ClearKmerError(marked) != originalKmer {
+					t.Errorf("Sequence corrupted for k=%d", k)
 				}
 			}
 		})

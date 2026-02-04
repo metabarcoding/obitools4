@@ -1,5 +1,51 @@
 package obikmer
 
+// Error markers for k-mers of odd length ≤ 31
+// For odd k ≤ 31, only k*2 bits are used (max 62 bits), leaving 2 high bits
+// available for error coding in the top 2 bits (bits 62-63).
+//
+// Error codes are simple integers:
+//   0 = no error
+//   1 = error type 1
+//   2 = error type 2
+//   3 = error type 3
+//
+// Use SetKmerError(kmer, code) and GetKmerError(kmer) to manipulate error bits.
+const (
+	KmerErrorMask    uint64 = 0b11 << 62  // Mask to extract error bits (bits 62-63)
+	KmerSequenceMask uint64 = ^KmerErrorMask // Mask to extract sequence bits (bits 0-61)
+)
+
+// SetKmerError sets the error marker bits on a k-mer encoded value.
+// Only valid for odd k-mer sizes ≤ 31 where 2 bits remain unused.
+//
+// Parameters:
+//   - kmer: the encoded k-mer value
+//   - errorCode: error code (0-3), where 0=no error, 1-3=error types
+//
+// Returns:
+//   - k-mer with error bits set
+func SetKmerError(kmer uint64, errorCode uint64) uint64 {
+	return (kmer & KmerSequenceMask) | ((errorCode & 0b11) << 62)
+}
+
+// GetKmerError extracts the error marker bits from a k-mer encoded value.
+//
+// Returns:
+//   - error code (0-3) as raw value (not shifted)
+func GetKmerError(kmer uint64) uint64 {
+	return (kmer & KmerErrorMask) >> 62
+}
+
+// ClearKmerError removes the error marker bits from a k-mer, returning
+// just the sequence encoding.
+//
+// Returns:
+//   - k-mer with error bits cleared (set to 00)
+func ClearKmerError(kmer uint64) uint64 {
+	return kmer & KmerSequenceMask
+}
+
 // EncodeKmers converts a DNA sequence to a slice of encoded k-mers.
 // Each nucleotide is encoded on 2 bits according to __single_base_code__:
 //   - A = 0 (00)
@@ -10,16 +56,19 @@ package obikmer
 // The function returns overlapping k-mers of size k encoded as uint64.
 // For a sequence of length n, it returns n-k+1 k-mers.
 //
+// The maximum k-mer size is 31 (using 62 bits), leaving the top 2 bits
+// available for error markers (see SetKmerError).
+//
 // Parameters:
 //   - seq: DNA sequence as a byte slice (case insensitive, supports A, C, G, T, U)
-//   - k: k-mer size (must be between 1 and 32)
+//   - k: k-mer size (must be between 1 and 31)
 //   - buffer: optional pre-allocated buffer for results. If nil, a new slice is created.
 //
 // Returns:
 //   - slice of uint64 encoded k-mers
 //   - nil if sequence is shorter than k or k is invalid
 func EncodeKmers(seq []byte, k int, buffer *[]uint64) []uint64 {
-	if k < 1 || k > 32 || len(seq) < k {
+	if k < 1 || k > 31 || len(seq) < k {
 		return nil
 	}
 
@@ -80,9 +129,12 @@ type dequeItem struct {
 // - Simultaneous forward/reverse m-mer encoding for O(1) canonical m-mer computation
 // - Monotone deque for O(1) amortized minimizer tracking per position
 //
+// The maximum k-mer size is 31 (using 62 bits), leaving the top 2 bits
+// available for error markers if needed.
+//
 // Parameters:
 //   - seq: DNA sequence as a byte slice (case insensitive, supports A, C, G, T, U)
-//   - k: k-mer size (must be between m+1 and 32)
+//   - k: k-mer size (must be between m+1 and 31)
 //   - m: minimizer size (must be between 1 and k-1)
 //   - buffer: optional pre-allocated buffer for results. If nil, a new slice is created.
 //
@@ -94,7 +146,7 @@ type dequeItem struct {
 // Space complexity: O(k-m+1) for the deque + O(number of super k-mers) for results
 func ExtractSuperKmers(seq []byte, k int, m int, buffer *[]SuperKmer) []SuperKmer {
 	// Validate parameters
-	if m < 1 || m >= k || k < 2 || k > 32 || len(seq) < k {
+	if m < 1 || m >= k || k < 2 || k > 31 || len(seq) < k {
 		return nil
 	}
 
@@ -215,13 +267,19 @@ func ExtractSuperKmers(seq []byte, k int, m int, buffer *[]SuperKmer) []SuperKme
 // The complement is: A↔T (00↔11), C↔G (01↔10), which is simply XOR with 11.
 // The reverse swaps the order of 2-bit pairs.
 //
+// For k-mers with error markers (top 2 bits), the error bits are preserved
+// and transferred to the reverse complement.
+//
 // Parameters:
-//   - kmer: the encoded k-mer
+//   - kmer: the encoded k-mer (possibly with error bits in positions 62-63)
 //   - k: the k-mer size (number of nucleotides)
 //
 // Returns:
-//   - the reverse complement of the k-mer
+//   - the reverse complement of the k-mer with error bits preserved
 func ReverseComplement(kmer uint64, k int) uint64 {
+	// Step 0: Extract and preserve error bits
+	errorBits := kmer & KmerErrorMask
+
 	// Step 1: Complement - XOR with all 1s to flip A↔T and C↔G
 	// For a k-mer of size k, we only want to flip the lower k*2 bits
 	mask := uint64(1)<<(k*2) - 1
@@ -237,6 +295,9 @@ func ReverseComplement(kmer uint64, k int) uint64 {
 
 	// Step 3: Shift right to align the k-mer (we reversed all 32 pairs, need only k)
 	rc >>= (64 - k*2)
+
+	// Step 4: Restore error bits
+	rc |= errorBits
 
 	return rc
 }
@@ -264,16 +325,19 @@ func NormalizeKmer(kmer uint64, k int) uint64 {
 // reverse complement. This ensures that forward and reverse complement sequences
 // produce the same k-mer set.
 //
+// The maximum k-mer size is 31 (using 62 bits), leaving the top 2 bits
+// available for error markers (see SetKmerError).
+//
 // Parameters:
 //   - seq: DNA sequence as a byte slice (case insensitive, supports A, C, G, T, U)
-//   - k: k-mer size (must be between 1 and 32)
+//   - k: k-mer size (must be between 1 and 31)
 //   - buffer: optional pre-allocated buffer for results. If nil, a new slice is created.
 //
 // Returns:
 //   - slice of uint64 normalized k-mers
 //   - nil if sequence is shorter than k or k is invalid
 func EncodeNormalizedKmers(seq []byte, k int, buffer *[]uint64) []uint64 {
-	if k < 1 || k > 32 || len(seq) < k {
+	if k < 1 || k > 31 || len(seq) < k {
 		return nil
 	}
 
