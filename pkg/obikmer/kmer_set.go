@@ -44,9 +44,9 @@ func (ks *KmerSet) AddKmerCode(kmer uint64) {
 	ks.bitmap.Add(kmer)
 }
 
-// AddNormalizedKmerCode ajoute un k-mer encodé normalisé à l'ensemble
-func (ks *KmerSet) AddNormalizedKmerCode(kmer uint64) {
-	canonical := NormalizeKmer(kmer, ks.k)
+// AddCanonicalKmerCode ajoute un k-mer encodé canonique à l'ensemble
+func (ks *KmerSet) AddCanonicalKmerCode(kmer uint64) {
+	canonical := CanonicalKmer(kmer, ks.k)
 	ks.bitmap.Add(canonical)
 }
 
@@ -58,11 +58,11 @@ func (ks *KmerSet) AddKmer(seq []byte) {
 	ks.bitmap.Add(kmer)
 }
 
-// AddNormalizedKmer ajoute un k-mer normalisé à l'ensemble en encodant la séquence
+// AddCanonicalKmer ajoute un k-mer canonique à l'ensemble en encodant la séquence
 // La séquence doit avoir exactement k nucléotides
 // Zero-allocation: encode directement en forme canonique sans créer de slice intermédiaire
-func (ks *KmerSet) AddNormalizedKmer(seq []byte) {
-	canonical := EncodeNormalizedKmer(seq, ks.k)
+func (ks *KmerSet) AddCanonicalKmer(seq []byte) {
+	canonical := EncodeCanonicalKmer(seq, ks.k)
 	ks.bitmap.Add(canonical)
 }
 
@@ -70,7 +70,7 @@ func (ks *KmerSet) AddNormalizedKmer(seq []byte) {
 // Utilise un itérateur pour éviter l'allocation d'un vecteur intermédiaire
 func (ks *KmerSet) AddSequence(seq *obiseq.BioSequence) {
 	rawSeq := seq.Sequence()
-	for canonical := range IterNormalizedKmers(rawSeq, ks.k) {
+	for canonical := range IterCanonicalKmers(rawSeq, ks.k) {
 		ks.bitmap.Add(canonical)
 	}
 }

@@ -26,7 +26,7 @@ func NewFrequencyFilter(k, minFreq int) *FrequencyFilter {
 // Utilise un itérateur pour éviter l'allocation d'un vecteur intermédiaire
 func (ff *FrequencyFilter) AddSequence(seq *obiseq.BioSequence) {
 	rawSeq := seq.Sequence()
-	for canonical := range IterNormalizedKmers(rawSeq, ff.K()) {
+	for canonical := range IterCanonicalKmers(rawSeq, ff.K()) {
 		ff.AddKmerCode(canonical)
 	}
 }
@@ -45,9 +45,9 @@ func (ff *FrequencyFilter) AddKmerCode(kmer uint64) {
 	}
 }
 
-// AddNormalizedKmerCode ajoute un k-mer encodé normalisé au filtre
-func (ff *FrequencyFilter) AddNormalizedKmerCode(kmer uint64) {
-	canonical := NormalizeKmer(kmer, ff.K())
+// AddCanonicalKmerCode ajoute un k-mer encodé canonique au filtre
+func (ff *FrequencyFilter) AddCanonicalKmerCode(kmer uint64) {
+	canonical := CanonicalKmer(kmer, ff.K())
 	ff.AddKmerCode(canonical)
 }
 
@@ -59,11 +59,11 @@ func (ff *FrequencyFilter) AddKmer(seq []byte) {
 	ff.AddKmerCode(kmer)
 }
 
-// AddNormalizedKmer ajoute un k-mer normalisé au filtre en encodant la séquence
+// AddCanonicalKmer ajoute un k-mer canonique au filtre en encodant la séquence
 // La séquence doit avoir exactement k nucléotides
 // Zero-allocation: encode directement en forme canonique sans créer de slice intermédiaire
-func (ff *FrequencyFilter) AddNormalizedKmer(seq []byte) {
-	canonical := EncodeNormalizedKmer(seq, ff.K())
+func (ff *FrequencyFilter) AddCanonicalKmer(seq []byte) {
+	canonical := EncodeCanonicalKmer(seq, ff.K())
 	ff.AddKmerCode(canonical)
 }
 
@@ -183,14 +183,14 @@ func (ff *FrequencyFilter) Load(path string) error {
 
 // Contains vérifie si un k-mer a atteint la fréquence minimale
 func (ff *FrequencyFilter) Contains(kmer uint64) bool {
-	canonical := NormalizeKmer(kmer, ff.K())
+	canonical := CanonicalKmer(kmer, ff.K())
 	return ff.Get(ff.MinFreq - 1).Contains(canonical)
 }
 
 // GetFrequency retourne la fréquence approximative d'un k-mer
 // Retourne le niveau maximum atteint (freq ≥ niveau)
 func (ff *FrequencyFilter) GetFrequency(kmer uint64) int {
-	canonical := NormalizeKmer(kmer, ff.K())
+	canonical := CanonicalKmer(kmer, ff.K())
 
 	freq := 0
 	for i := 0; i < ff.MinFreq; i++ {

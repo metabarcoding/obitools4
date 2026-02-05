@@ -108,22 +108,22 @@ func EncodeKmer(seq []byte, k int) uint64 {
 	return kmer
 }
 
-// EncodeNormalizedKmer encodes a single k-mer sequence to its canonical form (uint64).
+// EncodeCanonicalKmer encodes a single k-mer sequence to its canonical form (uint64).
 // Returns the lexicographically smaller of the k-mer and its reverse complement.
-// This is the optimal zero-allocation function for encoding a single normalized k-mer.
+// This is the optimal zero-allocation function for encoding a single canonical k-mer.
 //
 // Parameters:
 //   - seq: DNA sequence as a byte slice (case insensitive, supports A, C, G, T, U)
 //   - k: k-mer size (must be between 1 and 31)
 //
 // Returns:
-//   - normalized k-mer as uint64
+//   - canonical k-mer as uint64
 //   - panics if len(seq) != k or k is invalid
 //
 // Example:
 //
-//	canonical := EncodeNormalizedKmer([]byte("ACGT"), 4)
-func EncodeNormalizedKmer(seq []byte, k int) uint64 {
+//	canonical := EncodeCanonicalKmer([]byte("ACGT"), 4)
+func EncodeCanonicalKmer(seq []byte, k int) uint64 {
 	if k < 1 || k > 31 {
 		panic("k must be between 1 and 31")
 	}
@@ -265,7 +265,7 @@ func IterKmers(seq []byte, k int) iter.Seq[uint64] {
 	}
 }
 
-// IterNormalizedKmersWithErrors returns an iterator over all normalized k-mers
+// IterCanonicalKmersWithErrors returns an iterator over all canonical k-mers
 // with error markers for ambiguous bases. No intermediate slice is allocated.
 //
 // Ambiguous bases (N, R, Y, W, S, K, M, B, D, H, V) are encoded as 0xFF and detected
@@ -279,16 +279,16 @@ func IterKmers(seq []byte, k int) iter.Seq[uint64] {
 //   - k: k-mer size (must be odd, between 1 and 31)
 //
 // Returns:
-//   - iterator yielding uint64 normalized k-mers with error markers
+//   - iterator yielding uint64 canonical k-mers with error markers
 //
 // Example:
 //
-//	for kmer := range IterNormalizedKmersWithErrors(seq, 21) {
+//	for kmer := range IterCanonicalKmersWithErrors(seq, 21) {
 //	    if GetKmerError(kmer) == 0 {
 //	        bitmap.Add(kmer) // Only add clean k-mers
 //	    }
 //	}
-func IterNormalizedKmersWithErrors(seq []byte, k int) iter.Seq[uint64] {
+func IterCanonicalKmersWithErrors(seq []byte, k int) iter.Seq[uint64] {
 	return func(yield func(uint64) bool) {
 		if k < 1 || k > 31 || k%2 == 0 || len(seq) < k {
 			return
@@ -380,7 +380,7 @@ func IterNormalizedKmersWithErrors(seq []byte, k int) iter.Seq[uint64] {
 	}
 }
 
-// IterNormalizedKmers returns an iterator over all normalized (canonical) k-mers.
+// IterCanonicalKmers returns an iterator over all canonical k-mers.
 // No intermediate slice is allocated, making it memory-efficient.
 //
 // Parameters:
@@ -388,14 +388,14 @@ func IterNormalizedKmersWithErrors(seq []byte, k int) iter.Seq[uint64] {
 //   - k: k-mer size (must be between 1 and 31)
 //
 // Returns:
-//   - iterator yielding uint64 normalized k-mers
+//   - iterator yielding uint64 canonical k-mers
 //
 // Example:
 //
-//	for canonical := range IterNormalizedKmers(seq, 21) {
+//	for canonical := range IterCanonicalKmers(seq, 21) {
 //	    bitmap.Add(canonical)
 //	}
-func IterNormalizedKmers(seq []byte, k int) iter.Seq[uint64] {
+func IterCanonicalKmers(seq []byte, k int) iter.Seq[uint64] {
 	return func(yield func(uint64) bool) {
 		if k < 1 || k > 31 || len(seq) < k {
 			return
@@ -615,19 +615,19 @@ func ReverseComplement(kmer uint64, k int) uint64 {
 	return rc
 }
 
-// NormalizeKmer returns the lexicographically smaller of a k-mer and its
+// CanonicalKmer returns the lexicographically smaller of a k-mer and its
 // reverse complement. This canonical form ensures that a k-mer and its
 // reverse complement map to the same value.
 //
-// This implements REVERSE COMPLEMENT normalization (biological canonicalization).
+// This implements REVERSE COMPLEMENT canonicalization (biological canonical form).
 //
 // Parameters:
 //   - kmer: the encoded k-mer
 //   - k: the k-mer size (number of nucleotides)
 //
 // Returns:
-//   - the canonical (normalized) k-mer
-func NormalizeKmer(kmer uint64, k int) uint64 {
+//   - the canonical k-mer
+func CanonicalKmer(kmer uint64, k int) uint64 {
 	rc := ReverseComplement(kmer, k)
 	if rc < kmer {
 		return rc
@@ -674,26 +674,26 @@ func NormalizeCircular(kmer uint64, k int) uint64 {
 	return canonical
 }
 
-// EncodeCircularNormalizedKmer encodes a k-mer and returns its lexicographically
+// EncodeCircularCanonicalKmer encodes a k-mer and returns its lexicographically
 // smallest circular rotation. This is optimized for single k-mer encoding with
-// circular normalization.
+// circular canonicalization.
 //
-// This implements CIRCULAR PERMUTATION normalization, used for entropy-based
-// low-complexity masking. This is DIFFERENT from EncodeNormalizedKmer which
-// uses reverse complement normalization.
+// This implements CIRCULAR PERMUTATION canonicalization, used for entropy-based
+// low-complexity masking. This is DIFFERENT from EncodeCanonicalKmer which
+// uses reverse complement canonicalization.
 //
 // Parameters:
 //   - seq: DNA sequence as a byte slice (case insensitive, supports A, C, G, T, U)
 //   - k: k-mer size (must be between 1 and 31)
 //
 // Returns:
-//   - normalized k-mer as uint64 (smallest circular rotation)
+//   - canonical k-mer as uint64 (smallest circular rotation)
 //   - panics if len(seq) != k or k is invalid
 //
 // Example:
 //
-//	canonical := EncodeCircularNormalizedKmer([]byte("ACGT"), 4)
-func EncodeCircularNormalizedKmer(seq []byte, k int) uint64 {
+//	canonical := EncodeCircularCanonicalKmer([]byte("ACGT"), 4)
+func EncodeCircularCanonicalKmer(seq []byte, k int) uint64 {
 	kmer := EncodeKmer(seq, k)
 	return NormalizeCircular(kmer, k)
 }
@@ -827,7 +827,7 @@ func necklaceCount(n, alphabetSize int) int {
 	return sum / n
 }
 
-// EncodeNormalizedKmersWithErrors converts a DNA sequence to a slice of normalized k-mers
+// EncodeCanonicalKmersWithErrors converts a DNA sequence to a slice of canonical k-mers
 // with error markers for ambiguous bases (N, R, Y, W, S, K, M, B, D, H, V).
 //
 // Ambiguous bases are encoded as 0xFF by __single_base_code__ and detected during
@@ -846,9 +846,9 @@ func necklaceCount(n, alphabetSize int) int {
 //   - buffer: optional pre-allocated buffer for results. If nil, a new slice is created.
 //
 // Returns:
-//   - slice of uint64 normalized k-mers with error markers
+//   - slice of uint64 canonical k-mers with error markers
 //   - nil if sequence is shorter than k, k is invalid, or k is even
-func EncodeNormalizedKmersWithErrors(seq []byte, k int, buffer *[]uint64) []uint64 {
+func EncodeCanonicalKmersWithErrors(seq []byte, k int, buffer *[]uint64) []uint64 {
 	if k < 1 || k > 31 || k%2 == 0 || len(seq) < k {
 		return nil
 	}
@@ -860,14 +860,14 @@ func EncodeNormalizedKmersWithErrors(seq []byte, k int, buffer *[]uint64) []uint
 		result = (*buffer)[:0]
 	}
 
-	for kmer := range IterNormalizedKmersWithErrors(seq, k) {
+	for kmer := range IterCanonicalKmersWithErrors(seq, k) {
 		result = append(result, kmer)
 	}
 
 	return result
 }
 
-// EncodeNormalizedKmers converts a DNA sequence to a slice of normalized k-mers.
+// EncodeCanonicalKmers converts a DNA sequence to a slice of canonical k-mers.
 // Each k-mer is replaced by the lexicographically smaller of itself and its
 // reverse complement. This ensures that forward and reverse complement sequences
 // produce the same k-mer set.
@@ -881,9 +881,9 @@ func EncodeNormalizedKmersWithErrors(seq []byte, k int, buffer *[]uint64) []uint
 //   - buffer: optional pre-allocated buffer for results. If nil, a new slice is created.
 //
 // Returns:
-//   - slice of uint64 normalized k-mers
+//   - slice of uint64 canonical k-mers
 //   - nil if sequence is shorter than k or k is invalid
-func EncodeNormalizedKmers(seq []byte, k int, buffer *[]uint64) []uint64 {
+func EncodeCanonicalKmers(seq []byte, k int, buffer *[]uint64) []uint64 {
 	if k < 1 || k > 31 || len(seq) < k {
 		return nil
 	}
@@ -895,7 +895,7 @@ func EncodeNormalizedKmers(seq []byte, k int, buffer *[]uint64) []uint64 {
 		result = (*buffer)[:0]
 	}
 
-	for kmer := range IterNormalizedKmers(seq, k) {
+	for kmer := range IterCanonicalKmers(seq, k) {
 		result = append(result, kmer)
 	}
 
