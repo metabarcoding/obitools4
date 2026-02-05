@@ -1,20 +1,14 @@
 package obioptions
 
-import (
-	"fmt"
-)
+// Version is automatically updated by the Makefile from version.txt
+// The patch number (third digit) is incremented on each push to the repository
 
-// TODO: The version number is extracted from git. This induces that the version
-// corresponds to the last commit, and not the one when the file will be
-// commited
-
-var _Commit = "a43e625"
-var _Version = "Release 4.4.0"
+var _Version = "Release 4.4.3"
 
 // Version returns the version of the obitools package.
 //
 // No parameters.
 // Returns a string representing the version of the obitools package.
 func VersionString() string {
-	return fmt.Sprintf("%s (%s)", _Version, _Commit)
+	return _Version
 }

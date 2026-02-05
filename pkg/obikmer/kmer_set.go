@@ -158,6 +158,54 @@ func (ks *KmerSet) Difference(other *KmerSet) *KmerSet {
 	return NewKmerSetFromBitmap(ks.k, result)
 }
 
+// JaccardDistance computes the Jaccard distance between two KmerSets.
+// The Jaccard distance is defined as: 1 - (|A ∩ B| / |A ∪ B|)
+// where A and B are the two sets.
+//
+// Returns:
+//   - 0.0 when sets are identical (distance = 0, similarity = 1)
+//   - 1.0 when sets are completely disjoint (distance = 1, similarity = 0)
+//   - 1.0 when both sets are empty (by convention)
+//
+// Time complexity: O(|A| + |B|) for Roaring Bitmap operations
+// Space complexity: O(1) as operations are done in-place on temporary bitmaps
+func (ks *KmerSet) JaccardDistance(other *KmerSet) float64 {
+	if ks.k != other.k {
+		panic(fmt.Sprintf("Cannot compute Jaccard distance between KmerSets with different k values: %d vs %d", ks.k, other.k))
+	}
+
+	// Compute intersection cardinality
+	intersectionCard := ks.bitmap.AndCardinality(other.bitmap)
+
+	// Compute union cardinality
+	unionCard := ks.bitmap.OrCardinality(other.bitmap)
+
+	// If union is empty, both sets are empty - return 1.0 by convention
+	if unionCard == 0 {
+		return 1.0
+	}
+
+	// Jaccard similarity = |A ∩ B| / |A ∪ B|
+	similarity := float64(intersectionCard) / float64(unionCard)
+
+	// Jaccard distance = 1 - similarity
+	return 1.0 - similarity
+}
+
+// JaccardSimilarity computes the Jaccard similarity coefficient between two KmerSets.
+// The Jaccard similarity is defined as: |A ∩ B| / |A ∪ B|
+//
+// Returns:
+//   - 1.0 when sets are identical (maximum similarity)
+//   - 0.0 when sets are completely disjoint (no similarity)
+//   - 0.0 when both sets are empty (by convention)
+//
+// Time complexity: O(|A| + |B|) for Roaring Bitmap operations
+// Space complexity: O(1) as operations are done in-place on temporary bitmaps
+func (ks *KmerSet) JaccardSimilarity(other *KmerSet) float64 {
+	return 1.0 - ks.JaccardDistance(other)
+}
+
 // Iterator returns an iterator over all k-mers in the set
 func (ks *KmerSet) Iterator() roaring64.IntIterable64 {
 	return ks.bitmap.Iterator()

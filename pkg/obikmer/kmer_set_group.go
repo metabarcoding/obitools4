@@ -3,6 +3,7 @@ package obikmer
 import (
 	"fmt"
 
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidist"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 )
 
@@ -259,4 +260,80 @@ Set breakdown:
 	}
 
 	return result
+}
+
+// JaccardDistanceMatrix computes a pairwise Jaccard distance matrix for all KmerSets in the group.
+// Returns a triangular distance matrix where element (i, j) represents the Jaccard distance
+// between set i and set j.
+//
+// The Jaccard distance is: 1 - (|A ∩ B| / |A ∪ B|)
+//
+// The matrix labels are set to the IDs of the individual KmerSets if available,
+// otherwise they are set to "set_0", "set_1", etc.
+//
+// Time complexity: O(n² × (|A| + |B|)) where n is the number of sets
+// Space complexity: O(n²) for the distance matrix
+func (ksg *KmerSetGroup) JaccardDistanceMatrix() *obidist.DistMatrix {
+	n := len(ksg.sets)
+
+	// Create labels from set IDs
+	labels := make([]string, n)
+	for i, ks := range ksg.sets {
+		if ks.Id() != "" {
+			labels[i] = ks.Id()
+		} else {
+			labels[i] = fmt.Sprintf("set_%d", i)
+		}
+	}
+
+	dm := obidist.NewDistMatrixWithLabels(labels)
+
+	// Compute pairwise distances
+	for i := 0; i < n-1; i++ {
+		for j := i + 1; j < n; j++ {
+			distance := ksg.sets[i].JaccardDistance(ksg.sets[j])
+			dm.Set(i, j, distance)
+		}
+	}
+
+	return dm
+}
+
+// JaccardSimilarityMatrix computes a pairwise Jaccard similarity matrix for all KmerSets in the group.
+// Returns a similarity matrix where element (i, j) represents the Jaccard similarity
+// between set i and set j.
+//
+// The Jaccard similarity is: |A ∩ B| / |A ∪ B|
+//
+// The diagonal is 1.0 (similarity of a set to itself).
+//
+// The matrix labels are set to the IDs of the individual KmerSets if available,
+// otherwise they are set to "set_0", "set_1", etc.
+//
+// Time complexity: O(n² × (|A| + |B|)) where n is the number of sets
+// Space complexity: O(n²) for the similarity matrix
+func (ksg *KmerSetGroup) JaccardSimilarityMatrix() *obidist.DistMatrix {
+	n := len(ksg.sets)
+
+	// Create labels from set IDs
+	labels := make([]string, n)
+	for i, ks := range ksg.sets {
+		if ks.Id() != "" {
+			labels[i] = ks.Id()
+		} else {
+			labels[i] = fmt.Sprintf("set_%d", i)
+		}
+	}
+
+	sm := obidist.NewSimilarityMatrixWithLabels(labels)
+
+	// Compute pairwise similarities
+	for i := 0; i < n-1; i++ {
+		for j := i + 1; j < n; j++ {
+			similarity := ksg.sets[i].JaccardSimilarity(ksg.sets[j])
+			sm.Set(i, j, similarity)
+		}
+	}
+
+	return sm
 }
