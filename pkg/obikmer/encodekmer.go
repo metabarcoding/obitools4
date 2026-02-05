@@ -619,6 +619,8 @@ func ReverseComplement(kmer uint64, k int) uint64 {
 // reverse complement. This canonical form ensures that a k-mer and its
 // reverse complement map to the same value.
 //
+// This implements REVERSE COMPLEMENT normalization (biological canonicalization).
+//
 // Parameters:
 //   - kmer: the encoded k-mer
 //   - k: the k-mer size (number of nucleotides)
@@ -631,6 +633,198 @@ func NormalizeKmer(kmer uint64, k int) uint64 {
 		return rc
 	}
 	return kmer
+}
+
+// NormalizeCircular returns the lexicographically smallest circular rotation
+// of a k-mer. This is used for entropy calculations in low-complexity masking.
+//
+// This implements CIRCULAR PERMUTATION normalization (rotation-based canonicalization).
+// Example: ACGT → min(ACGT, CGTA, GTAC, TACG) by circular rotation
+//
+// This is DIFFERENT from NormalizeKmer which uses reverse complement.
+//
+// Parameters:
+//   - kmer: the encoded k-mer
+//   - k: the k-mer size (number of nucleotides)
+//
+// Returns:
+//   - the lexicographically smallest circular rotation
+//
+// Time complexity: O(k) - checks all k rotations
+func NormalizeCircular(kmer uint64, k int) uint64 {
+	if k < 1 || k > 31 {
+		return kmer
+	}
+
+	mask := uint64(1)<<(k*2) - 1
+	canonical := kmer
+	current := kmer
+
+	// Try all k rotations
+	for i := 0; i < k; i++ {
+		// Rotate: take top 2 bits, shift left, add to bottom
+		top := (current >> ((k - 1) * 2)) & 3
+		current = ((current << 2) | top) & mask
+
+		if current < canonical {
+			canonical = current
+		}
+	}
+
+	return canonical
+}
+
+// EncodeCircularNormalizedKmer encodes a k-mer and returns its lexicographically
+// smallest circular rotation. This is optimized for single k-mer encoding with
+// circular normalization.
+//
+// This implements CIRCULAR PERMUTATION normalization, used for entropy-based
+// low-complexity masking. This is DIFFERENT from EncodeNormalizedKmer which
+// uses reverse complement normalization.
+//
+// Parameters:
+//   - seq: DNA sequence as a byte slice (case insensitive, supports A, C, G, T, U)
+//   - k: k-mer size (must be between 1 and 31)
+//
+// Returns:
+//   - normalized k-mer as uint64 (smallest circular rotation)
+//   - panics if len(seq) != k or k is invalid
+//
+// Example:
+//
+//	canonical := EncodeCircularNormalizedKmer([]byte("ACGT"), 4)
+func EncodeCircularNormalizedKmer(seq []byte, k int) uint64 {
+	kmer := EncodeKmer(seq, k)
+	return NormalizeCircular(kmer, k)
+}
+
+// CanonicalCircularKmerCount returns the number of unique canonical k-mers
+// under circular permutation normalization for DNA sequences (4-letter alphabet).
+//
+// This counts equivalence classes where k-mers are considered the same if one
+// is a circular rotation of another (e.g., "ACGT", "CGTA", "GTAC", "TACG" are
+// all equivalent).
+//
+// Uses Moreau's necklace-counting formula for exact counts:
+//
+//	N(n, a) = (1/n) * Σ φ(d) * a^(n/d)
+//
+// where the sum is over all divisors d of n, and φ is Euler's totient function.
+//
+// Parameters:
+//   - k: k-mer size
+//
+// Returns:
+//   - number of unique canonical k-mers under circular rotation
+//
+// Example:
+//
+//	count := CanonicalCircularKmerCount(4) // Returns 70 (not 256)
+func CanonicalCircularKmerCount(k int) int {
+	// Hardcoded exact counts for k=1 to 6 (optimization)
+	switch k {
+	case 1:
+		return 4
+	case 2:
+		return 10
+	case 3:
+		return 24
+	case 4:
+		return 70
+	case 5:
+		return 208
+	case 6:
+		return 700
+	default:
+		// For k>6, use Moreau's necklace-counting formula
+		return necklaceCount(k, 4)
+	}
+}
+
+// eulerTotient computes Euler's totient function φ(n), which counts
+// the number of integers from 1 to n that are coprime with n.
+func eulerTotient(n int) int {
+	if n <= 0 {
+		return 0
+	}
+
+	result := n
+
+	// Process all prime factors
+	for p := 2; p*p <= n; p++ {
+		if n%p == 0 {
+			// Remove all occurrences of p
+			for n%p == 0 {
+				n /= p
+			}
+			// Apply: φ(n) = n * (1 - 1/p) = n * (p-1)/p
+			result -= result / p
+		}
+	}
+
+	// If n is still greater than 1, then it's a prime factor
+	if n > 1 {
+		result -= result / n
+	}
+
+	return result
+}
+
+// divisors returns all divisors of n in ascending order.
+func divisors(n int) []int {
+	if n <= 0 {
+		return []int{}
+	}
+
+	divs := []int{}
+	for i := 1; i*i <= n; i++ {
+		if n%i == 0 {
+			divs = append(divs, i)
+			if i != n/i {
+				divs = append(divs, n/i)
+			}
+		}
+	}
+
+	// Bubble sort in ascending order
+	for i := 0; i < len(divs)-1; i++ {
+		for j := i + 1; j < len(divs); j++ {
+			if divs[i] > divs[j] {
+				divs[i], divs[j] = divs[j], divs[i]
+			}
+		}
+	}
+
+	return divs
+}
+
+// necklaceCount computes the number of distinct necklaces (equivalence classes
+// under rotation) for sequences of length n over an alphabet of size a.
+// Uses Moreau's necklace-counting formula:
+//
+//	N(n, a) = (1/n) * Σ φ(d) * a^(n/d)
+//
+// where the sum is over all divisors d of n, and φ is Euler's totient function.
+func necklaceCount(n, alphabetSize int) int {
+	if n <= 0 {
+		return 0
+	}
+
+	divs := divisors(n)
+	sum := 0
+
+	for _, d := range divs {
+		// Compute a^(n/d)
+		power := 1
+		exp := n / d
+		for i := 0; i < exp; i++ {
+			power *= alphabetSize
+		}
+
+		sum += eulerTotient(d) * power
+	}
+
+	return sum / n
 }
 
 // EncodeNormalizedKmersWithErrors converts a DNA sequence to a slice of normalized k-mers
