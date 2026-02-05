@@ -10,7 +10,8 @@ import (
 // KmerSet encapsule un ensemble de k-mers stockés dans un Roaring Bitmap
 // Fournit des méthodes utilitaires pour manipuler des ensembles de k-mers
 type KmerSet struct {
-	K        int                    // Taille des k-mers
+	id       string                 // Identifiant unique du KmerSet
+	k        int                    // Taille des k-mers (immutable)
 	bitmap   *roaring64.Bitmap      // Bitmap contenant les k-mers
 	Metadata map[string]interface{} // Métadonnées utilisateur (clé=valeur atomique)
 }
@@ -18,7 +19,7 @@ type KmerSet struct {
 // NewKmerSet crée un nouveau KmerSet vide
 func NewKmerSet(k int) *KmerSet {
 	return &KmerSet{
-		K:        k,
+		k:        k,
 		bitmap:   roaring64.New(),
 		Metadata: make(map[string]interface{}),
 	}
@@ -27,10 +28,15 @@ func NewKmerSet(k int) *KmerSet {
 // NewKmerSetFromBitmap crée un KmerSet à partir d'un bitmap existant
 func NewKmerSetFromBitmap(k int, bitmap *roaring64.Bitmap) *KmerSet {
 	return &KmerSet{
-		K:        k,
+		k:        k,
 		bitmap:   bitmap,
 		Metadata: make(map[string]interface{}),
 	}
+}
+
+// K retourne la taille des k-mers (immutable)
+func (ks *KmerSet) K() int {
+	return ks.k
 }
 
 // Add ajoute un k-mer à l'ensemble
@@ -42,7 +48,7 @@ func (ks *KmerSet) Add(kmer uint64) {
 // Utilise un itérateur pour éviter l'allocation d'un vecteur intermédiaire
 func (ks *KmerSet) AddSequence(seq *obiseq.BioSequence) {
 	rawSeq := seq.Sequence()
-	for canonical := range IterNormalizedKmers(rawSeq, ks.K) {
+	for canonical := range IterNormalizedKmers(rawSeq, ks.k) {
 		ks.bitmap.Add(canonical)
 	}
 }
@@ -74,8 +80,8 @@ func (ks *KmerSet) Clear() {
 	ks.bitmap.Clear()
 }
 
-// Clone crée une copie de l'ensemble
-func (ks *KmerSet) Clone() *KmerSet {
+// Copy crée une copie de l'ensemble (cohérent avec BioSequence.Copy)
+func (ks *KmerSet) Copy() *KmerSet {
 	// Copier les métadonnées
 	metadata := make(map[string]interface{}, len(ks.Metadata))
 	for k, v := range ks.Metadata {
@@ -83,40 +89,51 @@ func (ks *KmerSet) Clone() *KmerSet {
 	}
 
 	return &KmerSet{
-		K:        ks.K,
+		id:       ks.id,
+		k:        ks.k,
 		bitmap:   ks.bitmap.Clone(),
 		Metadata: metadata,
 	}
 }
 
+// Id retourne l'identifiant du KmerSet (cohérent avec BioSequence.Id)
+func (ks *KmerSet) Id() string {
+	return ks.id
+}
+
+// SetId définit l'identifiant du KmerSet (cohérent avec BioSequence.SetId)
+func (ks *KmerSet) SetId(id string) {
+	ks.id = id
+}
+
 // Union retourne l'union de cet ensemble avec un autre
 func (ks *KmerSet) Union(other *KmerSet) *KmerSet {
-	if ks.K != other.K {
-		panic(fmt.Sprintf("Cannot union KmerSets with different k values: %d vs %d", ks.K, other.K))
+	if ks.k != other.k {
+		panic(fmt.Sprintf("Cannot union KmerSets with different k values: %d vs %d", ks.k, other.k))
 	}
 	result := ks.bitmap.Clone()
 	result.Or(other.bitmap)
-	return NewKmerSetFromBitmap(ks.K, result)
+	return NewKmerSetFromBitmap(ks.k, result)
 }
 
 // Intersect retourne l'intersection de cet ensemble avec un autre
 func (ks *KmerSet) Intersect(other *KmerSet) *KmerSet {
-	if ks.K != other.K {
-		panic(fmt.Sprintf("Cannot intersect KmerSets with different k values: %d vs %d", ks.K, other.K))
+	if ks.k != other.k {
+		panic(fmt.Sprintf("Cannot intersect KmerSets with different k values: %d vs %d", ks.k, other.k))
 	}
 	result := ks.bitmap.Clone()
 	result.And(other.bitmap)
-	return NewKmerSetFromBitmap(ks.K, result)
+	return NewKmerSetFromBitmap(ks.k, result)
 }
 
 // Difference retourne la différence de cet ensemble avec un autre (this - other)
 func (ks *KmerSet) Difference(other *KmerSet) *KmerSet {
-	if ks.K != other.K {
-		panic(fmt.Sprintf("Cannot subtract KmerSets with different k values: %d vs %d", ks.K, other.K))
+	if ks.k != other.k {
+		panic(fmt.Sprintf("Cannot subtract KmerSets with different k values: %d vs %d", ks.k, other.k))
 	}
 	result := ks.bitmap.Clone()
 	result.AndNot(other.bitmap)
-	return NewKmerSetFromBitmap(ks.K, result)
+	return NewKmerSetFromBitmap(ks.k, result)
 }
 
 // Iterator retourne un itérateur sur tous les k-mers de l'ensemble

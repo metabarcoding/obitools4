@@ -9,9 +9,10 @@ import (
 // KmerSetGroup représente un vecteur de KmerSet
 // Utilisé pour gérer plusieurs ensembles de k-mers (par exemple, par niveau de fréquence)
 type KmerSetGroup struct {
-	K        int                      // Taille des k-mers
-	sets     []*KmerSet               // Vecteur de KmerSet
-	Metadata []map[string]interface{} // Métadonnées par KmerSet (même longueur que sets)
+	id       string                 // Identifiant unique du KmerSetGroup
+	k        int                    // Taille des k-mers (immutable)
+	sets     []*KmerSet             // Vecteur de KmerSet
+	Metadata map[string]interface{} // Métadonnées du groupe (pas des sets individuels)
 }
 
 // NewKmerSetGroup crée un nouveau groupe de n KmerSets
@@ -21,17 +22,20 @@ func NewKmerSetGroup(k int, n int) *KmerSetGroup {
 	}
 
 	sets := make([]*KmerSet, n)
-	metadata := make([]map[string]interface{}, n)
 	for i := range sets {
 		sets[i] = NewKmerSet(k)
-		metadata[i] = make(map[string]interface{})
 	}
 
 	return &KmerSetGroup{
-		K:        k,
+		k:        k,
 		sets:     sets,
-		Metadata: metadata,
+		Metadata: make(map[string]interface{}),
 	}
+}
+
+// K retourne la taille des k-mers (immutable)
+func (ksg *KmerSetGroup) K() int {
+	return ksg.k
 }
 
 // Size retourne le nombre de KmerSet dans le groupe
@@ -54,8 +58,8 @@ func (ksg *KmerSetGroup) Set(index int, ks *KmerSet) {
 	if index < 0 || index >= len(ksg.sets) {
 		panic(fmt.Sprintf("Index out of bounds: %d (size: %d)", index, len(ksg.sets)))
 	}
-	if ks.K != ksg.K {
-		panic(fmt.Sprintf("KmerSet k mismatch: expected %d, got %d", ksg.K, ks.K))
+	if ks.k != ksg.k {
+		panic(fmt.Sprintf("KmerSet k mismatch: expected %d, got %d", ksg.k, ks.k))
 	}
 	ksg.sets[index] = ks
 }
@@ -93,26 +97,35 @@ func (ksg *KmerSetGroup) Clear() {
 	}
 }
 
-// Clone crée une copie complète du groupe
-func (ksg *KmerSetGroup) Clone() *KmerSetGroup {
-	clonedSets := make([]*KmerSet, len(ksg.sets))
-	clonedMetadata := make([]map[string]interface{}, len(ksg.Metadata))
-
+// Copy crée une copie complète du groupe (cohérent avec BioSequence.Copy)
+func (ksg *KmerSetGroup) Copy() *KmerSetGroup {
+	copiedSets := make([]*KmerSet, len(ksg.sets))
 	for i, ks := range ksg.sets {
-		clonedSets[i] = ks.Clone()
+		copiedSets[i] = ks.Copy() // Copy chaque KmerSet avec ses métadonnées
+	}
 
-		// Copier les métadonnées du groupe
-		clonedMetadata[i] = make(map[string]interface{}, len(ksg.Metadata[i]))
-		for k, v := range ksg.Metadata[i] {
-			clonedMetadata[i][k] = v
-		}
+	// Copier les métadonnées du groupe
+	groupMetadata := make(map[string]interface{}, len(ksg.Metadata))
+	for k, v := range ksg.Metadata {
+		groupMetadata[k] = v
 	}
 
 	return &KmerSetGroup{
-		K:        ksg.K,
-		sets:     clonedSets,
-		Metadata: clonedMetadata,
+		id:       ksg.id,
+		k:        ksg.k,
+		sets:     copiedSets,
+		Metadata: groupMetadata,
 	}
+}
+
+// Id retourne l'identifiant du KmerSetGroup (cohérent avec BioSequence.Id)
+func (ksg *KmerSetGroup) Id() string {
+	return ksg.id
+}
+
+// SetId définit l'identifiant du KmerSetGroup (cohérent avec BioSequence.SetId)
+func (ksg *KmerSetGroup) SetId(id string) {
+	ksg.id = id
 }
 
 // AddSequence ajoute tous les k-mers d'une séquence à un KmerSet spécifique
@@ -134,10 +147,10 @@ func (ksg *KmerSetGroup) AddSequences(sequences *obiseq.BioSequenceSlice, index 
 // Union retourne l'union de tous les KmerSet du groupe
 func (ksg *KmerSetGroup) Union() *KmerSet {
 	if len(ksg.sets) == 0 {
-		return NewKmerSet(ksg.K)
+		return NewKmerSet(ksg.k)
 	}
 
-	result := ksg.sets[0].Clone()
+	result := ksg.sets[0].Copy()
 	for i := 1; i < len(ksg.sets); i++ {
 		result = result.Union(ksg.sets[i])
 	}
@@ -147,10 +160,10 @@ func (ksg *KmerSetGroup) Union() *KmerSet {
 // Intersect retourne l'intersection de tous les KmerSet du groupe
 func (ksg *KmerSetGroup) Intersect() *KmerSet {
 	if len(ksg.sets) == 0 {
-		return NewKmerSet(ksg.K)
+		return NewKmerSet(ksg.k)
 	}
 
-	result := ksg.sets[0].Clone()
+	result := ksg.sets[0].Copy()
 	for i := 1; i < len(ksg.sets); i++ {
 		result = result.Intersect(ksg.sets[i])
 	}
@@ -173,7 +186,7 @@ type KmerSetStats struct {
 
 func (ksg *KmerSetGroup) Stats() KmerSetGroupStats {
 	stats := KmerSetGroupStats{
-		K:    ksg.K,
+		K:    ksg.k,
 		Size: len(ksg.sets),
 		Sets: make([]KmerSetStats, len(ksg.sets)),
 	}

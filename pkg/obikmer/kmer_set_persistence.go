@@ -36,12 +36,14 @@ func (f MetadataFormat) String() string {
 
 // KmerSetMetadata contient les métadonnées d'un KmerSet ou KmerSetGroup
 type KmerSetMetadata struct {
-	K              int                      `toml:"k" yaml:"k" json:"k"`                                     // Taille des k-mers
-	Type           string                   `toml:"type" yaml:"type" json:"type"`                            // "KmerSet" ou "KmerSetGroup"
-	Size           int                      `toml:"size" yaml:"size" json:"size"`                            // 1 pour KmerSet, n pour KmerSetGroup
-	Files          []string                 `toml:"files" yaml:"files" json:"files"`                         // Liste des fichiers .roaring
-	UserMetadata   map[string]interface{}   `toml:"user_metadata,omitempty" yaml:"user_metadata,omitempty" json:"user_metadata,omitempty"`       // Métadonnées KmerSet unique
-	SetsMetadata   []map[string]interface{} `toml:"sets_metadata,omitempty" yaml:"sets_metadata,omitempty" json:"sets_metadata,omitempty"`       // Métadonnées par set (KmerSetGroup)
+	ID            string                   `toml:"id,omitempty" yaml:"id,omitempty" json:"id,omitempty"`                        // Identifiant unique
+	K             int                      `toml:"k" yaml:"k" json:"k"`                                                         // Taille des k-mers
+	Type          string                   `toml:"type" yaml:"type" json:"type"`                                                // "KmerSet" ou "KmerSetGroup"
+	Size          int                      `toml:"size" yaml:"size" json:"size"`                                                // 1 pour KmerSet, n pour KmerSetGroup
+	Files         []string                 `toml:"files" yaml:"files" json:"files"`                                             // Liste des fichiers .roaring
+	SetsIDs       []string                 `toml:"sets_ids,omitempty" yaml:"sets_ids,omitempty" json:"sets_ids,omitempty"`      // IDs des KmerSet individuels
+	UserMetadata  map[string]interface{}   `toml:"user_metadata,omitempty" yaml:"user_metadata,omitempty" json:"user_metadata,omitempty"`         // Métadonnées KmerSet ou KmerSetGroup
+	SetsMetadata  []map[string]interface{} `toml:"sets_metadata,omitempty" yaml:"sets_metadata,omitempty" json:"sets_metadata,omitempty"`         // Métadonnées des KmerSet individuels dans un KmerSetGroup
 }
 
 // SaveKmerSet sauvegarde un KmerSet dans un répertoire
@@ -54,7 +56,8 @@ func (ks *KmerSet) Save(directory string, format MetadataFormat) error {
 
 	// Métadonnées
 	metadata := KmerSetMetadata{
-		K:            ks.K,
+		ID:           ks.id,
+		K:            ks.k,
 		Type:         "KmerSet",
 		Size:         1,
 		Files:        []string{"set_0.roaring"},
@@ -109,6 +112,9 @@ func LoadKmerSet(directory string) (*KmerSet, error) {
 
 	ks := NewKmerSet(metadata.K)
 
+	// Charger l'ID
+	ks.id = metadata.ID
+
 	// Charger les métadonnées utilisateur
 	if metadata.UserMetadata != nil {
 		ks.Metadata = metadata.UserMetadata
@@ -135,12 +141,23 @@ func (ksg *KmerSetGroup) Save(directory string, format MetadataFormat) error {
 		files[i] = fmt.Sprintf("set_%d.roaring", i)
 	}
 
+	// Collecter les IDs et métadonnées de chaque KmerSet individuel
+	setsIDs := make([]string, len(ksg.sets))
+	setsMetadata := make([]map[string]interface{}, len(ksg.sets))
+	for i, ks := range ksg.sets {
+		setsIDs[i] = ks.id
+		setsMetadata[i] = ks.Metadata
+	}
+
 	metadata := KmerSetMetadata{
-		K:            ksg.K,
+		ID:           ksg.id,
+		K:            ksg.k,
 		Type:         "KmerSetGroup",
 		Size:         len(ksg.sets),
 		Files:        files,
-		SetsMetadata: ksg.Metadata, // Sauvegarder les métadonnées de chaque set
+		SetsIDs:      setsIDs,          // IDs de chaque set
+		UserMetadata: ksg.Metadata,     // Métadonnées du groupe
+		SetsMetadata: setsMetadata,     // Métadonnées de chaque set
 	}
 
 	// Sauvegarder les métadonnées
@@ -187,12 +204,29 @@ func LoadKmerSetGroup(directory string) (*KmerSetGroup, error) {
 	// Créer le groupe
 	ksg := NewKmerSetGroup(metadata.K, metadata.Size)
 
-	// Charger les métadonnées de chaque set
+	// Charger l'ID du groupe
+	ksg.id = metadata.ID
+
+	// Charger les métadonnées du groupe
+	if metadata.UserMetadata != nil {
+		ksg.Metadata = metadata.UserMetadata
+	}
+
+	// Charger les IDs de chaque KmerSet
+	if metadata.SetsIDs != nil && len(metadata.SetsIDs) == metadata.Size {
+		for i := range ksg.sets {
+			ksg.sets[i].id = metadata.SetsIDs[i]
+		}
+	}
+
+	// Charger les métadonnées de chaque KmerSet individuel
 	if metadata.SetsMetadata != nil {
 		if len(metadata.SetsMetadata) != metadata.Size {
-			return nil, fmt.Errorf("metadata size mismatch: expected %d, got %d", metadata.Size, len(metadata.SetsMetadata))
+			return nil, fmt.Errorf("sets metadata size mismatch: expected %d, got %d", metadata.Size, len(metadata.SetsMetadata))
 		}
-		ksg.Metadata = metadata.SetsMetadata
+		for i := range ksg.sets {
+			ksg.sets[i].Metadata = metadata.SetsMetadata[i]
+		}
 	}
 
 	// Charger chaque bitmap

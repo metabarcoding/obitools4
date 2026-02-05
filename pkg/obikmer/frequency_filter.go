@@ -26,7 +26,7 @@ func NewFrequencyFilter(k, minFreq int) *FrequencyFilter {
 // Utilise un itérateur pour éviter l'allocation d'un vecteur intermédiaire
 func (ff *FrequencyFilter) AddSequence(seq *obiseq.BioSequence) {
 	rawSeq := seq.Sequence()
-	for canonical := range IterNormalizedKmers(rawSeq, ff.K) {
+	for canonical := range IterNormalizedKmers(rawSeq, ff.K()) {
 		ff.addKmer(canonical)
 	}
 }
@@ -48,7 +48,7 @@ func (ff *FrequencyFilter) addKmer(kmer uint64) {
 // GetFilteredSet retourne un KmerSet des k-mers avec fréquence ≥ minFreq
 func (ff *FrequencyFilter) GetFilteredSet() *KmerSet {
 	// Les k-mers filtrés sont dans le dernier niveau
-	return ff.Get(ff.MinFreq - 1).Clone()
+	return ff.Get(ff.MinFreq - 1).Copy()
 }
 
 // GetKmersAtLevel retourne un KmerSet des k-mers vus au moins (level+1) fois
@@ -56,9 +56,9 @@ func (ff *FrequencyFilter) GetFilteredSet() *KmerSet {
 func (ff *FrequencyFilter) GetKmersAtLevel(level int) *KmerSet {
 	ks := ff.Get(level)
 	if ks == nil {
-		return NewKmerSet(ff.K)
+		return NewKmerSet(ff.K())
 	}
-	return ks.Clone()
+	return ks.Copy()
 }
 
 // Stats retourne des statistiques sur les niveaux de fréquence
@@ -161,14 +161,14 @@ func (ff *FrequencyFilter) Load(path string) error {
 
 // Contains vérifie si un k-mer a atteint la fréquence minimale
 func (ff *FrequencyFilter) Contains(kmer uint64) bool {
-	canonical := NormalizeKmer(kmer, ff.K)
+	canonical := NormalizeKmer(kmer, ff.K())
 	return ff.Get(ff.MinFreq - 1).Contains(canonical)
 }
 
 // GetFrequency retourne la fréquence approximative d'un k-mer
 // Retourne le niveau maximum atteint (freq ≥ niveau)
 func (ff *FrequencyFilter) GetFrequency(kmer uint64) int {
-	canonical := NormalizeKmer(kmer, ff.K)
+	canonical := NormalizeKmer(kmer, ff.K())
 
 	freq := 0
 	for i := 0; i < ff.MinFreq; i++ {
