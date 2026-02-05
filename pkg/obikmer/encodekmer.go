@@ -15,27 +15,27 @@ var __single_base_code_err__ = []byte{0,
 	0xFF, 0xFF, 0xFF, 3,
 	//     U,     V,     W,     X,
 	3, 0xFF, 0xFF, 0xFF,
-	//     Y,     Z,     .,     .,
+	//     Y,     Z,     .,     .
 	0xFF, 0xFF, 0xFF, 0xFF,
 	0xFF, 0xFF, 0xFF,
 }
 
 const ambiguousBaseCode = byte(0xFF)
 
-
 // Error markers for k-mers of odd length ≤ 31
 // For odd k ≤ 31, only k*2 bits are used (max 62 bits), leaving 2 high bits
 // available for error coding in the top 2 bits (bits 62-63).
 //
 // Error codes are simple integers:
-//   0 = no error
-//   1 = error type 1
-//   2 = error type 2
-//   3 = error type 3
+//
+//	0 = no error
+//	1 = error type 1
+//	2 = error type 2
+//	3 = error type 3
 //
 // Use SetKmerError(kmer, code) and GetKmerError(kmer) to manipulate error bits.
 const (
-	KmerErrorMask    uint64 = 0b11 << 62  // Mask to extract error bits (bits 62-63)
+	KmerErrorMask    uint64 = 0b11 << 62     // Mask to extract error bits (bits 62-63)
 	KmerSequenceMask uint64 = ^KmerErrorMask // Mask to extract sequence bits (bits 0-61)
 )
 
@@ -95,31 +95,14 @@ func EncodeKmers(seq []byte, k int, buffer *[]uint64) []uint64 {
 		return nil
 	}
 
-	n := len(seq) - k + 1
-
 	var result []uint64
 	if buffer == nil {
-		result = make([]uint64, 0, n)
+		result = make([]uint64, 0, len(seq)-k+1)
 	} else {
 		result = (*buffer)[:0]
 	}
 
-	// Mask to keep only k*2 bits
-	mask := uint64(1)<<(k*2) - 1
-
-	// Build the first k-mer
-	var kmer uint64
-	for i := 0; i < k; i++ {
-		kmer <<= 2
-		kmer |= uint64(__single_base_code__[seq[i]&31])
-	}
-	result = append(result, kmer)
-
-	// Slide through the rest of the sequence
-	for i := k; i < len(seq); i++ {
-		kmer <<= 2
-		kmer |= uint64(__single_base_code__[seq[i]&31])
-		kmer &= mask
+	for kmer := range IterKmers(seq, k) {
 		result = append(result, kmer)
 	}
 
@@ -138,19 +121,18 @@ func EncodeKmers(seq []byte, k int, buffer *[]uint64) []uint64 {
 //   - iterator yielding uint64 encoded k-mers
 //
 // Example:
-//   for kmer := range IterKmers(seq, 21) {
-//       bitmap.Add(kmer)
-//   }
+//
+//	for kmer := range IterKmers(seq, 21) {
+//	    bitmap.Add(kmer)
+//	}
 func IterKmers(seq []byte, k int) iter.Seq[uint64] {
 	return func(yield func(uint64) bool) {
 		if k < 1 || k > 31 || len(seq) < k {
 			return
 		}
 
-		// Mask to keep only k*2 bits
 		mask := uint64(1)<<(k*2) - 1
 
-		// Build the first k-mer
 		var kmer uint64
 		for i := 0; i < k; i++ {
 			kmer <<= 2
@@ -161,7 +143,6 @@ func IterKmers(seq []byte, k int) iter.Seq[uint64] {
 			return
 		}
 
-		// Slide through the rest of the sequence
 		for i := k; i < len(seq); i++ {
 			kmer <<= 2
 			kmer |= uint64(__single_base_code__[seq[i]&31])
@@ -191,51 +172,43 @@ func IterKmers(seq []byte, k int) iter.Seq[uint64] {
 //   - iterator yielding uint64 normalized k-mers with error markers
 //
 // Example:
-//   for kmer := range IterNormalizedKmersWithErrors(seq, 21) {
-//       if GetKmerError(kmer) == 0 {
-//           bitmap.Add(kmer) // Only add clean k-mers
-//       }
-//   }
+//
+//	for kmer := range IterNormalizedKmersWithErrors(seq, 21) {
+//	    if GetKmerError(kmer) == 0 {
+//	        bitmap.Add(kmer) // Only add clean k-mers
+//	    }
+//	}
 func IterNormalizedKmersWithErrors(seq []byte, k int) iter.Seq[uint64] {
 	return func(yield func(uint64) bool) {
-		// Only valid for odd k ≤ 31
 		if k < 1 || k > 31 || k%2 == 0 || len(seq) < k {
 			return
 		}
 
-		// Mask to keep only k*2 bits
 		mask := uint64(1)<<(k*2) - 1
 
-		// Shift amount for adding to reverse complement (high position)
 		rcShift := uint((k - 1) * 2)
 
-		// Track ambiguous base count in sliding window
 		ambiguousCount := 0
 		const ambiguousCode = byte(0xFF)
 
-		// Build the first k-mer (forward and reverse complement)
 		var fwd, rvc uint64
 		hasError := false
 		for i := 0; i < k; i++ {
 			code := __single_base_code_err__[seq[i]&31]
 
-			// Check for ambiguous base
 			if code == ambiguousCode {
 				ambiguousCount++
 				hasError = true
-				code = 0 // Encode as A for the sequence bits
+				code = 0
 			}
 
 			codeUint := uint64(code)
-			// Forward: shift left and add new code at low end
 			fwd <<= 2
 			fwd |= codeUint
-			// Reverse complement: shift right and add complement at high end
 			rvc >>= 2
 			rvc |= (codeUint ^ 3) << rcShift
 		}
 
-		// Yield normalized k-mer with error marker
 		var canonical uint64
 		if fwd <= rvc {
 			canonical = fwd
@@ -243,7 +216,6 @@ func IterNormalizedKmersWithErrors(seq []byte, k int) iter.Seq[uint64] {
 			canonical = rvc
 		}
 
-		// Set error code based on ambiguous count
 		if hasError {
 			errorCode := uint64(ambiguousCount)
 			if errorCode > 3 {
@@ -256,40 +228,33 @@ func IterNormalizedKmersWithErrors(seq []byte, k int) iter.Seq[uint64] {
 			return
 		}
 
-		// Slide through the rest of the sequence
 		for i := k; i < len(seq); i++ {
-			// Check outgoing base (position i-k)
-			outgoingCode := __single_base_code__[seq[i-k]&31]
+			outgoingCode := __single_base_code_err__[seq[i-k]&31]
 			if outgoingCode == ambiguousCode {
 				ambiguousCount--
 			}
 
-			// Check incoming base (position i)
-			code := __single_base_code__[seq[i]&31]
+			code := __single_base_code_err__[seq[i]&31]
 			if code == ambiguousCode {
 				ambiguousCount++
-				code = 0 // Encode as A for the sequence bits
+				code = 0
 			}
 
 			codeUint := uint64(code)
 
-			// Update forward k-mer: shift left, add new code, mask
 			fwd <<= 2
 			fwd |= codeUint
 			fwd &= mask
 
-			// Update reverse complement: shift right, add complement at high end
 			rvc >>= 2
 			rvc |= (codeUint ^ 3) << rcShift
 
-			// Yield normalized k-mer
 			if fwd <= rvc {
 				canonical = fwd
 			} else {
 				canonical = rvc
 			}
 
-			// Set error code based on ambiguous count
 			if ambiguousCount > 0 {
 				errorCode := uint64(ambiguousCount)
 				if errorCode > 3 {
@@ -316,34 +281,29 @@ func IterNormalizedKmersWithErrors(seq []byte, k int) iter.Seq[uint64] {
 //   - iterator yielding uint64 normalized k-mers
 //
 // Example:
-//   for canonical := range IterNormalizedKmers(seq, 21) {
-//       bitmap.Add(canonical)
-//   }
+//
+//	for canonical := range IterNormalizedKmers(seq, 21) {
+//	    bitmap.Add(canonical)
+//	}
 func IterNormalizedKmers(seq []byte, k int) iter.Seq[uint64] {
 	return func(yield func(uint64) bool) {
 		if k < 1 || k > 31 || len(seq) < k {
 			return
 		}
 
-		// Mask to keep only k*2 bits
 		mask := uint64(1)<<(k*2) - 1
 
-		// Shift amount for adding to reverse complement (high position)
 		rcShift := uint((k - 1) * 2)
 
-		// Build the first k-mer (forward and reverse complement)
 		var fwd, rvc uint64
 		for i := 0; i < k; i++ {
 			code := uint64(__single_base_code__[seq[i]&31])
-			// Forward: shift left and add new code at low end
 			fwd <<= 2
 			fwd |= code
-			// Reverse complement: shift right and add complement at high end
 			rvc >>= 2
 			rvc |= (code ^ 3) << rcShift
 		}
 
-		// Yield normalized k-mer
 		var canonical uint64
 		if fwd <= rvc {
 			canonical = fwd
@@ -355,20 +315,16 @@ func IterNormalizedKmers(seq []byte, k int) iter.Seq[uint64] {
 			return
 		}
 
-		// Slide through the rest of the sequence
 		for i := k; i < len(seq); i++ {
 			code := uint64(__single_base_code__[seq[i]&31])
 
-			// Update forward k-mer: shift left, add new code, mask
 			fwd <<= 2
 			fwd |= code
 			fwd &= mask
 
-			// Update reverse complement: shift right, add complement at high end
 			rvc >>= 2
 			rvc |= (code ^ 3) << rcShift
 
-			// Yield normalized k-mer
 			if fwd <= rvc {
 				canonical = fwd
 			} else {
@@ -424,15 +380,12 @@ type dequeItem struct {
 // Time complexity: O(n) where n is the sequence length
 // Space complexity: O(k-m+1) for the deque + O(number of super k-mers) for results
 func ExtractSuperKmers(seq []byte, k int, m int, buffer *[]SuperKmer) []SuperKmer {
-	// Validate parameters
 	if m < 1 || m >= k || k < 2 || k > 31 || len(seq) < k {
 		return nil
 	}
 
-	// Initialize result buffer
 	var result []SuperKmer
 	if buffer == nil {
-		// Estimate: worst case is one super k-mer per k nucleotides
 		estimatedSize := len(seq) / k
 		if estimatedSize < 1 {
 			estimatedSize = 1
@@ -442,14 +395,11 @@ func ExtractSuperKmers(seq []byte, k int, m int, buffer *[]SuperKmer) []SuperKme
 		result = (*buffer)[:0]
 	}
 
-	// Initialize monotone deque for tracking minimizers
 	deque := make([]dequeItem, 0, k-m+1)
 
-	// Masks for m-mer encoding
 	mMask := uint64(1)<<(m*2) - 1
 	rcShift := uint((m - 1) * 2)
 
-	// Build first m-1 nucleotides (can't form complete m-mer yet)
 	var fwdMmer, rvcMmer uint64
 	for i := 0; i < m-1 && i < len(seq); i++ {
 		code := uint64(__single_base_code__[seq[i]&31])
@@ -457,19 +407,15 @@ func ExtractSuperKmers(seq []byte, k int, m int, buffer *[]SuperKmer) []SuperKme
 		rvcMmer = (rvcMmer >> 2) | ((code ^ 3) << rcShift)
 	}
 
-	// Track super k-mer boundaries
 	superKmerStart := 0
 	var currentMinimizer uint64
 	firstKmer := true
 
-	// Slide through sequence, processing each position that completes an m-mer
 	for pos := m - 1; pos < len(seq); pos++ {
-		// Add new nucleotide to m-mer
 		code := uint64(__single_base_code__[seq[pos]&31])
 		fwdMmer = ((fwdMmer << 2) | code) & mMask
 		rvcMmer = (rvcMmer >> 2) | ((code ^ 3) << rcShift)
 
-		// Get canonical m-mer (minimum of forward and reverse complement)
 		canonical := fwdMmer
 		if rvcMmer < fwdMmer {
 			canonical = rvcMmer
@@ -477,9 +423,6 @@ func ExtractSuperKmers(seq []byte, k int, m int, buffer *[]SuperKmer) []SuperKme
 
 		mmerPos := pos - m + 1
 
-		// Remove m-mers outside the current k-mer window from front of deque
-		// The k-mer at position pos spans from (pos-k+1) to pos
-		// It contains m-mers from position (pos-k+1) to (pos-m+1)
 		if pos >= k-1 {
 			windowStart := pos - k + 1
 			for len(deque) > 0 && deque[0].position < windowStart {
@@ -487,30 +430,20 @@ func ExtractSuperKmers(seq []byte, k int, m int, buffer *[]SuperKmer) []SuperKme
 			}
 		}
 
-		// Maintain monotone property: remove larger values from back
 		for len(deque) > 0 && deque[len(deque)-1].canonical >= canonical {
 			deque = deque[:len(deque)-1]
 		}
 
-		// Add new m-mer to deque
 		deque = append(deque, dequeItem{position: mmerPos, canonical: canonical})
 
-		// Once we have processed the first k nucleotides, we have our first k-mer
 		if pos >= k-1 {
-			// The minimizer is at the front of the deque
 			newMinimizer := deque[0].canonical
-			kmerStart := pos - k + 1 // Start position of current k-mer (ending at pos)
+			kmerStart := pos - k + 1
 
 			if firstKmer {
-				// Initialize first super k-mer
 				currentMinimizer = newMinimizer
 				firstKmer = false
 			} else if newMinimizer != currentMinimizer {
-				// Minimizer changed at this k-mer position
-				// Previous k-mer started at position kmerStart-1
-				// That k-mer is seq[kmerStart-1 : kmerStart-1+k] (Go slice notation)
-				// The last base of that k-mer is at kmerStart-1+k-1 = kmerStart+k-2
-				// In Go slice notation (exclusive end): kmerStart+k-1
 				endPos := kmerStart + k - 1
 				superKmer := SuperKmer{
 					Minimizer: currentMinimizer,
@@ -520,14 +453,12 @@ func ExtractSuperKmers(seq []byte, k int, m int, buffer *[]SuperKmer) []SuperKme
 				}
 				result = append(result, superKmer)
 
-				// New super k-mer starts at current k-mer position
 				superKmerStart = kmerStart
 				currentMinimizer = newMinimizer
 			}
 		}
 	}
 
-	// Emit final super k-mer
 	if !firstKmer {
 		superKmer := SuperKmer{
 			Minimizer: currentMinimizer,
@@ -556,26 +487,19 @@ func ExtractSuperKmers(seq []byte, k int, m int, buffer *[]SuperKmer) []SuperKme
 // Returns:
 //   - the reverse complement of the k-mer with error bits preserved
 func ReverseComplement(kmer uint64, k int) uint64 {
-	// Step 0: Extract and preserve error bits
 	errorBits := kmer & KmerErrorMask
 
-	// Step 1: Complement - XOR with all 1s to flip A↔T and C↔G
-	// For a k-mer of size k, we only want to flip the lower k*2 bits
 	mask := uint64(1)<<(k*2) - 1
 	rc := (^kmer) & mask
 
-	// Step 2: Reverse the order of 2-bit pairs
-	// We use a series of swaps at increasing granularity
-	rc = ((rc & 0x3333333333333333) << 2) | ((rc & 0xCCCCCCCCCCCCCCCC) >> 2)   // Swap adjacent pairs
-	rc = ((rc & 0x0F0F0F0F0F0F0F0F) << 4) | ((rc & 0xF0F0F0F0F0F0F0F0) >> 4)   // Swap nibbles
-	rc = ((rc & 0x00FF00FF00FF00FF) << 8) | ((rc & 0xFF00FF00FF00FF00) >> 8)   // Swap bytes
-	rc = ((rc & 0x0000FFFF0000FFFF) << 16) | ((rc & 0xFFFF0000FFFF0000) >> 16) // Swap 16-bit words
-	rc = (rc << 32) | (rc >> 32)                                               // Swap 32-bit words
+	rc = ((rc & 0x3333333333333333) << 2) | ((rc & 0xCCCCCCCCCCCCCCCC) >> 2)
+	rc = ((rc & 0x0F0F0F0F0F0F0F0F) << 4) | ((rc & 0xF0F0F0F0F0F0F0F0) >> 4)
+	rc = ((rc & 0x00FF00FF00FF00FF) << 8) | ((rc & 0xFF00FF00FF00FF00) >> 8)
+	rc = ((rc & 0x0000FFFF0000FFFF) << 16) | ((rc & 0xFFFF0000FFFF0000) >> 16)
+	rc = (rc << 32) | (rc >> 32)
 
-	// Step 3: Shift right to align the k-mer (we reversed all 32 pairs, need only k)
 	rc >>= (64 - k*2)
 
-	// Step 4: Restore error bits
 	rc |= errorBits
 
 	return rc
@@ -621,112 +545,19 @@ func NormalizeKmer(kmer uint64, k int) uint64 {
 //   - slice of uint64 normalized k-mers with error markers
 //   - nil if sequence is shorter than k, k is invalid, or k is even
 func EncodeNormalizedKmersWithErrors(seq []byte, k int, buffer *[]uint64) []uint64 {
-	// Only valid for odd k ≤ 31
 	if k < 1 || k > 31 || k%2 == 0 || len(seq) < k {
 		return nil
 	}
 
-	n := len(seq) - k + 1
-
 	var result []uint64
 	if buffer == nil {
-		result = make([]uint64, 0, n)
+		result = make([]uint64, 0, len(seq)-k+1)
 	} else {
 		result = (*buffer)[:0]
 	}
 
-	// Mask to keep only k*2 bits
-	mask := uint64(1)<<(k*2) - 1
-
-	// Shift amount for adding to reverse complement (high position)
-	rcShift := uint((k - 1) * 2)
-
-	// Track ambiguous base count in sliding window
-	ambiguousCount := 0
-	const ambiguousCode = byte(0xFF)
-
-	// Build the first k-mer (forward and reverse complement)
-	var fwd, rvc uint64
-	hasError := false
-	for i := 0; i < k; i++ {
-		code := __single_base_code_err__[seq[i]&31]
-
-		// Check for ambiguous base
-		if code == ambiguousCode {
-			ambiguousCount++
-			hasError = true
-			code = 0 // Encode as A for the sequence bits
-		}
-
-		codeUint := uint64(code)
-		// Forward: shift left and add new code at low end
-		fwd <<= 2
-		fwd |= codeUint
-		// Reverse complement: shift right and add complement at high end
-		rvc >>= 2
-		rvc |= (codeUint ^ 3) << rcShift
-	}
-
-	// Store the normalized (canonical) k-mer with error marker
-	var canonical uint64
-	if fwd <= rvc {
-		canonical = fwd
-	} else {
-		canonical = rvc
-	}
-
-	// Set error code based on ambiguous count
-	if hasError {
-		errorCode := uint64(ambiguousCount)
-		if errorCode > 3 {
-			errorCode = 3
-		}
-		canonical = SetKmerError(canonical, errorCode)
-	}
-	result = append(result, canonical)
-
-	// Slide through the rest of the sequence
-	for i := k; i < len(seq); i++ {
-		// Check outgoing base (position i-k)
-		outgoingCode := __single_base_code__[seq[i-k]&31]
-		if outgoingCode == ambiguousCode {
-			ambiguousCount--
-		}
-
-		// Check incoming base (position i)
-		code := __single_base_code__[seq[i]&31]
-		if code == ambiguousCode {
-			ambiguousCount++
-			code = 0 // Encode as A for the sequence bits
-		}
-
-		codeUint := uint64(code)
-
-		// Update forward k-mer: shift left, add new code, mask
-		fwd <<= 2
-		fwd |= codeUint
-		fwd &= mask
-
-		// Update reverse complement: shift right, add complement at high end
-		rvc >>= 2
-		rvc |= (codeUint ^ 3) << rcShift
-
-		// Store the normalized k-mer
-		if fwd <= rvc {
-			canonical = fwd
-		} else {
-			canonical = rvc
-		}
-
-		// Set error code based on ambiguous count
-		if ambiguousCount > 0 {
-			errorCode := uint64(ambiguousCount)
-			if errorCode > 3 {
-				errorCode = 3
-			}
-			canonical = SetKmerError(canonical, errorCode)
-		}
-		result = append(result, canonical)
+	for kmer := range IterNormalizedKmersWithErrors(seq, k) {
+		result = append(result, kmer)
 	}
 
 	return result
@@ -753,62 +584,15 @@ func EncodeNormalizedKmers(seq []byte, k int, buffer *[]uint64) []uint64 {
 		return nil
 	}
 
-	n := len(seq) - k + 1
-
 	var result []uint64
 	if buffer == nil {
-		result = make([]uint64, 0, n)
+		result = make([]uint64, 0, len(seq)-k+1)
 	} else {
 		result = (*buffer)[:0]
 	}
 
-	// Mask to keep only k*2 bits
-	mask := uint64(1)<<(k*2) - 1
-
-	// Shift amount for adding to reverse complement (high position)
-	rcShift := uint((k - 1) * 2)
-
-	// Complement lookup: A(00)->T(11), C(01)->G(10), G(10)->C(01), T(11)->A(00)
-	// This is simply XOR with 3
-
-	// Build the first k-mer (forward and reverse complement)
-	var fwd, rvc uint64
-	for i := 0; i < k; i++ {
-		code := uint64(__single_base_code__[seq[i]&31])
-		// Forward: shift left and add new code at low end
-		fwd <<= 2
-		fwd |= code
-		// Reverse complement: shift right and add complement at high end
-		rvc >>= 2
-		rvc |= (code ^ 3) << rcShift
-	}
-
-	// Store the normalized (canonical) k-mer
-	if fwd <= rvc {
-		result = append(result, fwd)
-	} else {
-		result = append(result, rvc)
-	}
-
-	// Slide through the rest of the sequence
-	for i := k; i < len(seq); i++ {
-		code := uint64(__single_base_code__[seq[i]&31])
-
-		// Update forward k-mer: shift left, add new code, mask
-		fwd <<= 2
-		fwd |= code
-		fwd &= mask
-
-		// Update reverse complement: shift right, add complement at high end
-		rvc >>= 2
-		rvc |= (code ^ 3) << rcShift
-
-		// Store the normalized k-mer
-		if fwd <= rvc {
-			result = append(result, fwd)
-		} else {
-			result = append(result, rvc)
-		}
+	for kmer := range IterNormalizedKmers(seq, k) {
+		result = append(result, kmer)
 	}
 
 	return result

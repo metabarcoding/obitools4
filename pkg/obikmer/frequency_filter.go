@@ -3,6 +3,7 @@ package obikmer
 import (
 	"fmt"
 
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	"github.com/RoaringBitmap/roaring/roaring64"
 )
 
@@ -36,8 +37,9 @@ func NewFrequencyFilter(k, minFreq int) *FrequencyFilter {
 
 // AddSequence ajoute tous les k-mers d'une séquence au filtre
 // Utilise un itérateur pour éviter l'allocation d'un vecteur intermédiaire
-func (ff *FrequencyFilter) AddSequence(seq []byte) {
-	for canonical := range IterNormalizedKmers(seq, ff.K) {
+func (ff *FrequencyFilter) AddSequence(seq *obiseq.BioSequence) {
+	rawSeq := seq.Sequence()
+	for canonical := range IterNormalizedKmers(rawSeq, ff.K) {
 		ff.addKmer(canonical)
 	}
 }
@@ -56,20 +58,20 @@ func (ff *FrequencyFilter) addKmer(kmer uint64) {
 	}
 }
 
-// GetFilteredSet retourne la Roaring Bitmap des k-mers avec fréquence ≥ minFreq
-func (ff *FrequencyFilter) GetFilteredSet() *roaring64.Bitmap {
+// GetFilteredSet retourne un KmerSet des k-mers avec fréquence ≥ minFreq
+func (ff *FrequencyFilter) GetFilteredSet() *KmerSet {
 	// Les k-mers filtrés sont dans le dernier niveau
-	return ff.index[ff.MinFreq-1].Clone()
+	return NewKmerSetFromBitmap(ff.K, ff.index[ff.MinFreq-1].Clone())
 }
 
-// GetKmersAtLevel retourne la Roaring Bitmap des k-mers vus au moins (level+1) fois
+// GetKmersAtLevel retourne un KmerSet des k-mers vus au moins (level+1) fois
 // level doit être dans [0, minFreq-1]
-func (ff *FrequencyFilter) GetKmersAtLevel(level int) *roaring64.Bitmap {
+func (ff *FrequencyFilter) GetKmersAtLevel(level int) *KmerSet {
 	if level < 0 || level >= ff.MinFreq {
-		return roaring64.New()
+		return NewKmerSet(ff.K)
 	}
 
-	return ff.index[level].Clone()
+	return NewKmerSetFromBitmap(ff.K, ff.index[level].Clone())
 }
 
 // Stats retourne des statistiques sur les niveaux de fréquence
@@ -143,8 +145,8 @@ func (ff *FrequencyFilter) Clear() {
 // ==================================
 
 // AddSequences ajoute plusieurs séquences en batch
-func (ff *FrequencyFilter) AddSequences(sequences [][]byte) {
-	for _, seq := range sequences {
+func (ff *FrequencyFilter) AddSequences(sequences *obiseq.BioSequenceSlice) {
+	for _, seq := range *sequences {
 		ff.AddSequence(seq)
 	}
 }
@@ -193,9 +195,22 @@ func (ff *FrequencyFilter) GetFrequency(kmer uint64) int {
 	return freq
 }
 
-// Cardinality retourne le nombre de k-mers filtrés
-func (ff *FrequencyFilter) Cardinality() uint64 {
-	return ff.index[ff.MinFreq-1].GetCardinality()
+// Len retourne le nombre de k-mers filtrés ou à un niveau spécifique
+// Sans argument: retourne le nombre de k-mers avec freq ≥ minFreq (dernier niveau)
+// Avec argument level: retourne le nombre de k-mers avec freq ≥ (level+1)
+// Exemple: Len() pour les k-mers filtrés, Len(2) pour freq ≥ 3
+func (ff *FrequencyFilter) Len(level ...int) uint64 {
+	if len(level) == 0 {
+		// Sans argument: dernier niveau (k-mers filtrés)
+		return ff.index[ff.MinFreq-1].GetCardinality()
+	}
+
+	// Avec argument: niveau spécifique
+	lvl := level[0]
+	if lvl < 0 || lvl >= ff.MinFreq {
+		return 0
+	}
+	return ff.index[lvl].GetCardinality()
 }
 
 // MemoryUsage retourne l'utilisation mémoire en bytes
