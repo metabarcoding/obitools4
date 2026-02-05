@@ -145,29 +145,69 @@ func (ksg *KmerSetGroup) AddSequences(sequences *obiseq.BioSequenceSlice, index 
 }
 
 // Union retourne l'union de tous les KmerSet du groupe
+// Optimisation: part du plus grand ensemble pour minimiser les opérations
 func (ksg *KmerSetGroup) Union() *KmerSet {
 	if len(ksg.sets) == 0 {
 		return NewKmerSet(ksg.k)
 	}
 
-	result := ksg.sets[0].Copy()
-	for i := 1; i < len(ksg.sets); i++ {
-		result = result.Union(ksg.sets[i])
+	if len(ksg.sets) == 1 {
+		return ksg.sets[0].Copy()
 	}
-	return result
+
+	// Trouver l'index du plus grand ensemble (celui avec le plus de k-mers)
+	maxIdx := 0
+	maxCard := ksg.sets[0].Len()
+	for i := 1; i < len(ksg.sets); i++ {
+		card := ksg.sets[i].Len()
+		if card > maxCard {
+			maxCard = card
+			maxIdx = i
+		}
+	}
+
+	// Copier le plus grand ensemble et faire les unions in-place
+	result := ksg.sets[maxIdx].bitmap.Clone()
+	for i := 0; i < len(ksg.sets); i++ {
+		if i != maxIdx {
+			result.Or(ksg.sets[i].bitmap)
+		}
+	}
+
+	return NewKmerSetFromBitmap(ksg.k, result)
 }
 
 // Intersect retourne l'intersection de tous les KmerSet du groupe
+// Optimisation: part du plus petit ensemble pour minimiser les opérations
 func (ksg *KmerSetGroup) Intersect() *KmerSet {
 	if len(ksg.sets) == 0 {
 		return NewKmerSet(ksg.k)
 	}
 
-	result := ksg.sets[0].Copy()
-	for i := 1; i < len(ksg.sets); i++ {
-		result = result.Intersect(ksg.sets[i])
+	if len(ksg.sets) == 1 {
+		return ksg.sets[0].Copy()
 	}
-	return result
+
+	// Trouver l'index du plus petit ensemble (celui avec le moins de k-mers)
+	minIdx := 0
+	minCard := ksg.sets[0].Len()
+	for i := 1; i < len(ksg.sets); i++ {
+		card := ksg.sets[i].Len()
+		if card < minCard {
+			minCard = card
+			minIdx = i
+		}
+	}
+
+	// Copier le plus petit ensemble et faire les intersections in-place
+	result := ksg.sets[minIdx].bitmap.Clone()
+	for i := 0; i < len(ksg.sets); i++ {
+		if i != minIdx {
+			result.And(ksg.sets[i].bitmap)
+		}
+	}
+
+	return NewKmerSetFromBitmap(ksg.k, result)
 }
 
 // Stats retourne des statistiques pour chaque KmerSet du groupe

@@ -16,10 +16,24 @@ type FrequencyFilter struct {
 // NewFrequencyFilter crée un nouveau filtre par fréquence
 // minFreq: nombre minimum d'occurrences requises (v)
 func NewFrequencyFilter(k, minFreq int) *FrequencyFilter {
-	return &FrequencyFilter{
+	ff := &FrequencyFilter{
 		KmerSetGroup: NewKmerSetGroup(k, minFreq),
 		MinFreq:      minFreq,
 	}
+
+	// Initialiser les métadonnées de groupe
+	ff.SetAttribute("type", "FrequencyFilter")
+	ff.SetAttribute("min_freq", minFreq)
+
+	// Initialiser les métadonnées de chaque niveau
+	for i := 0; i < minFreq; i++ {
+		level := ff.Get(i)
+		level.SetAttribute("level", i)
+		level.SetAttribute("min_occurrences", i+1)
+		level.SetId(fmt.Sprintf("level_%d", i))
+	}
+
+	return ff
 }
 
 // AddSequence ajoute tous les k-mers d'une séquence au filtre
@@ -164,17 +178,67 @@ func (ff *FrequencyFilter) AddSequences(sequences *obiseq.BioSequenceSlice) {
 // PERSISTANCE
 // ==================================
 
-// Save sauvegarde le filtre sur disque
-func (ff *FrequencyFilter) Save(path string) error {
-	// TODO: implémenter la sérialisation
-	// Pour chaque bitmap: bitmap.WriteTo(writer)
-	return nil
+// Save sauvegarde le FrequencyFilter dans un répertoire
+// Utilise le format de sérialisation du KmerSetGroup sous-jacent
+// Les métadonnées incluent le type "FrequencyFilter" et min_freq
+//
+// Format:
+//   - directory/metadata.{toml,yaml,json} - métadonnées du filtre
+//   - directory/set_0.roaring - k-mers vus ≥1 fois
+//   - directory/set_1.roaring - k-mers vus ≥2 fois
+//   - ...
+//   - directory/set_{minFreq-1}.roaring - k-mers vus ≥minFreq fois
+//
+// Parameters:
+//   - directory: répertoire de destination
+//   - format: format des métadonnées (FormatTOML, FormatYAML, FormatJSON)
+//
+// Example:
+//
+//	err := ff.Save("./my_filter", obikmer.FormatTOML)
+func (ff *FrequencyFilter) Save(directory string, format MetadataFormat) error {
+	// Déléguer à KmerSetGroup qui gère déjà tout
+	return ff.KmerSetGroup.Save(directory, format)
 }
 
-// Load charge le filtre depuis le disque
-func (ff *FrequencyFilter) Load(path string) error {
-	// TODO: implémenter la désérialisation
-	return nil
+// LoadFrequencyFilter charge un FrequencyFilter depuis un répertoire
+// Vérifie que les métadonnées correspondent à un FrequencyFilter
+//
+// Parameters:
+//   - directory: répertoire source
+//
+// Returns:
+//   - *FrequencyFilter: le filtre chargé
+//   - error: erreur si le chargement échoue ou si ce n'est pas un FrequencyFilter
+//
+// Example:
+//
+//	ff, err := obikmer.LoadFrequencyFilter("./my_filter")
+func LoadFrequencyFilter(directory string) (*FrequencyFilter, error) {
+	// Charger le KmerSetGroup
+	ksg, err := LoadKmerSetGroup(directory)
+	if err != nil {
+		return nil, err
+	}
+
+	// Vérifier que c'est bien un FrequencyFilter
+	if typeAttr, ok := ksg.GetAttribute("type"); !ok || typeAttr != "FrequencyFilter" {
+		return nil, fmt.Errorf("loaded data is not a FrequencyFilter (type=%v)", typeAttr)
+	}
+
+	// Récupérer min_freq
+	minFreqAttr, ok := ksg.GetIntAttribute("min_freq")
+	if !ok {
+		return nil, fmt.Errorf("FrequencyFilter missing min_freq attribute")
+	}
+
+	// Créer le FrequencyFilter
+	ff := &FrequencyFilter{
+		KmerSetGroup: ksg,
+		MinFreq:      minFreqAttr,
+	}
+
+	return ff, nil
 }
 
 // ==================================
