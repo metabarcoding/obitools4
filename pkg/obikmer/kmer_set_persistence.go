@@ -36,10 +36,12 @@ func (f MetadataFormat) String() string {
 
 // KmerSetMetadata contient les métadonnées d'un KmerSet ou KmerSetGroup
 type KmerSetMetadata struct {
-	K     int    `toml:"k" yaml:"k" json:"k"`           // Taille des k-mers
-	Type  string `toml:"type" yaml:"type" json:"type"`  // "KmerSet" ou "KmerSetGroup"
-	Size  int    `toml:"size" yaml:"size" json:"size"`  // 1 pour KmerSet, n pour KmerSetGroup
-	Files []string `toml:"files" yaml:"files" json:"files"` // Liste des fichiers .roaring
+	K              int                      `toml:"k" yaml:"k" json:"k"`                                     // Taille des k-mers
+	Type           string                   `toml:"type" yaml:"type" json:"type"`                            // "KmerSet" ou "KmerSetGroup"
+	Size           int                      `toml:"size" yaml:"size" json:"size"`                            // 1 pour KmerSet, n pour KmerSetGroup
+	Files          []string                 `toml:"files" yaml:"files" json:"files"`                         // Liste des fichiers .roaring
+	UserMetadata   map[string]interface{}   `toml:"user_metadata,omitempty" yaml:"user_metadata,omitempty" json:"user_metadata,omitempty"`       // Métadonnées KmerSet unique
+	SetsMetadata   []map[string]interface{} `toml:"sets_metadata,omitempty" yaml:"sets_metadata,omitempty" json:"sets_metadata,omitempty"`       // Métadonnées par set (KmerSetGroup)
 }
 
 // SaveKmerSet sauvegarde un KmerSet dans un répertoire
@@ -52,10 +54,11 @@ func (ks *KmerSet) Save(directory string, format MetadataFormat) error {
 
 	// Métadonnées
 	metadata := KmerSetMetadata{
-		K:     ks.K,
-		Type:  "KmerSet",
-		Size:  1,
-		Files: []string{"set_0.roaring"},
+		K:            ks.K,
+		Type:         "KmerSet",
+		Size:         1,
+		Files:        []string{"set_0.roaring"},
+		UserMetadata: ks.Metadata, // Sauvegarder les métadonnées utilisateur
 	}
 
 	// Sauvegarder les métadonnées
@@ -105,6 +108,12 @@ func LoadKmerSet(directory string) (*KmerSet, error) {
 	defer file.Close()
 
 	ks := NewKmerSet(metadata.K)
+
+	// Charger les métadonnées utilisateur
+	if metadata.UserMetadata != nil {
+		ks.Metadata = metadata.UserMetadata
+	}
+
 	if _, err := ks.bitmap.ReadFrom(file); err != nil {
 		return nil, fmt.Errorf("failed to read bitmap: %w", err)
 	}
@@ -127,10 +136,11 @@ func (ksg *KmerSetGroup) Save(directory string, format MetadataFormat) error {
 	}
 
 	metadata := KmerSetMetadata{
-		K:     ksg.K,
-		Type:  "KmerSetGroup",
-		Size:  len(ksg.sets),
-		Files: files,
+		K:            ksg.K,
+		Type:         "KmerSetGroup",
+		Size:         len(ksg.sets),
+		Files:        files,
+		SetsMetadata: ksg.Metadata, // Sauvegarder les métadonnées de chaque set
 	}
 
 	// Sauvegarder les métadonnées
@@ -176,6 +186,14 @@ func LoadKmerSetGroup(directory string) (*KmerSetGroup, error) {
 
 	// Créer le groupe
 	ksg := NewKmerSetGroup(metadata.K, metadata.Size)
+
+	// Charger les métadonnées de chaque set
+	if metadata.SetsMetadata != nil {
+		if len(metadata.SetsMetadata) != metadata.Size {
+			return nil, fmt.Errorf("metadata size mismatch: expected %d, got %d", metadata.Size, len(metadata.SetsMetadata))
+		}
+		ksg.Metadata = metadata.SetsMetadata
+	}
 
 	// Charger chaque bitmap
 	for i, filename := range metadata.Files {

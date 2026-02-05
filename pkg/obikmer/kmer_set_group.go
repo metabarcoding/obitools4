@@ -9,8 +9,9 @@ import (
 // KmerSetGroup représente un vecteur de KmerSet
 // Utilisé pour gérer plusieurs ensembles de k-mers (par exemple, par niveau de fréquence)
 type KmerSetGroup struct {
-	K     int         // Taille des k-mers
-	sets  []*KmerSet  // Vecteur de KmerSet
+	K        int                      // Taille des k-mers
+	sets     []*KmerSet               // Vecteur de KmerSet
+	Metadata []map[string]interface{} // Métadonnées par KmerSet (même longueur que sets)
 }
 
 // NewKmerSetGroup crée un nouveau groupe de n KmerSets
@@ -20,13 +21,16 @@ func NewKmerSetGroup(k int, n int) *KmerSetGroup {
 	}
 
 	sets := make([]*KmerSet, n)
+	metadata := make([]map[string]interface{}, n)
 	for i := range sets {
 		sets[i] = NewKmerSet(k)
+		metadata[i] = make(map[string]interface{})
 	}
 
 	return &KmerSetGroup{
-		K:    k,
-		sets: sets,
+		K:        k,
+		sets:     sets,
+		Metadata: metadata,
 	}
 }
 
@@ -92,12 +96,22 @@ func (ksg *KmerSetGroup) Clear() {
 // Clone crée une copie complète du groupe
 func (ksg *KmerSetGroup) Clone() *KmerSetGroup {
 	clonedSets := make([]*KmerSet, len(ksg.sets))
+	clonedMetadata := make([]map[string]interface{}, len(ksg.Metadata))
+
 	for i, ks := range ksg.sets {
 		clonedSets[i] = ks.Clone()
+
+		// Copier les métadonnées du groupe
+		clonedMetadata[i] = make(map[string]interface{}, len(ksg.Metadata[i]))
+		for k, v := range ksg.Metadata[i] {
+			clonedMetadata[i][k] = v
+		}
 	}
+
 	return &KmerSetGroup{
-		K:    ksg.K,
-		sets: clonedSets,
+		K:        ksg.K,
+		sets:     clonedSets,
+		Metadata: clonedMetadata,
 	}
 }
 

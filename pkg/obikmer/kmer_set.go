@@ -10,23 +10,26 @@ import (
 // KmerSet encapsule un ensemble de k-mers stockés dans un Roaring Bitmap
 // Fournit des méthodes utilitaires pour manipuler des ensembles de k-mers
 type KmerSet struct {
-	K      int               // Taille des k-mers
-	bitmap *roaring64.Bitmap // Bitmap contenant les k-mers
+	K        int                    // Taille des k-mers
+	bitmap   *roaring64.Bitmap      // Bitmap contenant les k-mers
+	Metadata map[string]interface{} // Métadonnées utilisateur (clé=valeur atomique)
 }
 
 // NewKmerSet crée un nouveau KmerSet vide
 func NewKmerSet(k int) *KmerSet {
 	return &KmerSet{
-		K:      k,
-		bitmap: roaring64.New(),
+		K:        k,
+		bitmap:   roaring64.New(),
+		Metadata: make(map[string]interface{}),
 	}
 }
 
 // NewKmerSetFromBitmap crée un KmerSet à partir d'un bitmap existant
 func NewKmerSetFromBitmap(k int, bitmap *roaring64.Bitmap) *KmerSet {
 	return &KmerSet{
-		K:      k,
-		bitmap: bitmap,
+		K:        k,
+		bitmap:   bitmap,
+		Metadata: make(map[string]interface{}),
 	}
 }
 
@@ -73,9 +76,16 @@ func (ks *KmerSet) Clear() {
 
 // Clone crée une copie de l'ensemble
 func (ks *KmerSet) Clone() *KmerSet {
+	// Copier les métadonnées
+	metadata := make(map[string]interface{}, len(ks.Metadata))
+	for k, v := range ks.Metadata {
+		metadata[k] = v
+	}
+
 	return &KmerSet{
-		K:      ks.K,
-		bitmap: ks.bitmap.Clone(),
+		K:        ks.K,
+		bitmap:   ks.bitmap.Clone(),
+		Metadata: metadata,
 	}
 }
 
