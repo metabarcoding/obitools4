@@ -11,7 +11,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// MetadataFormat représente le format de sérialisation des métadonnées
+// MetadataFormat represents the metadata serialization format
 type MetadataFormat int
 
 const (
@@ -20,7 +20,7 @@ const (
 	FormatJSON
 )
 
-// String retourne l'extension de fichier pour le format
+// String returns the file extension for the format
 func (f MetadataFormat) String() string {
 	switch f {
 	case FormatTOML:

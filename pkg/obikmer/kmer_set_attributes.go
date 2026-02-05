@@ -32,7 +32,7 @@ func (ks *KmerSet) GetAttribute(key string) (interface{}, bool) {
 	}
 }
 
-// SetAttribute définit la valeur d'un attribut
+// SetAttribute sets the value of an attribute
 // Cas particuliers: "id" utilise SetId(), "k" est immutable (panique)
 func (ks *KmerSet) SetAttribute(key string, value interface{}) {
 	switch key {
@@ -153,7 +153,7 @@ func (ks *KmerSet) GetBoolAttribute(key string) (bool, bool) {
 	return false, false
 }
 
-// AttributeKeys retourne l'ensemble des clés d'attributs
+// AttributeKeys returns the set of attribute keys
 func (ks *KmerSet) AttributeKeys() obiutils.Set[string] {
 	keys := obiutils.MakeSet[string]()
 	for key := range ks.Metadata {
@@ -162,7 +162,7 @@ func (ks *KmerSet) AttributeKeys() obiutils.Set[string] {
 	return keys
 }
 
-// Keys retourne l'ensemble des clés d'attributs (alias de AttributeKeys)
+// Keys returns the set of attribute keys (alias of AttributeKeys)
 func (ks *KmerSet) Keys() obiutils.Set[string] {
 	return ks.AttributeKeys()
 }
@@ -192,7 +192,7 @@ func (ksg *KmerSetGroup) GetAttribute(key string) (interface{}, bool) {
 	}
 }
 
-// SetAttribute définit la valeur d'un attribut du groupe
+// SetAttribute sets the value of an attribute du groupe
 // Cas particuliers: "id" utilise SetId(), "k" est immutable (panique)
 func (ksg *KmerSetGroup) SetAttribute(key string, value interface{}) {
 	switch key {
@@ -313,7 +313,7 @@ func (ksg *KmerSetGroup) GetBoolAttribute(key string) (bool, bool) {
 	return false, false
 }
 
-// AttributeKeys retourne l'ensemble des clés d'attributs du groupe
+// AttributeKeys returns the set of attribute keys du groupe
 func (ksg *KmerSetGroup) AttributeKeys() obiutils.Set[string] {
 	keys := obiutils.MakeSet[string]()
 	for key := range ksg.Metadata {
@@ -322,7 +322,7 @@ func (ksg *KmerSetGroup) AttributeKeys() obiutils.Set[string] {
 	return keys
 }
 
-// Keys retourne l'ensemble des clés d'attributs du groupe (alias)
+// Keys returns the set of group attribute keys (alias)
 func (ksg *KmerSetGroup) Keys() obiutils.Set[string] {
 	return ksg.AttributeKeys()
 }
@@ -342,7 +342,7 @@ func (ksg *KmerSetGroup) Keys() obiutils.Set[string] {
 //   ksg.SetAttribute("name", "FrequencyFilter")
 //   name, ok := ksg.GetStringAttribute("name")
 
-// AllAttributeKeys retourne toutes les clés d'attributs uniques du groupe ET de tous ses sets
+// AllAttributeKeys returns all unique attribute keys of the group AND all its sets
 func (ksg *KmerSetGroup) AllAttributeKeys() obiutils.Set[string] {
 	keys := obiutils.MakeSet[string]()
 

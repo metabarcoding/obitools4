@@ -6,26 +6,26 @@ import (
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 )
 
-// FrequencyFilter filtre les k-mers par fréquence minimale
-// Spécialisation de KmerSetGroup où index[i] contient les k-mers vus au moins i+1 fois
+// FrequencyFilter filters k-mers by minimum frequency
+// Specialization of KmerSetGroup where index[i] contains k-mers seen at least i+1 times
 type FrequencyFilter struct {
-	*KmerSetGroup          // Groupe de KmerSet (un par niveau de fréquence)
-	MinFreq       int      // v - fréquence minimale requise
+	*KmerSetGroup          // Group of KmerSet (one per frequency level)
+	MinFreq       int      // v - minimum required frequency
 }
 
-// NewFrequencyFilter crée un nouveau filtre par fréquence
-// minFreq: nombre minimum d'occurrences requises (v)
+// NewFrequencyFilter creates a new frequency filter
+// minFreq: minimum number d'occurrences required (v)
 func NewFrequencyFilter(k, minFreq int) *FrequencyFilter {
 	ff := &FrequencyFilter{
 		KmerSetGroup: NewKmerSetGroup(k, minFreq),
 		MinFreq:      minFreq,
 	}
 
-	// Initialiser les métadonnées de groupe
+	// Initialize group metadata
 	ff.SetAttribute("type", "FrequencyFilter")
 	ff.SetAttribute("min_freq", minFreq)
 
-	// Initialiser les métadonnées de chaque niveau
+	// Initialize metadata for each level
 	for i := 0; i < minFreq; i++ {
 		level := ff.Get(i)
 		level.SetAttribute("level", i)
@@ -36,8 +36,8 @@ func NewFrequencyFilter(k, minFreq int) *FrequencyFilter {
 	return ff
 }
 
-// AddSequence ajoute tous les k-mers d'une séquence au filtre
-// Utilise un itérateur pour éviter l'allocation d'un vecteur intermédiaire
+// AddSequence adds all k-mers from a sequence to the filter
+// Uses an iterator to avoid allocating an intermediate vector
 func (ff *FrequencyFilter) AddSequence(seq *obiseq.BioSequence) {
 	rawSeq := seq.Sequence()
 	for canonical := range IterCanonicalKmers(rawSeq, ff.K()) {
@@ -45,49 +45,49 @@ func (ff *FrequencyFilter) AddSequence(seq *obiseq.BioSequence) {
 	}
 }
 
-// AddKmerCode ajoute un k-mer encodé au filtre (algorithme principal)
+// AddKmerCode adds an encoded k-mer to the filter (main algorithm)
 func (ff *FrequencyFilter) AddKmerCode(kmer uint64) {
-	// Trouver le niveau actuel du k-mer
+	// Find the current level of the k-mer
 	c := 0
 	for c < ff.MinFreq && ff.Get(c).Contains(kmer) {
 		c++
 	}
 
-	// Ajouter au niveau suivant (si pas encore au maximum)
+	// Add to next level (if not yet at maximum)
 	if c < ff.MinFreq {
 		ff.Get(c).AddKmerCode(kmer)
 	}
 }
 
-// AddCanonicalKmerCode ajoute un k-mer encodé canonique au filtre
+// AddCanonicalKmerCode adds an encoded canonical k-mer to the filter
 func (ff *FrequencyFilter) AddCanonicalKmerCode(kmer uint64) {
 	canonical := CanonicalKmer(kmer, ff.K())
 	ff.AddKmerCode(canonical)
 }
 
-// AddKmer ajoute un k-mer au filtre en encodant la séquence
-// La séquence doit avoir exactement k nucléotides
-// Zero-allocation: encode directement sans créer de slice intermédiaire
+// AddKmer adds a k-mer to the filter by encoding the sequence
+// The sequence must have exactly k nucleotides
+// Zero-allocation: encodes directly without creating an intermediate slice
 func (ff *FrequencyFilter) AddKmer(seq []byte) {
 	kmer := EncodeKmer(seq, ff.K())
 	ff.AddKmerCode(kmer)
 }
 
-// AddCanonicalKmer ajoute un k-mer canonique au filtre en encodant la séquence
-// La séquence doit avoir exactement k nucléotides
-// Zero-allocation: encode directement en forme canonique sans créer de slice intermédiaire
+// AddCanonicalKmer adds a canonical k-mer to the filter by encoding the sequence
+// The sequence must have exactly k nucleotides
+// Zero-allocation: encodes directly in canonical form without creating an intermediate slice
 func (ff *FrequencyFilter) AddCanonicalKmer(seq []byte) {
 	canonical := EncodeCanonicalKmer(seq, ff.K())
 	ff.AddKmerCode(canonical)
 }
 
-// GetFilteredSet retourne un KmerSet des k-mers avec fréquence ≥ minFreq
+// GetFilteredSet returns a KmerSet of k-mers with frequency ≥ minFreq
 func (ff *FrequencyFilter) GetFilteredSet() *KmerSet {
-	// Les k-mers filtrés sont dans le dernier niveau
+	// Filtered k-mers are in the last level
 	return ff.Get(ff.MinFreq - 1).Copy()
 }
 
-// GetKmersAtLevel retourne un KmerSet des k-mers vus au moins (level+1) fois
+// GetKmersAtLevel returns a KmerSet of k-mers seen at least (level+1) times
 // level doit être dans [0, minFreq-1]
 func (ff *FrequencyFilter) GetKmersAtLevel(level int) *KmerSet {
 	ks := ff.Get(level)
@@ -97,7 +97,7 @@ func (ff *FrequencyFilter) GetKmersAtLevel(level int) *KmerSet {
 	return ks.Copy()
 }
 
-// Stats retourne des statistiques sur les niveaux de fréquence
+// Stats returns statistics on frequency levels
 func (ff *FrequencyFilter) Stats() FrequencyFilterStats {
 	stats := FrequencyFilterStats{
 		MinFreq: ff.MinFreq,
@@ -110,7 +110,7 @@ func (ff *FrequencyFilter) Stats() FrequencyFilterStats {
 		sizeBytes := ks.MemoryUsage()
 
 		stats.Levels[i] = LevelStats{
-			Level:       i + 1, // Niveau 1 = freq ≥ 1
+			Level:       i + 1, // Level 1 = freq ≥ 1
 			Cardinality: card,
 			SizeBytes:   sizeBytes,
 		}
@@ -118,25 +118,25 @@ func (ff *FrequencyFilter) Stats() FrequencyFilterStats {
 		stats.TotalBytes += sizeBytes
 	}
 
-	// Le dernier niveau contient le résultat
+	// The last level contains the result
 	stats.FilteredKmers = stats.Levels[ff.MinFreq-1].Cardinality
 
 	return stats
 }
 
-// FrequencyFilterStats contient les statistiques du filtre
+// FrequencyFilterStats contains the filter statistics
 type FrequencyFilterStats struct {
 	MinFreq       int
-	FilteredKmers uint64      // K-mers avec freq ≥ minFreq
-	TotalBytes    uint64      // Mémoire totale utilisée
+	FilteredKmers uint64      // K-mers with freq ≥ minFreq
+	TotalBytes    uint64      // Total memory used
 	Levels        []LevelStats
 }
 
-// LevelStats contient les stats d'un niveau
+// LevelStats contains the stats of a level
 type LevelStats struct {
 	Level       int    // freq ≥ Level
-	Cardinality uint64 // Nombre de k-mers
-	SizeBytes   uint64 // Taille en bytes
+	Cardinality uint64 // Number of k-mers
+	SizeBytes   uint64 // Size in bytes
 }
 
 func (ffs FrequencyFilterStats) String() string {
@@ -167,7 +167,7 @@ func (ff *FrequencyFilter) Clear() {
 // BATCH PROCESSING
 // ==================================
 
-// AddSequences ajoute plusieurs séquences en batch
+// AddSequences adds multiple sequences in batch
 func (ff *FrequencyFilter) AddSequences(sequences *obiseq.BioSequenceSlice) {
 	for _, seq := range *sequences {
 		ff.AddSequence(seq)
@@ -251,7 +251,7 @@ func (ff *FrequencyFilter) Contains(kmer uint64) bool {
 	return ff.Get(ff.MinFreq - 1).Contains(canonical)
 }
 
-// GetFrequency retourne la fréquence approximative d'un k-mer
+// GetFrequency returns the approximate frequency of a k-mer
 // Retourne le niveau maximum atteint (freq ≥ niveau)
 func (ff *FrequencyFilter) GetFrequency(kmer uint64) int {
 	canonical := CanonicalKmer(kmer, ff.K())
@@ -268,16 +268,16 @@ func (ff *FrequencyFilter) GetFrequency(kmer uint64) int {
 	return freq
 }
 
-// Len retourne le nombre de k-mers filtrés ou à un niveau spécifique
-// Sans argument: retourne le nombre de k-mers avec freq ≥ minFreq (dernier niveau)
-// Avec argument level: retourne le nombre de k-mers avec freq ≥ (level+1)
+// Len returns the number of filtered k-mers or at a specific level
+// Without argument: returns the number of k-mers with freq ≥ minFreq (last level)
+// With argument level: returns the number of k-mers with freq ≥ (level+1)
 // Exemple: Len() pour les k-mers filtrés, Len(2) pour freq ≥ 3
 // (héritée de KmerSetGroup mais redéfinie pour la documentation)
 func (ff *FrequencyFilter) Len(level ...int) uint64 {
 	return ff.KmerSetGroup.Len(level...)
 }
 
-// MemoryUsage retourne l'utilisation mémoire en bytes
+// MemoryUsage returns memory usage in bytes
 // (héritée de KmerSetGroup mais redéfinie pour clarté)
 func (ff *FrequencyFilter) MemoryUsage() uint64 {
 	return ff.KmerSetGroup.MemoryUsage()
