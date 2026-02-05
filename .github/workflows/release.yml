@@ -1,0 +1,152 @@
+name: Create Release on Tag
+
+on:
+  push:
+    tags:
+      - "Release_*"
+
+permissions:
+  contents: write
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+
+      - name: Extract version from tag
+        id: get_version
+        run: |
+          TAG=${GITHUB_REF#refs/tags/Release_}
+          echo "version=$TAG" >> $GITHUB_OUTPUT
+          echo "tag_name=Release_$TAG" >> $GITHUB_OUTPUT
+
+      - name: Build binaries for multiple platforms
+        run: |
+          VERSION=${{ steps.get_version.outputs.version }}
+          mkdir -p release
+
+          # Get list of obitools to build
+          OBITOOLS=$(ls -d cmd/obitools/*/ | xargs -n 1 basename)
+
+          # Build for Linux AMD64
+          echo "Building for Linux AMD64..."
+          GOOS=linux GOARCH=amd64 make obitools
+          cd build
+          for binary in *; do
+            tar -czf ../release/${binary}_${VERSION}_linux_amd64.tar.gz ${binary}
+          done
+          cd ..
+          rm -rf build/*
+
+          # Build for Linux ARM64
+          echo "Building for Linux ARM64..."
+          GOOS=linux GOARCH=arm64 make obitools
+          cd build
+          for binary in *; do
+            tar -czf ../release/${binary}_${VERSION}_linux_arm64.tar.gz ${binary}
+          done
+          cd ..
+          rm -rf build/*
+
+          # Build for macOS AMD64 (Intel)
+          echo "Building for macOS AMD64..."
+          GOOS=darwin GOARCH=amd64 make obitools
+          cd build
+          for binary in *; do
+            tar -czf ../release/${binary}_${VERSION}_darwin_amd64.tar.gz ${binary}
+          done
+          cd ..
+          rm -rf build/*
+
+          # Build for macOS ARM64 (Apple Silicon)
+          echo "Building for macOS ARM64..."
+          GOOS=darwin GOARCH=arm64 make obitools
+          cd build
+          for binary in *; do
+            tar -czf ../release/${binary}_${VERSION}_darwin_arm64.tar.gz ${binary}
+          done
+          cd ..
+          rm -rf build/*
+
+          # Build for Windows AMD64
+          echo "Building for Windows AMD64..."
+          GOOS=windows GOARCH=amd64 make obitools
+          cd build
+          for binary in *; do
+            zip ../release/${binary}_${VERSION}_windows_amd64.zip ${binary}.exe
+          done
+          cd ..
+
+          ls -lh release/
+
+      - name: Generate Release Notes
+        id: release_notes
+        run: |
+          VERSION=${{ steps.get_version.outputs.version }}
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+
+          echo "# OBITools4 Release ${VERSION}" > release_notes.md
+          echo "" >> release_notes.md
+
+          if [ -n "$PREV_TAG" ]; then
+            echo "## Changes since ${PREV_TAG}" >> release_notes.md
+            echo "" >> release_notes.md
+            git log ${PREV_TAG}..HEAD --pretty=format:"- %s" >> release_notes.md
+          else
+            echo "## Changes" >> release_notes.md
+            echo "" >> release_notes.md
+            git log --pretty=format:"- %s" -n 20 >> release_notes.md
+          fi
+
+          echo "" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "## Installation" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "Download the appropriate binary for your system and extract it:" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "### Linux (AMD64)" >> release_notes.md
+          echo '```bash' >> release_notes.md
+          echo "tar -xzf <tool>_${VERSION}_linux_amd64.tar.gz" >> release_notes.md
+          echo '```' >> release_notes.md
+          echo "" >> release_notes.md
+          echo "### Linux (ARM64)" >> release_notes.md
+          echo '```bash' >> release_notes.md
+          echo "tar -xzf <tool>_${VERSION}_linux_arm64.tar.gz" >> release_notes.md
+          echo '```' >> release_notes.md
+          echo "" >> release_notes.md
+          echo "### macOS (Intel)" >> release_notes.md
+          echo '```bash' >> release_notes.md
+          echo "tar -xzf <tool>_${VERSION}_darwin_amd64.tar.gz" >> release_notes.md
+          echo '```' >> release_notes.md
+          echo "" >> release_notes.md
+          echo "### macOS (Apple Silicon)" >> release_notes.md
+          echo '```bash' >> release_notes.md
+          echo "tar -xzf <tool>_${VERSION}_darwin_arm64.tar.gz" >> release_notes.md
+          echo '```' >> release_notes.md
+          echo "" >> release_notes.md
+          echo "### Windows (AMD64)" >> release_notes.md
+          echo '```powershell' >> release_notes.md
+          echo "Expand-Archive <tool>_${VERSION}_windows_amd64.zip" >> release_notes.md
+          echo '```' >> release_notes.md
+          echo "" >> release_notes.md
+          echo "Available tools: Replace \`<tool>\` with one of the obitools commands." >> release_notes.md
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Release ${{ steps.get_version.outputs.version }}
+          body_path: release_notes.md
+          files: release/*
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

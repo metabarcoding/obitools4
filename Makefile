@@ -137,10 +137,11 @@ jjpush:
 	@echo "$(BLUE)→ Documenting version bump commit...$(NC)"
 	@jj auto-describe
 	@version=$$(cat version.txt); \
-	echo "$(BLUE)→ Pushing commits and creating tag v$$version...$(NC)"; \
+	tag_name="Release_$$version"; \
+	echo "$(BLUE)→ Pushing commits and creating tag $$tag_name...$(NC)"; \
 	jj git push --change @; \
-	git tag -a "v$$version" -m "Release $$version" 2>/dev/null || echo "Tag v$$version already exists"; \
-	git push origin "v$$version" 2>/dev/null || echo "Tag already pushed"
+	git tag -a "$$tag_name" -m "Release $$version" 2>/dev/null || echo "Tag $$tag_name already exists"; \
+	git push origin "$$tag_name" 2>/dev/null || echo "Tag already pushed"
 	@echo "$(GREEN)✓ Commits and tag pushed to repository$(NC)"
 
 jjfetch:
