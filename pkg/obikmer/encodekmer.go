@@ -69,6 +69,116 @@ func ClearKmerError(kmer uint64) uint64 {
 	return kmer & KmerSequenceMask
 }
 
+// EncodeKmer encodes a single k-mer sequence to uint64.
+// This is the optimal zero-allocation function for encoding a single k-mer.
+//
+// Each nucleotide is encoded on 2 bits according to __single_base_code__:
+//   - A = 0 (00)
+//   - C = 1 (01)
+//   - G = 2 (10)
+//   - T/U = 3 (11)
+//
+// The maximum k-mer size is 31 (using 62 bits), leaving the top 2 bits
+// available for error markers if needed.
+//
+// Parameters:
+//   - seq: DNA sequence as a byte slice (case insensitive, supports A, C, G, T, U)
+//   - k: k-mer size (must be between 1 and 31)
+//
+// Returns:
+//   - encoded k-mer as uint64
+//   - panics if len(seq) != k or k is invalid
+//
+// Example:
+//
+//	kmer := EncodeKmer([]byte("ACGT"), 4)
+func EncodeKmer(seq []byte, k int) uint64 {
+	if k < 1 || k > 31 {
+		panic("k must be between 1 and 31")
+	}
+	if len(seq) != k {
+		panic("sequence length must equal k")
+	}
+
+	var kmer uint64
+	for i := 0; i < k; i++ {
+		kmer <<= 2
+		kmer |= uint64(__single_base_code__[seq[i]&31])
+	}
+	return kmer
+}
+
+// EncodeNormalizedKmer encodes a single k-mer sequence to its canonical form (uint64).
+// Returns the lexicographically smaller of the k-mer and its reverse complement.
+// This is the optimal zero-allocation function for encoding a single normalized k-mer.
+//
+// Parameters:
+//   - seq: DNA sequence as a byte slice (case insensitive, supports A, C, G, T, U)
+//   - k: k-mer size (must be between 1 and 31)
+//
+// Returns:
+//   - normalized k-mer as uint64
+//   - panics if len(seq) != k or k is invalid
+//
+// Example:
+//
+//	canonical := EncodeNormalizedKmer([]byte("ACGT"), 4)
+func EncodeNormalizedKmer(seq []byte, k int) uint64 {
+	if k < 1 || k > 31 {
+		panic("k must be between 1 and 31")
+	}
+	if len(seq) != k {
+		panic("sequence length must equal k")
+	}
+
+	rcShift := uint((k - 1) * 2)
+
+	var fwd, rvc uint64
+	for i := 0; i < k; i++ {
+		code := uint64(__single_base_code__[seq[i]&31])
+		fwd <<= 2
+		fwd |= code
+		rvc >>= 2
+		rvc |= (code ^ 3) << rcShift
+	}
+
+	if fwd <= rvc {
+		return fwd
+	}
+	return rvc
+}
+
+// DecodeKmer decodes a uint64 k-mer back to a DNA sequence.
+// This function reuses a provided buffer to avoid allocation.
+//
+// Parameters:
+//   - kmer: encoded k-mer as uint64
+//   - k: k-mer size (number of nucleotides)
+//   - buffer: pre-allocated buffer of length >= k (if nil, allocates new slice)
+//
+// Returns:
+//   - decoded DNA sequence as []byte (lowercase acgt)
+//
+// Example:
+//
+//	var buf [32]byte
+//	seq := DecodeKmer(kmer, 21, buf[:])
+func DecodeKmer(kmer uint64, k int, buffer []byte) []byte {
+	var result []byte
+	if buffer == nil || len(buffer) < k {
+		result = make([]byte, k)
+	} else {
+		result = buffer[:k]
+	}
+
+	bases := [4]byte{'a', 'c', 'g', 't'}
+	for i := k - 1; i >= 0; i-- {
+		result[i] = bases[kmer&3]
+		kmer >>= 2
+	}
+	return result
+}
+
 // EncodeKmers converts a DNA sequence to a slice of encoded k-mers.
 // Each nucleotide is encoded on 2 bits according to __single_base_code__:
 //   - A = 0 (00)

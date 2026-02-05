@@ -39,9 +39,31 @@ func (ks *KmerSet) K() int {
 	return ks.k
 }
 
-// Add ajoute un k-mer à l'ensemble
-func (ks *KmerSet) Add(kmer uint64) {
+// AddKmerCode ajoute un k-mer encodé à l'ensemble
+func (ks *KmerSet) AddKmerCode(kmer uint64) {
 	ks.bitmap.Add(kmer)
+}
+
+// AddNormalizedKmerCode ajoute un k-mer encodé normalisé à l'ensemble
+func (ks *KmerSet) AddNormalizedKmerCode(kmer uint64) {
+	canonical := NormalizeKmer(kmer, ks.k)
+	ks.bitmap.Add(canonical)
+}
+
+// AddKmer ajoute un k-mer à l'ensemble en encodant la séquence
+// La séquence doit avoir exactement k nucléotides
+// Zero-allocation: encode directement sans créer de slice intermédiaire
+func (ks *KmerSet) AddKmer(seq []byte) {
+	kmer := EncodeKmer(seq, ks.k)
+	ks.bitmap.Add(kmer)
+}
+
+// AddNormalizedKmer ajoute un k-mer normalisé à l'ensemble en encodant la séquence
+// La séquence doit avoir exactement k nucléotides
+// Zero-allocation: encode directement en forme canonique sans créer de slice intermédiaire
+func (ks *KmerSet) AddNormalizedKmer(seq []byte) {
+	canonical := EncodeNormalizedKmer(seq, ks.k)
+	ks.bitmap.Add(canonical)
 }
 
 // AddSequence ajoute tous les k-mers d'une séquence à l'ensemble

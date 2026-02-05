@@ -27,12 +27,12 @@ func NewFrequencyFilter(k, minFreq int) *FrequencyFilter {
 func (ff *FrequencyFilter) AddSequence(seq *obiseq.BioSequence) {
 	rawSeq := seq.Sequence()
 	for canonical := range IterNormalizedKmers(rawSeq, ff.K()) {
-		ff.addKmer(canonical)
+		ff.AddKmerCode(canonical)
 	}
 }
 
-// addKmer ajoute un k-mer au filtre (algorithme principal)
-func (ff *FrequencyFilter) addKmer(kmer uint64) {
+// AddKmerCode ajoute un k-mer encodé au filtre (algorithme principal)
+func (ff *FrequencyFilter) AddKmerCode(kmer uint64) {
 	// Trouver le niveau actuel du k-mer
 	c := 0
 	for c < ff.MinFreq && ff.Get(c).Contains(kmer) {
@@ -41,8 +41,30 @@ func (ff *FrequencyFilter) addKmer(kmer uint64) {
 
 	// Ajouter au niveau suivant (si pas encore au maximum)
 	if c < ff.MinFreq {
-		ff.Get(c).Add(kmer)
+		ff.Get(c).AddKmerCode(kmer)
 	}
+}
+
+// AddNormalizedKmerCode ajoute un k-mer encodé normalisé au filtre
+func (ff *FrequencyFilter) AddNormalizedKmerCode(kmer uint64) {
+	canonical := NormalizeKmer(kmer, ff.K())
+	ff.AddKmerCode(canonical)
+}
+
+// AddKmer ajoute un k-mer au filtre en encodant la séquence
+// La séquence doit avoir exactement k nucléotides
+// Zero-allocation: encode directement sans créer de slice intermédiaire
+func (ff *FrequencyFilter) AddKmer(seq []byte) {
+	kmer := EncodeKmer(seq, ff.K())
+	ff.AddKmerCode(kmer)
+}
+
+// AddNormalizedKmer ajoute un k-mer normalisé au filtre en encodant la séquence
+// La séquence doit avoir exactement k nucléotides
+// Zero-allocation: encode directement en forme canonique sans créer de slice intermédiaire
+func (ff *FrequencyFilter) AddNormalizedKmer(seq []byte) {
+	canonical := EncodeNormalizedKmer(seq, ff.K())
+	ff.AddKmerCode(canonical)
 }
 
 // GetFilteredSet retourne un KmerSet des k-mers avec fréquence ≥ minFreq
