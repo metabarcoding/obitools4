@@ -9,7 +9,22 @@ permissions:
   contents: write
 
 jobs:
+  # First run tests
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+      - name: Checkout obitools4 project
+        uses: actions/checkout@v4
+      - name: Run tests
+        run: make githubtests
+
+  # Then create release only if tests pass
   create-release:
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -30,68 +45,77 @@ jobs:
           echo "tag_name=Release_$TAG" >> $GITHUB_OUTPUT
 
       - name: Build binaries for multiple platforms
+        env:
+          VERSION: ${{ steps.get_version.outputs.version }}
         run: |
-          VERSION=${{ steps.get_version.outputs.version }}
           mkdir -p release
-
-          # Get list of obitools to build
-          OBITOOLS=$(ls -d cmd/obitools/*/ | xargs -n 1 basename)
 
           # Build for Linux AMD64
           echo "Building for Linux AMD64..."
-          GOOS=linux GOARCH=amd64 make obitools
+          GOOS=linux GOARCH=amd64 make
           cd build
           for binary in *; do
             tar -czf ../release/${binary}_${VERSION}_linux_amd64.tar.gz ${binary}
           done
           cd ..
-          rm -rf build/*
+          rm -rf build
+          
 
           # Build for Linux ARM64
           echo "Building for Linux ARM64..."
-          GOOS=linux GOARCH=arm64 make obitools
+          GOOS=linux GOARCH=arm64 make
           cd build
           for binary in *; do
             tar -czf ../release/${binary}_${VERSION}_linux_arm64.tar.gz ${binary}
           done
           cd ..
-          rm -rf build/*
+          rm -rf build
+          
 
           # Build for macOS AMD64 (Intel)
           echo "Building for macOS AMD64..."
-          GOOS=darwin GOARCH=amd64 make obitools
+          GOOS=darwin GOARCH=amd64 make
           cd build
           for binary in *; do
             tar -czf ../release/${binary}_${VERSION}_darwin_amd64.tar.gz ${binary}
           done
           cd ..
-          rm -rf build/*
+          rm -rf build
+          
 
           # Build for macOS ARM64 (Apple Silicon)
           echo "Building for macOS ARM64..."
-          GOOS=darwin GOARCH=arm64 make obitools
+          GOOS=darwin GOARCH=arm64 make
           cd build
           for binary in *; do
             tar -czf ../release/${binary}_${VERSION}_darwin_arm64.tar.gz ${binary}
           done
           cd ..
-          rm -rf build/*
+          rm -rf build
+          
 
           # Build for Windows AMD64
           echo "Building for Windows AMD64..."
-          GOOS=windows GOARCH=amd64 make obitools
+          GOOS=windows GOARCH=amd64 make
           cd build
           for binary in *; do
-            zip ../release/${binary}_${VERSION}_windows_amd64.zip ${binary}.exe
+            # Windows binaries have .exe extension
+            if [ -f "${binary}.exe" ]; then
+              zip ../release/${binary}_${VERSION}_windows_amd64.zip ${binary}.exe
+            else
+              zip ../release/${binary}_${VERSION}_windows_amd64.zip ${binary}
+            fi
           done
           cd ..
 
+          echo "Built archives:"
           ls -lh release/
 
       - name: Generate Release Notes
         id: release_notes
+        env:
+          VERSION: ${{ steps.get_version.outputs.version }}
         run: |
-          VERSION=${{ steps.get_version.outputs.version }}
           PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
 
           echo "# OBITools4 Release ${VERSION}" > release_notes.md
