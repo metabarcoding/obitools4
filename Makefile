@@ -62,10 +62,10 @@ OUTPUT:=$(shell mktemp)
 
 all: install-githook obitools
 
-obitools: $(patsubst %,$(OBITOOLS_PREFIX)%,$(OBITOOLS)) 
+obitools: $(patsubst %,$(OBITOOLS_PREFIX)%,$(OBITOOLS))
 
 install-githook: $(GITHOOKS)
-	
+
 $(GITHOOK_DIR)/%: $(GITHOOK_SRC_DIR)/%
 	@echo installing $$(basename $@)...
 	@mkdir -p $(GITHOOK_DIR)
@@ -79,10 +79,10 @@ update-deps:
 test: .FORCE
 	$(GOTEST) ./...
 
-obitests: 
+obitests:
 	@for t in $$(find obitests -name test.sh -print) ; do \
 		bash $${t} || exit 1;\
-	done 
+	done
 
 githubtests: obitools obitests
 
@@ -94,19 +94,60 @@ $(foreach P,$(PACKAGE_DIRS),$(eval $(call MAKE_PKG_RULE,$(P))))
 
 $(foreach P,$(OBITOOLS_DIRS),$(eval $(call MAKE_OBITOOLS_RULE,$(P))))
 
-pkg/obioptions/version.go: .FORCE
-ifneq ($(strip $(COMMIT_ID)),)
-	@cat $@ \
-	| sed  -E 's/^var _Commit = "[^"]*"/var _Commit = "'$(COMMIT_ID)'"/' \
-	| sed  -E 's/^var _Version = "[^"]*"/var _Version = "'"$(LAST_TAG)"'"/' \
+pkg/obioptions/version.go: version.txt .FORCE
+	@version=$$(cat version.txt); \
+	cat $@ \
+	| sed  -E 's/^var _Version = "[^"]*"/var _Version = "Release '$$version'"/' \
 	> $(OUTPUT)
 
 	@diff $@ $(OUTPUT) 2>&1 > /dev/null \
-    	|| echo "Update version.go : $@ to $(LAST_TAG) ($(COMMIT_ID))" \
-    	&& mv $(OUTPUT) $@
+    	|| (echo "Update version.go to $$(cat version.txt)" && mv $(OUTPUT) $@)
 
 	@rm -f $(OUTPUT)
-endif
 
-.PHONY: all obitools update-deps obitests githubtests .FORCE
+bump-version:
+	@echo "Incrementing version..."
+	@current=$$(cat version.txt); \
+	echo "  Current version: $$current"; \
+	major=$$(echo $$current | cut -d. -f1); \
+	minor=$$(echo $$current | cut -d. -f2); \
+	patch=$$(echo $$current | cut -d. -f3); \
+	new_patch=$$((patch + 1)); \
+	new_version="$$major.$$minor.$$new_patch"; \
+	echo "  New version: $$new_version"; \
+	echo "$$new_version" > version.txt
+	@echo "✓ Version updated in version.txt"
+	@$(MAKE) pkg/obioptions/version.go
+
+jjnew:
+	@echo "$(YELLOW)→ Creating a new commit...$(NC)"
+	@echo "$(BLUE)→ Documenting current commit...$(NC)"
+	@jj auto-describe
+	@echo "$(BLUE)→ Done.$(NC)"
+	@jj new
+	@echo "$(GREEN)✓ New commit created$(NC)"
+
+jjpush:
+	@echo "$(YELLOW)→ Pushing commit to repository...$(NC)"
+	@echo "$(BLUE)→ Documenting current commit...$(NC)"
+	@jj auto-describe
+	@echo "$(BLUE)→ Creating new commit for version bump...$(NC)"
+	@jj new
+	@$(MAKE) bump-version
+	@echo "$(BLUE)→ Documenting version bump commit...$(NC)"
+	@jj auto-describe
+	@version=$$(cat version.txt); \
+	echo "$(BLUE)→ Pushing commits and creating tag v$$version...$(NC)"; \
+	jj git push --change @; \
+	git tag -a "v$$version" -m "Release $$version" 2>/dev/null || echo "Tag v$$version already exists"; \
+	git push origin "v$$version" 2>/dev/null || echo "Tag already pushed"
+	@echo "$(GREEN)✓ Commits and tag pushed to repository$(NC)"
+
+jjfetch:
+	@echo "$(YELLOW)→ Pulling latest commits...$(NC)"
+	@jj git fetch
+	@jj new master@origin
+	@echo "$(GREEN)✓ Latest commits pulled$(NC)"
+
+.PHONY: all obitools update-deps obitests githubtests jjnew jjpush jjfetch bump-version .FORCE
 .FORCE:

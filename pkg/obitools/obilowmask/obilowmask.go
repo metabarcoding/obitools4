@@ -48,12 +48,12 @@ func LowMaskWorker(kmer_size int, level_max int, threshold float64, mode Masking
 	// - We calculate the entropy of a distribution where all words appear
 	//   cov or cov+1 times (most uniform distribution possible)
 	//
-	// IMPORTANT: Uses CanonicalKmerCount to get the actual number of canonical words
+	// IMPORTANT: Uses CanonicalCircularKmerCount to get the actual number of canonical words
 	// after circular normalization (e.g., "atg", "tga", "gat" → all "atg").
 	// This is much smaller than 4^word_size (e.g., 10 instead of 16 for word_size=2).
 	emax := func(lseq, word_size int) float64 {
-		nw := lseq - word_size + 1                  // Number of words in a k-mer of length lseq
-		na := obikmer.CanonicalKmerCount(word_size) // Number of canonical words after normalization
+		nw := lseq - word_size + 1                            // Number of words in a k-mer of length lseq
+		na := obikmer.CanonicalCircularKmerCount(word_size) // Number of canonical words after normalization
 
 		// Case 1: Fewer positions than possible words
 		// Maximum entropy is simply log(nw) since we can have at most nw different words
@@ -215,7 +215,8 @@ func LowMaskWorker(kmer_size int, level_max int, threshold float64, mode Masking
 			// *** CIRCULAR NORMALIZATION ***
 			// Convert word to its canonical form (smallest by circular rotation)
 			// This is where "atg", "tga", "gat" all become "atg"
-			words[i] = obikmer.NormalizeInt(word_index, wordSize)
+			// Now using uint64-based NormalizeCircular for better performance
+			words[i] = int(obikmer.NormalizeCircular(uint64(word_index), wordSize))
 		}
 
 		// ========================================================================

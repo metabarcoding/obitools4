@@ -5,6 +5,11 @@ import (
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 )
 
+// __single_base_code__ encodes DNA bases to 2-bit values.
+// Standard bases: A=0, C=1, G=2, T/U=3
+// Ambiguous bases (N, R, Y, W, S, K, M, B, D, H, V) and other characters: encoded as 0 (A)
+// Note: For error detection with ambiguous bases, use __single_base_code_err__ in encodekmer.go
+
 var __single_base_code__ = []byte{0,
 	//     A,  B,  C,  D,
 	0, 0, 1, 0,
