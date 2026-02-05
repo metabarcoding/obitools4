@@ -352,8 +352,8 @@ func TestReverseComplementInvolution(t *testing.T) {
 	}
 }
 
-// TestNormalizeKmer tests the normalization function
-func TestNormalizeKmer(t *testing.T) {
+// TestCanonicalKmer tests the normalization function
+func TestCanonicalKmer(t *testing.T) {
 	tests := []struct {
 		name string
 		seq  string
@@ -374,7 +374,7 @@ func TestNormalizeKmer(t *testing.T) {
 
 			kmer := kmers[0]
 			rc := ReverseComplement(kmer, tt.k)
-			normalized := NormalizeKmer(kmer, tt.k)
+			normalized := CanonicalKmer(kmer, tt.k)
 
 			// Normalized should be the minimum
 			expectedNorm := kmer
@@ -383,27 +383,27 @@ func TestNormalizeKmer(t *testing.T) {
 			}
 
 			if normalized != expectedNorm {
-				t.Errorf("NormalizeKmer(%d) = %d, want %d", kmer, normalized, expectedNorm)
+				t.Errorf("CanonicalKmer(%d) = %d, want %d", kmer, normalized, expectedNorm)
 			}
 
 			// Normalizing the RC should give the same result
-			normalizedRC := NormalizeKmer(rc, tt.k)
+			normalizedRC := CanonicalKmer(rc, tt.k)
 			if normalizedRC != normalized {
-				t.Errorf("NormalizeKmer(RC) = %d, want %d (same as NormalizeKmer(fwd))", normalizedRC, normalized)
+				t.Errorf("CanonicalKmer(RC) = %d, want %d (same as CanonicalKmer(fwd))", normalizedRC, normalized)
 			}
 		})
 	}
 }
 
-// TestEncodeNormalizedKmersBasic tests basic normalized k-mer encoding
-func TestEncodeNormalizedKmersBasic(t *testing.T) {
+// TestEncodeCanonicalKmersBasic tests basic normalized k-mer encoding
+func TestEncodeCanonicalKmersBasic(t *testing.T) {
 	// Test that a sequence and its reverse complement produce the same normalized k-mers
 	seq := []byte("AACGTT")
 	revComp := []byte("AACGTT") // This is a palindrome!
 
 	k := 4
-	kmers1 := EncodeNormalizedKmers(seq, k, nil)
-	kmers2 := EncodeNormalizedKmers(revComp, k, nil)
+	kmers1 := EncodeCanonicalKmers(seq, k, nil)
+	kmers2 := EncodeCanonicalKmers(revComp, k, nil)
 
 	if len(kmers1) != len(kmers2) {
 		t.Fatalf("length mismatch: %d vs %d", len(kmers1), len(kmers2))
@@ -417,8 +417,8 @@ func TestEncodeNormalizedKmersBasic(t *testing.T) {
 	}
 }
 
-// TestEncodeNormalizedKmersSymmetry tests that seq and its RC produce same normalized k-mers (reversed)
-func TestEncodeNormalizedKmersSymmetry(t *testing.T) {
+// TestEncodeCanonicalKmersSymmetry tests that seq and its RC produce same normalized k-mers (reversed)
+func TestEncodeCanonicalKmersSymmetry(t *testing.T) {
 	// Manually construct a sequence and its reverse complement
 	seq := []byte("ACGTAACCGG")
 
@@ -430,8 +430,8 @@ func TestEncodeNormalizedKmersSymmetry(t *testing.T) {
 	}
 
 	k := 4
-	kmers1 := EncodeNormalizedKmers(seq, k, nil)
-	kmers2 := EncodeNormalizedKmers(revComp, k, nil)
+	kmers1 := EncodeCanonicalKmers(seq, k, nil)
+	kmers2 := EncodeCanonicalKmers(revComp, k, nil)
 
 	if len(kmers1) != len(kmers2) {
 		t.Fatalf("length mismatch: %d vs %d", len(kmers1), len(kmers2))
@@ -446,14 +446,14 @@ func TestEncodeNormalizedKmersSymmetry(t *testing.T) {
 	}
 }
 
-// TestEncodeNormalizedKmersConsistency verifies normalized k-mers match manual normalization
-func TestEncodeNormalizedKmersConsistency(t *testing.T) {
+// TestEncodeCanonicalKmersConsistency verifies normalized k-mers match manual normalization
+func TestEncodeCanonicalKmersConsistency(t *testing.T) {
 	seq := []byte("ACGTACGTACGTACGT")
 	k := 8
 
 	// Get k-mers both ways
 	rawKmers := EncodeKmers(seq, k, nil)
-	normalizedKmers := EncodeNormalizedKmers(seq, k, nil)
+	normalizedKmers := EncodeCanonicalKmers(seq, k, nil)
 
 	if len(rawKmers) != len(normalizedKmers) {
 		t.Fatalf("length mismatch: %d vs %d", len(rawKmers), len(normalizedKmers))
@@ -461,16 +461,16 @@ func TestEncodeNormalizedKmersConsistency(t *testing.T) {
 
 	// Verify each normalized k-mer matches manual normalization
 	for i, raw := range rawKmers {
-		expected := NormalizeKmer(raw, k)
+		expected := CanonicalKmer(raw, k)
 		if normalizedKmers[i] != expected {
-			t.Errorf("position %d: EncodeNormalizedKmers gave %d, NormalizeKmer gave %d",
+			t.Errorf("position %d: EncodeCanonicalKmers gave %d, CanonicalKmer gave %d",
 				i, normalizedKmers[i], expected)
 		}
 	}
 }
 
-// BenchmarkEncodeNormalizedKmers benchmarks the normalized encoding function
-func BenchmarkEncodeNormalizedKmers(b *testing.B) {
+// BenchmarkEncodeCanonicalKmers benchmarks the normalized encoding function
+func BenchmarkEncodeCanonicalKmers(b *testing.B) {
 	sizes := []int{100, 1000, 10000, 100000}
 	kSizes := []int{8, 16, 31}
 
@@ -488,7 +488,7 @@ func BenchmarkEncodeNormalizedKmers(b *testing.B) {
 				b.SetBytes(int64(size))
 
 				for i := 0; i < b.N; i++ {
-					EncodeNormalizedKmers(seq, k, &buffer)
+					EncodeCanonicalKmers(seq, k, &buffer)
 				}
 			})
 		}
@@ -506,14 +506,14 @@ func BenchmarkReverseComplement(b *testing.B) {
 	}
 }
 
-// BenchmarkNormalizeKmer benchmarks the normalization function
-func BenchmarkNormalizeKmer(b *testing.B) {
+// BenchmarkCanonicalKmer benchmarks the normalization function
+func BenchmarkCanonicalKmer(b *testing.B) {
 	kmer := uint64(0x06C6C6C6C6C6C6C6)
 	k := 31
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		NormalizeKmer(kmer, k)
+		CanonicalKmer(kmer, k)
 	}
 }
 
@@ -730,7 +730,7 @@ func TestExtractSuperKmersCanonical(t *testing.T) {
 
 	for i, sk := range result {
 		// Verify the minimizer is indeed canonical (equal to its normalized form)
-		normalized := NormalizeKmer(sk.Minimizer, m)
+		normalized := CanonicalKmer(sk.Minimizer, m)
 		if sk.Minimizer != normalized {
 			t.Errorf("super k-mer %d: minimizer %d is not canonical (normalized: %d)",
 				i, sk.Minimizer, normalized)
@@ -886,8 +886,8 @@ func TestKmerErrorMarkersWithRealKmers(t *testing.T) {
 			}
 
 			// Verify normalization works with error bits cleared
-			normalized1 := NormalizeKmer(originalKmer, k)
-			normalized2 := NormalizeKmer(ClearKmerError(marked), k)
+			normalized1 := CanonicalKmer(originalKmer, k)
+			normalized2 := CanonicalKmer(ClearKmerError(marked), k)
 			if normalized1 != normalized2 {
 				t.Errorf("Normalization affected by error bits")
 			}
@@ -977,8 +977,8 @@ func TestReverseComplementPreservesErrorBits(t *testing.T) {
 	}
 }
 
-// TestNormalizeKmerWithErrorBits tests that NormalizeKmer works with error bits
-func TestNormalizeKmerWithErrorBits(t *testing.T) {
+// TestCanonicalKmerWithErrorBits tests that CanonicalKmer works with error bits
+func TestCanonicalKmerWithErrorBits(t *testing.T) {
 	seq := []byte("ACGTACGTACGTACGTACGTACGTACGTACG")
 	k := 31
 
@@ -995,7 +995,7 @@ func TestNormalizeKmerWithErrorBits(t *testing.T) {
 			marked := SetKmerError(originalKmer, errCode)
 
 			// Normalize should work on the sequence part
-			normalized := NormalizeKmer(marked, k)
+			normalized := CanonicalKmer(marked, k)
 
 			// Error bits should be preserved
 			if GetKmerError(normalized) != errCode {
@@ -1004,7 +1004,7 @@ func TestNormalizeKmerWithErrorBits(t *testing.T) {
 
 			// The sequence part should be normalized
 			cleanNormalized := ClearKmerError(normalized)
-			expectedNormalized := NormalizeKmer(ClearKmerError(marked), k)
+			expectedNormalized := CanonicalKmer(ClearKmerError(marked), k)
 
 			if cleanNormalized != expectedNormalized {
 				t.Errorf("Normalization incorrect with error bits present")
@@ -1081,19 +1081,19 @@ func TestIterKmers(t *testing.T) {
 	}
 }
 
-// TestIterNormalizedKmers tests the normalized k-mer iterator
-func TestIterNormalizedKmers(t *testing.T) {
+// TestIterCanonicalKmers tests the normalized k-mer iterator
+func TestIterCanonicalKmers(t *testing.T) {
 	seq := []byte("ACGTACGTACGT")
 	k := 6
 
 	// Collect k-mers via iterator
 	var iterKmers []uint64
-	for kmer := range IterNormalizedKmers(seq, k) {
+	for kmer := range IterCanonicalKmers(seq, k) {
 		iterKmers = append(iterKmers, kmer)
 	}
 
 	// Compare with slice-based version
-	sliceKmers := EncodeNormalizedKmers(seq, k, nil)
+	sliceKmers := EncodeCanonicalKmers(seq, k, nil)
 
 	if len(iterKmers) != len(sliceKmers) {
 		t.Errorf("length mismatch: iter=%d, slice=%d", len(iterKmers), len(sliceKmers))
@@ -1151,8 +1151,8 @@ func BenchmarkIterKmers(b *testing.B) {
 	})
 }
 
-// BenchmarkIterNormalizedKmers benchmarks the normalized iterator
-func BenchmarkIterNormalizedKmers(b *testing.B) {
+// BenchmarkIterCanonicalKmers benchmarks the normalized iterator
+func BenchmarkIterCanonicalKmers(b *testing.B) {
 	seq := make([]byte, 10000)
 	for i := range seq {
 		seq[i] = "ACGT"[i%4]
@@ -1163,7 +1163,7 @@ func BenchmarkIterNormalizedKmers(b *testing.B) {
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			count := 0
-			for range IterNormalizedKmers(seq, k) {
+			for range IterCanonicalKmers(seq, k) {
 				count++
 			}
 		}
@@ -1173,7 +1173,7 @@ func BenchmarkIterNormalizedKmers(b *testing.B) {
 		var buffer []uint64
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			buffer = EncodeNormalizedKmers(seq, k, &buffer)
+			buffer = EncodeCanonicalKmers(seq, k, &buffer)
 		}
 	})
 }
