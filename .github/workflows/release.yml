@@ -22,15 +22,35 @@ jobs:
       - name: Run tests
         run: make githubtests
 
-  # Then create release only if tests pass
-  create-release:
+  # Build binaries for each platform
+  build:
     needs: test
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            goos: linux
+            goarch: amd64
+            output_name: linux_amd64
+          - os: ubuntu-latest
+            goos: linux
+            goarch: arm64
+            output_name: linux_arm64
+            cross_compile: true
+          - os: macos-latest
+            goos: darwin
+            goarch: amd64
+            output_name: darwin_amd64
+          - os: macos-latest
+            goos: darwin
+            goarch: arm64
+            output_name: darwin_arm64
+
+    runs-on: ${{ matrix.os }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Setup Go
         uses: actions/setup-go@v5
@@ -42,77 +62,61 @@ jobs:
         run: |
           TAG=${GITHUB_REF#refs/tags/Release_}
           echo "version=$TAG" >> $GITHUB_OUTPUT
-          echo "tag_name=Release_$TAG" >> $GITHUB_OUTPUT
 
-      - name: Build binaries for multiple platforms
+      - name: Install cross-compilation tools (Linux ARM64 only)
+        if: matrix.cross_compile
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu
+
+      - name: Build binaries
         env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CC: ${{ matrix.cross_compile && 'aarch64-linux-gnu-gcc' || '' }}
           VERSION: ${{ steps.get_version.outputs.version }}
         run: |
+          make obitools
+          mkdir -p artifacts
+          cd build
+          for binary in *; do
+            tar -czf ../artifacts/${binary}_${VERSION}_${{ matrix.output_name }}.tar.gz ${binary}
+          done
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: binaries-${{ matrix.output_name }}
+          path: artifacts/*
+
+  # Create the release
+  create-release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract version from tag
+        id: get_version
+        run: |
+          TAG=${GITHUB_REF#refs/tags/Release_}
+          echo "version=$TAG" >> $GITHUB_OUTPUT
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-artifacts
+
+      - name: Prepare release directory
+        run: |
           mkdir -p release
-
-          # Build for Linux AMD64
-          echo "Building for Linux AMD64..."
-          GOOS=linux GOARCH=amd64 make obitools
-          cd build
-          for binary in *; do
-            tar -czf ../release/${binary}_${VERSION}_linux_amd64.tar.gz ${binary}
-          done
-          cd ..
-          rm -rf build
-          
-
-          # Build for Linux ARM64
-          echo "Building for Linux ARM64..."
-          GOOS=linux GOARCH=arm64 make obitools
-          cd build
-          for binary in *; do
-            tar -czf ../release/${binary}_${VERSION}_linux_arm64.tar.gz ${binary}
-          done
-          cd ..
-          rm -rf build
-          
-
-          # Build for macOS AMD64 (Intel)
-          echo "Building for macOS AMD64..."
-          GOOS=darwin GOARCH=amd64 make obitools
-          cd build
-          for binary in *; do
-            tar -czf ../release/${binary}_${VERSION}_darwin_amd64.tar.gz ${binary}
-          done
-          cd ..
-          rm -rf build
-          
-
-          # Build for macOS ARM64 (Apple Silicon)
-          echo "Building for macOS ARM64..."
-          GOOS=darwin GOARCH=arm64 make obitools
-          cd build
-          for binary in *; do
-            tar -czf ../release/${binary}_${VERSION}_darwin_arm64.tar.gz ${binary}
-          done
-          cd ..
-          rm -rf build
-          
-
-          # Build for Windows AMD64
-          echo "Building for Windows AMD64..."
-          GOOS=windows GOARCH=amd64 make obitools
-          cd build
-          for binary in *; do
-            # Windows binaries have .exe extension
-            if [ -f "${binary}.exe" ]; then
-              zip ../release/${binary}_${VERSION}_windows_amd64.zip ${binary}.exe
-            else
-              zip ../release/${binary}_${VERSION}_windows_amd64.zip ${binary}
-            fi
-          done
-          cd ..
-
-          echo "Built archives:"
+          find release-artifacts -type f -name "*.tar.gz" -exec cp {} release/ \;
           ls -lh release/
 
       - name: Generate Release Notes
-        id: release_notes
         env:
           VERSION: ${{ steps.get_version.outputs.version }}
         run: |
@@ -155,11 +159,6 @@ jobs:
           echo "### macOS (Apple Silicon)" >> release_notes.md
           echo '```bash' >> release_notes.md
           echo "tar -xzf <tool>_${VERSION}_darwin_arm64.tar.gz" >> release_notes.md
-          echo '```' >> release_notes.md
-          echo "" >> release_notes.md
-          echo "### Windows (AMD64)" >> release_notes.md
-          echo '```powershell' >> release_notes.md
-          echo "Expand-Archive <tool>_${VERSION}_windows_amd64.zip" >> release_notes.md
           echo '```' >> release_notes.md
           echo "" >> release_notes.md
           echo "Available tools: Replace \`<tool>\` with one of the obitools commands." >> release_notes.md
