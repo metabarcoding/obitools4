@@ -16,12 +16,17 @@ The easiest way to run it is to copy and paste the following command into your t
 curl -L https://raw.githubusercontent.com/metabarcoding/obitools4/master/install_obitools.sh | bash
 ```
 
-By default, the script installs the *OBITools* commands and other associated files into the `/usr/local` directory.
-The names of the commands in the new *OBITools4* are mostly identical to those in *OBITools2*.
-Therefore, installing the new *OBITools* may hide or delete the old ones. If you want both versions to be 
-available on your system, the installation script offers two options:
+By default, the script installs the latest version of *OBITools* commands and other associated files into the `/usr/local` directory.
 
+### Installation Options
 
+The installation script offers several options:
+
+>  -l, --list              List all available versions and exit.
+> 
+>  -v, --version           Install a specific version (e.g., `-v 4.4.3`).
+>                          By default, the latest version is installed.
+> 
 >  -i, --install-dir       Directory where obitools are installed 
 >                          (as example use `/usr/local` not `/usr/local/bin`).
 > 
@@ -30,14 +35,31 @@ available on your system, the installation script offers two options:
 >                          same time on your system (as example `-p g` will produce 
 >                          `gobigrep` command instead of `obigrep`).
 
-You can use these options by following the installation command:
+### Examples
 
+List all available versions:
+```{bash}
+curl -L https://raw.githubusercontent.com/metabarcoding/obitools4/master/install_obitools.sh | bash -s -- --list
+```
+
+Install a specific version:
+```{bash}
+curl -L https://raw.githubusercontent.com/metabarcoding/obitools4/master/install_obitools.sh | bash -s -- --version 4.4.3
+```
+
+Install in a custom directory with command prefix:
 ```{bash}
 curl -L https://raw.githubusercontent.com/metabarcoding/obitools4/master/install_obitools.sh | \
       bash -s -- --install-dir test_install --obitools-prefix k
 ```
 
-In this case, the binaries will be installed in the `test_install` directory and all command names will be prefixed with the letter `k`. Thus, `obigrep` will be named `kobigrep`.
+In this last example, the binaries will be installed in the `test_install` directory and all command names will be prefixed with the letter `k`. Thus, `obigrep` will be named `kobigrep`.
+
+### Note on Version Compatibility
+
+The names of the commands in the new *OBITools4* are mostly identical to those in *OBITools2*.
+Therefore, installing the new *OBITools* may hide or delete the old ones. If you want both versions to be 
+available on your system, use the `--install-dir` and `--obitools-prefix` options as shown above.
 
 ## Continuing the analysis...
 
