@@ -77,10 +77,8 @@ jobs:
         run: |
           make obitools
           mkdir -p artifacts
-          cd build
-          for binary in *; do
-            tar -czf ../artifacts/${binary}_${VERSION}_${{ matrix.output_name }}.tar.gz ${binary}
-          done
+          # Create a single tar.gz with all binaries for this platform
+          tar -czf artifacts/obitools4_${VERSION}_${{ matrix.output_name }}.tar.gz -C build .
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -138,29 +136,29 @@ jobs:
           echo "" >> release_notes.md
           echo "## Installation" >> release_notes.md
           echo "" >> release_notes.md
-          echo "Download the appropriate binary for your system and extract it:" >> release_notes.md
+          echo "Download the appropriate archive for your system and extract it:" >> release_notes.md
           echo "" >> release_notes.md
           echo "### Linux (AMD64)" >> release_notes.md
           echo '```bash' >> release_notes.md
-          echo "tar -xzf <tool>_${VERSION}_linux_amd64.tar.gz" >> release_notes.md
+          echo "tar -xzf obitools4_${VERSION}_linux_amd64.tar.gz" >> release_notes.md
           echo '```' >> release_notes.md
           echo "" >> release_notes.md
           echo "### Linux (ARM64)" >> release_notes.md
           echo '```bash' >> release_notes.md
-          echo "tar -xzf <tool>_${VERSION}_linux_arm64.tar.gz" >> release_notes.md
+          echo "tar -xzf obitools4_${VERSION}_linux_arm64.tar.gz" >> release_notes.md
           echo '```' >> release_notes.md
           echo "" >> release_notes.md
           echo "### macOS (Intel)" >> release_notes.md
           echo '```bash' >> release_notes.md
-          echo "tar -xzf <tool>_${VERSION}_darwin_amd64.tar.gz" >> release_notes.md
+          echo "tar -xzf obitools4_${VERSION}_darwin_amd64.tar.gz" >> release_notes.md
           echo '```' >> release_notes.md
           echo "" >> release_notes.md
           echo "### macOS (Apple Silicon)" >> release_notes.md
           echo '```bash' >> release_notes.md
-          echo "tar -xzf <tool>_${VERSION}_darwin_arm64.tar.gz" >> release_notes.md
+          echo "tar -xzf obitools4_${VERSION}_darwin_arm64.tar.gz" >> release_notes.md
           echo '```' >> release_notes.md
           echo "" >> release_notes.md
-          echo "Available tools: Replace \`<tool>\` with one of the obitools commands." >> release_notes.md
+          echo "All OBITools4 binaries are included in each archive." >> release_notes.md
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1

@@ -3,7 +3,7 @@ package obioptions
 // Version is automatically updated by the Makefile from version.txt
 // The patch number (third digit) is incremented on each push to the repository
 
-var _Version = "Release 4.4.9"
+var _Version = "Release 4.4.10"
 
 // Version returns the version of the obitools package.
 //
