@@ -32,12 +32,11 @@ jobs:
             goos: linux
             goarch: amd64
             output_name: linux_amd64
-          - os: ubuntu-latest
+          - os: ubuntu-24.04-arm
             goos: linux
             goarch: arm64
             output_name: linux_arm64
-            cross_compile: true
-          - os: macos-latest
+          - os: macos-15-intel
             goos: darwin
             goarch: amd64
             output_name: darwin_amd64
@@ -63,17 +62,17 @@ jobs:
           TAG=${GITHUB_REF#refs/tags/Release_}
           echo "version=$TAG" >> $GITHUB_OUTPUT
 
-      - name: Install cross-compilation tools (Linux ARM64 only)
-        if: matrix.cross_compile
+      - name: Install build tools (macOS)
+        if: runner.os == 'macOS'
         run: |
-          sudo apt-get update
-          sudo apt-get install -y gcc-aarch64-linux-gnu
+          # Ensure Xcode Command Line Tools are installed
+          xcode-select --install 2>/dev/null || true
+          xcode-select -p
 
       - name: Build binaries
         env:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
-          CC: ${{ matrix.cross_compile && 'aarch64-linux-gnu-gcc' || '' }}
           VERSION: ${{ steps.get_version.outputs.version }}
         run: |
           make obitools
