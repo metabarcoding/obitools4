@@ -95,7 +95,7 @@ func IterSuperKmers(seq []byte, k int, m int) iter.Seq[SuperKmer] {
 			}
 		}
 
-		if !firstKmer {
+		if !firstKmer && len(seq[superKmerStart:]) >= k {
 			superKmer := SuperKmer{
 				Minimizer: currentMinimizer,
 				Start:     superKmerStart,
