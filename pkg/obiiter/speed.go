@@ -5,15 +5,27 @@ import (
 	"os"
 	"time"
 
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"github.com/schollz/progressbar/v3"
 )
 
 func (iterator IBioSequence) Speed(message string, size ...int) IBioSequence {
 
-	// If the STDERR is redicted and doesn't end up to a terminal
+	// If the progress bar is disabled via --no-progressbar option
+	if !obidefault.ProgressBar() {
+		return iterator
+	}
+
+	// If the STDERR is redirected and doesn't end up to a terminal
 	// No progress bar is printed.
 	o, _ := os.Stderr.Stat()
 	if (o.Mode() & os.ModeCharDevice) != os.ModeCharDevice {
+		return iterator
+	}
+
+	// If stdout is piped, no progress bar is printed.
+	oo, _ := os.Stdout.Stat()
+	if (oo.Mode() & os.ModeNamedPipe) == os.ModeNamedPipe {
 		return iterator
 	}
 

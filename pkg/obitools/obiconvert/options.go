@@ -31,7 +31,6 @@ var __output_in_json__ = false
 var __output_fastjson_format__ = false
 var __output_fastobi_format__ = false
 
-var __no_progress_bar__ = false
 var __skip_empty__ = false
 var __skip_on_error__ = false
 
@@ -82,7 +81,7 @@ func InputOptionSet(options *getoptions.GetOpt) {
 }
 
 func OutputModeOptionSet(options *getoptions.GetOpt, compressed bool) {
-	options.BoolVar(&__no_progress_bar__, "no-progressbar", false,
+	options.BoolVar(obidefault.NoProgressBarPtr(), "no-progressbar", obidefault.NoProgressBar(),
 		options.Description("Disable the progress bar printing"))
 
 	if compressed {
@@ -233,7 +232,7 @@ func CLIProgressBar() bool {
 	oo, _ := os.Stdout.Stat()
 	toPipe := (oo.Mode() & os.ModeNamedPipe) == os.ModeNamedPipe
 
-	return onTerminal && !toPipe && !__no_progress_bar__
+	return onTerminal && !toPipe && obidefault.ProgressBar()
 }
 
 func CLIOutPutFileName() string {

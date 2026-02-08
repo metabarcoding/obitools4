@@ -14,35 +14,39 @@ func AhoCorazickWorker(slot string, patterns []string) obiseq.SeqWorker {
 
 	sizebatch:=10000000
 	nmatcher := len(patterns) / sizebatch + 1
-	log.Infof("Building AhoCorasick %d matcher for %d patterns in slot %s", 
+	log.Infof("Building AhoCorasick %d matcher for %d patterns in slot %s",
 			 nmatcher, len(patterns), slot)
 
 	if nmatcher == 0 {
 		log.Errorln("No patterns provided")
 	}
-	
+
 	matchers := make([]*ahocorasick.Matcher, nmatcher)
-	ieme := make(chan int) 
+	ieme := make(chan int)
 	mutex := &sync.WaitGroup{}
 	npar := min(obidefault.ParallelWorkers(), nmatcher)
 	mutex.Add(npar)
 
-	pbopt := make([]progressbar.Option, 0, 5)
-	pbopt = append(pbopt,
-		progressbar.OptionSetWriter(os.Stderr),
-		progressbar.OptionSetWidth(15),
-		progressbar.OptionShowCount(),
-		progressbar.OptionShowIts(),
-		progressbar.OptionSetDescription("Building AhoCorasick matcher..."),
-	)
+	var bar *progressbar.ProgressBar
+	if obidefault.ProgressBar() {
+		pbopt := make([]progressbar.Option, 0, 5)
+		pbopt = append(pbopt,
+			progressbar.OptionSetWriter(os.Stderr),
+			progressbar.OptionSetWidth(15),
+			progressbar.OptionShowCount(),
+			progressbar.OptionShowIts(),
+			progressbar.OptionSetDescription("Building AhoCorasick matcher..."),
+		)
 
-	bar := progressbar.NewOptions(nmatcher, pbopt...)
-	bar.Add(0)
+		bar = progressbar.NewOptions(nmatcher, pbopt...)
+	}
 
 	builder := func() {
-		for i := range ieme  {		
+		for i := range ieme  {
 		matchers[i] = ahocorasick.CompileStrings(patterns[i*sizebatch:min((i+1)*sizebatch,len(patterns))])
-		bar.Add(1)
+		if bar != nil {
+			bar.Add(1)
+		}
 		}
 		mutex.Done()
 	}

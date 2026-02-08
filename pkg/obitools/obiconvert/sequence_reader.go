@@ -210,9 +210,7 @@ func CLIReadBioSequences(filenames ...string) (obiiter.IBioSequence, error) {
 
 	}
 
-	if CLIProgressBar() {
-		iterator = iterator.Speed("Reading sequences")
-	}
+	iterator = iterator.Speed("Reading sequences")
 
 	return iterator, nil
 }
