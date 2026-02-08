@@ -224,13 +224,16 @@ func CLIAnalyzeOnly() int {
 
 func CLIProgressBar() bool {
 	// If the output is not a terminal, then we do not display the progress bar
-	o, _ := os.Stderr.Stat()
-	onTerminal := (o.Mode() & os.ModeCharDevice) == os.ModeCharDevice
+	oe, _ := os.Stderr.Stat()
+	onTerminal := (oe.Mode() & os.ModeCharDevice) == os.ModeCharDevice
 	if !onTerminal {
 		log.Info("Stderr is redirected, progress bar disabled")
 	}
 
-	return onTerminal && !__no_progress_bar__
+	oo, _ := os.Stdout.Stat()
+	toPipe := (oo.Mode() & os.ModeNamedPipe) == os.ModeNamedPipe
+
+	return onTerminal && !toPipe && !__no_progress_bar__
 }
 
 func CLIOutPutFileName() string {
