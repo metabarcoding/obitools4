@@ -39,7 +39,7 @@ cleanup() {
     rm -rf "$TMPDIR"  # Suppress the temporary directory
 
     if [ $failed -gt 0 ]; then
-       log "$TEST_NAME tests failed" 
+       log "$TEST_NAME tests failed"
         log
         log
        exit 1
@@ -55,10 +55,10 @@ log() {
     echo -e "[$TEST_NAME @ $(date)] $*" 1>&2
 }
 
-log "Testing $TEST_NAME..." 
-log "Test directory is $TEST_DIR" 
-log "obitools directory is $OBITOOLS_DIR" 
-log "Temporary directory is $TMPDIR" 
+log "Testing $TEST_NAME..."
+log "Test directory is $TEST_DIR"
+log "obitools directory is $OBITOOLS_DIR"
+log "Temporary directory is $TMPDIR"
 log "files: $(find $TEST_DIR | awk -F'/' '{print $NF}' | tail -n +2)"
 
 ######################################################################
@@ -89,12 +89,12 @@ log "files: $(find $TEST_DIR | awk -F'/' '{print $NF}' | tail -n +2)"
 
 
 ((ntest++))
-if $CMD -h > "${TMPDIR}/help.txt" 2>&1 
+if $CMD -h > "${TMPDIR}/help.txt" 2>&1
 then
-    log "$MCMD: printing help OK" 
+    log "$MCMD: printing help OK"
     ((success++))
 else
-    log "$MCMD: printing help failed" 
+    log "$MCMD: printing help failed"
     ((failed++))
 fi
 
@@ -102,7 +102,7 @@ fi
 if obiuniq "${TEST_DIR}/touniq.fasta" \
     > "${TMPDIR}/touniq_u.fasta"
 then
-    log "OBIUniq simple: running OK" 
+    log "OBIUniq simple: running OK"
     ((success++))
 else
     log "OBIUniq simple: running failed"
@@ -134,7 +134,7 @@ fi
 if obiuniq -c a "${TEST_DIR}/touniq.fasta" \
     > "${TMPDIR}/touniq_u_a.fasta"
 then
-    log "OBIUniq one category: running OK" 
+    log "OBIUniq one category: running OK"
     ((success++))
 else
     log "OBIUniq one category: running failed"
@@ -167,7 +167,7 @@ fi
 if obiuniq -c a -c b "${TEST_DIR}/touniq.fasta" \
     > "${TMPDIR}/touniq_u_a_b.fasta"
 then
-    log "OBIUniq two categories: running OK" 
+    log "OBIUniq two categories: running OK"
     ((success++))
 else
     log "OBIUniq two categories: running failed"
@@ -192,6 +192,59 @@ then
     ((success++))
 else
     log "OBIUniq two categories: result failed"
+    ((failed++))
+fi
+
+##
+## Test merge attributes consistency between in-memory and on-disk paths
+## This test catches the bug where the shared classifier in the on-disk
+## dereplication path caused incorrect merged attributes.
+##
+
+((ntest++))
+if obiuniq -m a -m b --in-memory \
+    "${TEST_DIR}/touniq.fasta" \
+    > "${TMPDIR}/touniq_u_merge_mem.fasta" 2>/dev/null
+then
+    log "OBIUniq merge in-memory: running OK"
+    ((success++))
+else
+    log "OBIUniq merge in-memory: running failed"
+    ((failed++))
+fi
+
+((ntest++))
+if obiuniq -m a -m b --chunk-count 4 \
+    "${TEST_DIR}/touniq.fasta" \
+    > "${TMPDIR}/touniq_u_merge_disk.fasta" 2>/dev/null
+then
+    log "OBIUniq merge on-disk: running OK"
+    ((success++))
+else
+    log "OBIUniq merge on-disk: running failed"
+    ((failed++))
+fi
+
+# Extract sorted annotations (JSON attributes) from both outputs
+# to compare merge results independently of sequence ordering
+grep '^>' "${TMPDIR}/touniq_u_merge_mem.fasta" \
+| sed 's/^>seq[0-9]* //' \
+| sort \
+> "${TMPDIR}/touniq_u_merge_mem.json"
+
+grep '^>' "${TMPDIR}/touniq_u_merge_disk.fasta" \
+| sed 's/^>seq[0-9]* //' \
+| sort \
+> "${TMPDIR}/touniq_u_merge_disk.json"
+
+((ntest++))
+if diff "${TMPDIR}/touniq_u_merge_mem.json" \
+        "${TMPDIR}/touniq_u_merge_disk.json" > /dev/null
+then
+    log "OBIUniq merge on-disk vs in-memory: result OK"
+    ((success++))
+else
+    log "OBIUniq merge on-disk vs in-memory: result failed"
     ((failed++))
 fi
 
