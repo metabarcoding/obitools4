@@ -141,9 +141,19 @@ jjpush:
 	echo "$(BLUE)→ Documenting version bump commit...$(NC)"; \
 	jj auto-describe; \
 	echo "$(BLUE)→ Generating release notes from $$previous_tag to current commit...$(NC)"; \
-	if command -v orla >/dev/null 2>&1; then \
-		release_message=$$(ORLA_MAX_TOOL_CALLS=50 jj log -r "$$previous_tag::@" -T 'commit_id.short() ++ " " ++ description' | \
-			orla agent -m ollama:qwen3-coder-next:latest "synthétise en anglais l'ensemble des commits présentés en un message de nouvelle version pour ma page GitHub. Tu détailleras précisément les changements, sans exposer de code, et tu éviteras toute redondance dans le texte généré."); \
+	if command -v orla >/dev/null 2>&1 && command -v jq >/dev/null 2>&1; then \
+		release_json=$$(ORLA_MAX_TOOL_CALLS=50 jj log -r "$$previous_tag::@" -T 'commit_id.short() ++ " " ++ description' | \
+			orla agent -m ollama:qwen3-coder-next:latest \
+			"Summarize the following commits into a GitHub release note for version $$version. Ignore commits related to version bumps, .gitignore changes, or any internal housekeeping that is irrelevant to end users. Describe each user-facing change precisely without exposing code. Eliminate redundancy. Output strictly valid JSON with no surrounding text, using this exact schema: {\"title\": \"<short release title>\", \"body\": \"<detailed markdown release notes>\"}"); \
+		release_json=$$(echo "$$release_json" | sed -n '/^{/,/^}/p'); \
+		release_title=$$(echo "$$release_json" | jq -r '.title // empty') ; \
+		release_body=$$(echo "$$release_json" | jq -r '.body // empty') ; \
+		if [ -n "$$release_title" ] && [ -n "$$release_body" ]; then \
+			release_message="$$release_title"$$'\n\n'"$$release_body"; \
+		else \
+			echo "$(YELLOW)⚠ JSON parsing failed, falling back to raw output$(NC)"; \
+			release_message="Release $$version"$$'\n\n'"$$release_json"; \
+		fi; \
 	else \
 		release_message="Release $$version"; \
 	fi; \
