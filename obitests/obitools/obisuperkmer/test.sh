@@ -230,19 +230,16 @@ else
     ((failed++))
 fi
 
-# Test 12: Verify super k-mers are shorter than or equal to parent sequences
+# Test 12: Verify each super k-mer length is >= k (default k=31)
 ((ntest++))
-# Count nucleotides in input sequences (excluding headers)
-input_bases=$(grep -v "^>" "${TEST_DIR}/test_sequences.fasta" | tr -d '\n' | wc -c)
-# Count nucleotides in output sequences (excluding headers)
-output_bases=$(grep -v "^>" "${TMPDIR}/output_default.fasta" | tr -d '\n' | wc -c)
+min_len=$(grep -v "^>" "${TMPDIR}/output_default.fasta" | awk '{print length}' | sort -n | head -1)
 
-if [ "$output_bases" -le "$input_bases" ]
+if [ "$min_len" -ge 31 ]
 then
-    log "$MCMD: super k-mer total length <= input length OK"
+    log "$MCMD: all super k-mers have length >= k OK"
     ((success++))
 else
-    log "$MCMD: super k-mer total length > input length - failed"
+    log "$MCMD: some super k-mers shorter than k ($min_len < 31) - failed"
     ((failed++))
 fi
 
