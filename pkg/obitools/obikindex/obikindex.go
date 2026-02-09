@@ -7,8 +7,8 @@ import (
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obikmer"
 )
 
-// CLIBuildKmerIndex reads sequences from the iterator and builds a kmer index
-// saved as a roaring bitmap directory.
+// CLIBuildKmerIndex reads sequences from the iterator and builds a
+// disk-based kmer index using the KmerSetGroupBuilder.
 func CLIBuildKmerIndex(iterator obiiter.IBioSequence) {
 	// Validate output directory
 	outDir := CLIOutputDirectory()
@@ -31,64 +31,56 @@ func CLIBuildKmerIndex(iterator obiiter.IBioSequence) {
 		log.Fatalf("Invalid min-occurrence: %d (must be >= 1)", minOcc)
 	}
 
-	// Resolve metadata format
-	format := CLIMetadataFormat()
-
 	log.Infof("Building kmer index: k=%d, m=%d, min-occurrence=%d", k, m, minOcc)
 
-	if minOcc <= 1 {
-		// Simple KmerSet mode
-		ks := obikmer.BuildKmerIndex(iterator, k, m)
+	// Build options
+	var opts []obikmer.BuilderOption
+	if minOcc > 1 {
+		opts = append(opts, obikmer.WithMinFrequency(minOcc))
+	}
 
-		// Apply metadata
-		applyKmerSetMetadata(ks)
+	// Create builder (1 set, auto partitions)
+	builder, err := obikmer.NewKmerSetGroupBuilder(outDir, k, m, 1, -1, opts...)
+	if err != nil {
+		log.Fatalf("Failed to create kmer index builder: %v", err)
+	}
 
-		// Save
-		log.Infof("Saving KmerSet to %s", outDir)
-		if err := ks.Save(outDir, format); err != nil {
-			log.Fatalf("Failed to save kmer index: %v", err)
-		}
-	} else {
-		// FrequencyFilter mode
-		ff := obikmer.BuildFrequencyFilterIndex(iterator, k, m, minOcc)
-
-		if CLISaveFullFilter() {
-			// Save the full filter (all levels)
-			applyMetadataGroup(ff.KmerSetGroup)
-
-			log.Infof("Saving full FrequencyFilter to %s", outDir)
-			if err := ff.Save(outDir, format); err != nil {
-				log.Fatalf("Failed to save frequency filter: %v", err)
-			}
-		} else {
-			// Save only the filtered KmerSet (k-mers with freq >= minOcc)
-			ks := ff.GetFilteredSet()
-			applyKmerSetMetadata(ks)
-			ks.SetAttribute("min_occurrence", minOcc)
-
-			log.Infof("Saving filtered KmerSet (freq >= %d) to %s", minOcc, outDir)
-			if err := ks.Save(outDir, format); err != nil {
-				log.Fatalf("Failed to save filtered kmer index: %v", err)
-			}
+	// Feed sequences
+	seqCount := 0
+	for iterator.Next() {
+		batch := iterator.Get()
+		for _, seq := range batch.Slice() {
+			builder.AddSequence(0, seq)
+			seqCount++
 		}
 	}
 
+	log.Infof("Processed %d sequences", seqCount)
+
+	// Finalize
+	ksg, err := builder.Close()
+	if err != nil {
+		log.Fatalf("Failed to finalize kmer index: %v", err)
+	}
+
+	// Apply metadata
+	applyMetadata(ksg)
+
+	if minOcc > 1 {
+		ksg.SetAttribute("min_occurrence", minOcc)
+	}
+
+	// Persist metadata updates
+	if err := ksg.SaveMetadata(); err != nil {
+		log.Fatalf("Failed to save metadata: %v", err)
+	}
+
+	log.Infof("Index contains %d k-mers in %s", ksg.Len(0), outDir)
 	log.Info("Done.")
 }
 
-// applyKmerSetMetadata sets index-id and --set-tag metadata on a KmerSet.
-func applyKmerSetMetadata(ks *obikmer.KmerSet) {
-	if id := CLIIndexId(); id != "" {
-		ks.SetId(id)
-	}
-
-	for key, value := range CLISetTag() {
-		ks.SetAttribute(key, value)
-	}
-}
-
-// applyMetadataGroup sets index-id and --set-tag metadata on a KmerSetGroup.
-func applyMetadataGroup(ksg *obikmer.KmerSetGroup) {
+// applyMetadata sets index-id and --set-tag metadata on a KmerSetGroup.
+func applyMetadata(ksg *obikmer.KmerSetGroup) {
 	if id := CLIIndexId(); id != "" {
 		ksg.SetId(id)
 	}

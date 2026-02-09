@@ -11,7 +11,7 @@ import (
 func main() {
 	optionParser := obioptions.GenerateOptionParser(
 		"obikindex",
-		"builds a roaring kmer index from sequence files",
+		"builds a disk-based kmer index from sequence files",
 		obikindex.OptionSet)
 
 	_, args := optionParser(os.Args)
