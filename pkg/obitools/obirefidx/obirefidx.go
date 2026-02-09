@@ -239,16 +239,19 @@ func IndexReferenceDB(iterator obiiter.IBioSequence) obiiter.IBioSequence {
 
 	log.Info("done")
 
-	pbopt := make([]progressbar.Option, 0, 5)
-	pbopt = append(pbopt,
-		progressbar.OptionSetWriter(os.Stderr),
-		progressbar.OptionSetWidth(15),
-		progressbar.OptionShowCount(),
-		progressbar.OptionShowIts(),
-		progressbar.OptionSetDescription("[Sequence Processing]"),
-	)
+	var bar *progressbar.ProgressBar
+	if obidefault.ProgressBar() {
+		pbopt := make([]progressbar.Option, 0, 5)
+		pbopt = append(pbopt,
+			progressbar.OptionSetWriter(os.Stderr),
+			progressbar.OptionSetWidth(15),
+			progressbar.OptionShowCount(),
+			progressbar.OptionShowIts(),
+			progressbar.OptionSetDescription("[Sequence Processing]"),
+		)
 
-	bar := progressbar.NewOptions(len(references), pbopt...)
+		bar = progressbar.NewOptions(len(references), pbopt...)
+	}
 
 	limits := make(chan [2]int)
 	indexed := obiiter.MakeIBioSequence()
@@ -267,7 +270,9 @@ func IndexReferenceDB(iterator obiiter.IBioSequence) obiiter.IBioSequence {
 				iref := references[i].Copy()
 				iref.SetOBITagRefIndex(idx)
 				sl = append(sl, iref)
-				bar.Add(1)
+				if bar != nil {
+					bar.Add(1)
+				}
 			}
 			indexed.Push(obiiter.MakeBioSequenceBatch(source, l[0]/10, sl))
 		}

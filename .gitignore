@@ -27,7 +27,9 @@ xx
 
 !/obitests/**
 !/sample/**
-LLM/** 
+LLM/**
 *_files
 
 entropy.html
+bug_id.txt
+obilowmask_ref

@@ -42,16 +42,19 @@ func MapOnLandmarkSequences(library obiseq.BioSequenceSlice, landmark_idx []int,
 
 	seqworld := obiutils.Make2DArray[float64](library_size, n_landmark)
 
-	pbopt := make([]progressbar.Option, 0, 5)
-	pbopt = append(pbopt,
-		progressbar.OptionSetWriter(os.Stderr),
-		progressbar.OptionSetWidth(15),
-		progressbar.OptionShowCount(),
-		progressbar.OptionShowIts(),
-		progressbar.OptionSetDescription("[Sequence mapping]"),
-	)
+	var bar *progressbar.ProgressBar
+	if obidefault.ProgressBar() {
+		pbopt := make([]progressbar.Option, 0, 5)
+		pbopt = append(pbopt,
+			progressbar.OptionSetWriter(os.Stderr),
+			progressbar.OptionSetWidth(15),
+			progressbar.OptionShowCount(),
+			progressbar.OptionShowIts(),
+			progressbar.OptionSetDescription("[Sequence mapping]"),
+		)
 
-	bar := progressbar.NewOptions(library_size, pbopt...)
+		bar = progressbar.NewOptions(library_size, pbopt...)
+	}
 
 	waiting := sync.WaitGroup{}
 	waiting.Add(nworkers)
@@ -66,7 +69,9 @@ func MapOnLandmarkSequences(library obiseq.BioSequenceSlice, landmark_idx []int,
 				match, lalign := obialign.FastLCSScore(landmark, seq, -1, &buffer)
 				coord[j] = float64(lalign - match)
 			}
-			bar.Add(1)
+			if bar != nil {
+				bar.Add(1)
+			}
 		}
 		waiting.Done()
 	}
@@ -170,23 +175,26 @@ func CLISelectLandmarkSequences(iterator obiiter.IBioSequence) obiiter.IBioSeque
 			taxa.Set(i, taxon)
 		}
 
-		pbopt := make([]progressbar.Option, 0, 5)
-		pbopt = append(pbopt,
-			progressbar.OptionSetWriter(os.Stderr),
-			progressbar.OptionSetWidth(15),
-			progressbar.OptionShowCount(),
-			progressbar.OptionShowIts(),
-			progressbar.OptionSetDescription("[Sequence Indexing]"),
-		)
+		var bar2 *progressbar.ProgressBar
+		if obidefault.ProgressBar() {
+			pbopt := make([]progressbar.Option, 0, 5)
+			pbopt = append(pbopt,
+				progressbar.OptionSetWriter(os.Stderr),
+				progressbar.OptionSetWidth(15),
+				progressbar.OptionShowCount(),
+				progressbar.OptionShowIts(),
+				progressbar.OptionSetDescription("[Sequence Indexing]"),
+			)
 
-		bar := progressbar.NewOptions(len(library), pbopt...)
+			bar2 = progressbar.NewOptions(len(library), pbopt...)
+		}
 
 		for i, seq := range library {
 			idx := obirefidx.GeomIndexSesquence(i, library, taxa, taxo)
 			seq.SetOBITagGeomRefIndex(idx)
 
-			if i%10 == 0 {
-				bar.Add(10)
+			if bar2 != nil && i%10 == 0 {
+				bar2.Add(10)
 			}
 		}
 	}

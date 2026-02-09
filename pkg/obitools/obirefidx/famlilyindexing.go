@@ -207,16 +207,19 @@ func IndexFamilyDB(iterator obiiter.IBioSequence) obiiter.IBioSequence {
 
 	log.Infof("Done. Found %d clusters", clusters.Len())
 
-	pbopt := make([]progressbar.Option, 0, 5)
-	pbopt = append(pbopt,
-		progressbar.OptionSetWriter(os.Stderr),
-		progressbar.OptionSetWidth(15),
-		progressbar.OptionShowCount(),
-		progressbar.OptionShowIts(),
-		progressbar.OptionSetDescription("Cluster indexing"),
-	)
+	var bar *progressbar.ProgressBar
+	if obidefault.ProgressBar() {
+		pbopt := make([]progressbar.Option, 0, 5)
+		pbopt = append(pbopt,
+			progressbar.OptionSetWriter(os.Stderr),
+			progressbar.OptionSetWidth(15),
+			progressbar.OptionShowCount(),
+			progressbar.OptionShowIts(),
+			progressbar.OptionSetDescription("Cluster indexing"),
+		)
 
-	bar := progressbar.NewOptions(len(clusters), pbopt...)
+		bar = progressbar.NewOptions(len(clusters), pbopt...)
+	}
 
 	limits := make(chan [2]int)
 	waiting := sync.WaitGroup{}
@@ -233,7 +236,9 @@ func IndexFamilyDB(iterator obiiter.IBioSequence) obiiter.IBioSequence {
 			for i := l[0]; i < l[1]; i++ {
 				idx := IndexSequence(i, clusters, &kcluster, taxa, taxonomy)
 				clusters[i].SetOBITagRefIndex(idx)
-				bar.Add(1)
+				if bar != nil {
+					bar.Add(1)
+				}
 			}
 		}
 

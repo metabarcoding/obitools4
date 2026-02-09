@@ -5,6 +5,7 @@ import (
 	"sort"
 	"unsafe"
 
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obifp"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obilog"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
@@ -267,20 +268,23 @@ func NewKmerMap[T obifp.FPUint[T]](
 	}
 
 	n := len(sequences)
-	pbopt := make([]progressbar.Option, 0, 5)
-	pbopt = append(pbopt,
-		progressbar.OptionSetWriter(os.Stderr),
-		progressbar.OptionSetWidth(15),
-		progressbar.OptionShowCount(),
-		progressbar.OptionShowIts(),
-		progressbar.OptionSetDescription("Indexing kmers"),
-	)
+	var bar *progressbar.ProgressBar
+	if obidefault.ProgressBar() {
+		pbopt := make([]progressbar.Option, 0, 5)
+		pbopt = append(pbopt,
+			progressbar.OptionSetWriter(os.Stderr),
+			progressbar.OptionSetWidth(15),
+			progressbar.OptionShowCount(),
+			progressbar.OptionShowIts(),
+			progressbar.OptionSetDescription("Indexing kmers"),
+		)
 
-	bar := progressbar.NewOptions(n, pbopt...)
+		bar = progressbar.NewOptions(n, pbopt...)
+	}
 
 	for i, sequence := range sequences {
 		kmap.Push(sequence, maxoccurs)
-		if i%100 == 0 {
+		if bar != nil && i%100 == 0 {
 			bar.Add(100)
 		}
 	}

@@ -133,14 +133,23 @@ jjpush:
 	@jj auto-describe
 	@echo "$(BLUE)→ Creating new commit for version bump...$(NC)"
 	@jj new
-	@$(MAKE) bump-version
-	@echo "$(BLUE)→ Documenting version bump commit...$(NC)"
-	@jj auto-describe
-	@version=$$(cat version.txt); \
+	@previous_version=$$(cat version.txt); \
+	$(MAKE) bump-version; \
+	version=$$(cat version.txt); \
 	tag_name="Release_$$version"; \
+	previous_tag="Release_$$previous_version"; \
+	echo "$(BLUE)→ Documenting version bump commit...$(NC)"; \
+	jj auto-describe; \
+	echo "$(BLUE)→ Generating release notes from $$previous_tag to current commit...$(NC)"; \
+	if command -v orla >/dev/null 2>&1; then \
+		release_message=$$(ORLA_MAX_TOOL_CALLS=50 jj log -r "$$previous_tag::@" -T 'commit_id.short() ++ " " ++ description' | \
+			orla agent -m ollama:qwen3-coder-next:latest "synthétise en anglais l'ensemble des commits présentés en un message de nouvelle version pour ma page GitHub. Tu détailleras précisément les changements, sans exposer de code, et tu éviteras toute redondance dans le texte généré."); \
+	else \
+		release_message="Release $$version"; \
+	fi; \
 	echo "$(BLUE)→ Pushing commits and creating tag $$tag_name...$(NC)"; \
 	jj git push --change @; \
-	git tag -a "$$tag_name" -m "Release $$version" 2>/dev/null || echo "Tag $$tag_name already exists"; \
+	git tag -a "$$tag_name" -m "$$release_message" 2>/dev/null || echo "Tag $$tag_name already exists"; \
 	git push origin "$$tag_name" 2>/dev/null || echo "Tag already pushed"
 	@echo "$(GREEN)✓ Commits and tag pushed to repository$(NC)"
 

@@ -12,9 +12,7 @@ import (
 func CLIWriteSequenceCSV(iterator obiiter.IBioSequence,
 	terminalAction bool, filenames ...string) *obiitercsv.ICSVRecord {
 
-	if obiconvert.CLIProgressBar() {
-		iterator = iterator.Speed("Writing CSV")
-	}
+	iterator = iterator.Speed("Writing CSV")
 
 	opts := make([]WithOption, 0, 10)
 

@@ -110,6 +110,7 @@ func ISequenceChunkOnDisk(iterator obiiter.IBioSequence,
 	log.Infof("Data splitted over %d batches", nbatch)
 
 	go func() {
+		localClassifier := uniqueClassifier.Clone()
 
 		for order, file := range fileNames {
 			iseq, err := obiformats.ReadSequencesFromFile(file)
@@ -121,7 +122,7 @@ func ISequenceChunkOnDisk(iterator obiiter.IBioSequence,
 			if dereplicate {
 				u := make(map[string]*obiseq.BioSequence)
 				var source string
-				uniqueClassifier.Reset()
+				localClassifier.Reset()
 
 				for iseq.Next() {
 					batch := iseq.Get()
@@ -129,8 +130,8 @@ func ISequenceChunkOnDisk(iterator obiiter.IBioSequence,
 
 					for _, seq := range batch.Slice() {
 						// Use composite key: sequence + categories
-						code := uniqueClassifier.Code(seq)
-						key := uniqueClassifier.Value(code)
+						code := localClassifier.Code(seq)
+						key := localClassifier.Value(code)
 						prev, ok := u[key]
 						if ok {
 							prev.Merge(seq, na, true, statsOn)

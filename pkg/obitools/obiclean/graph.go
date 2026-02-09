@@ -13,6 +13,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obialign"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 	"github.com/schollz/progressbar/v3"
 )
@@ -69,16 +70,18 @@ func EmpiricalDistCsv(filename string, data [][]Ratio, compressed bool) {
 	}
 	defer destfile.Close()
 
-	pbopt := make([]progressbar.Option, 0, 5)
-	pbopt = append(pbopt,
-		progressbar.OptionSetWriter(os.Stderr),
-		progressbar.OptionSetWidth(15),
-		progressbar.OptionShowIts(),
-		progressbar.OptionSetPredictTime(true),
-		progressbar.OptionSetDescription("[Save CSV stat ratio file]"),
-	)
-
-	bar := progressbar.NewOptions(len(data), pbopt...)
+	var bar *progressbar.ProgressBar
+	if obidefault.ProgressBar() {
+		pbopt := make([]progressbar.Option, 0, 5)
+		pbopt = append(pbopt,
+			progressbar.OptionSetWriter(os.Stderr),
+			progressbar.OptionSetWidth(15),
+			progressbar.OptionShowIts(),
+			progressbar.OptionSetPredictTime(true),
+			progressbar.OptionSetDescription("[Save CSV stat ratio file]"),
+		)
+		bar = progressbar.NewOptions(len(data), pbopt...)
+	}
 
 	fmt.Fprintln(destfile, "Sample,Origin_id,Origin_status,Origin,Mutant,Origin_Weight,Mutant_Weight,Origin_Count,Mutant_Count,Position,Origin_length,A,C,G,T")
 	for code, dist := range data {
@@ -101,7 +104,9 @@ func EmpiricalDistCsv(filename string, data [][]Ratio, compressed bool) {
 				ratio.T,
 			)
 		}
-		bar.Add(1)
+		if bar != nil {
+			bar.Add(1)
+		}
 	}
 }
 
@@ -116,7 +121,7 @@ func Gml(seqs *[]*seqPCR, sample string, statThreshold int) string {
 		directed 1
 		{{range $index, $data:= .}}
 		{{ if or $data.Edges (gt $data.SonCount 0)}}
-	node [ id {{$index}} 
+	node [ id {{$index}}
 			graphics [
 				type "{{ Shape $data.Count }}"
 				fill "{{ if and (gt $data.SonCount 0) (not $data.Edges)}}#0000FF{{  else }}#00FF00{{ end }}"
@@ -130,15 +135,15 @@ func Gml(seqs *[]*seqPCR, sample string, statThreshold int) string {
 
 		 {{range $index, $data:= .}}
 				{{range $i, $edge:= $data.Edges}}
-	edge [ source {{$index}} 
-	       target {{$edge.Father}} 
+	edge [ source {{$index}}
+	       target {{$edge.Father}}
 		   color "{{ if gt (index $data.Edges $i).Dist 1 }}#FF0000{{  else }}#00FF00{{ end }}"
 		   label "{{(index $data.Edges $i).Dist}}"
 		   ]
 				{{ end }}
 				{{ end }}
-	] 
-		 
+	]
+
 			`
 
 	tmpl, err := digraphTpl.Funcs(template.FuncMap{
@@ -181,16 +186,18 @@ func SaveGMLGraphs(dirname string,
 		}
 	}
 
-	pbopt := make([]progressbar.Option, 0, 5)
-	pbopt = append(pbopt,
-		progressbar.OptionSetWriter(os.Stderr),
-		progressbar.OptionSetWidth(15),
-		progressbar.OptionShowIts(),
-		progressbar.OptionSetPredictTime(true),
-		progressbar.OptionSetDescription("[Save GML Graph files]"),
-	)
-
-	bar := progressbar.NewOptions(len(samples), pbopt...)
+	var bar *progressbar.ProgressBar
+	if obidefault.ProgressBar() {
+		pbopt := make([]progressbar.Option, 0, 5)
+		pbopt = append(pbopt,
+			progressbar.OptionSetWriter(os.Stderr),
+			progressbar.OptionSetWidth(15),
+			progressbar.OptionShowIts(),
+			progressbar.OptionSetPredictTime(true),
+			progressbar.OptionSetDescription("[Save GML Graph files]"),
+		)
+		bar = progressbar.NewOptions(len(samples), pbopt...)
+	}
 
 	for name, seqs := range samples {
 
@@ -204,7 +211,9 @@ func SaveGMLGraphs(dirname string,
 		file.WriteString(Gml(seqs, name, statThreshold))
 		file.Close()
 
-		bar.Add(1)
+		if bar != nil {
+			bar.Add(1)
+		}
 	}
 
 }
@@ -495,37 +504,44 @@ func BuildSeqGraph(samples map[string]*[]*seqPCR,
 		npairs += nseq * (nseq - 1) / 2
 	}
 
-	pbopt := make([]progressbar.Option, 0, 5)
-	pbopt = append(pbopt,
-		progressbar.OptionSetWriter(os.Stderr),
-		progressbar.OptionSetWidth(15),
-		progressbar.OptionShowIts(),
-		progressbar.OptionSetPredictTime(true),
-		progressbar.OptionSetDescription("[One error graph]"),
-	)
-
-	bar := progressbar.NewOptions(npairs, pbopt...)
-	for _, seqs := range samples {
-		np := buildSamplePairs(seqs, workers)
-
-		bar.Add(np)
-	}
-
-	if maxError > 1 {
-		pbopt = make([]progressbar.Option, 0, 5)
+	var bar *progressbar.ProgressBar
+	if obidefault.ProgressBar() {
+		pbopt := make([]progressbar.Option, 0, 5)
 		pbopt = append(pbopt,
 			progressbar.OptionSetWriter(os.Stderr),
 			progressbar.OptionSetWidth(15),
 			progressbar.OptionShowIts(),
 			progressbar.OptionSetPredictTime(true),
-			progressbar.OptionSetDescription("[Adds multiple errors]"),
+			progressbar.OptionSetDescription("[One error graph]"),
 		)
-
 		bar = progressbar.NewOptions(npairs, pbopt...)
+	}
+
+	for _, seqs := range samples {
+		np := buildSamplePairs(seqs, workers)
+		if bar != nil {
+			bar.Add(np)
+		}
+	}
+
+	if maxError > 1 {
+		if obidefault.ProgressBar() {
+			pbopt := make([]progressbar.Option, 0, 5)
+			pbopt = append(pbopt,
+				progressbar.OptionSetWriter(os.Stderr),
+				progressbar.OptionSetWidth(15),
+				progressbar.OptionShowIts(),
+				progressbar.OptionSetPredictTime(true),
+				progressbar.OptionSetDescription("[Adds multiple errors]"),
+			)
+			bar = progressbar.NewOptions(npairs, pbopt...)
+		}
 
 		for _, seqs := range samples {
 			np := extendSimilarityGraph(seqs, maxError, workers)
-			bar.Add(np)
+			if bar != nil {
+				bar.Add(np)
+			}
 		}
 	}
 }
