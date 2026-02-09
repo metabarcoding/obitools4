@@ -82,6 +82,13 @@ func (ks *KmerSet) AddSequences(sequences *obiseq.BioSequenceSlice) {
 	}
 }
 
+// AddSequenceSlice adds all k-mers from a slice of sequences
+func (ks *KmerSet) AddSequenceSlice(sequences *obiseq.BioSequenceSlice) {
+	for _, seq := range *sequences {
+		ks.AddSequence(seq)
+	}
+}
+
 // Contains checks if a k-mer is in the set
 func (ks *KmerSet) Contains(kmer uint64) bool {
 	return ks.bitmap.Contains(kmer)

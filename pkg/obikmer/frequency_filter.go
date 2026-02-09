@@ -174,6 +174,13 @@ func (ff *FrequencyFilter) AddSequences(sequences *obiseq.BioSequenceSlice) {
 	}
 }
 
+// AddSequenceSlice adds all k-mers from a slice of sequences to the filter
+func (ff *FrequencyFilter) AddSequenceSlice(sequences *obiseq.BioSequenceSlice) {
+	for _, seq := range *sequences {
+		ff.AddSequence(seq)
+	}
+}
+
 // ==================================
 // PERSISTANCE
 // ==================================

@@ -145,6 +145,14 @@ func (ksg *KmerSetGroup) AddSequences(sequences *obiseq.BioSequenceSlice, index 
 	ksg.sets[index].AddSequences(sequences)
 }
 
+// AddSequenceSlice adds all k-mers from a slice of sequences to a specific KmerSet
+func (ksg *KmerSetGroup) AddSequenceSlice(sequences *obiseq.BioSequenceSlice, index int) {
+	if index < 0 || index >= len(ksg.sets) {
+		panic(fmt.Sprintf("Index out of bounds: %d (size: %d)", index, len(ksg.sets)))
+	}
+	ksg.sets[index].AddSequenceSlice(sequences)
+}
+
 // Union returns the union of all KmerSet in the group
 // Optimization: starts from the largest set to minimize operations
 func (ksg *KmerSetGroup) Union() *KmerSet {
