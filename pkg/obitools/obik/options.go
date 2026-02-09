@@ -1,4 +1,4 @@
-package obikindex
+package obik
 
 import (
 	"strings"
@@ -11,7 +11,27 @@ import (
 	"github.com/DavidGamba/go-getoptions"
 )
 
-// Private variables for storing option values
+// Output format flags
+var _jsonOutput bool
+var _csvOutput bool
+var _yamlOutput bool
+
+// Set selection flags
+var _setPatterns []string
+
+// Force flag
+var _force bool
+
+// Jaccard flag
+var _jaccard bool
+
+// Per-set tags for index subcommand
+var _setMetaTags = make(map[string]string, 0)
+
+// ==============================
+// Kmer index building options (moved from obikindex)
+// ==============================
+
 var _kmerSize = 31
 var _minimizerSize = -1 // -1 means auto: ceil(k / 2.5)
 var _indexId = ""
@@ -39,7 +59,7 @@ func KmerIndexOptionSet(options *getoptions.GetOpt) {
 	options.StringMapVar(&_setTag, "set-tag", 1, 1,
 		options.Alias("S"),
 		options.ArgName("KEY=VALUE"),
-		options.Description("Adds a metadata attribute KEY with value VALUE to the index."))
+		options.Description("Adds a group-level metadata attribute KEY with value VALUE."))
 
 	options.IntVar(&_minOccurrence, "min-occurrence", _minOccurrence,
 		options.Description("Minimum number of occurrences for a k-mer to be kept (default 1 = keep all)."))
@@ -48,23 +68,12 @@ func KmerIndexOptionSet(options *getoptions.GetOpt) {
 		options.Description("When using --min-occurrence > 1, save the full frequency filter instead of just the filtered index."))
 }
 
-// OptionSet adds to the basic option set every option declared for
-// the obikindex command.
-func OptionSet(options *getoptions.GetOpt) {
-	obiconvert.InputOptionSet(options)
-	obiconvert.OutputModeOptionSet(options, false)
-	KmerIndexOptionSet(options)
-}
-
 // CLIKmerSize returns the k-mer size.
 func CLIKmerSize() int {
 	return _kmerSize
 }
 
 // CLIMinimizerSize returns the effective minimizer size.
-// If -1 (auto), computes ceil(k / 2.5) then applies constraints:
-//   - minimum: ceil(log(nworkers) / log(4))
-//   - maximum: k - 1
 func CLIMinimizerSize() int {
 	m := _minimizerSize
 	if m < 0 {
@@ -95,7 +104,7 @@ func CLIMetadataFormat() obikmer.MetadataFormat {
 	}
 }
 
-// CLISetTag returns the metadata key=value pairs.
+// CLISetTag returns the group-level metadata key=value pairs.
 func CLISetTag() map[string]string {
 	return _setTag
 }
@@ -128,4 +137,53 @@ func SetMinimizerSize(m int) {
 // SetMinOccurrence sets the minimum occurrence (for testing).
 func SetMinOccurrence(n int) {
 	_minOccurrence = n
+}
+
+// OutputFormatOptionSet registers --json-output, --csv-output, --yaml-output.
+func OutputFormatOptionSet(options *getoptions.GetOpt) {
+	options.BoolVar(&_jsonOutput, "json-output", false,
+		options.Description("Print results as JSON."))
+	options.BoolVar(&_csvOutput, "csv-output", false,
+		options.Description("Print results as CSV."))
+	options.BoolVar(&_yamlOutput, "yaml-output", false,
+		options.Description("Print results as YAML."))
+}
+
+// CLIOutFormat returns the selected output format: "json", "csv", "yaml", or "text".
+func CLIOutFormat() string {
+	if _jsonOutput {
+		return "json"
+	}
+	if _csvOutput {
+		return "csv"
+	}
+	if _yamlOutput {
+		return "yaml"
+	}
+	return "text"
+}
+
+// SetSelectionOptionSet registers --set <glob_pattern> (repeatable).
+func SetSelectionOptionSet(options *getoptions.GetOpt) {
+	options.StringSliceVar(&_setPatterns, "set", 1, 1,
+		options.Alias("s"),
+		options.ArgName("PATTERN"),
+		options.Description("Set ID or glob pattern (repeatable, supports *, ?, [...])."))
+}
+
+// CLISetPatterns returns the --set patterns provided by the user.
+func CLISetPatterns() []string {
+	return _setPatterns
+}
+
+// ForceOptionSet registers --force / -f.
+func ForceOptionSet(options *getoptions.GetOpt) {
+	options.BoolVar(&_force, "force", false,
+		options.Alias("f"),
+		options.Description("Force operation even if set ID already exists in destination."))
+}
+
+// CLIForce returns whether --force was specified.
+func CLIForce() bool {
+	return _force
 }

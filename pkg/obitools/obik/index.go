@@ -1,0 +1,110 @@
+package obik
+
+import (
+	"context"
+	"fmt"
+	"os"
+	"path/filepath"
+
+	log "github.com/sirupsen/logrus"
+
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obikmer"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
+	"github.com/DavidGamba/go-getoptions"
+)
+
+func runIndex(ctx context.Context, opt *getoptions.GetOpt, args []string) error {
+	outDir := CLIOutputDirectory()
+	if outDir == "" || outDir == "-" {
+		return fmt.Errorf("--out option is required and must specify a directory path")
+	}
+
+	k := CLIKmerSize()
+	if k < 2 || k > 31 {
+		return fmt.Errorf("invalid k-mer size: %d (must be between 2 and 31)", k)
+	}
+
+	m := CLIMinimizerSize()
+
+	minOcc := CLIMinOccurrence()
+	if minOcc < 1 {
+		return fmt.Errorf("invalid min-occurrence: %d (must be >= 1)", minOcc)
+	}
+
+	// Build options
+	var opts []obikmer.BuilderOption
+	if minOcc > 1 {
+		opts = append(opts, obikmer.WithMinFrequency(minOcc))
+	}
+
+	// Determine whether to append to existing group or create new
+	var builder *obikmer.KmerSetGroupBuilder
+	var err error
+	metaPath := filepath.Join(outDir, "metadata.toml")
+	if _, statErr := os.Stat(metaPath); statErr == nil {
+		// Existing group: append
+		log.Infof("Appending to existing kmer index at %s", outDir)
+		builder, err = obikmer.AppendKmerSetGroupBuilder(outDir, 1, opts...)
+		if err != nil {
+			return fmt.Errorf("failed to open existing kmer index for appending: %w", err)
+		}
+	} else {
+		// New group
+		log.Infof("Creating new kmer index: k=%d, m=%d, min-occurrence=%d", k, m, minOcc)
+		builder, err = obikmer.NewKmerSetGroupBuilder(outDir, k, m, 1, -1, opts...)
+		if err != nil {
+			return fmt.Errorf("failed to create kmer index builder: %w", err)
+		}
+	}
+
+	// Read and process sequences
+	sequences, err := obiconvert.CLIReadBioSequences(args...)
+	if err != nil {
+		return fmt.Errorf("failed to open sequence files: %w", err)
+	}
+
+	seqCount := 0
+	for sequences.Next() {
+		batch := sequences.Get()
+		for _, seq := range batch.Slice() {
+			builder.AddSequence(0, seq)
+			seqCount++
+		}
+	}
+
+	log.Infof("Processed %d sequences", seqCount)
+
+	// Finalize
+	ksg, err := builder.Close()
+	if err != nil {
+		return fmt.Errorf("failed to finalize kmer index: %w", err)
+	}
+
+	// Apply index-id to the new set
+	newSetIdx := builder.StartIndex()
+	if id := CLIIndexId(); id != "" {
+		ksg.SetSetID(newSetIdx, id)
+	}
+
+	// Apply group-level tags (-S)
+	for key, value := range CLISetTag() {
+		ksg.SetAttribute(key, value)
+	}
+
+	// Apply per-set tags (-T) to the new set
+	for key, value := range _setMetaTags {
+		ksg.SetSetMetadata(newSetIdx, key, value)
+	}
+
+	if minOcc > 1 {
+		ksg.SetAttribute("min_occurrence", minOcc)
+	}
+
+	if err := ksg.SaveMetadata(); err != nil {
+		return fmt.Errorf("failed to save metadata: %w", err)
+	}
+
+	log.Infof("Index contains %d k-mers for set %d in %s", ksg.Len(newSetIdx), newSetIdx, outDir)
+	log.Info("Done.")
+	return nil
+}

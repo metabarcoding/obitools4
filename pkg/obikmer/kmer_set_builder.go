@@ -32,15 +32,17 @@ func WithMinFrequency(minFreq int) BuilderOption {
 // partitioned by minimizer. On Close(), each partition is finalized
 // (sort, dedup, optional frequency filter) into .kdi files.
 type KmerSetGroupBuilder struct {
-	dir     string
-	k       int
-	m       int
-	n       int // number of sets
-	P       int // number of partitions
-	config  builderConfig
-	writers [][]*SkmWriter // [setIndex][partIndex]
-	mu      [][]sync.Mutex // per-writer mutex for concurrent access
-	closed  bool
+	dir        string
+	k          int
+	m          int
+	n          int // number of NEW sets being built
+	P          int // number of partitions
+	startIndex int // first set index (0 for new groups, existingN for appends)
+	config     builderConfig
+	existing   *KmerSetGroup  // non-nil when appending to existing group
+	writers    [][]*SkmWriter // [setIndex][partIndex] (local index 0..n-1)
+	mu         [][]sync.Mutex // per-writer mutex for concurrent access
+	closed     bool
 }
 
 // NewKmerSetGroupBuilder creates a builder for a new KmerSetGroup.
@@ -127,15 +129,92 @@ func NewKmerSetGroupBuilder(directory string, k, m, n, P int,
 	}
 
 	return &KmerSetGroupBuilder{
-		dir:     directory,
-		k:       k,
-		m:       m,
-		n:       n,
-		P:       P,
-		config:  config,
-		writers: writers,
-		mu:      mutexes,
+		dir:        directory,
+		k:          k,
+		m:          m,
+		n:          n,
+		P:          P,
+		startIndex: 0,
+		config:     config,
+		writers:    writers,
+		mu:         mutexes,
 	}, nil
+}
+
+// AppendKmerSetGroupBuilder opens an existing KmerSetGroup and creates
+// a builder that adds n new sets starting from the existing set count.
+// The k, m, and partitions are inherited from the existing group.
+func AppendKmerSetGroupBuilder(directory string, n int, options ...BuilderOption) (*KmerSetGroupBuilder, error) {
+	existing, err := OpenKmerSetGroup(directory)
+	if err != nil {
+		return nil, fmt.Errorf("obikmer: open existing group: %w", err)
+	}
+
+	if n < 1 {
+		return nil, fmt.Errorf("obikmer: n must be >= 1, got %d", n)
+	}
+
+	k := existing.K()
+	m := existing.M()
+	P := existing.Partitions()
+	startIndex := existing.Size()
+
+	var config builderConfig
+	for _, opt := range options {
+		opt(&config)
+	}
+
+	// Create build directory structure for new sets
+	buildDir := filepath.Join(directory, ".build")
+	for s := 0; s < n; s++ {
+		setDir := filepath.Join(buildDir, fmt.Sprintf("set_%d", s))
+		if err := os.MkdirAll(setDir, 0755); err != nil {
+			return nil, fmt.Errorf("obikmer: create build dir: %w", err)
+		}
+	}
+
+	// Create SKM writers for new sets
+	writers := make([][]*SkmWriter, n)
+	mutexes := make([][]sync.Mutex, n)
+	for s := 0; s < n; s++ {
+		writers[s] = make([]*SkmWriter, P)
+		mutexes[s] = make([]sync.Mutex, P)
+		for p := 0; p < P; p++ {
+			path := filepath.Join(buildDir, fmt.Sprintf("set_%d", s),
+				fmt.Sprintf("part_%04d.skm", p))
+			w, err := NewSkmWriter(path)
+			if err != nil {
+				for ss := 0; ss <= s; ss++ {
+					for pp := 0; pp < P; pp++ {
+						if writers[ss][pp] != nil {
+							writers[ss][pp].Close()
+						}
+					}
+				}
+				return nil, fmt.Errorf("obikmer: create skm writer: %w", err)
+			}
+			writers[s][p] = w
+		}
+	}
+
+	return &KmerSetGroupBuilder{
+		dir:        directory,
+		k:          k,
+		m:          m,
+		n:          n,
+		P:          P,
+		startIndex: startIndex,
+		config:     config,
+		existing:   existing,
+		writers:    writers,
+		mu:         mutexes,
+	}, nil
+}
+
+// StartIndex returns the first global set index for the new sets being built.
+// For new groups this is 0; for appends it is the existing group's Size().
+func (b *KmerSetGroupBuilder) StartIndex() int {
+	return b.startIndex
 }
 
 // AddSequence extracts super-kmers from a sequence and writes them
@@ -193,9 +272,10 @@ func (b *KmerSetGroupBuilder) Close() (*KmerSetGroup, error) {
 		}
 	}
 
-	// 2. Create output directory structure
+	// 2. Create output directory structure for new sets
 	for s := 0; s < b.n; s++ {
-		setDir := filepath.Join(b.dir, fmt.Sprintf("set_%d", s))
+		globalIdx := b.startIndex + s
+		setDir := filepath.Join(b.dir, fmt.Sprintf("set_%d", globalIdx))
 		if err := os.MkdirAll(setDir, 0755); err != nil {
 			return nil, fmt.Errorf("obikmer: create set dir: %w", err)
 		}
@@ -251,24 +331,44 @@ func (b *KmerSetGroupBuilder) Close() (*KmerSetGroup, error) {
 	}
 
 	// 3. Build KmerSetGroup and write metadata
-	totalCounts := make([]uint64, b.n)
+	newCounts := make([]uint64, b.n)
 	for s := 0; s < b.n; s++ {
 		for p := 0; p < b.P; p++ {
-			totalCounts[s] += counts[s][p]
+			newCounts[s] += counts[s][p]
 		}
 	}
 
-	setsIDs := make([]string, b.n)
+	var ksg *KmerSetGroup
 
-	ksg := &KmerSetGroup{
-		path:       b.dir,
-		k:          b.k,
-		m:          b.m,
-		partitions: b.P,
-		n:          b.n,
-		setsIDs:    setsIDs,
-		counts:     totalCounts,
-		Metadata:   make(map[string]interface{}),
+	if b.existing != nil {
+		// Append mode: extend existing group
+		ksg = b.existing
+		ksg.n += b.n
+		ksg.setsIDs = append(ksg.setsIDs, make([]string, b.n)...)
+		ksg.counts = append(ksg.counts, newCounts...)
+		newMeta := make([]map[string]interface{}, b.n)
+		for i := range newMeta {
+			newMeta[i] = make(map[string]interface{})
+		}
+		ksg.setsMetadata = append(ksg.setsMetadata, newMeta...)
+	} else {
+		// New group
+		setsIDs := make([]string, b.n)
+		setsMetadata := make([]map[string]interface{}, b.n)
+		for i := range setsMetadata {
+			setsMetadata[i] = make(map[string]interface{})
+		}
+		ksg = &KmerSetGroup{
+			path:         b.dir,
+			k:            b.k,
+			m:            b.m,
+			partitions:   b.P,
+			n:            b.n,
+			setsIDs:      setsIDs,
+			counts:       newCounts,
+			setsMetadata: setsMetadata,
+			Metadata:     make(map[string]interface{}),
+		}
 	}
 
 	if err := ksg.saveMetadata(); err != nil {
@@ -285,12 +385,14 @@ func (b *KmerSetGroupBuilder) Close() (*KmerSetGroup, error) {
 // finalizePartition processes a single partition: load SKM, extract k-mers,
 // sort, dedup/count, write KDI.
 func (b *KmerSetGroupBuilder) finalizePartition(setIdx, partIdx int, count *uint64) error {
+	// setIdx is local (0..n-1); build dirs use local index, output dirs use global
 	skmPath := filepath.Join(b.dir, ".build",
 		fmt.Sprintf("set_%d", setIdx),
 		fmt.Sprintf("part_%04d.skm", partIdx))
 
+	globalIdx := b.startIndex + setIdx
 	kdiPath := filepath.Join(b.dir,
-		fmt.Sprintf("set_%d", setIdx),
+		fmt.Sprintf("set_%d", globalIdx),
 		fmt.Sprintf("part_%04d.kdi", partIdx))
 
 	// Load super-kmers and extract canonical k-mers

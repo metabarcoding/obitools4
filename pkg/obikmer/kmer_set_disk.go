@@ -2,9 +2,12 @@ package obikmer
 
 import (
 	"fmt"
+	"io"
 	"iter"
 	"os"
+	"path"
 	"path/filepath"
+	"sort"
 	"sync"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidist"
@@ -42,28 +45,30 @@ func (f MetadataFormat) String() string {
 //
 // A KmerSetGroup with Size()==1 is effectively a KmerSet (singleton).
 type KmerSetGroup struct {
-	path       string                 // root directory
-	id         string                 // user-assigned identifier
-	k          int                    // k-mer size
-	m          int                    // minimizer size
-	partitions int                    // number of partitions P
-	n          int                    // number of sets N
-	setsIDs    []string               // IDs of individual sets
-	counts     []uint64               // total k-mer count per set (sum over partitions)
-	Metadata   map[string]interface{} // group-level user metadata
+	path         string                   // root directory
+	id           string                   // user-assigned identifier
+	k            int                      // k-mer size
+	m            int                      // minimizer size
+	partitions   int                      // number of partitions P
+	n            int                      // number of sets N
+	setsIDs      []string                 // IDs of individual sets
+	counts       []uint64                 // total k-mer count per set (sum over partitions)
+	setsMetadata []map[string]interface{} // per-set user metadata
+	Metadata     map[string]interface{}   // group-level user metadata
 }
 
 // diskMetadata is the TOML-serializable structure for metadata.toml.
 type diskMetadata struct {
-	ID           string                 `toml:"id,omitempty"`
-	K            int                    `toml:"k"`
-	M            int                    `toml:"m"`
-	Partitions   int                    `toml:"partitions"`
-	Type         string                 `toml:"type"`
-	Size         int                    `toml:"size"`
-	SetsIDs      []string               `toml:"sets_ids,omitempty"`
-	Counts       []uint64               `toml:"counts,omitempty"`
-	UserMetadata map[string]interface{} `toml:"user_metadata,omitempty"`
+	ID           string                   `toml:"id,omitempty"`
+	K            int                      `toml:"k"`
+	M            int                      `toml:"m"`
+	Partitions   int                      `toml:"partitions"`
+	Type         string                   `toml:"type"`
+	Size         int                      `toml:"size"`
+	SetsIDs      []string                 `toml:"sets_ids,omitempty"`
+	Counts       []uint64                 `toml:"counts,omitempty"`
+	SetsMetadata []map[string]interface{} `toml:"sets_metadata,omitempty"`
+	UserMetadata map[string]interface{}   `toml:"user_metadata,omitempty"`
 }
 
 // OpenKmerSetGroup opens a finalized index directory in read-only mode.
@@ -81,21 +86,28 @@ func OpenKmerSetGroup(directory string) (*KmerSetGroup, error) {
 	}
 
 	ksg := &KmerSetGroup{
-		path:       directory,
-		id:         meta.ID,
-		k:          meta.K,
-		m:          meta.M,
-		partitions: meta.Partitions,
-		n:          meta.Size,
-		setsIDs:    meta.SetsIDs,
-		counts:     meta.Counts,
-		Metadata:   meta.UserMetadata,
+		path:         directory,
+		id:           meta.ID,
+		k:            meta.K,
+		m:            meta.M,
+		partitions:   meta.Partitions,
+		n:            meta.Size,
+		setsIDs:      meta.SetsIDs,
+		counts:       meta.Counts,
+		setsMetadata: meta.SetsMetadata,
+		Metadata:     meta.UserMetadata,
 	}
 	if ksg.Metadata == nil {
 		ksg.Metadata = make(map[string]interface{})
 	}
 	if ksg.setsIDs == nil {
 		ksg.setsIDs = make([]string, ksg.n)
+	}
+	if ksg.setsMetadata == nil {
+		ksg.setsMetadata = make([]map[string]interface{}, ksg.n)
+		for i := range ksg.setsMetadata {
+			ksg.setsMetadata[i] = make(map[string]interface{})
+		}
 	}
 	if ksg.counts == nil {
 		// Compute counts by scanning partitions
@@ -133,6 +145,7 @@ func (ksg *KmerSetGroup) saveMetadata() error {
 		Size:         ksg.n,
 		SetsIDs:      ksg.setsIDs,
 		Counts:       ksg.counts,
+		SetsMetadata: ksg.setsMetadata,
 		UserMetadata: ksg.Metadata,
 	}
 
@@ -577,4 +590,300 @@ func (ksg *KmerSetGroup) JaccardSimilarityMatrix() *obidist.DistMatrix {
 	}
 
 	return sm
+}
+
+// ==============================
+// Set ID accessors
+// ==============================
+
+// SetsIDs returns a copy of the per-set string identifiers.
+func (ksg *KmerSetGroup) SetsIDs() []string {
+	out := make([]string, len(ksg.setsIDs))
+	copy(out, ksg.setsIDs)
+	return out
+}
+
+// SetIDOf returns the string ID of the set at the given index.
+// Returns "" if index is out of range.
+func (ksg *KmerSetGroup) SetIDOf(index int) string {
+	if index < 0 || index >= ksg.n {
+		return ""
+	}
+	return ksg.setsIDs[index]
+}
+
+// SetSetID sets the string ID of the set at the given index.
+func (ksg *KmerSetGroup) SetSetID(index int, id string) {
+	if index >= 0 && index < ksg.n {
+		ksg.setsIDs[index] = id
+	}
+}
+
+// IndexOfSetID returns the numeric index for a set ID, or -1 if not found.
+func (ksg *KmerSetGroup) IndexOfSetID(id string) int {
+	for i, sid := range ksg.setsIDs {
+		if sid == id {
+			return i
+		}
+	}
+	return -1
+}
+
+// MatchSetIDs resolves glob patterns against set IDs and returns matching
+// indices sorted in ascending order. Uses path.Match for pattern matching
+// (supports *, ?, [...] patterns). Returns error if a pattern is malformed.
+func (ksg *KmerSetGroup) MatchSetIDs(patterns []string) ([]int, error) {
+	seen := make(map[int]bool)
+	for _, pattern := range patterns {
+		for i, sid := range ksg.setsIDs {
+			matched, err := path.Match(pattern, sid)
+			if err != nil {
+				return nil, fmt.Errorf("obikmer: invalid glob pattern %q: %w", pattern, err)
+			}
+			if matched {
+				seen[i] = true
+			}
+		}
+	}
+	result := make([]int, 0, len(seen))
+	for idx := range seen {
+		result = append(result, idx)
+	}
+	sort.Ints(result)
+	return result, nil
+}
+
+// ==============================
+// Per-set metadata accessors
+// ==============================
+
+// GetSetMetadata returns the value of a per-set metadata key.
+func (ksg *KmerSetGroup) GetSetMetadata(setIndex int, key string) (interface{}, bool) {
+	if setIndex < 0 || setIndex >= ksg.n {
+		return nil, false
+	}
+	v, ok := ksg.setsMetadata[setIndex][key]
+	return v, ok
+}
+
+// SetSetMetadata sets a per-set metadata attribute.
+func (ksg *KmerSetGroup) SetSetMetadata(setIndex int, key string, value interface{}) {
+	if setIndex < 0 || setIndex >= ksg.n {
+		return
+	}
+	if ksg.setsMetadata[setIndex] == nil {
+		ksg.setsMetadata[setIndex] = make(map[string]interface{})
+	}
+	ksg.setsMetadata[setIndex][key] = value
+}
+
+// DeleteSetMetadata removes a per-set metadata attribute.
+func (ksg *KmerSetGroup) DeleteSetMetadata(setIndex int, key string) {
+	if setIndex < 0 || setIndex >= ksg.n {
+		return
+	}
+	delete(ksg.setsMetadata[setIndex], key)
+}
+
+// AllSetMetadata returns a copy of all metadata for a given set.
+func (ksg *KmerSetGroup) AllSetMetadata(setIndex int) map[string]interface{} {
+	if setIndex < 0 || setIndex >= ksg.n {
+		return nil
+	}
+	out := make(map[string]interface{}, len(ksg.setsMetadata[setIndex]))
+	for k, v := range ksg.setsMetadata[setIndex] {
+		out[k] = v
+	}
+	return out
+}
+
+// ==============================
+// Exported partition path and compatibility
+// ==============================
+
+// PartitionPath returns the file path for partition partIndex of set setIndex.
+func (ksg *KmerSetGroup) PartitionPath(setIndex, partIndex int) string {
+	return ksg.partitionPath(setIndex, partIndex)
+}
+
+// IsCompatibleWith returns true if the other group has the same k, m, and partitions.
+func (ksg *KmerSetGroup) IsCompatibleWith(other *KmerSetGroup) bool {
+	return ksg.k == other.k && ksg.m == other.m && ksg.partitions == other.partitions
+}
+
+// ==============================
+// Set management operations
+// ==============================
+
+// NewEmptyCompatible creates an empty KmerSetGroup at destDir with the same
+// k, m, and partitions as this group. The destination must not already exist.
+func (ksg *KmerSetGroup) NewEmptyCompatible(destDir string) (*KmerSetGroup, error) {
+	if err := os.MkdirAll(destDir, 0755); err != nil {
+		return nil, fmt.Errorf("obikmer: create directory: %w", err)
+	}
+
+	dest := &KmerSetGroup{
+		path:         destDir,
+		k:            ksg.k,
+		m:            ksg.m,
+		partitions:   ksg.partitions,
+		n:            0,
+		setsIDs:      []string{},
+		counts:       []uint64{},
+		setsMetadata: []map[string]interface{}{},
+		Metadata:     make(map[string]interface{}),
+	}
+
+	if err := dest.saveMetadata(); err != nil {
+		return nil, fmt.Errorf("obikmer: write metadata: %w", err)
+	}
+
+	return dest, nil
+}
+
+// RemoveSetByID removes the set with the given ID from the group.
+// It deletes the set directory, renumbers all subsequent sets, and
+// updates the metadata on disk.
+func (ksg *KmerSetGroup) RemoveSetByID(id string) error {
+	idx := ksg.IndexOfSetID(id)
+	if idx < 0 {
+		return fmt.Errorf("obikmer: set ID %q not found", id)
+	}
+
+	// Delete the set directory
+	setDir := filepath.Join(ksg.path, fmt.Sprintf("set_%d", idx))
+	if err := os.RemoveAll(setDir); err != nil {
+		return fmt.Errorf("obikmer: remove set directory: %w", err)
+	}
+
+	// Renumber subsequent sets
+	for i := idx + 1; i < ksg.n; i++ {
+		oldDir := filepath.Join(ksg.path, fmt.Sprintf("set_%d", i))
+		newDir := filepath.Join(ksg.path, fmt.Sprintf("set_%d", i-1))
+		if err := os.Rename(oldDir, newDir); err != nil {
+			return fmt.Errorf("obikmer: rename set_%d to set_%d: %w", i, i-1, err)
+		}
+	}
+
+	// Update slices
+	ksg.setsIDs = append(ksg.setsIDs[:idx], ksg.setsIDs[idx+1:]...)
+	ksg.counts = append(ksg.counts[:idx], ksg.counts[idx+1:]...)
+	ksg.setsMetadata = append(ksg.setsMetadata[:idx], ksg.setsMetadata[idx+1:]...)
+	ksg.n--
+
+	return ksg.saveMetadata()
+}
+
+// CopySetsByIDTo copies sets identified by their IDs into a KmerSetGroup
+// at destDir. If destDir does not exist, a new compatible empty group is
+// created. If it exists, compatibility (k, m, partitions) is checked.
+// If a set ID already exists in the destination, an error is returned
+// unless force is true (in which case the existing set is replaced).
+// Per-set metadata travels with the set.
+func (ksg *KmerSetGroup) CopySetsByIDTo(ids []string, destDir string, force bool) (*KmerSetGroup, error) {
+	// Resolve source IDs to indices
+	srcIndices := make([]int, len(ids))
+	for i, id := range ids {
+		idx := ksg.IndexOfSetID(id)
+		if idx < 0 {
+			return nil, fmt.Errorf("obikmer: source set ID %q not found", id)
+		}
+		srcIndices[i] = idx
+	}
+
+	// Open or create destination
+	var dest *KmerSetGroup
+	metaPath := filepath.Join(destDir, "metadata.toml")
+	if _, err := os.Stat(metaPath); err == nil {
+		// Destination exists
+		dest, err = OpenKmerSetGroup(destDir)
+		if err != nil {
+			return nil, fmt.Errorf("obikmer: open destination: %w", err)
+		}
+		if !ksg.IsCompatibleWith(dest) {
+			return nil, fmt.Errorf("obikmer: incompatible groups: source (k=%d, m=%d, P=%d) vs dest (k=%d, m=%d, P=%d)",
+				ksg.k, ksg.m, ksg.partitions, dest.k, dest.m, dest.partitions)
+		}
+	} else {
+		// Create new destination
+		var err error
+		dest, err = ksg.NewEmptyCompatible(destDir)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// Copy each set
+	for i, srcIdx := range srcIndices {
+		srcID := ids[i]
+
+		// Check for ID conflict in destination
+		existingIdx := dest.IndexOfSetID(srcID)
+		if existingIdx >= 0 {
+			if !force {
+				return nil, fmt.Errorf("obikmer: set ID %q already exists in destination (use force to replace)", srcID)
+			}
+			// Force: remove existing set in destination
+			if err := dest.RemoveSetByID(srcID); err != nil {
+				return nil, fmt.Errorf("obikmer: remove existing set %q in destination: %w", srcID, err)
+			}
+		}
+
+		// Destination set index = current dest size
+		destIdx := dest.n
+
+		// Create destination set directory
+		destSetDir := filepath.Join(destDir, fmt.Sprintf("set_%d", destIdx))
+		if err := os.MkdirAll(destSetDir, 0755); err != nil {
+			return nil, fmt.Errorf("obikmer: create dest set dir: %w", err)
+		}
+
+		// Copy all partition files
+		for p := 0; p < ksg.partitions; p++ {
+			srcPath := ksg.partitionPath(srcIdx, p)
+			destPath := dest.partitionPath(destIdx, p)
+			if err := copyFile(srcPath, destPath); err != nil {
+				return nil, fmt.Errorf("obikmer: copy partition %d of set %q: %w", p, srcID, err)
+			}
+		}
+
+		// Update destination metadata
+		dest.setsIDs = append(dest.setsIDs, srcID)
+		dest.counts = append(dest.counts, ksg.counts[srcIdx])
+
+		// Copy per-set metadata
+		srcMeta := ksg.AllSetMetadata(srcIdx)
+		if srcMeta == nil {
+			srcMeta = make(map[string]interface{})
+		}
+		dest.setsMetadata = append(dest.setsMetadata, srcMeta)
+		dest.n++
+	}
+
+	if err := dest.saveMetadata(); err != nil {
+		return nil, fmt.Errorf("obikmer: save destination metadata: %w", err)
+	}
+
+	return dest, nil
+}
+
+// copyFile copies a file from src to dst.
+func copyFile(src, dst string) error {
+	in, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+
+	out, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	if _, err := io.Copy(out, in); err != nil {
+		return err
+	}
+
+	return out.Close()
 }

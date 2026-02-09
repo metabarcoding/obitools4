@@ -1,39 +1,80 @@
-package obilowmask
+package obik
 
 import (
+	"context"
 	"fmt"
 	"math"
+	"strings"
+
+	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obikmer"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
+	"github.com/DavidGamba/go-getoptions"
 )
 
 // MaskingMode defines how to handle low-complexity regions
 type MaskingMode int
 
 const (
-	Mask  MaskingMode = iota // Mask mode: replace low-complexity regions with masked characters
-	Split                    // Split mode: split sequence into high-complexity fragments
-	Extract
+	MaskMode    MaskingMode = iota // Replace low-complexity regions with masked characters
+	SplitMode                      // Split sequence into high-complexity fragments
+	ExtractMode                    // Extract low-complexity fragments
 )
 
-// LowMaskWorker creates a worker to mask low-complexity regions in DNA sequences.
-//
-// Algorithm principle:
-// Calculate the normalized entropy of each k-mer at different scales (wordSize = 1 to level_max).
-// K-mers with entropy below the threshold are masked.
-//
-// Parameters:
-//   - kmer_size: size of the sliding window for entropy calculation
-//   - level_max: maximum word size used for entropy calculation (finest scale)
-//   - threshold: normalized entropy threshold below which masking occurs (between 0 and 1)
-//   - mode: Mask (masking) or Split (splitting)
-//   - maskChar: character used for masking (typically 'n' or 'N')
-//
-// Returns: a SeqWorker function that can be applied to each sequence
-func LowMaskWorker(kmer_size int, level_max int, threshold float64, mode MaskingMode, maskChar byte) obiseq.SeqWorker {
+// Lowmask-specific option variables (separate from index/super kmer-size).
+var _lowmaskKmerSize = 31
+var _lowmaskLevelMax = 6
+var _lowmaskThreshold = 0.5
+var _lowmaskSplitMode = false
+var _lowmaskLowMode = false
+var _lowmaskMaskChar = "."
+
+// LowMaskOptionSet registers options specific to low-complexity masking.
+func LowMaskOptionSet(options *getoptions.GetOpt) {
+	options.IntVar(&_lowmaskKmerSize, "kmer-size", _lowmaskKmerSize,
+		options.Description("Size of the kmer considered to estimate entropy."))
+
+	options.IntVar(&_lowmaskLevelMax, "entropy-size", _lowmaskLevelMax,
+		options.Description("Maximum word size considered for entropy estimate."))
+
+	options.Float64Var(&_lowmaskThreshold, "threshold", _lowmaskThreshold,
+		options.Description("Entropy threshold below which a kmer is masked (0 to 1)."))
+
+	options.BoolVar(&_lowmaskSplitMode, "split-mode", _lowmaskSplitMode,
+		options.Description("Split sequences to remove masked regions."))
+
+	options.BoolVar(&_lowmaskLowMode, "low-mode", _lowmaskLowMode,
+		options.Description("Extract only low-complexity regions."))
+
+	options.StringVar(&_lowmaskMaskChar, "masking-char", _lowmaskMaskChar,
+		options.Description("Character used to mask low complexity regions."))
+}
+
+func lowmaskMaskingMode() MaskingMode {
+	switch {
+	case _lowmaskLowMode:
+		return ExtractMode
+	case _lowmaskSplitMode:
+		return SplitMode
+	default:
+		return MaskMode
+	}
+}
+
+func lowmaskMaskingChar() byte {
+	mask := strings.TrimSpace(_lowmaskMaskChar)
+	if len(mask) != 1 {
+		log.Fatalf("--masking-char option accepts a single character, not %s", mask)
+	}
+	return []byte(mask)[0]
+}
+
+// lowMaskWorker creates a worker to mask low-complexity regions in DNA sequences.
+func lowMaskWorker(kmer_size int, level_max int, threshold float64, mode MaskingMode, maskChar byte) obiseq.SeqWorker {
 
 	nLogN := make([]float64, kmer_size+1)
 	for i := 1; i <= kmer_size; i++ {
@@ -87,6 +128,7 @@ func LowMaskWorker(kmer_size int, level_max int, threshold float64, mode Masking
 			data[i] = deque[0].value
 		}
 	}
+
 	emaxValues := make([]float64, level_max+1)
 	logNwords := make([]float64, level_max+1)
 	for ws := 1; ws <= level_max; ws++ {
@@ -329,7 +371,7 @@ func LowMaskWorker(kmer_size int, level_max int, threshold float64, mode Masking
 
 		maskPositions := maskAmbiguities(bseq)
 
-		mask := make([]int, len(bseq))
+		maskFlags := make([]int, len(bseq))
 		entropies := make([]float64, len(bseq))
 		for i := range entropies {
 			entropies[i] = 4.0
@@ -343,7 +385,7 @@ func LowMaskWorker(kmer_size int, level_max int, threshold float64, mode Masking
 
 		for i := range bseq {
 			v := level_max
-			mask[i] = v
+			maskFlags[i] = v
 		}
 
 		for ws := level_max - 1; ws > 0; ws-- {
@@ -351,7 +393,7 @@ func LowMaskWorker(kmer_size int, level_max int, threshold float64, mode Masking
 			for i, e2 := range entropies2 {
 				if e2 < entropies[i] {
 					entropies[i] = e2
-					mask[i] = ws
+					maskFlags[i] = ws
 				}
 			}
 		}
@@ -367,39 +409,49 @@ func LowMaskWorker(kmer_size int, level_max int, threshold float64, mode Masking
 			remove[i] = e <= threshold
 		}
 
-		sequence.SetAttribute("mask", mask)
+		sequence.SetAttribute("mask", maskFlags)
 		sequence.SetAttribute("Entropies", entropies)
 
 		switch mode {
-		case Mask:
+		case MaskMode:
 			return applyMaskMode(sequence, remove, maskChar)
-		case Split:
+		case SplitMode:
 			return selectunmasked(sequence, remove)
-		case Extract:
+		case ExtractMode:
 			return selectMasked(sequence, remove)
 		}
-		return nil, fmt.Errorf("Unknown mode %d", mode)
+		return nil, fmt.Errorf("unknown mode %d", mode)
 	}
 
 	return masking
 }
 
-// CLISequenceEntropyMasker creates an iterator that applies entropy masking
-// to all sequences in an input iterator.
-//
-// Uses command-line parameters to configure the worker.
-func CLISequenceEntropyMasker(iterator obiiter.IBioSequence) obiiter.IBioSequence {
-	var newIter obiiter.IBioSequence
+// runLowmask implements the "obik lowmask" subcommand.
+// It masks low-complexity regions in DNA sequences using entropy-based detection.
+func runLowmask(ctx context.Context, opt *getoptions.GetOpt, args []string) error {
+	kmerSize := _lowmaskKmerSize
+	levelMax := _lowmaskLevelMax
+	threshold := _lowmaskThreshold
+	mode := lowmaskMaskingMode()
+	maskChar := lowmaskMaskingChar()
 
-	worker := LowMaskWorker(
-		CLIKmerSize(),
-		CLILevelMax(),
-		CLIThreshold(),
-		CLIMaskingMode(),
-		CLIMaskingChar(),
-	)
+	log.Printf("Low-complexity masking: kmer-size=%d, entropy-size=%d, threshold=%.4f", kmerSize, levelMax, threshold)
 
-	newIter = iterator.MakeIWorker(worker, false, obidefault.ParallelWorkers())
+	sequences, err := obiconvert.CLIReadBioSequences(args...)
+	if err != nil {
+		return fmt.Errorf("failed to open sequence files: %w", err)
+	}
 
-	return newIter.FilterEmpty()
+	worker := lowMaskWorker(kmerSize, levelMax, threshold, mode, maskChar)
+
+	masked := sequences.MakeIWorker(
+		worker,
+		false,
+		obidefault.ParallelWorkers(),
+	).FilterEmpty()
+
+	obiconvert.CLIWriteBioSequences(masked, true)
+	obiutils.WaitForLastPipe()
+
+	return nil
 }
