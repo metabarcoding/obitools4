@@ -32,6 +32,7 @@ var _lowmaskThreshold = 0.5
 var _lowmaskSplitMode = false
 var _lowmaskLowMode = false
 var _lowmaskMaskChar = "."
+var _lowmaskKeepShorter = false
 
 // LowMaskOptionSet registers options specific to low-complexity masking.
 func LowMaskOptionSet(options *getoptions.GetOpt) {
@@ -52,6 +53,9 @@ func LowMaskOptionSet(options *getoptions.GetOpt) {
 
 	options.StringVar(&_lowmaskMaskChar, "masking-char", _lowmaskMaskChar,
 		options.Description("Character used to mask low complexity regions."))
+
+	options.BoolVar(&_lowmaskKeepShorter, "keep-shorter", _lowmaskKeepShorter,
+		options.Description("Keep fragments shorter than kmer-size in split/extract mode."))
 }
 
 func lowmaskMaskingMode() MaskingMode {
@@ -74,7 +78,7 @@ func lowmaskMaskingChar() byte {
 }
 
 // lowMaskWorker creates a worker to mask low-complexity regions in DNA sequences.
-func lowMaskWorker(kmer_size int, level_max int, threshold float64, mode MaskingMode, maskChar byte) obiseq.SeqWorker {
+func lowMaskWorker(kmer_size int, level_max int, threshold float64, mode MaskingMode, maskChar byte, keepShorter bool) obiseq.SeqWorker {
 
 	nLogN := make([]float64, kmer_size+1)
 	for i := 1; i <= kmer_size; i++ {
@@ -301,11 +305,14 @@ func lowMaskWorker(kmer_size int, level_max int, threshold float64, mode Masking
 			}
 			if inlow && !masked {
 				if fromlow >= 0 {
-					frg, err := sequence.Subsequence(fromlow, i, false)
-					if err != nil {
-						return nil, err
+					frgLen := i - fromlow
+					if keepShorter || frgLen >= kmer_size {
+						frg, err := sequence.Subsequence(fromlow, i, false)
+						if err != nil {
+							return nil, err
+						}
+						rep.Push(frg)
 					}
-					rep.Push(frg)
 				}
 				inlow = false
 				fromlow = -1
@@ -313,11 +320,14 @@ func lowMaskWorker(kmer_size int, level_max int, threshold float64, mode Masking
 		}
 
 		if inlow && fromlow >= 0 {
-			frg, err := sequence.Subsequence(fromlow, len(maskPosition), false)
-			if err != nil {
-				return nil, err
+			frgLen := len(maskPosition) - fromlow
+			if keepShorter || frgLen >= kmer_size {
+				frg, err := sequence.Subsequence(fromlow, len(maskPosition), false)
+				if err != nil {
+					return nil, err
+				}
+				rep.Push(frg)
 			}
-			rep.Push(frg)
 		}
 
 		return *rep, nil
@@ -335,11 +345,14 @@ func lowMaskWorker(kmer_size int, level_max int, threshold float64, mode Masking
 			}
 			if inhigh && masked {
 				if fromhigh >= 0 {
-					frg, err := sequence.Subsequence(fromhigh, i, false)
-					if err != nil {
-						return nil, err
+					frgLen := i - fromhigh
+					if keepShorter || frgLen >= kmer_size {
+						frg, err := sequence.Subsequence(fromhigh, i, false)
+						if err != nil {
+							return nil, err
+						}
+						rep.Push(frg)
 					}
-					rep.Push(frg)
 				}
 				inhigh = false
 				fromhigh = -1
@@ -347,11 +360,14 @@ func lowMaskWorker(kmer_size int, level_max int, threshold float64, mode Masking
 		}
 
 		if inhigh && fromhigh >= 0 {
-			frg, err := sequence.Subsequence(fromhigh, len(maskPosition), false)
-			if err != nil {
-				return nil, err
+			frgLen := len(maskPosition) - fromhigh
+			if keepShorter || frgLen >= kmer_size {
+				frg, err := sequence.Subsequence(fromhigh, len(maskPosition), false)
+				if err != nil {
+					return nil, err
+				}
+				rep.Push(frg)
 			}
-			rep.Push(frg)
 		}
 
 		return *rep, nil
@@ -364,7 +380,15 @@ func lowMaskWorker(kmer_size int, level_max int, threshold float64, mode Masking
 			for i := range remove {
 				remove[i] = true
 			}
-			return applyMaskMode(sequence, remove, maskChar)
+			switch mode {
+			case MaskMode:
+				return applyMaskMode(sequence, remove, maskChar)
+			case SplitMode:
+				return selectunmasked(sequence, remove)
+			case ExtractMode:
+				return selectMasked(sequence, remove)
+			}
+			return nil, fmt.Errorf("unknown mode %d", mode)
 		}
 
 		bseq := sequence.Sequence()
@@ -442,7 +466,7 @@ func runLowmask(ctx context.Context, opt *getoptions.GetOpt, args []string) erro
 		return fmt.Errorf("failed to open sequence files: %w", err)
 	}
 
-	worker := lowMaskWorker(kmerSize, levelMax, threshold, mode, maskChar)
+	worker := lowMaskWorker(kmerSize, levelMax, threshold, mode, maskChar, _lowmaskKeepShorter)
 
 	masked := sequences.MakeIWorker(
 		worker,
