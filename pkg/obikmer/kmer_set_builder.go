@@ -16,7 +16,9 @@ import (
 type BuilderOption func(*builderConfig)
 
 type builderConfig struct {
-	minFreq int // 0 means no frequency filtering (simple dedup)
+	minFreq      int // 0 means no frequency filtering (simple dedup)
+	maxFreq      int // 0 means no upper bound
+	saveFreqTopN int // >0 means save the N most frequent k-mers per set to CSV
 }
 
 // WithMinFrequency activates frequency filtering mode.
@@ -24,6 +26,22 @@ type builderConfig struct {
 func WithMinFrequency(minFreq int) BuilderOption {
 	return func(c *builderConfig) {
 		c.minFreq = minFreq
+	}
+}
+
+// WithMaxFrequency sets the upper frequency bound.
+// Only k-mers seen <= maxFreq times are kept in the final index.
+func WithMaxFrequency(maxFreq int) BuilderOption {
+	return func(c *builderConfig) {
+		c.maxFreq = maxFreq
+	}
+}
+
+// WithSaveFreqKmers saves the N most frequent k-mers per set to a CSV file
+// (top_kmers.csv in each set directory).
+func WithSaveFreqKmers(n int) BuilderOption {
+	return func(c *builderConfig) {
+		c.saveFreqTopN = n
 	}
 }
 
@@ -283,8 +301,17 @@ func (b *KmerSetGroupBuilder) Close() (*KmerSetGroup, error) {
 
 	// Process partitions in parallel
 	counts := make([][]uint64, b.n)
+	spectra := make([][]map[int]uint64, b.n)
+	var topKmers [][]*TopNKmers
 	for s := 0; s < b.n; s++ {
 		counts[s] = make([]uint64, b.P)
+		spectra[s] = make([]map[int]uint64, b.P)
+	}
+	if b.config.saveFreqTopN > 0 {
+		topKmers = make([][]*TopNKmers, b.n)
+		for s := 0; s < b.n; s++ {
+			topKmers[s] = make([]*TopNKmers, b.P)
+		}
 	}
 
 	nWorkers := runtime.NumCPU()
@@ -307,12 +334,17 @@ func (b *KmerSetGroupBuilder) Close() (*KmerSetGroup, error) {
 		go func() {
 			defer wg.Done()
 			for j := range jobs {
-				if err := b.finalizePartition(j.setIdx, j.partIdx, &counts[j.setIdx][j.partIdx]); err != nil {
+				partSpec, partTop, err := b.finalizePartition(j.setIdx, j.partIdx, &counts[j.setIdx][j.partIdx])
+				if err != nil {
 					errMu.Lock()
 					if firstErr == nil {
 						firstErr = err
 					}
 					errMu.Unlock()
+				}
+				spectra[j.setIdx][j.partIdx] = partSpec
+				if topKmers != nil {
+					topKmers[j.setIdx][j.partIdx] = partTop
 				}
 			}
 		}()
@@ -328,6 +360,41 @@ func (b *KmerSetGroupBuilder) Close() (*KmerSetGroup, error) {
 
 	if firstErr != nil {
 		return nil, firstErr
+	}
+
+	// Aggregate per-partition spectra into per-set spectra and write spectrum.bin
+	for s := 0; s < b.n; s++ {
+		globalIdx := b.startIndex + s
+		setSpectrum := make(map[int]uint64)
+		for p := 0; p < b.P; p++ {
+			if spectra[s][p] != nil {
+				MergeSpectraMaps(setSpectrum, spectra[s][p])
+			}
+		}
+		if len(setSpectrum) > 0 {
+			specPath := filepath.Join(b.dir, fmt.Sprintf("set_%d", globalIdx), "spectrum.bin")
+			if err := WriteSpectrum(specPath, MapToSpectrum(setSpectrum)); err != nil {
+				return nil, fmt.Errorf("obikmer: write spectrum set=%d: %w", globalIdx, err)
+			}
+		}
+	}
+
+	// Aggregate per-partition top-N k-mers and write CSV
+	if topKmers != nil {
+		for s := 0; s < b.n; s++ {
+			globalIdx := b.startIndex + s
+			merged := NewTopNKmers(b.config.saveFreqTopN)
+			for p := 0; p < b.P; p++ {
+				merged.MergeTopN(topKmers[s][p])
+			}
+			results := merged.Results()
+			if len(results) > 0 {
+				csvPath := filepath.Join(b.dir, fmt.Sprintf("set_%d", globalIdx), "top_kmers.csv")
+				if err := WriteTopKmersCSV(csvPath, results, b.k); err != nil {
+					return nil, fmt.Errorf("obikmer: write top kmers set=%d: %w", globalIdx, err)
+				}
+			}
+		}
 	}
 
 	// 3. Build KmerSetGroup and write metadata
@@ -383,8 +450,10 @@ func (b *KmerSetGroupBuilder) Close() (*KmerSetGroup, error) {
 }
 
 // finalizePartition processes a single partition: load SKM, extract k-mers,
-// sort, dedup/count, write KDI.
-func (b *KmerSetGroupBuilder) finalizePartition(setIdx, partIdx int, count *uint64) error {
+// sort, dedup/count, write KDI. Returns a partial frequency spectrum
+// (frequency → count of distinct k-mers) computed before filtering,
+// and optionally the top-N most frequent k-mers.
+func (b *KmerSetGroupBuilder) finalizePartition(setIdx, partIdx int, count *uint64) (map[int]uint64, *TopNKmers, error) {
 	// setIdx is local (0..n-1); build dirs use local index, output dirs use global
 	skmPath := filepath.Join(b.dir, ".build",
 		fmt.Sprintf("set_%d", setIdx),
@@ -399,7 +468,7 @@ func (b *KmerSetGroupBuilder) finalizePartition(setIdx, partIdx int, count *uint
 	reader, err := NewSkmReader(skmPath)
 	if err != nil {
 		// If file doesn't exist or is empty, write empty KDI
-		return b.writeEmptyKdi(kdiPath, count)
+		return nil, nil, b.writeEmptyKdi(kdiPath, count)
 	}
 
 	var kmers []uint64
@@ -415,7 +484,7 @@ func (b *KmerSetGroupBuilder) finalizePartition(setIdx, partIdx int, count *uint
 	reader.Close()
 
 	if len(kmers) == 0 {
-		return b.writeEmptyKdi(kdiPath, count)
+		return nil, nil, b.writeEmptyKdi(kdiPath, count)
 	}
 
 	// Sort
@@ -424,15 +493,23 @@ func (b *KmerSetGroupBuilder) finalizePartition(setIdx, partIdx int, count *uint
 	// Write KDI based on mode
 	w, err := NewKdiWriter(kdiPath)
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 
 	minFreq := b.config.minFreq
 	if minFreq <= 0 {
 		minFreq = 1 // simple dedup
 	}
+	maxFreq := b.config.maxFreq // 0 means no upper bound
 
-	// Linear scan: count consecutive identical values
+	// Prepare top-N collector if requested
+	var topN *TopNKmers
+	if b.config.saveFreqTopN > 0 {
+		topN = NewTopNKmers(b.config.saveFreqTopN)
+	}
+
+	// Linear scan: count consecutive identical values and accumulate spectrum
+	partSpectrum := make(map[int]uint64)
 	i := 0
 	for i < len(kmers) {
 		val := kmers[i]
@@ -440,17 +517,21 @@ func (b *KmerSetGroupBuilder) finalizePartition(setIdx, partIdx int, count *uint
 		for i+c < len(kmers) && kmers[i+c] == val {
 			c++
 		}
-		if c >= minFreq {
+		partSpectrum[c]++
+		if topN != nil {
+			topN.Add(val, c)
+		}
+		if c >= minFreq && (maxFreq <= 0 || c <= maxFreq) {
 			if err := w.Write(val); err != nil {
 				w.Close()
-				return err
+				return nil, nil, err
 			}
 		}
 		i += c
 	}
 
 	*count = w.Count()
-	return w.Close()
+	return partSpectrum, topN, w.Close()
 }
 
 func (b *KmerSetGroupBuilder) writeEmptyKdi(path string, count *uint64) error {

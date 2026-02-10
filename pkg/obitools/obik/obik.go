@@ -48,6 +48,12 @@ func OptionSet(opt *getoptions.GetOpt) {
 	SetSelectionOptionSet(rmCmd)
 	rmCmd.SetCommandFn(runRm)
 
+	// spectrum: output k-mer frequency spectrum as CSV
+	spectrumCmd := opt.NewCommand("spectrum", "Output k-mer frequency spectrum as CSV")
+	SetSelectionOptionSet(spectrumCmd)
+	obiconvert.OutputModeOptionSet(spectrumCmd, false)
+	spectrumCmd.SetCommandFn(runSpectrum)
+
 	// super: extract super k-mers from sequences
 	superCmd := opt.NewCommand("super", "Extract super k-mers from sequence files")
 	obiconvert.InputOptionSet(superCmd)

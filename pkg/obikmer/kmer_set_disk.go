@@ -706,6 +706,21 @@ func (ksg *KmerSetGroup) PartitionPath(setIndex, partIndex int) string {
 	return ksg.partitionPath(setIndex, partIndex)
 }
 
+// SpectrumPath returns the path to the spectrum.bin file for the given set.
+func (ksg *KmerSetGroup) SpectrumPath(setIndex int) string {
+	return filepath.Join(ksg.path, fmt.Sprintf("set_%d", setIndex), "spectrum.bin")
+}
+
+// Spectrum reads the k-mer frequency spectrum for the given set.
+// Returns nil, nil if no spectrum file exists.
+func (ksg *KmerSetGroup) Spectrum(setIndex int) (*KmerSpectrum, error) {
+	path := ksg.SpectrumPath(setIndex)
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return nil, nil
+	}
+	return ReadSpectrum(path)
+}
+
 // IsCompatibleWith returns true if the other group has the same k, m, and partitions.
 func (ksg *KmerSetGroup) IsCompatibleWith(other *KmerSetGroup) bool {
 	return ksg.k == other.k && ksg.m == other.m && ksg.partitions == other.partitions
@@ -844,6 +859,15 @@ func (ksg *KmerSetGroup) CopySetsByIDTo(ids []string, destDir string, force bool
 			destPath := dest.partitionPath(destIdx, p)
 			if err := copyFile(srcPath, destPath); err != nil {
 				return nil, fmt.Errorf("obikmer: copy partition %d of set %q: %w", p, srcID, err)
+			}
+		}
+
+		// Copy spectrum.bin if it exists
+		srcSpecPath := ksg.SpectrumPath(srcIdx)
+		if _, err := os.Stat(srcSpecPath); err == nil {
+			destSpecPath := filepath.Join(destSetDir, "spectrum.bin")
+			if err := copyFile(srcSpecPath, destSpecPath); err != nil {
+				return nil, fmt.Errorf("obikmer: copy spectrum of set %q: %w", srcID, err)
 			}
 		}
 

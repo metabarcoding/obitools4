@@ -38,7 +38,9 @@ var _indexId = ""
 var _metadataFormat = "toml"
 var _setTag = make(map[string]string, 0)
 var _minOccurrence = 1
+var _maxOccurrence = 0
 var _saveFullFilter = false
+var _saveFreqKmer = 0
 
 // KmerIndexOptionSet defines every option related to kmer index building.
 func KmerIndexOptionSet(options *getoptions.GetOpt) {
@@ -64,8 +66,14 @@ func KmerIndexOptionSet(options *getoptions.GetOpt) {
 	options.IntVar(&_minOccurrence, "min-occurrence", _minOccurrence,
 		options.Description("Minimum number of occurrences for a k-mer to be kept (default 1 = keep all)."))
 
+	options.IntVar(&_maxOccurrence, "max-occurrence", _maxOccurrence,
+		options.Description("Maximum number of occurrences for a k-mer to be kept (default 0 = no upper bound)."))
+
 	options.BoolVar(&_saveFullFilter, "save-full-filter", _saveFullFilter,
 		options.Description("When using --min-occurrence > 1, save the full frequency filter instead of just the filtered index."))
+
+	options.IntVar(&_saveFreqKmer, "save-freq-kmer", _saveFreqKmer,
+		options.Description("Save the N most frequent k-mers per set to a CSV file (top_kmers.csv)."))
 }
 
 // CLIKmerSize returns the k-mer size.
@@ -114,9 +122,19 @@ func CLIMinOccurrence() int {
 	return _minOccurrence
 }
 
+// CLIMaxOccurrence returns the maximum occurrence threshold (0 = no upper bound).
+func CLIMaxOccurrence() int {
+	return _maxOccurrence
+}
+
 // CLISaveFullFilter returns whether to save the full frequency filter.
 func CLISaveFullFilter() bool {
 	return _saveFullFilter
+}
+
+// CLISaveFreqKmer returns the number of top frequent k-mers to save (0 = disabled).
+func CLISaveFreqKmer() int {
+	return _saveFreqKmer
 }
 
 // CLIOutputDirectory returns the output directory path.

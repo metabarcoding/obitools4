@@ -31,10 +31,18 @@ func runIndex(ctx context.Context, opt *getoptions.GetOpt, args []string) error 
 		return fmt.Errorf("invalid min-occurrence: %d (must be >= 1)", minOcc)
 	}
 
+	maxOcc := CLIMaxOccurrence()
+
 	// Build options
 	var opts []obikmer.BuilderOption
 	if minOcc > 1 {
 		opts = append(opts, obikmer.WithMinFrequency(minOcc))
+	}
+	if maxOcc > 0 {
+		opts = append(opts, obikmer.WithMaxFrequency(maxOcc))
+	}
+	if topN := CLISaveFreqKmer(); topN > 0 {
+		opts = append(opts, obikmer.WithSaveFreqKmers(topN))
 	}
 
 	// Determine whether to append to existing group or create new
@@ -50,7 +58,11 @@ func runIndex(ctx context.Context, opt *getoptions.GetOpt, args []string) error 
 		}
 	} else {
 		// New group
-		log.Infof("Creating new kmer index: k=%d, m=%d, min-occurrence=%d", k, m, minOcc)
+		if maxOcc > 0 {
+			log.Infof("Creating new kmer index: k=%d, m=%d, occurrence=[%d,%d]", k, m, minOcc, maxOcc)
+		} else {
+			log.Infof("Creating new kmer index: k=%d, m=%d, min-occurrence=%d", k, m, minOcc)
+		}
 		builder, err = obikmer.NewKmerSetGroupBuilder(outDir, k, m, 1, -1, opts...)
 		if err != nil {
 			return fmt.Errorf("failed to create kmer index builder: %w", err)
@@ -98,6 +110,9 @@ func runIndex(ctx context.Context, opt *getoptions.GetOpt, args []string) error 
 
 	if minOcc > 1 {
 		ksg.SetAttribute("min_occurrence", minOcc)
+	}
+	if maxOcc > 0 {
+		ksg.SetAttribute("max_occurrence", maxOcc)
 	}
 
 	if err := ksg.SaveMetadata(); err != nil {
