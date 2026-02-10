@@ -11,6 +11,15 @@ import (
 	"github.com/DavidGamba/go-getoptions"
 )
 
+// MaskingMode defines how to handle low-complexity regions
+type MaskingMode int
+
+const (
+	MaskMode    MaskingMode = iota // Replace low-complexity regions with masked characters
+	SplitMode                      // Split sequence into high-complexity fragments
+	ExtractMode                    // Extract low-complexity fragments
+)
+
 // Output format flags
 var _jsonOutput bool
 var _csvOutput bool
@@ -29,11 +38,66 @@ var _jaccard bool
 var _setMetaTags = make(map[string]string, 0)
 
 // ==============================
-// Kmer index building options (moved from obikindex)
+// Shared kmer options (used by index, super, lowmask)
 // ==============================
 
 var _kmerSize = 31
 var _minimizerSize = -1 // -1 means auto: ceil(k / 2.5)
+
+// KmerSizeOptionSet registers --kmer-size / -k.
+// Shared by index, super, and lowmask subcommands.
+func KmerSizeOptionSet(options *getoptions.GetOpt) {
+	options.IntVar(&_kmerSize, "kmer-size", _kmerSize,
+		options.Alias("k"),
+		options.Description("Size of k-mers (must be between 2 and 31)."))
+}
+
+// MinimizerOptionSet registers --minimizer-size / -m.
+// Shared by index and super subcommands.
+func MinimizerOptionSet(options *getoptions.GetOpt) {
+	options.IntVar(&_minimizerSize, "minimizer-size", _minimizerSize,
+		options.Alias("m"),
+		options.Description("Size of minimizers for parallelization (-1 for auto = ceil(k/2.5))."))
+}
+
+// ==============================
+// Lowmask-specific options
+// ==============================
+
+var _entropySize = 6
+var _entropyThreshold = 0.5
+var _splitMode = false
+var _extractMode = false
+var _maskingChar = "."
+var _keepShorter = false
+
+// LowMaskOptionSet registers options specific to low-complexity masking.
+func LowMaskOptionSet(options *getoptions.GetOpt) {
+	KmerSizeOptionSet(options)
+
+	options.IntVar(&_entropySize, "entropy-size", _entropySize,
+		options.Description("Maximum word size considered for entropy estimate."))
+
+	options.Float64Var(&_entropyThreshold, "threshold", _entropyThreshold,
+		options.Description("Entropy threshold below which a kmer is masked (0 to 1)."))
+
+	options.BoolVar(&_splitMode, "extract-high", _splitMode,
+		options.Description("Extract only high-complexity regions."))
+
+	options.BoolVar(&_extractMode, "extract-low", _extractMode,
+		options.Description("Extract only low-complexity regions."))
+
+	options.StringVar(&_maskingChar, "masking-char", _maskingChar,
+		options.Description("Character used to mask low complexity regions."))
+
+	options.BoolVar(&_keepShorter, "keep-shorter", _keepShorter,
+		options.Description("Keep fragments shorter than kmer-size in split/extract mode."))
+}
+
+// ==============================
+// Index-specific options
+// ==============================
+
 var _indexId = ""
 var _metadataFormat = "toml"
 var _setTag = make(map[string]string, 0)
@@ -44,13 +108,8 @@ var _saveFreqKmer = 0
 
 // KmerIndexOptionSet defines every option related to kmer index building.
 func KmerIndexOptionSet(options *getoptions.GetOpt) {
-	options.IntVar(&_kmerSize, "kmer-size", _kmerSize,
-		options.Alias("k"),
-		options.Description("Size of k-mers (must be between 2 and 31)."))
-
-	options.IntVar(&_minimizerSize, "minimizer-size", _minimizerSize,
-		options.Alias("m"),
-		options.Description("Size of minimizers for parallelization (-1 for auto = ceil(k/2.5))."))
+	KmerSizeOptionSet(options)
+	MinimizerOptionSet(options)
 
 	options.StringVar(&_indexId, "index-id", _indexId,
 		options.Description("Identifier for the kmer index."))
@@ -74,6 +133,16 @@ func KmerIndexOptionSet(options *getoptions.GetOpt) {
 
 	options.IntVar(&_saveFreqKmer, "save-freq-kmer", _saveFreqKmer,
 		options.Description("Save the N most frequent k-mers per set to a CSV file (top_kmers.csv)."))
+}
+
+// ==============================
+// Super kmer options
+// ==============================
+
+// SuperKmerOptionSet registers options specific to super k-mer extraction.
+func SuperKmerOptionSet(options *getoptions.GetOpt) {
+	KmerSizeOptionSet(options)
+	MinimizerOptionSet(options)
 }
 
 // CLIKmerSize returns the k-mer size.
@@ -155,6 +224,42 @@ func SetMinimizerSize(m int) {
 // SetMinOccurrence sets the minimum occurrence (for testing).
 func SetMinOccurrence(n int) {
 	_minOccurrence = n
+}
+
+// CLIMaskingMode returns the masking mode from CLI flags.
+func CLIMaskingMode() MaskingMode {
+	switch {
+	case _extractMode:
+		return ExtractMode
+	case _splitMode:
+		return SplitMode
+	default:
+		return MaskMode
+	}
+}
+
+// CLIMaskingChar returns the masking character, validated.
+func CLIMaskingChar() byte {
+	mask := strings.TrimSpace(_maskingChar)
+	if len(mask) != 1 {
+		log.Fatalf("--masking-char option accepts a single character, not %s", mask)
+	}
+	return []byte(mask)[0]
+}
+
+// CLIEntropySize returns the entropy word size.
+func CLIEntropySize() int {
+	return _entropySize
+}
+
+// CLIEntropyThreshold returns the entropy threshold.
+func CLIEntropyThreshold() float64 {
+	return _entropyThreshold
+}
+
+// CLIKeepShorter returns whether to keep short fragments.
+func CLIKeepShorter() bool {
+	return _keepShorter
 }
 
 // OutputFormatOptionSet registers --json-output, --csv-output, --yaml-output.

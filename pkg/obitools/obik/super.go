@@ -13,26 +13,11 @@ import (
 	"github.com/DavidGamba/go-getoptions"
 )
 
-// Super k-mer specific option variables.
-// These reuse _kmerSize and _minimizerSize from options.go since
-// only one subcommand runs at a time.
-
-// SuperKmerOptionSet registers options specific to super k-mer extraction.
-func SuperKmerOptionSet(options *getoptions.GetOpt) {
-	options.IntVar(&_kmerSize, "kmer-size", _kmerSize,
-		options.Alias("k"),
-		options.Description("Size of k-mers (must be between m+1 and 31)."))
-
-	options.IntVar(&_minimizerSize, "minimizer-size", _minimizerSize,
-		options.Alias("m"),
-		options.Description("Size of minimizers (must be between 1 and k-1)."))
-}
-
 // runSuper implements the "obik super" subcommand.
 // It extracts super k-mers from DNA sequences.
 func runSuper(ctx context.Context, opt *getoptions.GetOpt, args []string) error {
-	k := _kmerSize
-	m := _minimizerSize
+	k := CLIKmerSize()
+	m := CLIMinimizerSize()
 
 	if k < 2 || k > 31 {
 		return fmt.Errorf("invalid k-mer size: %d (must be between 2 and 31)", k)

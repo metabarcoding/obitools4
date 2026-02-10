@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"math"
-	"strings"
 
 	log "github.com/sirupsen/logrus"
 
@@ -15,67 +14,6 @@ import (
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 	"github.com/DavidGamba/go-getoptions"
 )
-
-// MaskingMode defines how to handle low-complexity regions
-type MaskingMode int
-
-const (
-	MaskMode    MaskingMode = iota // Replace low-complexity regions with masked characters
-	SplitMode                      // Split sequence into high-complexity fragments
-	ExtractMode                    // Extract low-complexity fragments
-)
-
-// Lowmask-specific option variables (separate from index/super kmer-size).
-var _lowmaskKmerSize = 31
-var _lowmaskLevelMax = 6
-var _lowmaskThreshold = 0.5
-var _lowmaskSplitMode = false
-var _lowmaskLowMode = false
-var _lowmaskMaskChar = "."
-var _lowmaskKeepShorter = false
-
-// LowMaskOptionSet registers options specific to low-complexity masking.
-func LowMaskOptionSet(options *getoptions.GetOpt) {
-	options.IntVar(&_lowmaskKmerSize, "kmer-size", _lowmaskKmerSize,
-		options.Description("Size of the kmer considered to estimate entropy."))
-
-	options.IntVar(&_lowmaskLevelMax, "entropy-size", _lowmaskLevelMax,
-		options.Description("Maximum word size considered for entropy estimate."))
-
-	options.Float64Var(&_lowmaskThreshold, "threshold", _lowmaskThreshold,
-		options.Description("Entropy threshold below which a kmer is masked (0 to 1)."))
-
-	options.BoolVar(&_lowmaskSplitMode, "split-mode", _lowmaskSplitMode,
-		options.Description("Split sequences to remove masked regions."))
-
-	options.BoolVar(&_lowmaskLowMode, "low-mode", _lowmaskLowMode,
-		options.Description("Extract only low-complexity regions."))
-
-	options.StringVar(&_lowmaskMaskChar, "masking-char", _lowmaskMaskChar,
-		options.Description("Character used to mask low complexity regions."))
-
-	options.BoolVar(&_lowmaskKeepShorter, "keep-shorter", _lowmaskKeepShorter,
-		options.Description("Keep fragments shorter than kmer-size in split/extract mode."))
-}
-
-func lowmaskMaskingMode() MaskingMode {
-	switch {
-	case _lowmaskLowMode:
-		return ExtractMode
-	case _lowmaskSplitMode:
-		return SplitMode
-	default:
-		return MaskMode
-	}
-}
-
-func lowmaskMaskingChar() byte {
-	mask := strings.TrimSpace(_lowmaskMaskChar)
-	if len(mask) != 1 {
-		log.Fatalf("--masking-char option accepts a single character, not %s", mask)
-	}
-	return []byte(mask)[0]
-}
 
 // lowMaskWorker creates a worker to mask low-complexity regions in DNA sequences.
 func lowMaskWorker(kmer_size int, level_max int, threshold float64, mode MaskingMode, maskChar byte, keepShorter bool) obiseq.SeqWorker {
@@ -453,11 +391,11 @@ func lowMaskWorker(kmer_size int, level_max int, threshold float64, mode Masking
 // runLowmask implements the "obik lowmask" subcommand.
 // It masks low-complexity regions in DNA sequences using entropy-based detection.
 func runLowmask(ctx context.Context, opt *getoptions.GetOpt, args []string) error {
-	kmerSize := _lowmaskKmerSize
-	levelMax := _lowmaskLevelMax
-	threshold := _lowmaskThreshold
-	mode := lowmaskMaskingMode()
-	maskChar := lowmaskMaskingChar()
+	kmerSize := CLIKmerSize()
+	levelMax := CLIEntropySize()
+	threshold := CLIEntropyThreshold()
+	mode := CLIMaskingMode()
+	maskChar := CLIMaskingChar()
 
 	log.Printf("Low-complexity masking: kmer-size=%d, entropy-size=%d, threshold=%.4f", kmerSize, levelMax, threshold)
 
@@ -466,7 +404,7 @@ func runLowmask(ctx context.Context, opt *getoptions.GetOpt, args []string) erro
 		return fmt.Errorf("failed to open sequence files: %w", err)
 	}
 
-	worker := lowMaskWorker(kmerSize, levelMax, threshold, mode, maskChar, _lowmaskKeepShorter)
+	worker := lowMaskWorker(kmerSize, levelMax, threshold, mode, maskChar, CLIKeepShorter())
 
 	masked := sequences.MakeIWorker(
 		worker,
