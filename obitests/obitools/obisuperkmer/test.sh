@@ -4,8 +4,8 @@
 # Here give the name of the test serie
 #
 
-TEST_NAME=obisuperkmer
-CMD=obisuperkmer
+TEST_NAME=obik-super
+CMD=obik
 
 ######
 #
@@ -16,7 +16,7 @@ TEST_DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 OBITOOLS_DIR="${TEST_DIR/obitest*/}build"
 export PATH="${OBITOOLS_DIR}:${PATH}"
 
-MCMD="$(echo "${CMD:0:4}" | tr '[:lower:]' '[:upper:]')$(echo "${CMD:4}" | tr '[:upper:]' '[:lower:]')"
+MCMD="OBIk-super"
 
 TMPDIR="$(mktemp -d)"
 ntest=0
@@ -65,31 +65,10 @@ log "files: $(find $TEST_DIR | awk -F'/' '{print $NF}' | tail -n +2)"
 ####
 #### Below are the tests
 ####
-#### Before each test :
-####  - increment the variable ntest
-####
-#### Run the command as the condition of an if / then /else
-####  - The command must return 0 on success
-####  - The command must return an exit code different from 0 on failure
-####  - The datafiles are stored in the same directory than the test script
-####  - The test script directory is stored in the TEST_DIR variable
-####  - If result files have to be produced they must be stored
-####    in the temporary directory (TMPDIR variable)
-####
-#### then clause is executed on success of the command
-####  - Write a success message using the log function
-####  - increment the variable success
-####
-#### else clause is executed on failure of the command
-####  - Write a failure message using the log function
-####  - increment the variable failed
-####
 ######################################################################
 
-
-
 ((ntest++))
-if $CMD -h > "${TMPDIR}/help.txt" 2>&1
+if $CMD super -h > "${TMPDIR}/help.txt" 2>&1
 then
     log "$MCMD: printing help OK"
     ((success++))
@@ -100,7 +79,7 @@ fi
 
 # Test 1: Basic super k-mer extraction with default parameters
 ((ntest++))
-if obisuperkmer "${TEST_DIR}/test_sequences.fasta" \
+if $CMD super "${TEST_DIR}/test_sequences.fasta" \
     > "${TMPDIR}/output_default.fasta" 2>&1
 then
     log "$MCMD: basic extraction with default parameters OK"
@@ -148,7 +127,7 @@ fi
 
 # Test 5: Extract super k-mers with custom k and m parameters
 ((ntest++))
-if obisuperkmer -k 15 -m 7 "${TEST_DIR}/test_sequences.fasta" \
+if $CMD super -k 15 -m 7 "${TEST_DIR}/test_sequences.fasta" \
     > "${TMPDIR}/output_k15_m7.fasta" 2>&1
 then
     log "$MCMD: extraction with custom k=15, m=7 OK"
@@ -172,7 +151,7 @@ fi
 
 # Test 7: Test with different output format (FASTA output explicitly)
 ((ntest++))
-if obisuperkmer --fasta-output -k 21 -m 11 \
+if $CMD super --fasta-output -k 21 -m 11 \
     "${TEST_DIR}/test_sequences.fasta" \
     > "${TMPDIR}/output_fasta.fasta" 2>&1
 then
@@ -209,7 +188,7 @@ fi
 
 # Test 10: Test with output file option
 ((ntest++))
-if obisuperkmer -o "${TMPDIR}/output_file.fasta" \
+if $CMD super -o "${TMPDIR}/output_file.fasta" \
     "${TEST_DIR}/test_sequences.fasta" 2>&1
 then
     log "$MCMD: output to file with -o option OK"
