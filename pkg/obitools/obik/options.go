@@ -105,6 +105,8 @@ var _minOccurrence = 1
 var _maxOccurrence = 0
 var _saveFullFilter = false
 var _saveFreqKmer = 0
+var _indexEntropyThreshold = 0.0
+var _indexEntropySize = 6
 
 // KmerIndexOptionSet defines every option related to kmer index building.
 func KmerIndexOptionSet(options *getoptions.GetOpt) {
@@ -133,6 +135,22 @@ func KmerIndexOptionSet(options *getoptions.GetOpt) {
 
 	options.IntVar(&_saveFreqKmer, "save-freq-kmer", _saveFreqKmer,
 		options.Description("Save the N most frequent k-mers per set to a CSV file (top_kmers.csv)."))
+
+	options.Float64Var(&_indexEntropyThreshold, "entropy-filter", _indexEntropyThreshold,
+		options.Description("Filter low-complexity k-mers with entropy <= threshold (0 = disabled)."))
+
+	options.IntVar(&_indexEntropySize, "entropy-filter-size", _indexEntropySize,
+		options.Description("Maximum word size for entropy filter computation (default 6)."))
+}
+
+// EntropyFilterOptionSet registers entropy filter options for commands
+// that process existing indices (e.g. filter).
+func EntropyFilterOptionSet(options *getoptions.GetOpt) {
+	options.Float64Var(&_indexEntropyThreshold, "entropy-filter", _indexEntropyThreshold,
+		options.Description("Filter low-complexity k-mers with entropy <= threshold (0 = disabled)."))
+
+	options.IntVar(&_indexEntropySize, "entropy-filter-size", _indexEntropySize,
+		options.Description("Maximum word size for entropy filter computation (default 6)."))
 }
 
 // ==============================
@@ -260,6 +278,16 @@ func CLIEntropyThreshold() float64 {
 // CLIKeepShorter returns whether to keep short fragments.
 func CLIKeepShorter() bool {
 	return _keepShorter
+}
+
+// CLIIndexEntropyThreshold returns the entropy filter threshold for index building (0 = disabled).
+func CLIIndexEntropyThreshold() float64 {
+	return _indexEntropyThreshold
+}
+
+// CLIIndexEntropySize returns the entropy filter word size for index building.
+func CLIIndexEntropySize() int {
+	return _indexEntropySize
 }
 
 // OutputFormatOptionSet registers --json-output, --csv-output, --yaml-output.

@@ -5,20 +5,23 @@ import (
 	"math"
 	"os"
 	"path/filepath"
-	"runtime"
-	"sort"
+	"slices"
 	"sync"
 
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
+	"github.com/schollz/progressbar/v3"
 )
 
 // BuilderOption is a functional option for KmerSetGroupBuilder.
 type BuilderOption func(*builderConfig)
 
 type builderConfig struct {
-	minFreq      int // 0 means no frequency filtering (simple dedup)
-	maxFreq      int // 0 means no upper bound
-	saveFreqTopN int // >0 means save the N most frequent k-mers per set to CSV
+	minFreq          int     // 0 means no frequency filtering (simple dedup)
+	maxFreq          int     // 0 means no upper bound
+	saveFreqTopN     int     // >0 means save the N most frequent k-mers per set to CSV
+	entropyThreshold float64 // >0 means filter k-mers with entropy <= threshold
+	entropyLevelMax  int     // max sub-word size for entropy (typically 6)
 }
 
 // WithMinFrequency activates frequency filtering mode.
@@ -42,6 +45,16 @@ func WithMaxFrequency(maxFreq int) BuilderOption {
 func WithSaveFreqKmers(n int) BuilderOption {
 	return func(c *builderConfig) {
 		c.saveFreqTopN = n
+	}
+}
+
+// WithEntropyFilter activates entropy-based low-complexity filtering.
+// K-mers with entropy <= threshold are discarded during finalization.
+// levelMax is the maximum sub-word size for entropy computation (typically 6).
+func WithEntropyFilter(threshold float64, levelMax int) BuilderOption {
+	return func(c *builderConfig) {
+		c.entropyThreshold = threshold
+		c.entropyLevelMax = levelMax
 	}
 }
 
@@ -299,7 +312,17 @@ func (b *KmerSetGroupBuilder) Close() (*KmerSetGroup, error) {
 		}
 	}
 
-	// Process partitions in parallel
+	// =====================================================================
+	// 2-stage pipeline: readers (pure I/O) → workers (CPU + write)
+	//
+	// - nReaders goroutines read .skm files (pure I/O, fast)
+	// - nWorkers goroutines extract k-mers, sort, dedup, filter, write .kdi
+	//
+	// One unbuffered channel between stages. Readers are truly I/O-bound
+	// (small files, buffered reads), workers are CPU-bound and stay busy.
+	// =====================================================================
+	totalJobs := b.n * b.P
+
 	counts := make([][]uint64, b.n)
 	spectra := make([][]map[int]uint64, b.n)
 	var topKmers [][]*TopNKmers
@@ -314,27 +337,71 @@ func (b *KmerSetGroupBuilder) Close() (*KmerSetGroup, error) {
 		}
 	}
 
-	nWorkers := runtime.NumCPU()
-	if nWorkers > b.P {
-		nWorkers = b.P
+	nCPU := obidefault.ParallelWorkers()
+
+	// Stage sizing
+	nWorkers := nCPU     // CPU-bound: one per core
+	nReaders := nCPU / 4 // pure I/O: few goroutines suffice
+	if nReaders < 2 {
+		nReaders = 2
+	}
+	if nReaders > 4 {
+		nReaders = 4
+	}
+	if nWorkers > totalJobs {
+		nWorkers = totalJobs
+	}
+	if nReaders > totalJobs {
+		nReaders = totalJobs
 	}
 
-	type job struct {
+	var bar *progressbar.ProgressBar
+	if obidefault.ProgressBar() {
+		pbopt := []progressbar.Option{
+			progressbar.OptionSetWriter(os.Stderr),
+			progressbar.OptionSetWidth(15),
+			progressbar.OptionShowCount(),
+			progressbar.OptionShowIts(),
+			progressbar.OptionSetPredictTime(true),
+			progressbar.OptionSetDescription("[Finalizing partitions]"),
+		}
+		bar = progressbar.NewOptions(totalJobs, pbopt...)
+	}
+
+	// --- Channel types ---
+	type partitionData struct {
+		setIdx  int
+		partIdx int
+		skmers  []SuperKmer // raw super-kmers from I/O stage
+	}
+
+	type readJob struct {
 		setIdx  int
 		partIdx int
 	}
 
-	jobs := make(chan job, b.n*b.P)
-	var wg sync.WaitGroup
+	dataCh := make(chan *partitionData) // unbuffered
+	readJobs := make(chan readJob, totalJobs)
+
 	var errMu sync.Mutex
 	var firstErr error
 
-	for w := 0; w < nWorkers; w++ {
-		wg.Add(1)
+	// Fill job queue (buffered, all jobs pre-loaded)
+	for s := 0; s < b.n; s++ {
+		for p := 0; p < b.P; p++ {
+			readJobs <- readJob{s, p}
+		}
+	}
+	close(readJobs)
+
+	// --- Stage 1: Readers (pure I/O) ---
+	var readWg sync.WaitGroup
+	for w := 0; w < nReaders; w++ {
+		readWg.Add(1)
 		go func() {
-			defer wg.Done()
-			for j := range jobs {
-				partSpec, partTop, err := b.finalizePartition(j.setIdx, j.partIdx, &counts[j.setIdx][j.partIdx])
+			defer readWg.Done()
+			for rj := range readJobs {
+				skmers, err := b.loadPartitionRaw(rj.setIdx, rj.partIdx)
 				if err != nil {
 					errMu.Lock()
 					if firstErr == nil {
@@ -342,21 +409,62 @@ func (b *KmerSetGroupBuilder) Close() (*KmerSetGroup, error) {
 					}
 					errMu.Unlock()
 				}
-				spectra[j.setIdx][j.partIdx] = partSpec
+				dataCh <- &partitionData{rj.setIdx, rj.partIdx, skmers}
+			}
+		}()
+	}
+
+	go func() {
+		readWg.Wait()
+		close(dataCh)
+	}()
+
+	// --- Stage 2: Workers (CPU: extract k-mers + sort/filter + write .kdi) ---
+	var workWg sync.WaitGroup
+	for w := 0; w < nWorkers; w++ {
+		workWg.Add(1)
+		go func() {
+			defer workWg.Done()
+			for pd := range dataCh {
+				// CPU: extract canonical k-mers from super-kmers
+				kmers := extractCanonicalKmers(pd.skmers, b.k)
+				pd.skmers = nil // allow GC of raw super-kmers
+
+				// CPU: sort, dedup, filter
+				filtered, spectrum, topN := b.sortFilterPartition(kmers)
+				kmers = nil // allow GC of unsorted data
+
+				// I/O: write .kdi file
+				globalIdx := b.startIndex + pd.setIdx
+				kdiPath := filepath.Join(b.dir,
+					fmt.Sprintf("set_%d", globalIdx),
+					fmt.Sprintf("part_%04d.kdi", pd.partIdx))
+
+				n, err := b.writePartitionKdi(kdiPath, filtered)
+				if err != nil {
+					errMu.Lock()
+					if firstErr == nil {
+						firstErr = err
+					}
+					errMu.Unlock()
+				}
+				counts[pd.setIdx][pd.partIdx] = n
+				spectra[pd.setIdx][pd.partIdx] = spectrum
 				if topKmers != nil {
-					topKmers[j.setIdx][j.partIdx] = partTop
+					topKmers[pd.setIdx][pd.partIdx] = topN
+				}
+				if bar != nil {
+					bar.Add(1)
 				}
 			}
 		}()
 	}
 
-	for s := 0; s < b.n; s++ {
-		for p := 0; p < b.P; p++ {
-			jobs <- job{s, p}
-		}
+	workWg.Wait()
+
+	if bar != nil {
+		fmt.Fprintln(os.Stderr)
 	}
-	close(jobs)
-	wg.Wait()
 
 	if firstErr != nil {
 		return nil, firstErr
@@ -449,58 +557,89 @@ func (b *KmerSetGroupBuilder) Close() (*KmerSetGroup, error) {
 	return ksg, nil
 }
 
-// finalizePartition processes a single partition: load SKM, extract k-mers,
-// sort, dedup/count, write KDI. Returns a partial frequency spectrum
-// (frequency → count of distinct k-mers) computed before filtering,
-// and optionally the top-N most frequent k-mers.
-func (b *KmerSetGroupBuilder) finalizePartition(setIdx, partIdx int, count *uint64) (map[int]uint64, *TopNKmers, error) {
-	// setIdx is local (0..n-1); build dirs use local index, output dirs use global
+// loadPartitionRaw reads a .skm file and returns raw super-kmers.
+// This is pure I/O — no k-mer extraction is done here.
+// Returns nil (not an error) if the .skm file is empty or missing.
+func (b *KmerSetGroupBuilder) loadPartitionRaw(setIdx, partIdx int) ([]SuperKmer, error) {
 	skmPath := filepath.Join(b.dir, ".build",
 		fmt.Sprintf("set_%d", setIdx),
 		fmt.Sprintf("part_%04d.skm", partIdx))
 
-	globalIdx := b.startIndex + setIdx
-	kdiPath := filepath.Join(b.dir,
-		fmt.Sprintf("set_%d", globalIdx),
-		fmt.Sprintf("part_%04d.kdi", partIdx))
-
-	// Load super-kmers and extract canonical k-mers
-	reader, err := NewSkmReader(skmPath)
+	fi, err := os.Stat(skmPath)
 	if err != nil {
-		// If file doesn't exist or is empty, write empty KDI
-		return nil, nil, b.writeEmptyKdi(kdiPath, count)
+		return nil, nil // empty partition, not an error
 	}
 
-	var kmers []uint64
+	reader, err := NewSkmReader(skmPath)
+	if err != nil {
+		return nil, nil
+	}
+
+	// Estimate capacity from file size. Each super-kmer record is
+	// 2 bytes (length) + packed bases (~k/4 bytes), so roughly
+	// (2 + k/4) bytes per super-kmer on average.
+	avgRecordSize := 2 + b.k/4
+	if avgRecordSize < 4 {
+		avgRecordSize = 4
+	}
+	estCount := int(fi.Size()) / avgRecordSize
+
+	skmers := make([]SuperKmer, 0, estCount)
 	for {
 		sk, ok := reader.Next()
 		if !ok {
 			break
 		}
-		for kmer := range IterCanonicalKmers(sk.Sequence, b.k) {
-			kmers = append(kmers, kmer)
-		}
+		skmers = append(skmers, sk)
 	}
 	reader.Close()
 
+	return skmers, nil
+}
+
+// extractCanonicalKmers extracts all canonical k-mers from a slice of super-kmers.
+// This is CPU-bound work (sliding-window forward/reverse complement).
+func extractCanonicalKmers(skmers []SuperKmer, k int) []uint64 {
+	// Pre-compute total capacity to avoid repeated slice growth.
+	// Each super-kmer of length L yields L-k+1 canonical k-mers.
+	total := 0
+	for i := range skmers {
+		n := len(skmers[i].Sequence) - k + 1
+		if n > 0 {
+			total += n
+		}
+	}
+
+	kmers := make([]uint64, 0, total)
+	for _, sk := range skmers {
+		for kmer := range IterCanonicalKmers(sk.Sequence, k) {
+			kmers = append(kmers, kmer)
+		}
+	}
+	return kmers
+}
+
+// sortFilterPartition sorts, deduplicates, and filters k-mers in memory (CPU-bound).
+// Returns the filtered sorted slice, frequency spectrum, and optional top-N.
+func (b *KmerSetGroupBuilder) sortFilterPartition(kmers []uint64) ([]uint64, map[int]uint64, *TopNKmers) {
 	if len(kmers) == 0 {
-		return nil, nil, b.writeEmptyKdi(kdiPath, count)
+		return nil, nil, nil
 	}
 
-	// Sort
-	sort.Slice(kmers, func(i, j int) bool { return kmers[i] < kmers[j] })
-
-	// Write KDI based on mode
-	w, err := NewKdiWriter(kdiPath)
-	if err != nil {
-		return nil, nil, err
-	}
+	// Sort (CPU-bound) — slices.Sort avoids reflection overhead of sort.Slice
+	slices.Sort(kmers)
 
 	minFreq := b.config.minFreq
 	if minFreq <= 0 {
 		minFreq = 1 // simple dedup
 	}
-	maxFreq := b.config.maxFreq // 0 means no upper bound
+	maxFreq := b.config.maxFreq
+
+	// Prepare entropy filter if requested
+	var entropyFilter *KmerEntropyFilter
+	if b.config.entropyThreshold > 0 && b.config.entropyLevelMax > 0 {
+		entropyFilter = NewKmerEntropyFilter(b.k, b.config.entropyLevelMax, b.config.entropyThreshold)
+	}
 
 	// Prepare top-N collector if requested
 	var topN *TopNKmers
@@ -508,8 +647,10 @@ func (b *KmerSetGroupBuilder) finalizePartition(setIdx, partIdx int, count *uint
 		topN = NewTopNKmers(b.config.saveFreqTopN)
 	}
 
-	// Linear scan: count consecutive identical values and accumulate spectrum
+	// Linear scan: count consecutive identical values, filter, accumulate spectrum
 	partSpectrum := make(map[int]uint64)
+	filtered := make([]uint64, 0, len(kmers)/2)
+
 	i := 0
 	for i < len(kmers) {
 		val := kmers[i]
@@ -522,16 +663,33 @@ func (b *KmerSetGroupBuilder) finalizePartition(setIdx, partIdx int, count *uint
 			topN.Add(val, c)
 		}
 		if c >= minFreq && (maxFreq <= 0 || c <= maxFreq) {
-			if err := w.Write(val); err != nil {
-				w.Close()
-				return nil, nil, err
+			if entropyFilter == nil || entropyFilter.Accept(val) {
+				filtered = append(filtered, val)
 			}
 		}
 		i += c
 	}
 
-	*count = w.Count()
-	return partSpectrum, topN, w.Close()
+	return filtered, partSpectrum, topN
+}
+
+// writePartitionKdi writes a sorted slice of k-mers to a .kdi file (I/O-bound).
+// Returns the number of k-mers written.
+func (b *KmerSetGroupBuilder) writePartitionKdi(kdiPath string, kmers []uint64) (uint64, error) {
+	w, err := NewKdiWriter(kdiPath)
+	if err != nil {
+		return 0, err
+	}
+
+	for _, val := range kmers {
+		if err := w.Write(val); err != nil {
+			w.Close()
+			return 0, err
+		}
+	}
+
+	n := w.Count()
+	return n, w.Close()
 }
 
 func (b *KmerSetGroupBuilder) writeEmptyKdi(path string, count *uint64) error {

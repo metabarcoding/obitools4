@@ -33,6 +33,9 @@ func runIndex(ctx context.Context, opt *getoptions.GetOpt, args []string) error 
 
 	maxOcc := CLIMaxOccurrence()
 
+	entropyThreshold := CLIIndexEntropyThreshold()
+	entropySize := CLIIndexEntropySize()
+
 	// Build options
 	var opts []obikmer.BuilderOption
 	if minOcc > 1 {
@@ -43,6 +46,9 @@ func runIndex(ctx context.Context, opt *getoptions.GetOpt, args []string) error 
 	}
 	if topN := CLISaveFreqKmer(); topN > 0 {
 		opts = append(opts, obikmer.WithSaveFreqKmers(topN))
+	}
+	if entropyThreshold > 0 {
+		opts = append(opts, obikmer.WithEntropyFilter(entropyThreshold, entropySize))
 	}
 
 	// Determine whether to append to existing group or create new
@@ -113,6 +119,11 @@ func runIndex(ctx context.Context, opt *getoptions.GetOpt, args []string) error 
 	}
 	if maxOcc > 0 {
 		ksg.SetAttribute("max_occurrence", maxOcc)
+	}
+
+	if entropyThreshold > 0 {
+		ksg.SetAttribute("entropy_filter", entropyThreshold)
+		ksg.SetAttribute("entropy_filter_size", entropySize)
 	}
 
 	if err := ksg.SaveMetadata(); err != nil {

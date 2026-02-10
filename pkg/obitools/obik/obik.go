@@ -74,4 +74,11 @@ func OptionSet(opt *getoptions.GetOpt) {
 	obiconvert.OutputOptionSet(matchCmd)
 	SetSelectionOptionSet(matchCmd)
 	matchCmd.SetCommandFn(runMatch)
+
+	// filter: filter an index to remove low-complexity k-mers
+	filterCmd := opt.NewCommand("filter", "Filter a kmer index to remove low-complexity k-mers")
+	obiconvert.OutputModeOptionSet(filterCmd, false)
+	EntropyFilterOptionSet(filterCmd)
+	SetSelectionOptionSet(filterCmd)
+	filterCmd.SetCommandFn(runFilter)
 }

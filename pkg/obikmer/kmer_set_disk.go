@@ -128,6 +128,27 @@ func OpenKmerSetGroup(directory string) (*KmerSetGroup, error) {
 	return ksg, nil
 }
 
+// NewFilteredKmerSetGroup creates a KmerSetGroup from pre-computed data.
+// Used by the filter command to construct a new group after filtering partitions.
+func NewFilteredKmerSetGroup(
+	directory string, k, m, partitions, n int,
+	setsIDs []string, counts []uint64,
+	setsMetadata []map[string]interface{},
+) (*KmerSetGroup, error) {
+	ksg := &KmerSetGroup{
+		path:         directory,
+		k:            k,
+		m:            m,
+		partitions:   partitions,
+		n:            n,
+		setsIDs:      setsIDs,
+		counts:       counts,
+		setsMetadata: setsMetadata,
+		Metadata:     make(map[string]interface{}),
+	}
+	return ksg, nil
+}
+
 // SaveMetadata writes the metadata.toml file. This is useful after
 // modifying attributes or IDs on an already-finalized index.
 func (ksg *KmerSetGroup) SaveMetadata() error {
