@@ -280,6 +280,26 @@ func CLIKeepShorter() bool {
 	return _keepShorter
 }
 
+// ==============================
+// Match-specific options
+// ==============================
+
+var _indexDirectory = ""
+
+// IndexDirectoryOptionSet registers --index / -i (mandatory directory for match).
+func IndexDirectoryOptionSet(options *getoptions.GetOpt) {
+	options.StringVar(&_indexDirectory, "index", _indexDirectory,
+		options.Alias("i"),
+		options.Required(),
+		options.ArgName("DIRECTORY"),
+		options.Description("Path to the kmer index directory."))
+}
+
+// CLIIndexDirectory returns the --index directory path.
+func CLIIndexDirectory() string {
+	return _indexDirectory
+}
+
 // CLIIndexEntropyThreshold returns the entropy filter threshold for index building (0 = disabled).
 func CLIIndexEntropyThreshold() float64 {
 	return _indexEntropyThreshold

@@ -70,6 +70,7 @@ func OptionSet(opt *getoptions.GetOpt) {
 
 	// match: annotate sequences with k-mer match positions from an index
 	matchCmd := opt.NewCommand("match", "Annotate sequences with k-mer match positions from an index")
+	IndexDirectoryOptionSet(matchCmd)
 	obiconvert.InputOptionSet(matchCmd)
 	obiconvert.OutputOptionSet(matchCmd)
 	SetSelectionOptionSet(matchCmd)

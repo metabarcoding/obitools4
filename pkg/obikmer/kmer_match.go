@@ -1,7 +1,8 @@
 package obikmer
 
 import (
-	"sort"
+	"cmp"
+	"slices"
 	"sync"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
@@ -12,23 +13,73 @@ import (
 type QueryEntry struct {
 	Kmer   uint64 // canonical k-mer value
 	SeqIdx int    // index within the batch
-	Pos    int    // 0-based position in the sequence
+	Pos    int    // 1-based position in the sequence
 }
 
-// MatchResult maps sequence index → sorted slice of matched positions.
-type MatchResult map[int][]int
+// MatchResult holds matched positions for each sequence in a batch.
+// results[i] contains the sorted matched positions for sequence i.
+type MatchResult [][]int
 
-// seqMatchResult collects matched positions for a single sequence.
-type seqMatchResult struct {
-	mu        sync.Mutex
-	positions []int
+// PreparedQueries holds pre-computed query buckets along with the number
+// of sequences they were built from. This is used by the accumulation
+// pipeline to merge queries from multiple batches.
+type PreparedQueries struct {
+	Buckets [][]QueryEntry // queries[partition], each sorted by Kmer
+	NSeqs   int            // number of sequences that produced these queries
+	NKmers  int            // total number of k-mer entries across all partitions
+}
+
+// MergeQueries merges src into dst, offsetting all SeqIdx values in src
+// by dst.NSeqs. Both dst and src must have the same number of partitions.
+// After merging, src should not be reused.
+//
+// Each partition's entries are merged in sorted order (merge-sort of two
+// already-sorted slices).
+func MergeQueries(dst, src *PreparedQueries) {
+	for p := range dst.Buckets {
+		if len(src.Buckets[p]) == 0 {
+			continue
+		}
+
+		offset := dst.NSeqs
+		srcB := src.Buckets[p]
+
+		// Offset SeqIdx in src entries
+		for i := range srcB {
+			srcB[i].SeqIdx += offset
+		}
+
+		if len(dst.Buckets[p]) == 0 {
+			dst.Buckets[p] = srcB
+			continue
+		}
+
+		// Merge two sorted slices
+		dstB := dst.Buckets[p]
+		merged := make([]QueryEntry, 0, len(dstB)+len(srcB))
+		i, j := 0, 0
+		for i < len(dstB) && j < len(srcB) {
+			if dstB[i].Kmer <= srcB[j].Kmer {
+				merged = append(merged, dstB[i])
+				i++
+			} else {
+				merged = append(merged, srcB[j])
+				j++
+			}
+		}
+		merged = append(merged, dstB[i:]...)
+		merged = append(merged, srcB[j:]...)
+		dst.Buckets[p] = merged
+	}
+	dst.NSeqs += src.NSeqs
+	dst.NKmers += src.NKmers
 }
 
 // PrepareQueries extracts all canonical k-mers from a batch of sequences
 // and groups them by partition using super-kmer minimizers.
 //
-// Returns queries[partition] where each slice is sorted by Kmer value.
-func (ksg *KmerSetGroup) PrepareQueries(sequences []*obiseq.BioSequence) [][]QueryEntry {
+// Returns a PreparedQueries with sorted per-partition buckets.
+func (ksg *KmerSetGroup) PrepareQueries(sequences []*obiseq.BioSequence) *PreparedQueries {
 	P := ksg.partitions
 	k := ksg.k
 	m := ksg.m
@@ -39,6 +90,7 @@ func (ksg *KmerSetGroup) PrepareQueries(sequences []*obiseq.BioSequence) [][]Que
 		buckets[i] = make([]QueryEntry, 0, 64)
 	}
 
+	totalKmers := 0
 	for seqIdx, seq := range sequences {
 		bseq := seq.Sequence()
 		if len(bseq) < k {
@@ -60,71 +112,67 @@ func (ksg *KmerSetGroup) PrepareQueries(sequences []*obiseq.BioSequence) [][]Que
 				buckets[partition] = append(buckets[partition], QueryEntry{
 					Kmer:   kmer,
 					SeqIdx: seqIdx,
-					Pos:    sk.Start + localPos,
+					Pos:    sk.Start + localPos + 1,
 				})
 				localPos++
+				totalKmers++
 			}
 		}
 	}
 
 	// Sort each bucket by k-mer value for merge-scan
 	for p := range buckets {
-		sort.Slice(buckets[p], func(i, j int) bool {
-			return buckets[p][i].Kmer < buckets[p][j].Kmer
+		slices.SortFunc(buckets[p], func(a, b QueryEntry) int {
+			return cmp.Compare(a.Kmer, b.Kmer)
 		})
 	}
 
-	return buckets
+	return &PreparedQueries{
+		Buckets: buckets,
+		NSeqs:   len(sequences),
+		NKmers:  totalKmers,
+	}
 }
 
 // MatchBatch looks up pre-sorted queries against one set of the index.
 // Partitions are processed in parallel. For each partition, a merge-scan
 // compares the sorted queries against the sorted KDI stream.
 //
-// Returns a MatchResult mapping sequence index to sorted matched positions.
-func (ksg *KmerSetGroup) MatchBatch(setIndex int, queries [][]QueryEntry) MatchResult {
+// Returns a MatchResult where result[i] contains sorted matched positions
+// for sequence i.
+func (ksg *KmerSetGroup) MatchBatch(setIndex int, pq *PreparedQueries) MatchResult {
 	P := ksg.partitions
 
-	// Per-sequence result collectors
-	var resultMu sync.Mutex
-	resultMap := make(map[int]*seqMatchResult)
-
-	getResult := func(seqIdx int) *seqMatchResult {
-		resultMu.Lock()
-		sr, ok := resultMap[seqIdx]
-		if !ok {
-			sr = &seqMatchResult{}
-			resultMap[seqIdx] = sr
-		}
-		resultMu.Unlock()
-		return sr
-	}
+	// Pre-allocated per-sequence results and mutexes.
+	// Each partition goroutine appends to results[seqIdx] with mus[seqIdx] held.
+	// Contention is low: a sequence's k-mers span many partitions, but each
+	// partition processes its queries sequentially and the critical section is tiny.
+	results := make([][]int, pq.NSeqs)
+	mus := make([]sync.Mutex, pq.NSeqs)
 
 	var wg sync.WaitGroup
 
 	for p := 0; p < P; p++ {
-		if len(queries[p]) == 0 {
+		if len(pq.Buckets[p]) == 0 {
 			continue
 		}
 		wg.Add(1)
 		go func(part int) {
 			defer wg.Done()
-			ksg.matchPartition(setIndex, part, queries[part], getResult)
+			ksg.matchPartition(setIndex, part, pq.Buckets[part], results, mus)
 		}(p)
 	}
 
 	wg.Wait()
 
-	// Build final result with sorted positions
-	result := make(MatchResult, len(resultMap))
-	for seqIdx, sr := range resultMap {
-		if len(sr.positions) > 0 {
-			sort.Ints(sr.positions)
-			result[seqIdx] = sr.positions
+	// Sort positions within each sequence
+	for i := range results {
+		if len(results[i]) > 1 {
+			slices.Sort(results[i])
 		}
 	}
 
-	return result
+	return MatchResult(results)
 }
 
 // matchPartition processes one partition: opens the KDI reader (with index),
@@ -133,7 +181,8 @@ func (ksg *KmerSetGroup) matchPartition(
 	setIndex int,
 	partIndex int,
 	queries []QueryEntry, // sorted by Kmer
-	getResult func(int) *seqMatchResult,
+	results [][]int,
+	mus []sync.Mutex,
 ) {
 	r, err := NewKdiIndexedReader(ksg.partitionPath(setIndex, partIndex))
 	if err != nil {
@@ -161,6 +210,23 @@ func (ksg *KmerSetGroup) matchPartition(
 	for qi < len(queries) {
 		q := queries[qi]
 
+		// If the next query is far ahead, re-seek instead of linear scan.
+		// Only seek if we'd skip more k-mers than the index stride,
+		// otherwise linear scan through the buffer is faster than a syscall.
+		if r.index != nil && q.Kmer > currentKmer && r.Remaining() > uint64(r.index.stride) {
+			_, skipCount, found := r.index.FindOffset(q.Kmer)
+			if found && skipCount > r.read+uint64(r.index.stride) {
+				if err := r.SeekTo(q.Kmer); err == nil {
+					nextKmer, nextOk := r.Next()
+					if !nextOk {
+						return
+					}
+					currentKmer = nextKmer
+					ok = true
+				}
+			}
+		}
+
 		// Advance KDI stream until >= query kmer
 		for currentKmer < q.Kmer {
 			currentKmer, ok = r.Next()
@@ -173,10 +239,10 @@ func (ksg *KmerSetGroup) matchPartition(
 			// Match! Record all queries with this same k-mer value
 			matchedKmer := q.Kmer
 			for qi < len(queries) && queries[qi].Kmer == matchedKmer {
-				sr := getResult(queries[qi].SeqIdx)
-				sr.mu.Lock()
-				sr.positions = append(sr.positions, queries[qi].Pos)
-				sr.mu.Unlock()
+				idx := queries[qi].SeqIdx
+				mus[idx].Lock()
+				results[idx] = append(results[idx], queries[qi].Pos)
+				mus[idx].Unlock()
 				qi++
 			}
 		} else {

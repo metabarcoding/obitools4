@@ -5,9 +5,13 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sync"
+	"sync/atomic"
 
 	log "github.com/sirupsen/logrus"
 
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obikmer"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
 	"github.com/DavidGamba/go-getoptions"
@@ -75,22 +79,36 @@ func runIndex(ctx context.Context, opt *getoptions.GetOpt, args []string) error 
 		}
 	}
 
-	// Read and process sequences
+	// Read and process sequences in parallel
 	sequences, err := obiconvert.CLIReadBioSequences(args...)
 	if err != nil {
 		return fmt.Errorf("failed to open sequence files: %w", err)
 	}
 
-	seqCount := 0
-	for sequences.Next() {
-		batch := sequences.Get()
-		for _, seq := range batch.Slice() {
-			builder.AddSequence(0, seq)
-			seqCount++
+	nworkers := obidefault.ParallelWorkers()
+	var seqCount atomic.Int64
+	var wg sync.WaitGroup
+
+	consumer := func(iter obiiter.IBioSequence) {
+		defer wg.Done()
+		for iter.Next() {
+			batch := iter.Get()
+			for _, seq := range batch.Slice() {
+				builder.AddSequence(0, seq)
+				seqCount.Add(1)
+			}
 		}
 	}
 
-	log.Infof("Processed %d sequences", seqCount)
+	for i := 1; i < nworkers; i++ {
+		wg.Add(1)
+		go consumer(sequences.Split())
+	}
+	wg.Add(1)
+	go consumer(sequences)
+	wg.Wait()
+
+	log.Infof("Processed %d sequences", seqCount.Load())
 
 	// Finalize
 	ksg, err := builder.Close()
