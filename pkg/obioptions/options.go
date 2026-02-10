@@ -26,16 +26,11 @@ var __defaut_taxonomy_mutex__ sync.Mutex
 
 type ArgumentParser func([]string) (*getoptions.GetOpt, []string)
 
-func GenerateOptionParser(program string,
-	documentation string,
-	optionset ...func(*getoptions.GetOpt)) ArgumentParser {
-
-	options := getoptions.New()
-	options.Self(program, documentation)
-	options.SetMode(getoptions.Bundling)
-	options.SetUnknownMode(getoptions.Fail)
-	options.Bool("help", false, options.Alias("h", "?"))
-
+// RegisterGlobalOptions registers the global options shared by all obitools
+// commands onto the given GetOpt instance. It does NOT register --help,
+// which must be handled by the caller (either as a Bool option or via
+// HelpCommand for subcommand-based parsers).
+func RegisterGlobalOptions(options *getoptions.GetOpt) {
 	options.Bool("version", false,
 		options.Description("Prints the version and exits."))
 
@@ -46,16 +41,9 @@ func GenerateOptionParser(program string,
 	options.BoolVar(&_Pprof, "pprof", false,
 		options.Description("Enable pprof server. Look at the log for details."))
 
-	// options.IntVar(&_ParallelWorkers, "workers", _ParallelWorkers,
-	// 	options.Alias("w"),
-	// 	options.Description("Number of parallele threads computing the result"))
-
 	options.IntVar(obidefault.MaxCPUPtr(), "max-cpu", obidefault.MaxCPU(),
 		options.GetEnv("OBIMAXCPU"),
 		options.Description("Number of parallele threads computing the result"))
-
-	// options.BoolVar(&_Pprof, "force-one-cpu", false,
-	// 	options.Description("Force to use only one cpu core for parallel processing"))
 
 	options.IntVar(&_PprofMudex, "pprof-mutex", _PprofMudex,
 		options.GetEnv("OBIPPROFMUTEX"),
@@ -77,119 +65,119 @@ func GenerateOptionParser(program string,
 		options.GetEnv("OBIWARNING"),
 		options.Description("Stop printing of the warning message"),
 	)
+}
+
+// ProcessParsedOptions handles the post-parse logic common to all obitools
+// commands: help, version, debug, pprof, taxonomy, cpu configuration, etc.
+// It receives the GetOpt instance and the parse error (if any).
+func ProcessParsedOptions(options *getoptions.GetOpt, parseErr error) {
+	// Note: "help" may not be registered as a Bool (e.g. when using HelpCommand
+	// for subcommand-based parsers). Only check if it won't panic.
+	// We use a recover guard to be safe.
+	func() {
+		defer func() { recover() }()
+		if options.Called("help") {
+			fmt.Fprint(os.Stderr, options.Help())
+			os.Exit(0)
+		}
+	}()
+
+	if options.Called("version") {
+		fmt.Fprintf(os.Stderr, "OBITools %s\n", VersionString())
+		os.Exit(0)
+	}
+
+	if options.Called("taxonomy") {
+		__defaut_taxonomy_mutex__.Lock()
+		defer __defaut_taxonomy_mutex__.Unlock()
+		taxonomy, err := obiformats.LoadTaxonomy(
+			obidefault.SelectedTaxonomy(),
+			!obidefault.AreAlternativeNamesSelected(),
+			SeqAsTaxa(),
+		)
+
+		if err != nil {
+			log.Fatalf("Cannot load default taxonomy: %v", err)
+		}
+
+		taxonomy.SetAsDefault()
+	}
+
+	log.SetLevel(log.InfoLevel)
+	if options.Called("debug") {
+		log.SetLevel(log.DebugLevel)
+		log.Debugln("Switch to debug level logging")
+	}
+
+	if options.Called("pprof") {
+		url := "localhost:6060"
+		go http.ListenAndServe(url, nil)
+		log.Infof("Start a pprof server at address %s/debug/pprof", url)
+		log.Info("Profil can be followed running concurrently the command :")
+		log.Info("  go tool pprof -http=127.0.0.1:8080 'http://localhost:6060/debug/pprof/profile?seconds=30'")
+	}
+
+	if options.Called("pprof-mutex") {
+		url := "localhost:6060"
+		go http.ListenAndServe(url, nil)
+		runtime.SetMutexProfileFraction(_PprofMudex)
+		log.Infof("Start a pprof server at address %s/debug/pprof", url)
+		log.Info("Profil can be followed running concurrently the command :")
+		log.Info("  go tool pprof -http=127.0.0.1:8080 'http://localhost:6060/debug/pprof/mutex'")
+	}
+
+	if options.Called("pprof-goroutine") {
+		url := "localhost:6060"
+		go http.ListenAndServe(url, nil)
+		runtime.SetBlockProfileRate(_PprofGoroutine)
+		log.Infof("Start a pprof server at address %s/debug/pprof", url)
+		log.Info("Profil can be followed running concurrently the command :")
+		log.Info("  go tool pprof -http=127.0.0.1:8080 'http://localhost:6060/debug/pprof/block'")
+	}
+
+	// Handle user errors
+	if parseErr != nil {
+		fmt.Fprintf(os.Stderr, "ERROR: %s\n\n", parseErr)
+		fmt.Fprint(os.Stderr, options.Help(getoptions.HelpSynopsis))
+		os.Exit(1)
+	}
+
+	runtime.GOMAXPROCS(obidefault.MaxCPU())
+
+	if options.Called("max-cpu") {
+		log.Printf("CPU number limited to %d", obidefault.MaxCPU())
+	}
+
+	if options.Called("no-singleton") {
+		log.Printf("No singleton option set")
+	}
+
+	log.Printf("Number of workers set %d", obidefault.ParallelWorkers())
+
+	if options.Called("solexa") {
+		obidefault.SetReadQualitiesShift(64)
+	}
+}
+
+func GenerateOptionParser(program string,
+	documentation string,
+	optionset ...func(*getoptions.GetOpt)) ArgumentParser {
+
+	options := getoptions.New()
+	options.Self(program, documentation)
+	options.SetMode(getoptions.Bundling)
+	options.SetUnknownMode(getoptions.Fail)
+	options.Bool("help", false, options.Alias("h", "?"))
+
+	RegisterGlobalOptions(options)
 
 	for _, o := range optionset {
 		o(options)
 	}
 
 	return func(args []string) (*getoptions.GetOpt, []string) {
-
 		remaining, err := options.Parse(args[1:])
-
-		if options.Called("help") {
-			fmt.Fprint(os.Stderr, options.Help())
-			os.Exit(0)
-		}
-
-		if options.Called("version") {
-			fmt.Fprintf(os.Stderr, "OBITools %s\n", VersionString())
-			os.Exit(0)
-		}
-
-		if options.Called("taxonomy") {
-			__defaut_taxonomy_mutex__.Lock()
-			defer __defaut_taxonomy_mutex__.Unlock()
-			taxonomy, err := obiformats.LoadTaxonomy(
-				obidefault.SelectedTaxonomy(),
-				!obidefault.AreAlternativeNamesSelected(),
-				SeqAsTaxa(),
-			)
-
-			if err != nil {
-				log.Fatalf("Cannot load default taxonomy: %v", err)
-
-			}
-
-			taxonomy.SetAsDefault()
-		}
-
-		log.SetLevel(log.InfoLevel)
-		if options.Called("debug") {
-			log.SetLevel(log.DebugLevel)
-			log.Debugln("Switch to debug level logging")
-		}
-
-		if options.Called("pprof") {
-			url := "localhost:6060"
-			go http.ListenAndServe(url, nil)
-			log.Infof("Start a pprof server at address %s/debug/pprof", url)
-			log.Info("Profil can be followed running concurrently the command :")
-			log.Info("  go tool pprof -http=127.0.0.1:8080 'http://localhost:6060/debug/pprof/profile?seconds=30'")
-		}
-
-		if options.Called("pprof-mutex") {
-			url := "localhost:6060"
-			go http.ListenAndServe(url, nil)
-			runtime.SetMutexProfileFraction(_PprofMudex)
-			log.Infof("Start a pprof server at address %s/debug/pprof", url)
-			log.Info("Profil can be followed running concurrently the command :")
-			log.Info("  go tool pprof -http=127.0.0.1:8080 'http://localhost:6060/debug/pprof/mutex'")
-		}
-
-		if options.Called("pprof-goroutine") {
-			url := "localhost:6060"
-			go http.ListenAndServe(url, nil)
-			runtime.SetBlockProfileRate(_PprofGoroutine)
-			log.Infof("Start a pprof server at address %s/debug/pprof", url)
-			log.Info("Profil can be followed running concurrently the command :")
-			log.Info("  go tool pprof -http=127.0.0.1:8080 'http://localhost:6060/debug/pprof/block'")
-		}
-
-		// Handle user errors
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "ERROR: %s\n\n", err)
-			fmt.Fprint(os.Stderr, options.Help(getoptions.HelpSynopsis))
-			os.Exit(1)
-		}
-
-		// // Setup the maximum number of CPU usable by the program
-		// if obidefault.MaxCPU() == 1 {
-		// 	log.Warn("Limitating the Maximum number of CPU to 1 is not recommanded")
-		// 	log.Warn("The number of CPU requested has been set to 2")
-		// 	obidefault.SetMaxCPU(2)
-		// }
-
-		// if options.Called("force-one-cpu") {
-		// 	log.Warn("Limitating the Maximum number of CPU to 1 is not recommanded")
-		// 	log.Warn("The number of CPU has been forced to 1")
-		// 	log.Warn("This can lead to unexpected behavior")
-		// 	obidefault.SetMaxCPU(1)
-		// }
-
-		runtime.GOMAXPROCS(obidefault.MaxCPU())
-
-		// if options.Called("max-cpu") || options.Called("force-one-cpu") {
-		// 	log.Printf("CPU number limited to %d", obidefault.MaxCPU())
-		// }
-
-		if options.Called("max-cpu") {
-			log.Printf("CPU number limited to %d", obidefault.MaxCPU())
-		}
-
-		if options.Called("no-singleton") {
-			log.Printf("No singleton option set")
-		}
-
-		log.Printf("Number of workers set %d", obidefault.ParallelWorkers())
-
-		// if options.Called("workers") {
-
-		// }
-
-		if options.Called("solexa") {
-			obidefault.SetReadQualitiesShift(64)
-		}
-
+		ProcessParsedOptions(options, err)
 		return options, remaining
 	}
 }

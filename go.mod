@@ -14,6 +14,7 @@ require (
 	github.com/goccy/go-json v0.10.3
 	github.com/klauspost/pgzip v1.2.6
 	github.com/pbnjay/memory v0.0.0-20210728143218-7b4eea64cf58
+	github.com/pelletier/go-toml/v2 v2.2.4
 	github.com/rrethy/ahocorasick v1.0.0
 	github.com/schollz/progressbar/v3 v3.13.1
 	github.com/sirupsen/logrus v1.9.3
@@ -27,14 +28,10 @@ require (
 )
 
 require (
-	github.com/RoaringBitmap/roaring v1.9.4 // indirect
-	github.com/bits-and-blooms/bitset v1.12.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/goombaio/orderedmap v0.0.0-20180924084748-ba921b7e2419 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/kr/text v0.2.0 // indirect
-	github.com/mschoch/smat v0.2.0 // indirect
-	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rogpeppe/go-internal v1.12.0 // indirect
 )
