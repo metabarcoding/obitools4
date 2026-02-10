@@ -67,4 +67,11 @@ func OptionSet(opt *getoptions.GetOpt) {
 	obiconvert.OutputOptionSet(lowmaskCmd)
 	LowMaskOptionSet(lowmaskCmd)
 	lowmaskCmd.SetCommandFn(runLowmask)
+
+	// match: annotate sequences with k-mer match positions from an index
+	matchCmd := opt.NewCommand("match", "Annotate sequences with k-mer match positions from an index")
+	obiconvert.InputOptionSet(matchCmd)
+	obiconvert.OutputOptionSet(matchCmd)
+	SetSelectionOptionSet(matchCmd)
+	matchCmd.SetCommandFn(runMatch)
 }

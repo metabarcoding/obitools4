@@ -9,6 +9,9 @@ import (
 // KDI file magic bytes: "KDI\x01"
 var kdiMagic = [4]byte{'K', 'D', 'I', 0x01}
 
+// kdiHeaderSize is the size of the KDI header: magic(4) + count(8) = 12 bytes.
+const kdiHeaderSize = 12
+
 // KdiWriter writes a sorted sequence of uint64 k-mers to a .kdi file
 // using delta-varint encoding.
 //
@@ -22,13 +25,18 @@ var kdiMagic = [4]byte{'K', 'D', 'I', 0x01}
 //	...
 //
 // The caller must write k-mers in strictly increasing order.
+//
+// On Close(), a companion .kdx sparse index file is written alongside
+// the .kdi file for fast random access.
 type KdiWriter struct {
-	w     *bufio.Writer
-	file  *os.File
-	count uint64
-	prev  uint64
-	first bool
-	path  string
+	w            *bufio.Writer
+	file         *os.File
+	count        uint64
+	prev         uint64
+	first        bool
+	path         string
+	bytesWritten uint64     // bytes written after header (data section offset)
+	indexEntries []kdxEntry // sparse index entries collected during writes
 }
 
 // NewKdiWriter creates a new KdiWriter writing to the given file path.
@@ -54,10 +62,12 @@ func NewKdiWriter(path string) (*KdiWriter, error) {
 	}
 
 	return &KdiWriter{
-		w:     w,
-		file:  f,
-		first: true,
-		path:  path,
+		w:            w,
+		file:         f,
+		first:        true,
+		path:         path,
+		bytesWritten: 0,
+		indexEntries: make([]kdxEntry, 0, 256),
 	}, nil
 }
 
@@ -71,16 +81,32 @@ func (kw *KdiWriter) Write(kmer uint64) error {
 		if _, err := kw.w.Write(buf[:]); err != nil {
 			return err
 		}
+		kw.bytesWritten += 8
 		kw.prev = kmer
 		kw.first = false
 	} else {
 		delta := kmer - kw.prev
-		if _, err := EncodeVarint(kw.w, delta); err != nil {
+		n, err := EncodeVarint(kw.w, delta)
+		if err != nil {
 			return err
 		}
+		kw.bytesWritten += uint64(n)
 		kw.prev = kmer
 	}
 	kw.count++
+
+	// Record sparse index entry every defaultKdxStride k-mers.
+	// The offset recorded is AFTER writing this k-mer, so it points to
+	// where the next k-mer's data will start. SeekTo uses this: it seeks
+	// to the recorded offset, sets prev = indexedKmer, and Next() reads
+	// the delta of the following k-mer.
+	if kw.count%defaultKdxStride == 0 {
+		kw.indexEntries = append(kw.indexEntries, kdxEntry{
+			kmer:   kmer,
+			offset: kdiHeaderSize + kw.bytesWritten,
+		})
+	}
+
 	return nil
 }
 
@@ -90,7 +116,7 @@ func (kw *KdiWriter) Count() uint64 {
 }
 
 // Close flushes buffered data, patches the count in the header,
-// and closes the file.
+// writes the companion .kdx index file, and closes the file.
 func (kw *KdiWriter) Close() error {
 	if err := kw.w.Flush(); err != nil {
 		kw.file.Close()
@@ -109,5 +135,17 @@ func (kw *KdiWriter) Close() error {
 		return err
 	}
 
-	return kw.file.Close()
+	if err := kw.file.Close(); err != nil {
+		return err
+	}
+
+	// Write .kdx index file if there are entries to index
+	if len(kw.indexEntries) > 0 {
+		kdxPath := KdxPathForKdi(kw.path)
+		if err := WriteKdxIndex(kdxPath, defaultKdxStride, kw.indexEntries); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

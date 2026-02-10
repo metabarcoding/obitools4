@@ -219,21 +219,15 @@ func (ksg *KmerSetGroup) Len(setIndex ...int) uint64 {
 }
 
 // Contains checks if a k-mer is present in the specified set.
-// Uses binary search on the appropriate partition's KDI file.
+// Uses the .kdx sparse index (if available) for fast seeking within
+// each partition, then a short linear scan of at most `stride` entries.
+// All partitions are searched in parallel since the k-mer's partition
+// is not known without its minimizer context.
 func (ksg *KmerSetGroup) Contains(setIndex int, kmer uint64) bool {
 	if setIndex < 0 || setIndex >= ksg.n {
 		return false
 	}
-	// Determine partition from minimizer
-	// For a canonical k-mer, we need to find which partition it would fall into.
-	// The partition is determined by the minimizer during construction.
-	// For Contains, we must scan all partitions of this set (linear search within each).
-	// A full binary-search approach would require an index file.
-	// For now, scan the partition determined by the k-mer's minimizer.
-	// Since we don't know the minimizer, we do a linear scan of all partitions.
-	// This is O(total_kmers / P) per partition on average.
 
-	// Optimization: scan all partitions in parallel
 	type result struct {
 		found bool
 	}
@@ -241,12 +235,20 @@ func (ksg *KmerSetGroup) Contains(setIndex int, kmer uint64) bool {
 
 	for p := 0; p < ksg.partitions; p++ {
 		go func(part int) {
-			r, err := NewKdiReader(ksg.partitionPath(setIndex, part))
+			r, err := NewKdiIndexedReader(ksg.partitionPath(setIndex, part))
 			if err != nil {
 				ch <- result{false}
 				return
 			}
 			defer r.Close()
+
+			// Use index to jump near the target
+			if err := r.SeekTo(kmer); err != nil {
+				ch <- result{false}
+				return
+			}
+
+			// Linear scan from the seek position
 			for {
 				v, ok := r.Next()
 				if !ok {
@@ -853,12 +855,20 @@ func (ksg *KmerSetGroup) CopySetsByIDTo(ids []string, destDir string, force bool
 			return nil, fmt.Errorf("obikmer: create dest set dir: %w", err)
 		}
 
-		// Copy all partition files
+		// Copy all partition files and their .kdx indices
 		for p := 0; p < ksg.partitions; p++ {
 			srcPath := ksg.partitionPath(srcIdx, p)
 			destPath := dest.partitionPath(destIdx, p)
 			if err := copyFile(srcPath, destPath); err != nil {
 				return nil, fmt.Errorf("obikmer: copy partition %d of set %q: %w", p, srcID, err)
+			}
+			// Copy .kdx index if it exists
+			srcKdx := KdxPathForKdi(srcPath)
+			if _, err := os.Stat(srcKdx); err == nil {
+				destKdx := KdxPathForKdi(destPath)
+				if err := copyFile(srcKdx, destKdx); err != nil {
+					return nil, fmt.Errorf("obikmer: copy index %d of set %q: %w", p, srcID, err)
+				}
 			}
 		}
 
