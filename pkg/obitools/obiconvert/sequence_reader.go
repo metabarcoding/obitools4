@@ -68,6 +68,8 @@ func ExpandListOfFiles(check_ext bool, filenames ...string) ([]string, error) {
 						strings.HasSuffix(path, "seq.gz") ||
 						strings.HasSuffix(path, "gb") ||
 						strings.HasSuffix(path, "gb.gz") ||
+						strings.HasSuffix(path, "gbff") ||
+						strings.HasSuffix(path, "gbff.gz") ||
 						strings.HasSuffix(path, "dat") ||
 						strings.HasSuffix(path, "dat.gz") ||
 						strings.HasSuffix(path, "ecopcr") ||
@@ -204,7 +206,7 @@ func CLIReadBioSequences(filenames ...string) (obiiter.IBioSequence, error) {
 					iterator = iterator.PairTo(ip)
 				}
 			} else {
-				iterator = obiiter.NilIBioSequence
+				return obiiter.NilIBioSequence, fmt.Errorf("no sequence files found in the provided paths")
 			}
 		}
 
