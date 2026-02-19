@@ -1,0 +1,3 @@
+lit le ficier [@canonical-super-kmer-strategy.md](file:///Users/coissac/Sync/travail/__MOI__/GO/obitools4/blackboard/Prospective/canonical-super-kmer-strategy.md).
+
+Dans le fichier [@superkmer_iter.go](file:///Users/coissac/Sync/travail/__MOI__/GO/obitools4/pkg/obikmer/superkmer_iter.go) implemente une nouvelle fonction IterCanonicalSuperKmers sur le modèle de IterSuperKmers, qui implémente la notion de SuperKmers canonique présenté dans le document d'architecture.

@@ -162,9 +162,10 @@ func GenbankChunkParser(withFeatureTable, UtoT bool) func(string, io.Reader) (ob
 					// log.Debugf("Chunk %d : Genbank: line %d, state = %d : %s", chunks.order, nl, state, line)
 
 					sl++
-					parts := strings.SplitN(line[10:], " ", 6)
+					cleanline := strings.TrimSpace(line)
+					parts := strings.SplitN(cleanline, " ", 7)
 					lparts := len(parts)
-					for i := 0; i < lparts; i++ {
+					for i := 1; i < lparts; i++ {
 						if UtoT {
 							parts[i] = strings.ReplaceAll(parts[i], "u", "t")
 						}
