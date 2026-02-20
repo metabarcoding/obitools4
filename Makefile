@@ -128,40 +128,58 @@ jjnew:
 	@echo "$(GREEN)✓ New commit created$(NC)"
 
 jjpush:
-	@echo "$(YELLOW)→ Pushing commit to repository...$(NC)"
+	@$(MAKE) jjpush-describe
+	@$(MAKE) jjpush-bump
+	@$(MAKE) jjpush-push
+	@$(MAKE) jjpush-tag
+	@echo "$(GREEN)✓ Release complete$(NC)"
+
+jjpush-describe:
 	@echo "$(BLUE)→ Documenting current commit...$(NC)"
 	@jj auto-describe
+
+jjpush-bump:
 	@echo "$(BLUE)→ Creating new commit for version bump...$(NC)"
 	@jj new
-	@previous_version=$$(cat version.txt); \
-	$(MAKE) bump-version; \
-	version=$$(cat version.txt); \
+	@$(MAKE) bump-version
+	@echo "$(BLUE)→ Documenting version bump commit...$(NC)"
+	@jj auto-describe
+
+jjpush-push:
+	@echo "$(BLUE)→ Pushing commits...$(NC)"
+	@jj git push --change @
+
+jjpush-tag:
+	@version=$$(cat version.txt); \
 	tag_name="Release_$$version"; \
-	previous_tag="Release_$$previous_version"; \
-	echo "$(BLUE)→ Documenting version bump commit...$(NC)"; \
-	jj auto-describe; \
-	echo "$(BLUE)→ Generating release notes from $$previous_tag to current commit...$(NC)"; \
+	echo "$(BLUE)→ Generating release notes for $$tag_name...$(NC)"; \
+	release_message="Release $$version"; \
 	if command -v orla >/dev/null 2>&1 && command -v jq >/dev/null 2>&1; then \
-		release_json=$$(ORLA_MAX_TOOL_CALLS=50 jj log -r "$$previous_tag::@" -T 'commit_id.short() ++ " " ++ description' | \
-			orla agent -m ollama:qwen3-coder-next:latest \
-			"Summarize the following commits into a GitHub release note for version $$version. Ignore commits related to version bumps, .gitignore changes, or any internal housekeeping that is irrelevant to end users. Describe each user-facing change precisely without exposing code. Eliminate redundancy. Output strictly valid JSON with no surrounding text, using this exact schema: {\"title\": \"<short release title>\", \"body\": \"<detailed markdown release notes>\"}"); \
-		release_json=$$(echo "$$release_json" | sed -n '/^{/,/^}/p'); \
-		release_title=$$(echo "$$release_json" | jq -r '.title // empty') ; \
-		release_body=$$(echo "$$release_json" | jq -r '.body // empty') ; \
-		if [ -n "$$release_title" ] && [ -n "$$release_body" ]; then \
-			release_message="$$release_title"$$'\n\n'"$$release_body"; \
+		previous_tag=$$(git describe --tags --abbrev=0 --match 'Release_*' HEAD^ 2>/dev/null); \
+		if [ -z "$$previous_tag" ]; then \
+			echo "$(YELLOW)⚠ No previous Release tag found, skipping release notes$(NC)"; \
 		else \
-			echo "$(YELLOW)⚠ JSON parsing failed, falling back to raw output$(NC)"; \
-			release_message="Release $$version"$$'\n\n'"$$release_json"; \
+			raw_output=$$(git log --format="%h %B" "$$previous_tag..HEAD" | \
+				ORLA_MAX_TOOL_CALLS=50 orla agent -m ollama:qwen3-coder-next:latest \
+				"Summarize the following commits into a GitHub release note for version $$version. Ignore commits related to version bumps, .gitignore changes, or any internal housekeeping that is irrelevant to end users. Describe each user-facing change precisely without exposing code. Eliminate redundancy. Output strictly valid JSON with no surrounding text, using this exact schema: {\"title\": \"<short release title>\", \"body\": \"<detailed markdown release notes>\"}" 2>/dev/null) || true; \
+			if [ -n "$$raw_output" ]; then \
+				sanitized=$$(echo "$$raw_output" | sed -n '/^{/,/^}/p' | tr -d '\000-\011\013-\014\016-\037'); \
+				release_title=$$(echo "$$sanitized" | jq -r '.title // empty' 2>/dev/null) ; \
+				release_body=$$(echo "$$sanitized" | jq -r '.body // empty' 2>/dev/null) ; \
+				if [ -n "$$release_title" ] && [ -n "$$release_body" ]; then \
+					release_message="$$release_title"$$'\n\n'"$$release_body"; \
+				else \
+					echo "$(YELLOW)⚠ JSON parsing failed, using default release message$(NC)"; \
+				fi; \
+			fi; \
 		fi; \
-	else \
-		release_message="Release $$version"; \
 	fi; \
-	echo "$(BLUE)→ Pushing commits and creating tag $$tag_name...$(NC)"; \
-	jj git push --change @; \
-	git tag -a "$$tag_name" -m "$$release_message" 2>/dev/null || echo "Tag $$tag_name already exists"; \
-	git push origin "$$tag_name" 2>/dev/null || echo "Tag already pushed"
-	@echo "$(GREEN)✓ Commits and tag pushed to repository$(NC)"
+	install_section=$$'\n## Installation\n\n### Pre-built binaries\n\nDownload the appropriate archive for your system from the\n[release assets](https://github.com/metabarcoding/obitools4/releases/tag/Release_'"$$version"')\nand extract it:\n\n#### Linux (AMD64)\n```bash\ntar -xzf obitools4_'"$$version"'_linux_amd64.tar.gz\n```\n\n#### Linux (ARM64)\n```bash\ntar -xzf obitools4_'"$$version"'_linux_arm64.tar.gz\n```\n\n#### macOS (Intel)\n```bash\ntar -xzf obitools4_'"$$version"'_darwin_amd64.tar.gz\n```\n\n#### macOS (Apple Silicon)\n```bash\ntar -xzf obitools4_'"$$version"'_darwin_arm64.tar.gz\n```\n\nAll OBITools4 binaries are included in each archive.\n\n### From source\n\nYou can also compile and install OBITools4 directly from source using the\ninstallation script:\n\n```bash\ncurl -L https://raw.githubusercontent.com/metabarcoding/obitools4/master/install_obitools.sh | bash -s -- --version '"$$version"'\n```\n\nBy default binaries are installed in `/usr/local/bin`. Use `--install-dir` to\nchange the destination and `--obitools-prefix` to add a prefix to command names:\n\n```bash\ncurl -L https://raw.githubusercontent.com/metabarcoding/obitools4/master/install_obitools.sh | \\\n  bash -s -- --version '"$$version"' --install-dir ~/local --obitools-prefix k\n```\n'; \
+	release_message="$$release_message$$install_section"; \
+	echo "$(BLUE)→ Creating tag $$tag_name...$(NC)"; \
+	git tag -a "$$tag_name" -m "$$release_message" 2>/dev/null || echo "$(YELLOW)⚠ Tag $$tag_name already exists$(NC)"; \
+	echo "$(BLUE)→ Pushing tag $$tag_name...$(NC)"; \
+	git push origin "$$tag_name" 2>/dev/null || echo "$(YELLOW)⚠ Tag push failed or already pushed$(NC)"
 
 jjfetch:
 	@echo "$(YELLOW)→ Pulling latest commits...$(NC)"
@@ -169,5 +187,5 @@ jjfetch:
 	@jj new master@origin
 	@echo "$(GREEN)✓ Latest commits pulled$(NC)"
 
-.PHONY: all obitools update-deps obitests githubtests jjnew jjpush jjfetch bump-version .FORCE
+.PHONY: all obitools update-deps obitests githubtests jjnew jjpush jjpush-describe jjpush-bump jjpush-push jjpush-tag jjfetch bump-version .FORCE
 .FORCE:
