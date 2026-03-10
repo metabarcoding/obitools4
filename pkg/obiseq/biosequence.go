@@ -120,6 +120,19 @@ func NewBioSequence(id string,
 	return bs
 }
 
+// NewBioSequenceOwning creates a BioSequence taking ownership of the sequence
+// slice without copying it. The caller must not use the slice after this call.
+// Use this when the slice was allocated specifically for this sequence.
+func NewBioSequenceOwning(id string,
+	sequence []byte,
+	definition string) *BioSequence {
+	bs := NewEmptyBioSequence(0)
+	bs.SetId(id)
+	bs.TakeSequence(sequence)
+	bs.SetDefinition(definition)
+	return bs
+}
+
 // NewBioSequenceWithQualities creates a new BioSequence object with the given id, sequence, definition, and qualities.
 //
 // Parameters:
@@ -442,6 +455,12 @@ func (s *BioSequence) SetFeatures(feature []byte) {
 // - sequence: a byte slice representing the sequence to be set.
 func (s *BioSequence) SetSequence(sequence []byte) {
 	s.sequence = obiutils.InPlaceToLower(CopySlice(sequence))
+}
+
+// TakeSequence stores the slice directly without copying, then lowercases in-place.
+// The caller must not use the slice after this call.
+func (s *BioSequence) TakeSequence(sequence []byte) {
+	s.sequence = obiutils.InPlaceToLower(sequence)
 }
 
 func (s *BioSequence) HasValidSequence() bool {

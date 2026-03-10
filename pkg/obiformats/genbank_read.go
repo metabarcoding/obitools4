@@ -287,7 +287,7 @@ func GenbankChunkParserRope(source string, rope *PieceOfChunk,
 				if id == "" {
 					log.Warn("Empty id when parsing genbank file")
 				}
-				sequence := obiseq.NewBioSequence(id, seqDest, defBytes.String())
+				sequence := obiseq.NewBioSequenceOwning(id, seqDest, defBytes.String())
 				sequence.SetSource(source)
 				if withFeatureTable {
 					sequence.SetFeatures(featBytes.Bytes())
@@ -320,7 +320,7 @@ func GenbankChunkParserRope(source string, rope *PieceOfChunk,
 				if id == "" {
 					log.Warn("Empty id when parsing genbank file")
 				}
-				sequence := obiseq.NewBioSequence(id, seqDest, defBytes.String())
+				sequence := obiseq.NewBioSequenceOwning(id, seqDest, defBytes.String())
 				sequence.SetSource(source)
 				if withFeatureTable {
 					sequence.SetFeatures(featBytes.Bytes())
