@@ -209,28 +209,121 @@ func FastaChunkParser(UtoT bool) func(string, io.Reader) (obiseq.BioSequenceSlic
 	return parser
 }
 
+// extractFastaSeq scans sequence bytes from the rope directly into dest,
+// appending valid nucleotide characters and skipping whitespace.
+// Stops when '>' is found at the start of a line (next record) or at EOF.
+// Returns (dest with appended bases, hasMore).
+// hasMore=true means scanner is now positioned at '>' of the next record.
+func (s *gbRopeScanner) extractFastaSeq(dest []byte, UtoT bool) ([]byte, bool) {
+	lineStart := true
+
+	for s.current != nil {
+		data := s.current.data[s.pos:]
+		for i, b := range data {
+			if lineStart && b == '>' {
+				s.pos += i
+				if s.pos >= len(s.current.data) {
+					s.current = s.current.Next()
+					s.pos = 0
+				}
+				return dest, true
+			}
+			if b == '\n' || b == '\r' {
+				lineStart = true
+				continue
+			}
+			lineStart = false
+			if b == ' ' || b == '\t' {
+				continue
+			}
+			if b >= 'A' && b <= 'Z' {
+				b += 'a' - 'A'
+			}
+			if UtoT && b == 'u' {
+				b = 't'
+			}
+			dest = append(dest, b)
+		}
+		s.current = s.current.Next()
+		s.pos = 0
+	}
+	return dest, false
+}
+
+// FastaChunkParserRope parses a FASTA chunk directly from the rope without Pack().
+func FastaChunkParserRope(source string, rope *PieceOfChunk, UtoT bool) (obiseq.BioSequenceSlice, error) {
+	scanner := newGbRopeScanner(rope)
+	sequences := obiseq.MakeBioSequenceSlice(100)[:0]
+
+	for {
+		bline := scanner.ReadLine()
+		if bline == nil {
+			break
+		}
+		if len(bline) == 0 || bline[0] != '>' {
+			continue
+		}
+
+		// Parse header: ">id definition"
+		header := bline[1:]
+		var id string
+		var definition string
+		sp := bytes.IndexByte(header, ' ')
+		if sp < 0 {
+			sp = bytes.IndexByte(header, '\t')
+		}
+		if sp < 0 {
+			id = string(header)
+		} else {
+			id = string(header[:sp])
+			definition = string(bytes.TrimSpace(header[sp+1:]))
+		}
+
+		seqDest := make([]byte, 0, 4096)
+		var hasMore bool
+		seqDest, hasMore = scanner.extractFastaSeq(seqDest, UtoT)
+
+		if len(seqDest) == 0 {
+			log.Fatalf("%s [%s]: sequence is empty", source, id)
+		}
+
+		seq := obiseq.NewBioSequenceOwning(id, seqDest, definition)
+		seq.SetSource(source)
+		sequences = append(sequences, seq)
+
+		if !hasMore {
+			break
+		}
+	}
+
+	return sequences, nil
+}
+
 func _ParseFastaFile(
 	input ChannelFileChunk,
 	out obiiter.IBioSequence,
 	UtoT bool,
 ) {
-
 	parser := FastaChunkParser(UtoT)
 
 	for chunks := range input {
-		sequences, err := parser(chunks.Source, chunks.Raw)
-		// obilog.Warnf("Chunck(%d:%d) -%d- ", chunks.Order, l, sequences.Len())
+		var sequences obiseq.BioSequenceSlice
+		var err error
+
+		if chunks.Rope != nil {
+			sequences, err = FastaChunkParserRope(chunks.Source, chunks.Rope, UtoT)
+		} else {
+			sequences, err = parser(chunks.Source, chunks.Raw)
+		}
 
 		if err != nil {
 			log.Fatalf("File %s : Cannot parse the fasta file : %v", chunks.Source, err)
 		}
 
 		out.Push(obiiter.MakeBioSequenceBatch(chunks.Source, chunks.Order, sequences))
-
 	}
 
 	out.Done()
-
 }
 
 func ReadFasta(reader io.Reader, options ...WithOption) (obiiter.IBioSequence, error) {
@@ -245,7 +338,7 @@ func ReadFasta(reader io.Reader, options ...WithOption) (obiiter.IBioSequence, e
 		1024*1024,
 		EndOfLastFastaEntry,
 		"\n>",
-		true,
+		false,
 	)
 
 	for i := 0; i < nworker; i++ {
