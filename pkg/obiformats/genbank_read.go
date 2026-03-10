@@ -233,6 +233,7 @@ func ReadGenbank(reader io.Reader, options ...WithOption) (obiiter.IBioSequence,
 		1024*1024*128,
 		EndOfLastFlatFileEntry,
 		"\nLOCUS       ",
+		true,
 	)
 
 	newIter := obiiter.MakeIBioSequence()
