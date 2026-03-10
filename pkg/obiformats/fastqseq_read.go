@@ -303,6 +303,80 @@ func FastqChunkParser(quality_shift byte, with_quality bool, UtoT bool) func(str
 	return parser
 }
 
+// FastqChunkParserRope parses a FASTQ chunk directly from a rope without Pack().
+func FastqChunkParserRope(source string, rope *PieceOfChunk, quality_shift byte, with_quality, UtoT bool) (obiseq.BioSequenceSlice, error) {
+	scanner := newRopeScanner(rope)
+	sequences := obiseq.MakeBioSequenceSlice(100)[:0]
+
+	for {
+		// Line 1: @id [definition]
+		hline := scanner.ReadLine()
+		if hline == nil {
+			break
+		}
+		if len(hline) == 0 || hline[0] != '@' {
+			continue
+		}
+		header := hline[1:]
+		var id string
+		var definition string
+		sp := bytes.IndexByte(header, ' ')
+		if sp < 0 {
+			sp = bytes.IndexByte(header, '\t')
+		}
+		if sp < 0 {
+			id = string(header)
+		} else {
+			id = string(header[:sp])
+			definition = string(bytes.TrimSpace(header[sp+1:]))
+		}
+
+		// Line 2: sequence
+		sline := scanner.ReadLine()
+		if sline == nil {
+			log.Fatalf("@%s[%s]: unexpected EOF after header", id, source)
+		}
+		seqDest := make([]byte, len(sline))
+		w := 0
+		for _, b := range sline {
+			if b >= 'A' && b <= 'Z' {
+				b += 'a' - 'A'
+			}
+			if UtoT && b == 'u' {
+				b = 't'
+			}
+			seqDest[w] = b
+			w++
+		}
+		seqDest = seqDest[:w]
+		if len(seqDest) == 0 {
+			log.Fatalf("@%s[%s]: sequence is empty", id, source)
+		}
+
+		// Line 3: + (skip)
+		scanner.ReadLine()
+
+		// Line 4: quality
+		qline := scanner.ReadLine()
+
+		seq := obiseq.NewBioSequenceOwning(id, seqDest, definition)
+		seq.SetSource(source)
+
+		if with_quality && qline != nil {
+			qDest := make([]byte, len(qline))
+			copy(qDest, qline)
+			for i := range qDest {
+				qDest[i] -= quality_shift
+			}
+			seq.TakeQualities(qDest)
+		}
+
+		sequences = append(sequences, seq)
+	}
+
+	return sequences, nil
+}
+
 func _ParseFastqFile(
 	input ChannelFileChunk,
 	out obiiter.IBioSequence,
@@ -313,7 +387,14 @@ func _ParseFastqFile(
 	parser := FastqChunkParser(quality_shift, with_quality, UtoT)
 
 	for chunks := range input {
-		sequences, err := parser(chunks.Source, chunks.Raw)
+		var sequences obiseq.BioSequenceSlice
+		var err error
+
+		if chunks.Rope != nil {
+			sequences, err = FastqChunkParserRope(chunks.Source, chunks.Rope, quality_shift, with_quality, UtoT)
+		} else {
+			sequences, err = parser(chunks.Source, chunks.Raw)
+		}
 
 		if err != nil {
 			log.Fatalf("File %s : Cannot parse the fastq file : %v", chunks.Source, err)
@@ -339,7 +420,7 @@ func ReadFastq(reader io.Reader, options ...WithOption) (obiiter.IBioSequence, e
 		1024*1024,
 		EndOfLastFastqEntry,
 		"\n@",
-		true,
+		false,
 	)
 
 	for i := 0; i < nworker; i++ {

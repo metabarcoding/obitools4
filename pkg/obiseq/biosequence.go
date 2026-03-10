@@ -480,6 +480,15 @@ func (s *BioSequence) SetQualities(qualities Quality) {
 	s.qualities = CopySlice(qualities)
 }
 
+// TakeQualities stores the slice directly without copying.
+// The caller must not use the slice after this call.
+func (s *BioSequence) TakeQualities(qualities Quality) {
+	if s.qualities != nil {
+		RecycleSlice(&s.qualities)
+	}
+	s.qualities = qualities
+}
+
 // A method that appends a byte slice to the qualities of the BioSequence.
 func (s *BioSequence) WriteQualities(data []byte) (int, error) {
 	s.qualities = append(s.qualities, data...)

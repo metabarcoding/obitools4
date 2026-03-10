@@ -214,7 +214,7 @@ func FastaChunkParser(UtoT bool) func(string, io.Reader) (obiseq.BioSequenceSlic
 // Stops when '>' is found at the start of a line (next record) or at EOF.
 // Returns (dest with appended bases, hasMore).
 // hasMore=true means scanner is now positioned at '>' of the next record.
-func (s *gbRopeScanner) extractFastaSeq(dest []byte, UtoT bool) ([]byte, bool) {
+func (s *ropeScanner) extractFastaSeq(dest []byte, UtoT bool) ([]byte, bool) {
 	lineStart := true
 
 	for s.current != nil {
@@ -252,7 +252,7 @@ func (s *gbRopeScanner) extractFastaSeq(dest []byte, UtoT bool) ([]byte, bool) {
 
 // FastaChunkParserRope parses a FASTA chunk directly from the rope without Pack().
 func FastaChunkParserRope(source string, rope *PieceOfChunk, UtoT bool) (obiseq.BioSequenceSlice, error) {
-	scanner := newGbRopeScanner(rope)
+	scanner := newRopeScanner(rope)
 	sequences := obiseq.MakeBioSequenceSlice(100)[:0]
 
 	for {
