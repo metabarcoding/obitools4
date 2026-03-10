@@ -245,6 +245,7 @@ func ReadFasta(reader io.Reader, options ...WithOption) (obiiter.IBioSequence, e
 		1024*1024,
 		EndOfLastFastaEntry,
 		"\n>",
+		true,
 	)
 
 	for i := 0; i < nworker; i++ {

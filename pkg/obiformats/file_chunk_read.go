@@ -16,6 +16,7 @@ type SeqFileChunkParser func(string, io.Reader) (obiseq.BioSequenceSlice, error)
 type FileChunk struct {
 	Source string
 	Raw    *bytes.Buffer
+	Rope   *PieceOfChunk
 	Order  int
 }
 
@@ -97,11 +98,17 @@ func (piece *PieceOfChunk) IsLast() bool {
 	return piece.next == nil
 }
 
-func (piece *PieceOfChunk) FileChunk(source string, order int) FileChunk {
-	piece.Pack()
+func (piece *PieceOfChunk) FileChunk(source string, order int, pack bool) FileChunk {
+	piece = piece.Head()
+	var raw *bytes.Buffer
+	if pack {
+		piece.Pack()
+		raw = bytes.NewBuffer(piece.data)
+	}
 	return FileChunk{
 		Source: source,
-		Raw:    bytes.NewBuffer(piece.data),
+		Raw:    raw,
+		Rope:   piece,
 		Order:  order,
 	}
 }
@@ -133,7 +140,8 @@ func ReadFileChunk(
 	reader io.Reader,
 	fileChunkSize int,
 	splitter LastSeqRecord,
-	probe string) ChannelFileChunk {
+	probe string,
+	pack bool) ChannelFileChunk {
 
 	chunk_channel := make(ChannelFileChunk)
 
@@ -205,7 +213,7 @@ func ReadFileChunk(
 
 				if len(pieces.data) > 0 {
 					// obilog.Warnf("chuck %d :Read %d bytes from file %s", i, io.Len(), source)
-					chunk_channel <- pieces.FileChunk(source, i)
+					chunk_channel <- pieces.FileChunk(source, i, pack)
 					i++
 				}
 
@@ -222,7 +230,7 @@ func ReadFileChunk(
 
 		// Send the last chunk to the channel
 		if pieces.Len() > 0 {
-			chunk_channel <- pieces.FileChunk(source, i)
+			chunk_channel <- pieces.FileChunk(source, i, pack)
 		}
 
 		// Close the readers channel when the end of the file is reached

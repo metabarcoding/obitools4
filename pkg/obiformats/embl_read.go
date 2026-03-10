@@ -196,6 +196,7 @@ func ReadEMBL(reader io.Reader, options ...WithOption) (obiiter.IBioSequence, er
 		1024*1024*128,
 		EndOfLastFlatFileEntry,
 		"\nID   ",
+		true,
 	)
 
 	newIter := obiiter.MakeIBioSequence()

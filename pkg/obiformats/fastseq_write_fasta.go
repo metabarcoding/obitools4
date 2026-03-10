@@ -77,45 +77,47 @@ func FormatFasta(seq *obiseq.BioSequence, formater FormatHeader) string {
 //
 // It returns a byte array containing the formatted sequences.
 func FormatFastaBatch(batch obiiter.BioSequenceBatch, formater FormatHeader, skipEmpty bool) *bytes.Buffer {
-	// Create a buffer to store the formatted sequences
 	var bs bytes.Buffer
 
 	lt := 0
-
 	for _, seq := range batch.Slice() {
 		lt += seq.Len()
 	}
 
-	// Iterate over each sequence in the batch
+	// Pre-allocate: sequence data + newlines every 60 chars + ~100 bytes header per sequence
+	bs.Grow(lt + lt/60 + 100*batch.Len() + 1)
+
 	log.Debugf("FormatFastaBatch: #%d : %d seqs", batch.Order(), batch.Len())
-	first := true
+
 	for _, seq := range batch.Slice() {
-		// Check if the sequence is empty
 		if seq.Len() > 0 {
-			// Format the sequence using the provided formater function
-			formattedSeq := FormatFasta(seq, formater)
-
-			if first {
-				bs.Grow(lt + (len(formattedSeq)-seq.Len())*batch.Len()*5/4)
-				first = false
-			}
-
-			// Append the formatted sequence to the buffer
-			bs.WriteString(formattedSeq)
+			// Write header directly into bs — no intermediate string
+			bs.WriteByte('>')
+			bs.WriteString(seq.Id())
+			bs.WriteByte(' ')
+			bs.WriteString(formater(seq))
 			bs.WriteByte('\n')
+
+			// Write folded sequence directly into bs — no copies
+			s := seq.Sequence()
+			l := len(s)
+			for i := 0; i < l; i += 60 {
+				to := i + 60
+				if to > l {
+					to = l
+				}
+				bs.Write(s[i:to])
+				bs.WriteByte('\n')
+			}
 		} else {
-			// Handle empty sequences
 			if skipEmpty {
-				// Skip empty sequences if skipEmpty is true
 				obilog.Warnf("Sequence %s is empty and skipped in output", seq.Id())
 			} else {
-				// Terminate the program if skipEmpty is false
 				log.Fatalf("Sequence %s is empty", seq.Id())
 			}
 		}
 	}
 
-	// Return the byte array representation of the buffer
 	return &bs
 }
 
