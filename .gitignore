@@ -16,6 +16,7 @@
 **/*.tgz
 **/*.yaml
 **/*.csv
+**/*.pb.gz
 xx
 
 .rhistory

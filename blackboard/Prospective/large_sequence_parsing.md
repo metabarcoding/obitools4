@@ -180,3 +180,85 @@ for ; i < len(bline); i++ {
 - `pkg/obiformats/embl_read.go` — `EmblChunkParser`, `ReadEMBL`
 - `pkg/obiformats/fastaseq_read.go` — `FastaChunkParser`, `_ParseFastaFile`
 - `pkg/obiformats/fastqseq_read.go` — parseur FASTQ (même structure)
+
+## Plan d'implémentation : parseur GenBank sur rope
+
+### Contexte
+
+Baseline mesurée : `obiconvert gbpln640.seq.gz` → 49s real, 42s user, 29s sys, **57 GB RSS**.
+Le sys élevé indique des allocations massives. Deux causes :
+1. `Pack()` : fusionne toute la rope (N × 128 MB) en un buffer contigu avant de parser
+2. Parser ORIGIN : `string(bline)` + `TrimSpace` + `SplitN` × millions de lignes
+
+### 1. `gbRopeScanner`
+
+Struct de lecture ligne par ligne sur la rope, sans allocation heap :
+
+```go
+type gbRopeScanner struct {
+    current *PieceOfChunk
+    pos     int
+    carry   [256]byte  // stack-allocated, max GenBank line = 80 chars
+    carryN  int
+}
+```
+
+`ReadLine()` :
+- Cherche `\n` dans `current.data[pos:]` via `bytes.IndexByte`
+- Si trouvé sans carry : retourne slice direct du node (zéro alloc)
+- Si trouvé avec carry : copie dans carry buffer, retourne `carry[:n]`
+- Si non trouvé : copie le reste dans carry, avance au node suivant, recommence
+- EOF : retourne `carry[:carryN]` puis nil
+
+`extractSequence(dest []byte, UtoT bool) int` :
+- Scan direct des bytes pour section ORIGIN, sans passer par ReadLine
+- Machine d'états : lineStart → skip espaces/digits → copier nucléotides dans dest
+- Stop sur `//` en début de ligne
+- Zéro allocation, UtoT inline
+
+### 2. `GenbankChunkParserRope`
+
+```go
+func GenbankChunkParserRope(source string, rope *PieceOfChunk,
+    withFeatureTable, UtoT bool) (obiseq.BioSequenceSlice, error)
+```
+
+- Même machine d'états que `GenbankChunkParser`, sur `[]byte` (`bytes.HasPrefix`)
+- LOCUS : extrait `id` et `lseq` par scan direct (remplace `_seqlenght_rx`)
+- FEATURES / default inFeature : taxid extrait par scan de `/db_xref="taxon:`
+  dans la source feature ; `featBytes` rempli seulement si `withFeatureTable=true`
+- DEFINITION : toujours conservée
+- ORIGIN : `dest = make([]byte, 0, lseq+20)` puis `s.extractSequence(dest, UtoT)`
+
+### 3. Modifications `_ParseGenbankFile` et `ReadGenbank`
+
+`_ParseGenbankFile` utilise `chunk.Rope` :
+```go
+sequences, err := GenbankChunkParserRope(chunk.Source, chunk.Rope, ...)
+```
+
+`ReadGenbank` passe `pack=false` :
+```go
+entry_channel := ReadFileChunk(..., false)
+```
+
+### 4. Ce qui NE change pas
+
+- `GenbankChunkParser` reste (référence, tests)
+- `ReadFileChunk`, `Pack()`, autres parseurs (EMBL, FASTA, FASTQ) : inchangés
+
+### 5. Gains attendus
+
+- **RSS** : pic ≈ 128 MB × workers (au lieu de N × 128 MB)
+- **Temps sys** : élimination des mmap/munmap pour les gros buffers
+- **Temps user** : ~50M allocations éliminées
+
+### 6. Vérification
+
+```bash
+/usr/local/go/bin/go build ./...
+diff <(obiconvert gbpln640.seq.gz) gbpln640.reference.fasta
+cd bugs/genbank && ./benchmark.sh gbpln640.seq.gz
+```
+
+Cible : RSS < 1 GB, temps comparable ou meilleur.
