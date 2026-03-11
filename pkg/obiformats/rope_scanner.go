@@ -2,13 +2,12 @@ package obiformats
 
 import "bytes"
 
-// ropeScanner reads lines from a PieceOfChunk rope without heap allocation.
-// The carry buffer (stack) handles lines that span two rope nodes.
+// ropeScanner reads lines from a PieceOfChunk rope.
+// The carry buffer handles lines that span two rope nodes; it grows as needed.
 type ropeScanner struct {
 	current *PieceOfChunk
 	pos     int
-	carry   [256]byte // 256 gives ample margin for typical flat-file lines
-	carryN  int
+	carry   []byte
 }
 
 func newRopeScanner(rope *PieceOfChunk) *ropeScanner {
@@ -21,10 +20,10 @@ func newRopeScanner(rope *PieceOfChunk) *ropeScanner {
 func (s *ropeScanner) ReadLine() []byte {
 	for {
 		if s.current == nil {
-			if s.carryN > 0 {
-				n := s.carryN
-				s.carryN = 0
-				return s.carry[:n]
+			if len(s.carry) > 0 {
+				line := s.carry
+				s.carry = s.carry[:0]
+				return line
 			}
 			return nil
 		}
@@ -34,13 +33,12 @@ func (s *ropeScanner) ReadLine() []byte {
 
 		if idx >= 0 {
 			var line []byte
-			if s.carryN == 0 {
+			if len(s.carry) == 0 {
 				line = data[:idx]
 			} else {
-				n := copy(s.carry[s.carryN:], data[:idx])
-				s.carryN += n
-				line = s.carry[:s.carryN]
-				s.carryN = 0
+				s.carry = append(s.carry, data[:idx]...)
+				line = s.carry
+				s.carry = s.carry[:0]
 			}
 			s.pos += idx + 1
 			if s.pos >= len(s.current.data) {
@@ -54,8 +52,7 @@ func (s *ropeScanner) ReadLine() []byte {
 		}
 
 		// No \n in this node: accumulate into carry and advance
-		n := copy(s.carry[s.carryN:], data)
-		s.carryN += n
+		s.carry = append(s.carry, data...)
 		s.current = s.current.Next()
 		s.pos = 0
 	}
