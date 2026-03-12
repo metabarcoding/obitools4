@@ -31,7 +31,7 @@ func NewTaxidFactory(code string, alphabet obiutils.AsciiSet) *TaxidFactory {
 // It extracts the relevant part of the string after the first colon (':') if present.
 func (f *TaxidFactory) FromString(taxid string) (Taxid, error) {
 	taxid = obiutils.AsciiSpaceSet.TrimLeft(taxid)
-	part1, part2 := obiutils.SplitInTwo(taxid, ':')
+	part1, part2 := obiutils.LeftSplitInTwo(taxid, ':')
 	if len(part2) == 0 {
 		taxid = part1
 	} else {
