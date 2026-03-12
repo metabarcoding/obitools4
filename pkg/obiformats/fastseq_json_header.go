@@ -296,7 +296,7 @@ func _parse_json_header_(header string, sequence *obiseq.BioSequence) string {
 
 			case strings.HasSuffix(skey, "_taxid"):
 				if dataType == jsonparser.Number || dataType == jsonparser.String {
-					rank, _ := obiutils.SplitInTwo(skey, '_')
+					rank := skey[:len(skey)-len("_taxid")]
 
 					taxid := string(value)
 					sequence.SetTaxid(taxid, rank)

@@ -195,7 +195,7 @@ func (s *BioSequenceSlice) ExtractTaxonomy(taxonomy *obitax.Taxonomy, seqAsTaxa 
 				return nil, fmt.Errorf("sequence %v has no path", s.Id())
 			}
 			last := path[len(path)-1]
-			taxname, _ := obiutils.SplitInTwo(last, ':')
+			taxname, _ := obiutils.LeftSplitInTwo(last, ':')
 			if idx, ok := s.GetIntAttribute("seq_number"); !ok {
 				return nil, errors.New("sequences are not numbered")
 			} else {

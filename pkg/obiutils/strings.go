@@ -144,9 +144,23 @@ func (r *AsciiSet) TrimLeft(s string) string {
 	return s[i:]
 }
 
-func SplitInTwo(s string, sep byte) (string, string) {
+func LeftSplitInTwo(s string, sep byte) (string, string) {
 	i := 0
 	for ; i < len(s); i++ {
+		c := s[i]
+		if c == sep {
+			break
+		}
+	}
+	if i == len(s) {
+		return s, ""
+	}
+	return s[:i], s[i+1:]
+}
+
+func RightSplitInTwo(s string, sep byte) (string, string) {
+	i := len(s) - 1
+	for ; i >= 0; i-- {
 		c := s[i]
 		if c == sep {
 			break

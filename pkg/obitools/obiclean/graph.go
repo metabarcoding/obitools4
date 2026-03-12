@@ -64,7 +64,7 @@ func EmpiricalDistCsv(filename string, data [][]Ratio, compressed bool) {
 		fmt.Println(err)
 	}
 
-	destfile, err := obiutils.CompressStream(file, true, true)
+	destfile, err := obiutils.CompressStream(file, compressed, true)
 	if err != nil {
 		fmt.Println(err)
 	}
