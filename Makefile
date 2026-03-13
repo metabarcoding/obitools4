@@ -12,7 +12,7 @@ NC     := \033[0m
 GOFLAGS=
 LDFLAGS=
 GOCMD=go
-GOBUILD=$(GOCMD) build $(GOFLAGS) $(if $(LDFLAGS),-ldflags='$(LDFLAGS)')
+GOBUILD=$(GOCMD) build $(GOFLAGS) $(if $(LDFLAGS),-ldflags="$(LDFLAGS)")
 GOGENERATE=$(GOCMD) generate
 GOCLEAN=$(GOCMD) clean
 GOTEST=$(GOCMD) test
@@ -51,7 +51,7 @@ $(OBITOOLS_PREFIX)$(notdir $(1)): $(BUILD_DIR) $(1) pkg/obioptions/version.go
 	@echo -n - Building obitool $(notdir $(1))...
 	@$(GOBUILD)  -o $(BUILD_DIR)/$(OBITOOLS_PREFIX)$(notdir $(1)) ./$(1) \
 	             2> $(OBITOOLS_PREFIX)$(notdir $(1)).log \
-				 || cat $(OBITOOLS_PREFIX)$(notdir $(1)).log
+				 || { cat $(OBITOOLS_PREFIX)$(notdir $(1)).log; rm -f $(OBITOOLS_PREFIX)$(notdir $(1)).log; exit 1; }
 	@rm -f $(OBITOOLS_PREFIX)$(notdir $(1)).log
 	@echo Done.
 endef

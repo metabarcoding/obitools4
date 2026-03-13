@@ -183,22 +183,24 @@ GOURL=$(curl -s "${URL}${GOFILE}" \
 
 echo "Installing Go from: $GOURL" 1>&2
 
-curl -s "$GOURL" | tar zxf -
+curl --progress-bar "$GOURL" | tar zxf -
 
-PATH="$(pwd)/go/bin:$PATH"
+export GOROOT="$(pwd)/go"
+PATH="${GOROOT}/bin:$PATH"
 export PATH
-GOPATH="$(pwd)/go"
-export GOPATH
+export GOPATH="$(pwd)/gopath"
 export GOCACHE="$(pwd)/cache"
+export GOTOOLCHAIN=local
 
+echo "GOROOT=$GOROOT" 1>&2
 echo "GOCACHE=$GOCACHE" 1>&2
-mkdir -p "$GOCACHE"
+mkdir -p "$GOPATH" "$GOCACHE"
 
 # Download OBITools4 source
 echo "Downloading OBITools4 v${VERSION}..." 1>&2
 echo "Source URL: $OBIURL4" 1>&2
 
-if ! curl -sL "$OBIURL4" > obitools4.zip; then
+if ! curl --progress-bar -L "$OBIURL4" > obitools4.zip; then
   echo "Error: Could not download OBITools4 version ${VERSION}" 1>&2
   echo "Please check that this version exists with: $0 --list" 1>&2
   exit 1
