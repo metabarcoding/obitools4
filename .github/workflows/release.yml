@@ -32,10 +32,12 @@ jobs:
             goos: linux
             goarch: amd64
             output_name: linux_amd64
+            cgo_cflags: "-I/usr/include/x86_64-linux-gnu -I/usr/include"
           - os: ubuntu-24.04-arm
             goos: linux
             goarch: arm64
             output_name: linux_arm64
+            cgo_cflags: "-I/usr/include/aarch64-linux-gnu -I/usr/include"
           - os: macos-15-intel
             goos: darwin
             goarch: amd64
@@ -81,7 +83,7 @@ jobs:
           GOARCH: ${{ matrix.goarch }}
           VERSION: ${{ steps.get_version.outputs.version }}
           CC: ${{ matrix.goos == 'linux' && 'musl-gcc' || '' }}
-          CGO_CFLAGS: ${{ matrix.goos == 'linux' && '-I/usr/include' || '' }}
+          CGO_CFLAGS: ${{ matrix.cgo_cflags || '' }}
         run: |
           if [ "$GOOS" = "linux" ]; then
             make LDFLAGS='-linkmode=external -extldflags=-static' obitools
