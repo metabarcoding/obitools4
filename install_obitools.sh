@@ -7,6 +7,7 @@ INSTALL_DIR="/usr/local"
 OBITOOLS_PREFIX=""
 VERSION=""
 LIST_VERSIONS=false
+JOBS=1
 
 # Help message
 function display_help {
@@ -21,6 +22,7 @@ function display_help {
   echo "                          gobigrep command instead of obigrep)."
   echo "  -v, --version           Install a specific version (e.g., 4.4.8)."
   echo "                          If not specified, installs the latest version."
+  echo "  -j, --jobs              Number of parallel jobs for compilation (default: 1)."
   echo "  -l, --list              List all available versions and exit."
   echo "  -h, --help              Display this help message."
   echo ""
@@ -63,6 +65,10 @@ while [ "$#" -gt 0 ]; do
       ;;
     -v|--version)
       VERSION="$2"
+      shift 2
+      ;;
+    -j|--jobs)
+      JOBS="$2"
       shift 2
       ;;
     -l|--list)
@@ -122,9 +128,15 @@ mkdir -p "${WORK_DIR}/cache" \
       exit 1)
 
 # Create installation directory
-mkdir -p "${INSTALL_DIR}/bin" 2> /dev/null \
-  || (echo "Please enter your password for installing obitools in ${INSTALL_DIR}" 1>&2
-      sudo mkdir -p "${INSTALL_DIR}/bin")
+if ! mkdir -p "${INSTALL_DIR}/bin" 2>/dev/null; then
+  if [ ! -w "$(dirname "${INSTALL_DIR}")" ] && [ ! -w "${INSTALL_DIR}" ]; then
+    echo "Please enter your password for installing obitools in ${INSTALL_DIR}" 1>&2
+    sudo mkdir -p "${INSTALL_DIR}/bin"
+  else
+    echo "Error: Could not create ${INSTALL_DIR}/bin (check path or disk space)" 1>&2
+    exit 1
+  fi
+fi
 
 if [[ ! -d "${INSTALL_DIR}/bin" ]]; then
   echo "Could not create ${INSTALL_DIR}/bin directory for installing obitools" 1>&2
@@ -208,16 +220,29 @@ mkdir -p vendor
 
 # Build with or without prefix
 if [[ -z "$OBITOOLS_PREFIX" ]] ; then
-  make GOFLAGS="-buildvcs=false"
+  make -j"${JOBS}" obitools GOFLAGS="-buildvcs=false"
 else
-  make GOFLAGS="-buildvcs=false" OBITOOLS_PREFIX="${OBITOOLS_PREFIX}"
+  make -j"${JOBS}" obitools GOFLAGS="-buildvcs=false" OBITOOLS_PREFIX="${OBITOOLS_PREFIX}"
 fi
 
 # Install binaries
 echo "Installing binaries to ${INSTALL_DIR}/bin..." 1>&2
-(cp build/* "${INSTALL_DIR}/bin" 2> /dev/null) \
-   || (echo "Please enter your password for installing obitools in ${INSTALL_DIR}" 1>&2
-       sudo cp build/* "${INSTALL_DIR}/bin")
+if ! cp build/* "${INSTALL_DIR}/bin" 2>/dev/null; then
+  if [ ! -w "${INSTALL_DIR}/bin" ]; then
+    echo "Please enter your password for installing obitools in ${INSTALL_DIR}" 1>&2
+    sudo cp build/* "${INSTALL_DIR}/bin"
+  else
+    echo "Error: Could not copy binaries to ${INSTALL_DIR}/bin" 1>&2
+    echo "  Source files: $(ls build/ 2>/dev/null || echo 'none found')" 1>&2
+    echo "" 1>&2
+    echo "The build directory has been preserved for manual recovery:" 1>&2
+    echo "  $(pwd)/build/" 1>&2
+    echo "You can install manually with:" 1>&2
+    echo "  cp $(pwd)/build/* ${INSTALL_DIR}/bin/" 1>&2
+    popd > /dev/null || true
+    exit 1
+  fi
+fi
 
 popd > /dev/null || exit
 

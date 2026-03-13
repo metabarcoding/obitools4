@@ -32,8 +32,12 @@ The installation script offers several options:
 > 
 >  -p, --obitools-prefix   Prefix added to the obitools command names if you
 >                          want to have several versions of obitools at the
->                          same time on your system (as example `-p g` will produce 
+>                          same time on your system (as example `-p g` will produce
 >                          `gobigrep` command instead of `obigrep`).
+>
+>  -j, --jobs              Number of parallel jobs used for compilation
+>                          (default: 1). Increase this value to speed up
+>                          compilation on multi-core systems (e.g., `-j 4`).
 
 ### Examples
 
