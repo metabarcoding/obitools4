@@ -62,6 +62,12 @@ jobs:
           TAG=${GITHUB_REF#refs/tags/Release_}
           echo "version=$TAG" >> $GITHUB_OUTPUT
 
+      - name: Install build tools (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y musl-tools
+
       - name: Install build tools (macOS)
         if: runner.os == 'macOS'
         run: |
@@ -74,8 +80,13 @@ jobs:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
           VERSION: ${{ steps.get_version.outputs.version }}
+          CC: ${{ matrix.goos == 'linux' && 'musl-gcc' || '' }}
         run: |
-          make obitools
+          if [ "$GOOS" = "linux" ]; then
+            make LDFLAGS='-linkmode=external -extldflags=-static' obitools
+          else
+            make obitools
+          fi
           mkdir -p artifacts
           # Create a single tar.gz with all binaries for this platform
           tar -czf artifacts/obitools4_${VERSION}_${{ matrix.output_name }}.tar.gz -C build .
