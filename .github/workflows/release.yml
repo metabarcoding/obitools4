@@ -81,6 +81,7 @@ jobs:
           GOARCH: ${{ matrix.goarch }}
           VERSION: ${{ steps.get_version.outputs.version }}
           CC: ${{ matrix.goos == 'linux' && 'musl-gcc' || '' }}
+          CGO_CFLAGS: ${{ matrix.goos == 'linux' && '-I/usr/include' || '' }}
         run: |
           if [ "$GOOS" = "linux" ]; then
             make LDFLAGS='-linkmode=external -extldflags=-static' obitools
