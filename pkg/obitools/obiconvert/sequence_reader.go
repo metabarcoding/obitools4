@@ -214,6 +214,10 @@ func CLIReadBioSequences(filenames ...string) (obiiter.IBioSequence, error) {
 
 	iterator = iterator.Speed("Reading sequences")
 
+	if obidefault.BatchMem() > 0 {
+		iterator = iterator.RebatchBySize(obidefault.BatchMem(), 1)
+	}
+
 	return iterator, nil
 }
 

@@ -444,6 +444,62 @@ func (iterator IBioSequence) Rebatch(size int) IBioSequence {
 	return newIter
 }
 
+// RebatchBySize reorganises the stream into batches whose cumulative estimated
+// memory footprint does not exceed maxBytes. A single sequence larger than
+// maxBytes is emitted alone rather than dropped. minSeqs sets a lower bound on
+// batch size (in number of sequences) so that very large sequences still form
+// reasonably-sized work units; use 1 to disable.
+func (iterator IBioSequence) RebatchBySize(maxBytes int, minSeqs int) IBioSequence {
+	newIter := MakeIBioSequence()
+
+	newIter.Add(1)
+
+	go func() {
+		newIter.WaitAndClose()
+	}()
+
+	go func() {
+		order := 0
+		iterator = iterator.SortBatches()
+		buffer := obiseq.MakeBioSequenceSlice()
+		bufBytes := 0
+		source := ""
+
+		flush := func() {
+			if len(buffer) > 0 {
+				newIter.Push(MakeBioSequenceBatch(source, order, buffer))
+				order++
+				buffer = obiseq.MakeBioSequenceSlice()
+				bufBytes = 0
+			}
+		}
+
+		for iterator.Next() {
+			seqs := iterator.Get()
+			source = seqs.Source()
+			for _, s := range seqs.Slice() {
+				sz := s.MemorySize()
+				// flush before adding if it would overflow, but only if
+				// we already meet the minimum sequence count
+				if bufBytes+sz > maxBytes && len(buffer) >= minSeqs {
+					flush()
+				}
+				buffer = append(buffer, s)
+				bufBytes += sz
+			}
+		}
+		flush()
+
+		newIter.Done()
+	}()
+
+	if iterator.IsPaired() {
+		newIter.MarkAsPaired()
+	}
+
+	return newIter
+}
+
 func (iterator IBioSequence) FilterEmpty() IBioSequence {
 
 	newIter := MakeIBioSequence()

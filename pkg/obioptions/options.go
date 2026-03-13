@@ -8,6 +8,7 @@ import (
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiformats"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/DavidGamba/go-getoptions"
@@ -56,6 +57,10 @@ func RegisterGlobalOptions(options *getoptions.GetOpt) {
 	options.IntVar(obidefault.BatchSizePtr(), "batch-size", obidefault.BatchSize(),
 		options.GetEnv("OBIBATCHSIZE"),
 		options.Description("Number of sequence per batch for paralelle processing"))
+
+	options.StringVar(obidefault.BatchMemStrPtr(), "batch-mem", "",
+		options.GetEnv("OBIBATCHMEM"),
+		options.Description("Maximum memory per batch (e.g. 128K, 64M, 1G). Overrides --batch-size when set."))
 
 	options.Bool("solexa", false,
 		options.GetEnv("OBISOLEXA"),
@@ -156,6 +161,15 @@ func ProcessParsedOptions(options *getoptions.GetOpt, parseErr error) {
 
 	if options.Called("solexa") {
 		obidefault.SetReadQualitiesShift(64)
+	}
+
+	if options.Called("batch-mem") {
+		n, err := obiutils.ParseMemSize(obidefault.BatchMemStr())
+		if err != nil {
+			log.Fatalf("Invalid --batch-mem value %q: %v", obidefault.BatchMemStr(), err)
+		}
+		obidefault.SetBatchMem(n)
+		log.Printf("Memory-based batching enabled: %s per batch", obidefault.BatchMemStr())
 	}
 }
 

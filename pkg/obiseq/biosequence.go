@@ -273,6 +273,28 @@ func (s *BioSequence) Len() int {
 	return len(s.sequence)
 }
 
+// MemorySize returns an estimate of the memory footprint of the BioSequence
+// in bytes. It accounts for the sequence, quality scores, feature data,
+// annotations, and fixed struct overhead. The estimate is conservative
+// (cap rather than len for byte slices) so it is suitable for memory-based
+// batching decisions.
+func (s *BioSequence) MemorySize() int {
+	if s == nil {
+		return 0
+	}
+	// fixed struct overhead (strings, pointers, mutex pointer)
+	const overhead = 128
+	n := overhead
+	n += cap(s.sequence)
+	n += cap(s.qualities)
+	n += cap(s.feature)
+	n += len(s.id)
+	n += len(s.source)
+	// rough annotation estimate: each key+value pair ~64 bytes on average
+	n += len(s.annotations) * 64
+	return n
+}
+
 // HasQualities checks if the BioSequence has sequence qualitiy scores.
 //
 // This function does not have any parameters.
