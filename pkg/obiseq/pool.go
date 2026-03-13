@@ -1,12 +1,19 @@
 package obiseq
 
 import (
+	"runtime"
 	"sync"
+	"sync/atomic"
 
 	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 )
+
+const _LargeSliceThreshold = 100 * 1024        // 100 kb — below: leave to GC, above: trigger explicit GC
+const _GCBytesBudget = int64(256 * 1024 * 1024) // trigger GC every 256 MB of large discards
+
+var _largeSliceDiscardedBytes = atomic.Int64{}
 
 var _BioSequenceByteSlicePool = sync.Pool{
 	New: func() interface{} {
@@ -34,6 +41,13 @@ func RecycleSlice(s *[]byte) {
 		}
 		if cap(*s) <= 1024 {
 			_BioSequenceByteSlicePool.Put(s)
+		} else if cap(*s) >= _LargeSliceThreshold {
+			n := int64(cap(*s))
+			*s = nil
+			prev := _largeSliceDiscardedBytes.Load()
+			if _largeSliceDiscardedBytes.Add(n)/_GCBytesBudget > prev/_GCBytesBudget {
+				runtime.GC()
+			}
 		}
 	}
 }

@@ -291,5 +291,5 @@ func IndexReferenceDB(iterator obiiter.IBioSequence) obiiter.IBioSequence {
 		go f()
 	}
 
-	return indexed.Rebatch(obidefault.BatchSize())
+	return indexed.RebatchBySize(obidefault.BatchMem(), obidefault.BatchSizeMax())
 }

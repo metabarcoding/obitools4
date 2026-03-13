@@ -10,8 +10,9 @@ BLUE   := \033[0;34m
 NC     := \033[0m
 
 GOFLAGS=
+LDFLAGS=
 GOCMD=go
-GOBUILD=$(GOCMD) build $(GOFLAGS)
+GOBUILD=$(GOCMD) build $(GOFLAGS) $(if $(LDFLAGS),-ldflags='$(LDFLAGS)')
 GOGENERATE=$(GOCMD) generate
 GOCLEAN=$(GOCMD) clean
 GOTEST=$(GOCMD) test

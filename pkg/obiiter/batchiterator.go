@@ -444,6 +444,67 @@ func (iterator IBioSequence) Rebatch(size int) IBioSequence {
 	return newIter
 }
 
+// RebatchBySize reorganises the stream into batches bounded by two independent
+// upper limits: maxCount (max number of sequences) and maxBytes (max cumulative
+// estimated memory). A batch is flushed as soon as either limit would be
+// exceeded. A single sequence larger than maxBytes is always emitted alone.
+// Passing 0 for a limit disables that constraint; if both are 0 it falls back
+// to Rebatch(obidefault.BatchSizeMax()).
+func (iterator IBioSequence) RebatchBySize(maxBytes int, maxCount int) IBioSequence {
+	if maxBytes <= 0 && maxCount <= 0 {
+		return iterator.Rebatch(obidefault.BatchSizeMax())
+	}
+
+	newIter := MakeIBioSequence()
+
+	newIter.Add(1)
+
+	go func() {
+		newIter.WaitAndClose()
+	}()
+
+	go func() {
+		order := 0
+		iterator = iterator.SortBatches()
+		buffer := obiseq.MakeBioSequenceSlice()
+		bufBytes := 0
+		source := ""
+
+		flush := func() {
+			if len(buffer) > 0 {
+				newIter.Push(MakeBioSequenceBatch(source, order, buffer))
+				order++
+				buffer = obiseq.MakeBioSequenceSlice()
+				bufBytes = 0
+			}
+		}
+
+		for iterator.Next() {
+			seqs := iterator.Get()
+			source = seqs.Source()
+			for _, s := range seqs.Slice() {
+				sz := s.MemorySize()
+				countFull := maxCount > 0 && len(buffer) >= maxCount
+				memFull := maxBytes > 0 && bufBytes+sz > maxBytes && len(buffer) > 0
+				if countFull || memFull {
+					flush()
+				}
+				buffer = append(buffer, s)
+				bufBytes += sz
+			}
+		}
+		flush()
+
+		newIter.Done()
+	}()
+
+	if iterator.IsPaired() {
+		newIter.MarkAsPaired()
+	}
+
+	return newIter
+}
+
 func (iterator IBioSequence) FilterEmpty() IBioSequence {
 
 	newIter := MakeIBioSequence()
@@ -638,7 +699,7 @@ func (iterator IBioSequence) FilterOn(predicate obiseq.SequencePredicate,
 		trueIter.MarkAsPaired()
 	}
 
-	return trueIter.Rebatch(size)
+	return trueIter.RebatchBySize(obidefault.BatchMem(), obidefault.BatchSizeMax())
 }
 
 func (iterator IBioSequence) FilterAnd(predicate obiseq.SequencePredicate,
@@ -694,7 +755,7 @@ func (iterator IBioSequence) FilterAnd(predicate obiseq.SequencePredicate,
 		trueIter.MarkAsPaired()
 	}
 
-	return trueIter.Rebatch(size)
+	return trueIter.RebatchBySize(obidefault.BatchMem(), obidefault.BatchSizeMax())
 }
 
 // Load all sequences availables from an IBioSequenceBatch iterator into
