@@ -699,7 +699,7 @@ func (iterator IBioSequence) FilterOn(predicate obiseq.SequencePredicate,
 		trueIter.MarkAsPaired()
 	}
 
-	return trueIter.Rebatch(size)
+	return trueIter.RebatchBySize(obidefault.BatchMem(), obidefault.BatchSizeMax())
 }
 
 func (iterator IBioSequence) FilterAnd(predicate obiseq.SequencePredicate,
@@ -755,7 +755,7 @@ func (iterator IBioSequence) FilterAnd(predicate obiseq.SequencePredicate,
 		trueIter.MarkAsPaired()
 	}
 
-	return trueIter.Rebatch(size)
+	return trueIter.RebatchBySize(obidefault.BatchMem(), obidefault.BatchSizeMax())
 }
 
 // Load all sequences availables from an IBioSequenceBatch iterator into

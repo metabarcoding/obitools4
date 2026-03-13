@@ -3,6 +3,7 @@ package obiiter
 import (
 	log "github.com/sirupsen/logrus"
 
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 )
 
@@ -70,7 +71,7 @@ func IFragments(minsize, length, overlap, size, nworkers int) Pipeable {
 		}
 		go f(iterator)
 
-		return newiter.SortBatches().Rebatch(size)
+		return newiter.SortBatches().RebatchBySize(obidefault.BatchMem(), obidefault.BatchSizeMax())
 	}
 
 	return ifrg
