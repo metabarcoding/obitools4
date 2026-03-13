@@ -56,11 +56,15 @@ func RegisterGlobalOptions(options *getoptions.GetOpt) {
 
 	options.IntVar(obidefault.BatchSizePtr(), "batch-size", obidefault.BatchSize(),
 		options.GetEnv("OBIBATCHSIZE"),
-		options.Description("Number of sequence per batch for paralelle processing"))
+		options.Description("Minimum number of sequences per batch (floor, default 1)"))
+
+	options.IntVar(obidefault.BatchSizeMaxPtr(), "batch-size-max", obidefault.BatchSizeMax(),
+		options.GetEnv("OBIBATCHSIZEMAX"),
+		options.Description("Maximum number of sequences per batch (ceiling, default 2000)"))
 
 	options.StringVar(obidefault.BatchMemStrPtr(), "batch-mem", "",
 		options.GetEnv("OBIBATCHMEM"),
-		options.Description("Maximum memory per batch (e.g. 128K, 64M, 1G). Overrides --batch-size when set."))
+		options.Description("Maximum memory per batch (e.g. 128K, 64M, 1G; default: 128M). Set to 0 to disable."))
 
 	options.Bool("solexa", false,
 		options.GetEnv("OBISOLEXA"),

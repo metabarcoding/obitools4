@@ -444,12 +444,17 @@ func (iterator IBioSequence) Rebatch(size int) IBioSequence {
 	return newIter
 }
 
-// RebatchBySize reorganises the stream into batches whose cumulative estimated
-// memory footprint does not exceed maxBytes. A single sequence larger than
-// maxBytes is emitted alone rather than dropped. minSeqs sets a lower bound on
-// batch size (in number of sequences) so that very large sequences still form
-// reasonably-sized work units; use 1 to disable.
-func (iterator IBioSequence) RebatchBySize(maxBytes int, minSeqs int) IBioSequence {
+// RebatchBySize reorganises the stream into batches bounded by two independent
+// upper limits: maxCount (max number of sequences) and maxBytes (max cumulative
+// estimated memory). A batch is flushed as soon as either limit would be
+// exceeded. A single sequence larger than maxBytes is always emitted alone.
+// Passing 0 for a limit disables that constraint; if both are 0 it falls back
+// to Rebatch(obidefault.BatchSizeMax()).
+func (iterator IBioSequence) RebatchBySize(maxBytes int, maxCount int) IBioSequence {
+	if maxBytes <= 0 && maxCount <= 0 {
+		return iterator.Rebatch(obidefault.BatchSizeMax())
+	}
+
 	newIter := MakeIBioSequence()
 
 	newIter.Add(1)
@@ -479,9 +484,9 @@ func (iterator IBioSequence) RebatchBySize(maxBytes int, minSeqs int) IBioSequen
 			source = seqs.Source()
 			for _, s := range seqs.Slice() {
 				sz := s.MemorySize()
-				// flush before adding if it would overflow, but only if
-				// we already meet the minimum sequence count
-				if bufBytes+sz > maxBytes && len(buffer) >= minSeqs {
+				countFull := maxCount > 0 && len(buffer) >= maxCount
+				memFull := maxBytes > 0 && bufBytes+sz > maxBytes && len(buffer) > 0
+				if countFull || memFull {
 					flush()
 				}
 				buffer = append(buffer, s)
