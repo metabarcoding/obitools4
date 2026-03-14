@@ -16,7 +16,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.23"
+          go-version: "1.26"
       - name: Checkout obitools4 project
         uses: actions/checkout@v4
       - name: Run tests
@@ -54,19 +54,13 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.23"
+          go-version: "1.26"
 
       - name: Extract version from tag
         id: get_version
         run: |
           TAG=${GITHUB_REF#refs/tags/Release_}
           echo "version=$TAG" >> $GITHUB_OUTPUT
-
-      - name: Install build tools (Linux)
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update -q
-          sudo apt-get install -y musl-tools zlib1g-dev
 
       - name: Install build tools (macOS)
         if: runner.os == 'macOS'
@@ -75,20 +69,30 @@ jobs:
           xcode-select --install 2>/dev/null || true
           xcode-select -p
 
-      - name: Build binaries
+      - name: Build binaries (Linux)
+        if: runner.os == 'Linux'
+        env:
+          VERSION: ${{ steps.get_version.outputs.version }}
+        run: |
+          docker run --rm \
+            -v "$(pwd):/src" \
+            -w /src \
+            -e VERSION="${VERSION}" \
+            golang:1.26-alpine \
+            sh -c "apk add --no-cache gcc musl-dev zlib-dev zlib-static make && \
+                   make LDFLAGS='-linkmode=external -extldflags=-static' obitools"
+          mkdir -p artifacts
+          tar -czf artifacts/obitools4_${VERSION}_${{ matrix.output_name }}.tar.gz -C build .
+
+      - name: Build binaries (macOS)
+        if: runner.os == 'macOS'
         env:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
           VERSION: ${{ steps.get_version.outputs.version }}
-          CC: ${{ matrix.goos == 'linux' && 'musl-gcc' || '' }}
         run: |
-          if [ "$GOOS" = "linux" ]; then
-            make LDFLAGS='-linkmode=external -extldflags=-static' obitools
-          else
-            make obitools
-          fi
+          make obitools
           mkdir -p artifacts
-          # Create a single tar.gz with all binaries for this platform
           tar -czf artifacts/obitools4_${VERSION}_${{ matrix.output_name }}.tar.gz -C build .
 
       - name: Upload artifacts
