@@ -46,8 +46,7 @@ func CLIDistributeSequence(sequences obiiter.IBioSequence) {
 		formater = obiformats.WriteSequencesToFile
 	}
 
-	dispatcher := sequences.Distribute(CLISequenceClassifier(),
-		obidefault.BatchSize())
+	dispatcher := sequences.Distribute(CLISequenceClassifier())
 
 	obiformats.WriterDispatcher(CLIFileNamePattern(),
 		dispatcher, formater, opts...,
