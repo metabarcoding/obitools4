@@ -57,33 +57,20 @@ func (dist *IDistribute) Classifier() *obiseq.BioSequenceClassifier {
 }
 
 // Distribute organizes the biosequences from the iterator into batches
-// based on the provided classifier and batch sizes. It returns an
-// IDistribute instance that manages the distribution of the sequences.
+// based on the provided classifier. It returns an IDistribute instance
+// that manages the distribution of the sequences.
 //
-// Parameters:
-//   - class: A pointer to a BioSequenceClassifier used to classify
-//     the biosequences during distribution.
-//   - sizes: Optional integer values specifying the batch size. If
-//     no sizes are provided, a default batch size of 5000 is used.
-//
-// Returns:
-// An IDistribute instance that contains the outputs of the
-// classified biosequences, a channel for new data notifications,
-// and the classifier used for distribution. The method operates
-// asynchronously, processing the sequences in separate goroutines.
-// It ensures that the outputs are closed and cleaned up once
-// processing is complete.
-func (iterator IBioSequence) Distribute(class *obiseq.BioSequenceClassifier, sizes ...int) IDistribute {
-	batchsize := obidefault.BatchSize()
+// Batches are flushed when either BatchSizeMax() sequences or BatchMem()
+// bytes are accumulated per key, mirroring the RebatchBySize strategy.
+func (iterator IBioSequence) Distribute(class *obiseq.BioSequenceClassifier) IDistribute {
+	maxCount := obidefault.BatchSizeMax()
+	maxBytes := obidefault.BatchMem()
 
 	outputs := make(map[int]IBioSequence, 100)
 	slices := make(map[int]*obiseq.BioSequenceSlice, 100)
+	bufBytes := make(map[int]int, 100)
 	orders := make(map[int]int, 100)
 	news := make(chan int)
-
-	if len(sizes) > 0 {
-		batchsize = sizes[0]
-	}
 
 	jobDone := sync.WaitGroup{}
 	lock := sync.Mutex{}
@@ -115,6 +102,7 @@ func (iterator IBioSequence) Distribute(class *obiseq.BioSequenceClassifier, siz
 					slice = &s
 					slices[key] = slice
 					orders[key] = 0
+					bufBytes[key] = 0
 
 					lock.Lock()
 					outputs[key] = MakeIBioSequence()
@@ -123,14 +111,20 @@ func (iterator IBioSequence) Distribute(class *obiseq.BioSequenceClassifier, siz
 					news <- key
 				}
 
-				*slice = append(*slice, s)
-
-				if len(*slice) == batchsize {
+				sz := s.MemorySize()
+				countFull := maxCount > 0 && len(*slice) >= maxCount
+				memFull := maxBytes > 0 && bufBytes[key]+sz > maxBytes && len(*slice) > 0
+				if countFull || memFull {
 					outputs[key].Push(MakeBioSequenceBatch(source, orders[key], *slice))
 					orders[key]++
 					s := obiseq.MakeBioSequenceSlice()
 					slices[key] = &s
+					slice = &s
+					bufBytes[key] = 0
 				}
+
+				*slice = append(*slice, s)
+				bufBytes[key] += sz
 			}
 		}
 

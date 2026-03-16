@@ -104,11 +104,11 @@ func SeqToSliceWorker(worker SeqWorker,
 			for _, s := range input {
 				r, err := worker(s)
 				if err == nil {
+					if i+len(r) > cap(output) {
+						output = slices.Grow(output[:i], len(r))
+						output = output[:cap(output)]
+					}
 					for _, rs := range r {
-						if i == len(output) {
-							output = slices.Grow(output, cap(output))
-							output = output[:cap(output)]
-						}
 						output[i] = rs
 						i++
 					}

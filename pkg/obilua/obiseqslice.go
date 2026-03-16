@@ -31,7 +31,8 @@ func obiseqslice2Lua(interpreter *lua.LState,
 }
 
 func newObiSeqSlice(luaState *lua.LState) int {
-	seqslice := obiseq.NewBioSequenceSlice()
+	capacity := luaState.OptInt(1, 0)
+	seqslice := obiseq.NewBioSequenceSlice(capacity)
 	luaState.Push(obiseqslice2Lua(luaState, seqslice))
 	return 1
 }
