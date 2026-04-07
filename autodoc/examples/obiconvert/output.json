@@ -1,0 +1,23 @@
+[
+  {
+    "annotations": {
+      "definition": "Test DNA sequence for FASTA conversion"
+    },
+    "id": "seq001",
+    "sequence": "atcgatcgatcgatcgatcgatcgatcgatcgatcgatcg"
+  },
+  {
+    "annotations": {
+      "definition": "Another test sequence with different nucleotide content"
+    },
+    "id": "seq002",
+    "sequence": "gctagctagctagctagctagctagctagctagctagct"
+  },
+  {
+    "annotations": {
+      "definition": "Third sequence for testing output format"
+    },
+    "id": "seq003",
+    "sequence": "ttaaccggttaaccggttaaccggttaaccggttaaccg"
+  }
+]

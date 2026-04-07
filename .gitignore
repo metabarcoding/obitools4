@@ -23,7 +23,7 @@ xx
 /.vscode
 /build
 /bugs
-
+autodoc
 /ncbitaxo
 
 !/obitests/**

@@ -1,0 +1,38 @@
+[
+  {
+    "annotations": {
+      "definition": "long sequence passes min-length 100 filter",
+      "processed": "true"
+    },
+    "id": "seq001",
+    "qualities": "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII",
+    "sequence": "atcgatcgatcgatcgatcgatcgatcgatcgatcgatcgatcgatcgatcgatcgatcgatcgatcgatcgatcgatcgatcgatcgatcgatcgatcgatcgatcgatcgatcgatcg"
+  },
+  {
+    "annotations": {
+      "definition": "short sequence fails min-length 100 filter",
+      "processed": "true"
+    },
+    "id": "seq002",
+    "qualities": "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII",
+    "sequence": "gctagctagctagctagctagctagctagctagctagctagctagctagctagctagctagctagctagctagctagcta"
+  },
+  {
+    "annotations": {
+      "definition": "long sequence passes min-length 100 filter",
+      "processed": "true"
+    },
+    "id": "seq003",
+    "qualities": "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII",
+    "sequence": "ttaattaattaattaattaattaattaattaattaattaattaattaattaattaattaattaattaattaattaattaattaattaattaattaattaattaattaattaa"
+  },
+  {
+    "annotations": {
+      "definition": "short sequence fails min-length 100 filter",
+      "processed": "true"
+    },
+    "id": "seq004",
+    "qualities": "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII",
+    "sequence": "ccggccggccggccggccggccggccggccggccggccggccggccggccgg"
+  }
+]

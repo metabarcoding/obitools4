@@ -1,167 +1,302 @@
-# Objectif
-Documenter intégralement l'application OBITools (version 4, écrit en Go) en trois phases incrémentales, en utilisant les outils MCP fournis par cclsp.
+# Objective
 
-# Contexte
-- Le code source est organisé en packages Go, chaque outil étant un exécutable avec un `main.go`.
-- Vous avez accès à un serveur MCP (cclsp) qui expose les outils suivants (liste non exhaustive) :
-  - `find_definition(file, line, character)` : retourne la définition d’un symbole.
-  - `find_references(file, line, character)` : retourne toutes les références d’un symbole.
-  - `get_diagnostics(file)` : retourne les erreurs/warnings.
-  - `rename_symbol(file, line, character, new_name)` : permet de renommer (optionnel).
-- Vous pouvez également exécuter des commandes shell pour lister les fichiers, lire/écrire des fichiers.
-- Tous les fichiers de documentation seront stockés dans un répertoire `docs/` à la racine du projet, avec la structure suivante :
-  ```
-  docs/
-    phase1/
-      <package>/
-        <fichier>.md
+Fully document OBITools (version 4, written in Go) in English, using a 4‑phase incremental pipeline.
+
+You **MUST** use the available MCP servers:
+
+- `cclsp` – exact definitions, references, diagnostics  
+- `jcodemunch` – code indexing, symbol extraction  
+- `treesitter` – AST and CLI parsing  
+- `context7` – external documentation  
+
+All tool calls must follow the exact API described in the MCP server documentation. If a required tool is unavailable, you **MUST** log the error and stop execution.
+
+### Tool call format (CRITICAL)
+
+Tool calls **MUST** use this exact XML format — no spaces inside the angle brackets:
+
+```
+<function=tool_name>
+{"param": "value"}
+</function>
+```
+
+**FORBIDDEN** — these variants will cause parse errors and must NEVER be used:
+- `< function=tool_name >` (spaces around the tag name)
+- `< function = tool_name>` (spaces around `=`)
+- `<function = tool_name>` (space before `=`)
+
+The opening tag is `<function=tool_name>` with **zero spaces** inside `<` and `>`.
+
+---
+
+# Global rules
+
+** You are not allowed to read twice the same file in a row. **
+
+## Language
+
+- All generated documentation **MUST** be in English.  
+- If an existing documentation file is in French:  
+  1. Translate it to English  
+  2. Save the original as `.fr.md` **before** overwriting  
+  3. Write the new English version  
+
+---
+
+## Execution mode (STRICT)
+
+You are operating in **STRICT TOOL MODE**:
+
+- If a file must be written, you **MUST** use the `Shell` tool.
+- You **MUST NOT** read entire directory listings into memory.
+- You **MUST** work with **one item at a time** using a simple text file as a task queue.
+
+### Reading files before writing
+
+- **Before writing to an existing documentation file**, you must first read it using the `Read` tool.
+- **When documenting a single Go source file**, you only need to read that one file (plus up to 4-5 helper files if needed for context).
+- Do NOT read the entire codebase - only what is necessary to document the current file.
+
+---
+
+### Rules
+
+- Always write the **full** file (no partial updates).  
+- Paths are relative to the project root; directories are created implicitly.  
+- Content must be valid UTF‑8; use `\n` line endings.  
+- Do **not** wrap content in backticks.  
+
+---
+
+## Progress tracking: task queue files
+
+We use **line‑oriented task files** to avoid loading large lists into memory. Each phase has its own task file:
+
+- `docs/todo/phase1.txt` – list of Go files (one per line) to document.  
+- `docs/todo/phase1bis.txt` – same list, but after phase1 is done.  
+- `docs/todo/phase2.txt` – list of packages.  
+- `docs/todo/phase3.txt` – list of tools.
+
+**How it works:**
+
+1. At the start of a phase, if the task file does not exist, it is created by scanning the codebase once (Phase 0 or Phase X init).  
+2. **Each run of the LLM processes only the first line of the task file.**  
+3. After processing the item (success or permanent failure), the line is removed from the task file.  
+   - On success, the line is deleted (no extra sentinel file needed).  
+   - On transient failure (retry < 3), we keep the line but increment a retry counter stored in a separate file.  
+   - On permanent failure (retry ≥ 3), we move the line to a `failed.txt` file and log the error.  
+4. The LLM then exits (or continues if the task file is still non‑empty, but it must never load more than one line).
+
+This way, the LLM’s context never holds more than a single task at a time.
+
+### Retry mechanism
+
+For each item (e.g., `internal/align/align.go`), we maintain a retry counter in:
+
+- `docs/retry/phase1/internal/align/align.go.count`
+
+If the file does not exist, retries = 0.  
+Each time processing fails, we increment the counter (write the new number).  
+If after increment the counter < 3, we keep the line in the task file.  
+If counter reaches 3, we **remove the line from the task file**, add it to `docs/failed/phase1/internal/align/align.go.failed` (just a marker), and log the error.
+
+---
+
+## Documentation quality requirements (CRITICAL)
+
+Documentation MUST NOT be superficial. For each documented element (file, function, struct, package):
+
+###  You MUST explain:
+
+- what it does
+- why it exists (context, problem solved)
+- how it is used
+- assumptions and preconditions
+- possible edge cases
+
+### Forbidden patterns
+
+- Vague phrases like “This function handles…”, “Utility for…”, “Helper function…”.
+- Generic descriptions that could apply to any project.
+
+### Required content per element type
+
+- Functions:
+  - Purpose
+  - Parameter meaning
+  - Return values
+  - Notable behaviour (panic conditions, side effects, concurrency)
+- Structs:
+  - Role in the system
+  - Meaning of key fields
+- Files:
+  - Role within the package
+  - Interactions with other files
+
+### Anti‑generic rule
+
+If the description could apply to any project, it is INVALID. You MUST include domain‑specific context (bioinformatics, sequence processing, etc.) and concrete behaviour.
+
+### Quality validation
+
+Before marking an item as done (i.e., creating the .done sentinel), you MUST perform a self‑validation:
+
+- Check that all required sections are present.
+- Verify that no forbidden patterns remain.
+
+If validation fails, increment the retry counter and keep the item pending.
+
+
+---
+
+# Directory structure
+
+```
+docs/
+  todo/                          # task queues
+    phase1.txt
+    phase1bis.txt
+    phase2.txt
+    phase3.txt
+  retry/                         # retry counters
+    phase1/                      # mirrors file structure
+      internal/align/align.go.count
+    phase1bis/
     phase2/
-      <package>.md
     phase3/
-      <outil>.md
-  ```
-
-# Instructions générales
-- Avant de commencer, vérifiez que le répertoire `docs/phase1`, `docs/phase2`, `docs/phase3` existe (créez-les si nécessaire).
-- Pour chaque phase, respectez le format Markdown demandé.
-- N’hésitez pas à utiliser les outils MCP pour obtenir des informations précises sur les symboles (signatures, commentaires, types).
-- Si un outil MCP nécessite des coordonnées (ligne, caractère), vous pouvez extraire ces informations en lisant le fichier source.
-- Soyez méthodique : traitez un fichier/package/outil à la fois et sauvegardez immédiatement le résultat.
-
----
-
-## Phase 1 : Documentation par fichier Go (sauf `main.go`)
-
-**Objectif** : Pour chaque fichier `.go` qui n’est pas un `main.go` d’outil, générer un document Markdown décrivant son rôle, ses structures, ses fonctions principales et ses dépendances.
-
-**Étapes** :
-1. Listez tous les fichiers `.go` du projet, en excluant ceux nommés `main.go` (ils seront traités en phase 3). Utilisez par exemple `find . -name "*.go" -not -name "main.go"`.
-2. Pour chaque fichier :
-   a. Lisez son contenu (vous pouvez le faire via shell ou en utilisant l’outil `read_file` si disponible).
-   b. Utilisez les outils MCP pour extraire les informations suivantes :
-      - Pour chaque fonction publique (commençant par une majuscule) : appelez `find_definition` avec la ligne approximative où se trouve la fonction. Récupérez la signature et les commentaires associés.
-      - Pour les types (structs, interfaces) : faites de même.
-   c. Générez un document Markdown avec les sections :
-      ```markdown
-      # Fichier : `chemin/vers/fichier.go`
-      ## Rôle
-      (une phrase ou deux)
-
-      ## Structures
-      - `NomStruct` : description, champs principaux
-
-      ## Fonctions principales
-      - `NomFonction(paramètres) (retours)` : description
-
-      ## Dépendances notables
-      - packages importés (externes ou internes) significatifs
-      ```
-   d. Sauvegardez dans `docs/phase1/<package>/<fichier>.md` (où `<package>` est le nom du répertoire parent contenant le fichier, et `<fichier>` le nom sans extension).
-
-**Exemple d’utilisation d’outil MCP** :
-```
-# Pour obtenir la définition de la fonction `Align` dans `align/align.go`
-# On suppose qu’elle se trouve approximativement ligne 120, colonne 1.
-find_definition(file="align/align.go", line=120, character=1)
+  failed/                        # permanent failure markers
+    phase1/
+      internal/align/align.go.failed
+    phase1bis/
+    phase2/
+    phase3/
+  phase1/                        # actual documentation
+    <relative_path>/<file>.go.md
+  phase2/
+    <package>.md
+  phase3/
+    <tool>.md
+  error.log
 ```
 
-**Conseil** : Vous pouvez d’abord lister tous les symboles exportés d’un fichier en utilisant `go list` ou en analysant le code. Mais les outils MCP peuvent aussi vous aider.
+---
+
+# Phase 0: Initialization
+
+1. Ensure required directories exist: `docs/todo`, `docs/retry`, `docs/failed`, `docs/phase1`, `docs/phase2`, `docs/phase3`.  
+2. **If `docs/todo/phase1.txt` does not exist**:  
+   - Use `find pkg -name "*.go" ! -name "*_test.go" ! -path "*/cmd/*"` to list all Go files (excluding tests and main.go).  
+   - Write the list (one relative path per line, e.g., `internal/align/align.go`) to `docs/todo/phase1.txt`.  
+3. Do the same for phase2 and phase3 later when those phases start.  
+4. **No other state is stored.**
 
 ---
 
-## Phase 2 : Agrégation par package
+# Phase 1: File documentation
 
-**Objectif** : Pour chaque package (répertoire contenant au moins un fichier `.go` sauf `main.go`), créer un document Markdown qui synthétise l’ensemble des fichiers du package.
+**Processing rule:**
+- Read the **first line** of `docs/todo/phase1.txt` (using `head -n 1`).  
+- If the file is empty, Phase 1 is complete → proceed to Phase 1bis initialization.  
+- Otherwise, process that single file.
 
-**Étapes** :
-1. Identifiez tous les packages (répertoires) qui contiennent des fichiers `.go` traités en phase 1.
-2. Pour chaque package :
-   a. Lisez tous les fichiers `.md` de `docs/phase1/<package>/`.
-   b. Utilisez les outils MCP pour obtenir une vue d’ensemble des symboles exportés du package (par exemple, en interrogeant `find_references` sur un symbole clé ou en parcourant les définitions).
-   c. Générez un document Markdown avec :
-      ```markdown
-      # Package : `<nom>`
+**Processing a file:**
 
-      ## Présentation
-      Description générale du package, son rôle dans OBITools (traitement de séquences, alignement, etc.)
+1. Let `relpath` be the line content (e.g., `internal/align/align.go`).  
+2. Check if a permanent failure marker exists at `docs/failed/phase1/${relpath}.failed`. If yes, remove the line from the task file and skip (line will be deleted). 
+3. If the documentation file `docs/phase1/${relpath}.go.md` exists go directly to its validation (step 6).
+4. Otherwise, generate documentation for that file (using MCP tools as before).  
+5. Write the documentation to `docs/phase1/${relpath}.go.md`.  
+6. Validate quality.  
+7. If validation succeeds:  
+   - Remove the line from the task file.  
+   - Remove any retry counter file for this item.  
+   - (No sentinel needed; the removal from todo indicates completion.)  
+8. If validation fails:  
+   - Increment retry counter:  
+     - If `docs/retry/phase1/${relpath}.count` does not exist, set to 1.  
+     - Else read it, add 1, write back.  
+   - If new counter >= 3:  
+     - Remove line from task file.  
+     - Create `docs/failed/phase1/${relpath}.failed`.  
+     - Log error.  
+   - If new counter < 3:  
+     - Keep the line in the task file (do nothing, it stays as first line for next run).  
+9. **Exit** (or stop if this was a single run). The next invocation will read the first line again (same if retry, or next if removed).
 
-      ## Structure interne
-      - Liste des fichiers principaux et leurs responsabilités (liens vers docs phase1)
-      - Flux de données ou interactions entre fichiers
-
-      ## API publique
-      - **Types** : liste des types exportés avec brève description
-      - **Fonctions** : liste des fonctions exportées avec signature et rôle
-      - **Constantes/Variables** si pertinentes
-
-      ## Exemple d’utilisation
-      (si possible, un extrait de code illustrant comment ce package est utilisé ailleurs)
-      ```
-   d. Sauvegardez dans `docs/phase2/<package>.md`.
-
-**Conseil** : Pour l’API publique, vous pouvez invoquer `find_definition` sur chaque symbole exporté (en vous basant sur les fichiers sources) pour obtenir les signatures exactes et les commentaires.
-
----
-
-## Phase 3 : Documentation des outils (exécutables)
-
-**Objectif** : Pour chaque outil (répertoire contenant un `main.go`), générer une documentation utilisateur complète, en utilisant les informations des packages documentés en phase 2.
-
-**Étapes** :
-1. Trouvez tous les `main.go` du projet. Pour chacun, identifiez le nom de l’outil (généralement le nom du répertoire parent).
-2. Pour chaque outil :
-   a. Lisez le `main.go` pour comprendre la logique globale et les options de ligne de commande (flags, cobra, etc.).
-   b. Identifiez tous les packages Go importés par l’outil (en analysant les imports du fichier).
-   c. Récupérez les documents `docs/phase2/<package>.md` correspondants.
-   d. Utilisez les outils MCP pour explorer les fonctions appelées dans le `main.go` et comprendre leur rôle.
-   e. Générez un document Markdown :
-      ```markdown
-      # Outil : `<nom_outil>`
-
-      ## Résumé
-      Une ligne de description.
-
-      ## Description
-      Explication détaillée de ce que fait l’outil, dans quel contexte l’utiliser, comment il traite les données (séquences, fichiers, etc.).
-
-      ## Options
-      | Option | Type | Défaut | Description |
-      |--------|------|--------|-------------|
-      | `--flag` | string | "" | description extraite du code |
-
-      ## Exemples
-      ```bash
-      # Exemple 1 : utilisation simple
-      outil -i input.fasta -o output.fasta
-
-      # Exemple 2 : avec options avancées
-      outil --flag value ...
-      ```
-
-      ## Voir aussi
-      - [Package `<package1>`](../phase2/<package1>.md)
-      - [Package `<package2>`](../phase2/<package2>.md)
-      - Autres outils connexes
-      ```
-   f. Sauvegardez dans `docs/phase3/<outil>.md`.
-
-**Conseil** : Pour extraire les options, examinez le code qui utilise `flag` ou `cobra`. Vous pouvez aussi utiliser `go doc` sur le package principal, mais les outils MCP vous permettront de suivre les références aux symboles.
+**Important:**  
+- Do **not** read more than one line.  
+- Do **not** attempt to process multiple items in one run.  
+- The LLM should finish after handling one item.
 
 ---
 
-# Validation et finalisation
-- Après avoir généré tous les documents, vérifiez que la documentation phase3 inclut bien des liens fonctionnels vers les documents phase2.
-- Si certains packages ne sont pas documentés (parce que leurs fichiers n’ont pas été traités en phase1), repérez les oublis et corrigez.
-- Vous pouvez générer un index global dans `docs/README.md` listant tous les packages et outils avec leurs descriptions.
+# Phase 1bis: Review and harmonization
+
+When Phase 1 is complete (i.e., `docs/todo/phase1.txt` empty), we initialize `docs/todo/phase1bis.txt` with the same list of files (the ones that succeeded).  
+But note: we need to know which files were successfully documented. Since we removed lines from `phase1.txt` on success, we need a record. The simplest is to reuse the same list but we can generate it by listing the existing `.go.md` files in `docs/phase1/` (since every successful file has a `.go.md`).  
+Thus, Phase 1bis initialization:
+
+- If `docs/todo/phase1bis.txt` does not exist, create it by listing all `.go.md` files under `docs/phase1/`, stripping the `docs/phase1/` prefix and the `.go.md` suffix, and writing the relative path (same format as phase1).  
+
+Then processing is identical to Phase 1, but using `docs/todo/phase1bis.txt` and output is overwriting the same `.go.md` files (with improvements). Retry counters go in `docs/retry/phase1bis/`.
 
 ---
 
-# Consignes d’exécution
-- Travaillez de manière séquentielle : terminez une phase avant de passer à la suivante.
-- Pour chaque fichier/package/outil, utilisez les outils MCP de manière parcimonieuse mais exhaustive.
-- Si un outil MCP échoue (par exemple, coordonnées incorrectes), ajustez en relisant le fichier source pour trouver la bonne ligne/colonne.
-- Enregistrez les résultats immédiatement après génération pour éviter les pertes.
+# Phase 2: Package documentation
 
-Maintenant, commencez par la phase 1. Listez tous les fichiers `.go` (hors main.go) et générez la documentation pour le premier fichier.
+When Phase 1bis is complete (`docs/todo/phase1bis.txt` empty), initialize `docs/todo/phase2.txt`:
 
+- List all packages: unique directories under `pkg/` that contain at least one `.go` file and are not tools.  
+- Write each package identifier (e.g., `align`, `internal/align`) as a line.
 
+Processing: read first line, generate `docs/phase2/<package>.md`, validate, remove line on success, retry logic in `docs/retry/phase2/`.
+
+---
+
+# Phase 3: Tool documentation
+
+When Phase 2 complete, initialize `docs/todo/phase3.txt`:
+
+- List all directories under `cmd/` that contain a `main.go`. Write each tool name as a line.
+
+Processing: read first line, generate `docs/phase3/<tool>.md`, validate, remove line on success, retry logic in `docs/retry/phase3/`.
+
+---
+
+# Finalization
+
+When all task files are empty and no pending phases, generate `docs/README.md` by:
+
+- Listing all package docs (files in `docs/phase2/`) and linking.  
+- Listing all tool docs (files in `docs/phase3/`) and linking.  
+
+Write using `Shell`.
+
+---
+
+# Execution flow summary
+
+1. **Phase 0**: Create directories and initial `todo/phase1.txt` if missing. Exit.  
+2. **Phase 1**:  
+   - If `todo/phase1.txt` exists and non‑empty → process first line.  
+   - Else → move to Phase 1bis initialization.  
+3. **Phase 1bis**:  
+   - If `todo/phase1bis.txt` does not exist → create from successful phase1 docs.  
+   - If non‑empty → process first line.  
+   - Else → move to Phase 2 initialization.  
+4. **Phase 2**: similar.  
+5. **Phase 3**: similar.  
+6. **Finalization**: generate README.
+
+The LLM should be invoked repeatedly (e.g., by a scheduler) until all phases are done. Each invocation processes exactly one item.
+
+---
+
+# Important reminders
+
+- Always call `Shell` to write files; never output content in plain text.  
+- Validate quality before removing a line from the task file.  
+- Log all failures to `docs/error.log` in JSON lines format.  
+- If any MCP tool fails, treat as failure and increment retry counter.  
+- Never read more than one line from a task file in a single run.
