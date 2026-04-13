@@ -17,15 +17,7 @@ import (
 // No return values. This function operates directly on the Lua state stack.
 func pushInterfaceToLua(L *lua.LState, val interface{}) {
 	switch v := val.(type) {
-	case string:
-		L.Push(lua.LString(v))
-	case bool:
-		L.Push(lua.LBool(v))
-	case int:
-		L.Push(lua.LNumber(v))
-	case float64:
-		L.Push(lua.LNumber(v))
-	// Add other cases as needed for different types
+	// Typed slices and maps from internal OBITools code — not produced by json.Unmarshal
 	case map[string]int:
 		pushMapStringIntToLua(L, v)
 	case map[string]string:
@@ -34,8 +26,6 @@ func pushInterfaceToLua(L *lua.LState, val interface{}) {
 		pushMapStringBoolToLua(L, v)
 	case map[string]float64:
 		pushMapStringFloat64ToLua(L, v)
-	case map[string]interface{}:
-		pushMapStringInterfaceToLua(L, v)
 	case []string:
 		pushSliceStringToLua(L, v)
 	case []int:
@@ -46,61 +36,61 @@ func pushInterfaceToLua(L *lua.LState, val interface{}) {
 		pushSliceNumericToLua(L, v)
 	case []bool:
 		pushSliceBoolToLua(L, v)
-	case []interface{}:
-		pushSliceInterfaceToLua(L, v)
-	case nil:
-		L.Push(lua.LNil)
 	case *sync.Mutex:
 		pushMutexToLua(L, v)
 	default:
-		log.Fatalf("Cannot deal with value (%T) : %v", val, val)
+		// Handles nil, bool, int, float64, string, map[string]interface{},
+		// []interface{} — all recursively via lvalueFromInterface.
+		L.Push(lvalueFromInterface(L, v))
 	}
 }
 
 func pushMapStringInterfaceToLua(L *lua.LState, m map[string]interface{}) {
-	// Create a new Lua table
 	luaTable := L.NewTable()
-	// Iterate over the Go map and set the key-value pairs in the Lua table
 	for key, value := range m {
-		switch v := value.(type) {
-		case int:
-			luaTable.RawSetString(key, lua.LNumber(v))
-		case float64:
-			luaTable.RawSetString(key, lua.LNumber(v))
-		case bool:
-			luaTable.RawSetString(key, lua.LBool(v))
-		case string:
-			luaTable.RawSetString(key, lua.LString(v))
-		default:
-			log.Fatalf("Doesn't deal with map containing value %v of type %T", v, v)
-		}
+		L.SetField(luaTable, key, lvalueFromInterface(L, value))
 	}
-
-	// Push the Lua table onto the stack
 	L.Push(luaTable)
 }
 
 func pushSliceInterfaceToLua(L *lua.LState, s []interface{}) {
-	// Create a new Lua table
 	luaTable := L.NewTable()
-	// Iterate over the Go map and set the key-value pairs in the Lua table
 	for _, value := range s {
-		switch v := value.(type) {
-		case int:
-			luaTable.Append(lua.LNumber(v))
-		case float64:
-			luaTable.Append(lua.LNumber(v))
-		case bool:
-			luaTable.Append(lua.LBool(v))
-		case string:
-			luaTable.Append(lua.LString(v))
-		default:
-			log.Fatalf("Doesn't deal with slice containing value %v of type %T", v, v)
-		}
+		luaTable.Append(lvalueFromInterface(L, value))
 	}
-
-	// Push the Lua table onto the stack
 	L.Push(luaTable)
+}
+
+// lvalueFromInterface converts a Go interface{} value (as produced by json.Unmarshal)
+// to the corresponding lua.LValue, handling nested maps and slices recursively.
+func lvalueFromInterface(L *lua.LState, value interface{}) lua.LValue {
+	switch v := value.(type) {
+	case nil:
+		return lua.LNil
+	case bool:
+		return lua.LBool(v)
+	case int:
+		return lua.LNumber(v)
+	case float64:
+		return lua.LNumber(v)
+	case string:
+		return lua.LString(v)
+	case map[string]interface{}:
+		t := L.NewTable()
+		for key, val := range v {
+			L.SetField(t, key, lvalueFromInterface(L, val))
+		}
+		return t
+	case []interface{}:
+		t := L.NewTable()
+		for _, val := range v {
+			t.Append(lvalueFromInterface(L, val))
+		}
+		return t
+	default:
+		log.Fatalf("lvalueFromInterface: unsupported type %T: %v", v, v)
+		return lua.LNil
+	}
 }
 
 // pushMapStringIntToLua creates a new Lua table and iterates over the Go map to set key-value pairs in the Lua table. It then pushes the Lua table onto the stack.

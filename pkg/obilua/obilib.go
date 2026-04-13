@@ -6,4 +6,5 @@ func RegisterObilib(luaState *lua.LState) {
 	RegisterObiSeq(luaState)
 	RegisterObiTaxonomy(luaState)
 	RegisterHTTP(luaState)
+	RegisterJSON(luaState)
 }
