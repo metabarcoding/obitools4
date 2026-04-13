@@ -141,6 +141,69 @@ func LuaWorker(proto *lua.FunctionProto) obiseq.SeqWorker {
 	return nil
 }
 
+// LuaSliceWorker creates a SeqSliceWorker that calls the Lua function
+// named "slice_worker". Unlike LuaWorker, the entire batch (BioSequenceSlice)
+// is passed to the Lua function at once, enabling batch-level processing
+// (e.g. a single HTTP request per batch instead of one per sequence).
+//
+// The Lua function signature:
+//
+//	function slice_worker(slice)   -- receives a BioSequenceSlice
+//	    -- process the batch
+//	    return slice               -- returns a BioSequenceSlice (or nil)
+//	end
+func LuaSliceWorker(proto *lua.FunctionProto) obiseq.SeqSliceWorker {
+	interpreter := NewInterpreter()
+	lfunc := interpreter.NewFunctionFromProto(proto)
+	interpreter.Push(lfunc)
+	err := interpreter.PCall(0, lua.MultRet, nil)
+
+	if err != nil {
+		log.Fatalf("Error in executing the lua script: %v", err)
+	}
+
+	result := interpreter.GetGlobal("slice_worker")
+
+	if lua_worker, ok := result.(*lua.LFunction); ok {
+		f := func(slice obiseq.BioSequenceSlice) (obiseq.BioSequenceSlice, error) {
+			if err := interpreter.CallByParam(lua.P{
+				Fn:      lua_worker,
+				NRet:    1,
+				Protect: true,
+			}, obiseqslice2Lua(interpreter, &slice)); err != nil {
+				log.Fatal(err)
+			}
+
+			lreponse := interpreter.Get(-1)
+			defer interpreter.Pop(1)
+
+			if reponse, ok := lreponse.(*lua.LUserData); ok {
+				s := reponse.Value
+				switch val := s.(type) {
+				case *obiseq.BioSequenceSlice:
+					return *val, nil
+				case *obiseq.BioSequence:
+					return obiseq.BioSequenceSlice{val}, nil
+				default:
+					r := reflect.TypeOf(val)
+					return nil, fmt.Errorf("slice_worker function doesn't return the correct type %s", r)
+				}
+			}
+
+			if _, ok = lreponse.(*lua.LNilType); ok {
+				return nil, nil
+			}
+
+			return nil, fmt.Errorf("slice_worker function doesn't return the correct type %T", lreponse)
+		}
+
+		return f
+	}
+
+	log.Fatalf("The slice_worker object is not a function")
+	return nil
+}
+
 // LuaProcessor processes a Lua script on a sequence iterator and returns a new iterator.
 //
 // Parameters:
@@ -216,11 +279,27 @@ func LuaProcessor(iterator obiiter.IBioSequence, name, program string, breakOnEr
 
 	}()
 
-	ff := func(iterator obiiter.IBioSequence) {
-		w := LuaWorker(proto)
-		sw := obiseq.SeqToSliceWorker(w, false)
+	// Detect whether the script defines slice_worker (batch-level) or worker (per-sequence).
+	hasSliceWorker := func() bool {
+		interpreter := NewInterpreter()
+		lfunc := interpreter.NewFunctionFromProto(proto)
+		interpreter.Push(lfunc)
+		if err := interpreter.PCall(0, lua.MultRet, nil); err != nil {
+			return false
+		}
+		result := interpreter.GetGlobal("slice_worker")
+		interpreter.Close()
+		_, ok := result.(*lua.LFunction)
+		return ok
+	}()
 
-		// iterator = iterator.SortBatches()
+	ff := func(iterator obiiter.IBioSequence) {
+		var sw obiseq.SeqSliceWorker
+		if hasSliceWorker {
+			sw = LuaSliceWorker(proto)
+		} else {
+			sw = obiseq.SeqToSliceWorker(LuaWorker(proto), false)
+		}
 
 		for iterator.Next() {
 			seqs := iterator.Get()
@@ -233,6 +312,10 @@ func LuaProcessor(iterator obiiter.IBioSequence, name, program string, breakOnEr
 				} else {
 					obilog.Warnf("Error during Lua sequence processing : %v", err)
 				}
+			}
+
+			if ns == nil {
+				ns = obiseq.BioSequenceSlice{}
 			}
 
 			newIter.Push(obiiter.MakeBioSequenceBatch(seqs.Source(), seqs.Order(), ns))
