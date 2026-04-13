@@ -15,7 +15,8 @@ var _httpClient = &http.Client{
 	Timeout: httpClientTimeout,
 }
 
-// RegisterHTTP registers the http module in the Lua state.
+// RegisterHTTP registers the http module in the Lua state as a global,
+// consistent with obicontext and BioSequence.
 //
 // Exposes:
 //
