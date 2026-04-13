@@ -91,7 +91,7 @@ func LuaWorker(proto *lua.FunctionProto) obiseq.SeqWorker {
 	err := interpreter.PCall(0, lua.MultRet, nil)
 
 	if err != nil {
-		log.Fatalf("Error in executing the lua script")
+		log.Fatalf("Error in executing the lua script: %v", err)
 	}
 
 	result := interpreter.GetGlobal("worker")
@@ -173,7 +173,7 @@ func LuaProcessor(iterator obiiter.IBioSequence, name, program string, breakOnEr
 	err = interpreter.PCall(0, lua.MultRet, nil)
 
 	if err != nil {
-		log.Fatalf("Error in executing the lua script")
+		log.Fatalf("Error in executing the lua script: %v", err)
 	}
 
 	result := interpreter.GetGlobal("begin")
@@ -198,7 +198,7 @@ func LuaProcessor(iterator obiiter.IBioSequence, name, program string, breakOnEr
 		err = interpreter.PCall(0, lua.MultRet, nil)
 
 		if err != nil {
-			log.Fatalf("Error in executing the lua script")
+			log.Fatalf("Error in executing the lua script: %v", err)
 		}
 
 		result := interpreter.GetGlobal("finish")

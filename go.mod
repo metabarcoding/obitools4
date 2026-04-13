@@ -6,7 +6,7 @@ require (
 	github.com/DavidGamba/go-getoptions v0.33.0
 	github.com/PaesslerAG/gval v1.2.4
 	github.com/barkimedes/go-deepcopy v0.0.0-20220514131651-17c30cfc62df
-	github.com/buger/jsonparser v1.1.1
+	github.com/buger/jsonparser v1.1.2
 	github.com/chen3feng/stl4go v0.1.1
 	github.com/dlclark/regexp2 v1.11.5
 	github.com/goccy/go-json v0.10.6
