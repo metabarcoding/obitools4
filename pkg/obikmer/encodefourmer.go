@@ -47,7 +47,7 @@ func Encode4mer(seq *obiseq.BioSequence, buffer *[]byte) []byte {
 	length := slength - 3
 	rawseq := seq.Sequence()
 
-	if length < 0 {
+	if length <= 0 {
 		return nil
 	}
 
