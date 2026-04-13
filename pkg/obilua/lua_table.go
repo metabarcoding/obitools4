@@ -28,6 +28,8 @@ func Table2Interface(interpreter *lua.LState, table *lua.LTable) interface{} {
 				val[i-1] = float64(v.(lua.LNumber))
 			case lua.LTString:
 				val[i-1] = string(v.(lua.LString))
+			case lua.LTTable:
+				val[i-1] = Table2Interface(interpreter, v.(*lua.LTable))
 			}
 		}
 		return val
@@ -45,6 +47,8 @@ func Table2Interface(interpreter *lua.LState, table *lua.LTable) interface{} {
 					val[string(ks)] = float64(v.(lua.LNumber))
 				case lua.LTString:
 					val[string(ks)] = string(v.(lua.LString))
+				case lua.LTTable:
+					val[string(ks)] = Table2Interface(interpreter, v.(*lua.LTable))
 				}
 			}
 		})
