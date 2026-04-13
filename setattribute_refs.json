@@ -1,0 +1,308 @@
+{
+  "obiannotate": {
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetDefinition": [
+      "definition"
+    ],
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetTaxid": [
+      "taxid"
+    ],
+    "(git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter.IBioSequence).NumberSequences$1": [
+      "seq_number"
+    ]
+  },
+  "obiclean": {
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetDefinition": [
+      "definition"
+    ],
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetTaxid": [
+      "taxid"
+    ]
+  },
+  "obicleandb": {
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetCount": [
+      "count"
+    ],
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetDefinition": [
+      "definition"
+    ],
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetTaxid": [
+      "taxid"
+    ]
+  },
+  "obicomplement": {
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetDefinition": [
+      "definition"
+    ],
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetTaxid": [
+      "taxid"
+    ]
+  },
+  "obiconsensus": {
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetCount": [
+      "count"
+    ],
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetDefinition": [
+      "definition"
+    ],
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetTaxid": [
+      "taxid"
+    ],
+    "git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconsensus.BuildConsensus": [
+      "obiconsensus_kmer_max_occur",
+      "obiconsensus_filtered_graph_size",
+      "obiconsensus_full_graph_size",
+      "obiconsensus_consensus",
+      "obiconsensus_weight",
+      "obiconsensus_seq_length",
+      "obiconsensus_kmer_size"
+    ],
+    "git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconsensus.MinionClusterDenoise": [
+      "obiconsensus_consensus"
+    ],
+    "git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconsensus.MinionDenoise$1": [
+      "obiconsensus_consensus",
+      "obiconsensus_weight"
+    ]
+  },
+  "obiconvert": {
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetDefinition": [
+      "definition"
+    ],
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetTaxid": [
+      "taxid"
+    ]
+  },
+  "obicount": {
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetDefinition": [
+      "definition"
+    ],
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetTaxid": [
+      "taxid"
+    ]
+  },
+  "obicsv": {
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetDefinition": [
+      "definition"
+    ],
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetTaxid": [
+      "taxid"
+    ]
+  },
+  "obidemerge": {
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetDefinition": [
+      "definition"
+    ],
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetTaxid": [
+      "taxid"
+    ]
+  },
+  "obidistribute": {
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetDefinition": [
+      "definition"
+    ],
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetTaxid": [
+      "taxid"
+    ]
+  },
+  "obigrep": {
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetDefinition": [
+      "definition"
+    ],
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetTaxid": [
+      "taxid"
+    ]
+  },
+  "obijoin": {
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetDefinition": [
+      "definition"
+    ],
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetTaxid": [
+      "taxid"
+    ]
+  },
+  "obikmermatch": {
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetDefinition": [
+      "definition"
+    ],
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetTaxid": [
+      "taxid"
+    ]
+  },
+  "obikmersimcount": {
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetDefinition": [
+      "definition"
+    ],
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetTaxid": [
+      "taxid"
+    ]
+  },
+  "obilandmark": {
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetCoordinate": [
+      "landmark_coord"
+    ],
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetDefinition": [
+      "definition"
+    ],
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetOBITagGeomRefIndex": [
+      "obitag_geomref_index"
+    ],
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetTaxid": [
+      "taxid"
+    ],
+    "git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obilandmark.CLISelectLandmarkSequences": [
+      "landmark_id"
+    ]
+  },
+  "obimatrix": {
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetDefinition": [
+      "definition"
+    ],
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetTaxid": [
+      "taxid"
+    ]
+  },
+  "obimicrosat": {
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetDefinition": [
+      "definition"
+    ],
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetTaxid": [
+      "taxid"
+    ]
+  },
+  "obimultiplex": {
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetDefinition": [
+      "definition"
+    ],
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetTaxid": [
+      "taxid"
+    ]
+  },
+  "obipairing": {
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetDefinition": [
+      "definition"
+    ],
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetTaxid": [
+      "taxid"
+    ],
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence)._revcmpMutation": [
+      "pairing_mismatches"
+    ],
+    "git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obialign.BuildQualityConsensus": [
+      "pairing_mismatches"
+    ]
+  },
+  "obipcr": {
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetDefinition": [
+      "definition"
+    ],
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetTaxid": [
+      "taxid"
+    ]
+  },
+  "obireffamidx": {
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetDefinition": [
+      "definition"
+    ],
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetOBITagRefIndex": [
+      "obitag_ref_index"
+    ],
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetTaxid": [
+      "taxid"
+    ],
+    "git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obirefidx.IndexFamilyDB": [
+      "reffamidx_id"
+    ]
+  },
+  "obirefidx": {
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetDefinition": [
+      "definition"
+    ],
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetOBITagRefIndex": [
+      "obitag_ref_index"
+    ],
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetTaxid": [
+      "taxid"
+    ]
+  },
+  "obiscript": {
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetDefinition": [
+      "definition"
+    ],
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetTaxid": [
+      "taxid"
+    ]
+  },
+  "obisplit": {
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetDefinition": [
+      "definition"
+    ],
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetTaxid": [
+      "taxid"
+    ]
+  },
+  "obisummary": {
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetDefinition": [
+      "definition"
+    ],
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetTaxid": [
+      "taxid"
+    ]
+  },
+  "obitag": {
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetDefinition": [
+      "definition"
+    ],
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetPath": [
+      "taxonomic_path"
+    ],
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetTaxid": [
+      "taxid"
+    ]
+  },
+  "obitagpcr": {
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obingslibrary.NGSLibrary).ExtractMultiBarcode": [
+      "obimultiplex_error",
+      "obimultiplex_amplicon_rank"
+    ],
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetDefinition": [
+      "definition"
+    ],
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetTaxid": [
+      "taxid"
+    ],
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence)._revcmpMutation": [
+      "pairing_mismatches"
+    ],
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence)._subseqMutation": [
+      "pairing_mismatches"
+    ],
+    "git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obialign.BuildQualityConsensus": [
+      "pairing_mismatches"
+    ]
+  },
+  "obitaxonomy": {
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetDefinition": [
+      "definition"
+    ],
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetPath": [
+      "taxonomic_path"
+    ],
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetTaxid": [
+      "taxid"
+    ],
+    "(git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter.IBioSequence).NumberSequences$1": [
+      "seq_number"
+    ]
+  },
+  "obiuniq": {
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetCount": [
+      "count"
+    ],
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetDefinition": [
+      "definition"
+    ],
+    "(*git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq.BioSequence).SetTaxid": [
+      "taxid"
+    ]
+  }
+}
