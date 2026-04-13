@@ -4,15 +4,33 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	lua "github.com/yuin/gopher-lua"
 )
 
 const httpClientTimeout = 30 * time.Second
 
-var _httpClient = &http.Client{
-	Timeout: httpClientTimeout,
+var (
+	_httpClient     *http.Client
+	_httpClientOnce sync.Once
+)
+
+func getHTTPClient() *http.Client {
+	_httpClientOnce.Do(func() {
+		conns := 2 * obidefault.ParallelWorkers()
+		_httpClient = &http.Client{
+			Transport: &http.Transport{
+				MaxIdleConnsPerHost: conns,
+				MaxConnsPerHost:     conns,
+				IdleConnTimeout:     90 * time.Second,
+			},
+			Timeout: httpClientTimeout,
+		}
+	})
+	return _httpClient
 }
 
 // RegisterHTTP registers the http module in the Lua state as a global,
@@ -46,7 +64,7 @@ func luaHTTPPost(L *lua.LState) int {
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := _httpClient.Do(req)
+	resp, err := getHTTPClient().Do(req)
 	if err != nil {
 		L.Push(lua.LNil)
 		L.Push(lua.LString(err.Error()))
