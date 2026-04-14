@@ -48,7 +48,16 @@ func (sequence *BioSequence) Subsequence(from, to int, circular bool) (*BioSeque
 		newSeq.sequence = CopySlice(sequence.Sequence()[from:to])
 
 		if sequence.HasQualities() {
-			newSeq.qualities = CopySlice(sequence.Qualities()[from:to])
+			qual := sequence.Qualities()
+			if len(qual) != sequence.Len() {
+				log.Panicf(
+					"[BioSequence.Subsequence] Sequence %s has a length of %d and qualities a length of %d",
+					sequence.Id(),
+					sequence.Len(),
+					len(qual),
+				)
+			}
+			newSeq.qualities = CopySlice(qual[from:to])
 		}
 
 		newSeq.id = fmt.Sprintf("%s_sub[%d..%d]", sequence.Id(), from+1, to)
@@ -58,7 +67,16 @@ func (sequence *BioSequence) Subsequence(from, to int, circular bool) (*BioSeque
 		newSeq.Write(sequence.Sequence()[0:to])
 
 		if sequence.HasQualities() {
-			newSeq.WriteQualities(sequence.Qualities()[0:to])
+			qual := sequence.Qualities()
+			if len(qual) != sequence.Len() {
+				log.Panicf(
+					"[BioSequence.Subsequence] Sequence %s has a length of %d and qualities a length of %d",
+					sequence.Id(),
+					sequence.Len(),
+					len(qual),
+				)
+			}
+			newSeq.WriteQualities(qual[0:to])
 		}
 
 	}

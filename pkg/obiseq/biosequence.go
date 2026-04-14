@@ -499,6 +499,9 @@ func (s *BioSequence) SetQualities(qualities Quality) {
 	if s.qualities != nil {
 		RecycleSlice(&s.qualities)
 	}
+	if len(qualities) > 0 && len(qualities) != len(s.sequence) {
+		log.Panicf("[BioSequence.SetQualities] Sequence %s has a length of %d and qualities a length of %d", s.id, len(s.sequence), len(qualities))
+	}
 	s.qualities = CopySlice(qualities)
 }
 
@@ -507,6 +510,9 @@ func (s *BioSequence) SetQualities(qualities Quality) {
 func (s *BioSequence) TakeQualities(qualities Quality) {
 	if s.qualities != nil {
 		RecycleSlice(&s.qualities)
+	}
+	if len(qualities) > 0 && len(qualities) != len(s.sequence) {
+		log.Panicf("[BioSequence.TakeQualities] Sequence %s has a length of %d and qualities a length of %d", s.id, len(s.sequence), len(qualities))
 	}
 	s.qualities = qualities
 }
