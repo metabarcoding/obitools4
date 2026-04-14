@@ -1,7 +1,0 @@
-time="2026-04-02T19:33:11+02:00" level=info msg="Number of workers set 16"
-time="2026-04-02T19:33:11+02:00" level=info msg="Found 1 files to process"
-time="2026-04-02T19:33:11+02:00" level=info msg="input.fasta mime type: text/fasta"
-entities,n
-variants,5
-reads,5
-symbols,435

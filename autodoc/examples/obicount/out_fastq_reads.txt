@@ -1,4 +1,0 @@
-time="2026-04-02T19:33:38+02:00" level=info msg="Number of workers set 16"
-time="2026-04-02T19:33:38+02:00" level=info msg="Found 1 files to process"
-entities,n
-reads,4
