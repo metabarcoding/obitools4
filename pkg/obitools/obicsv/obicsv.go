@@ -33,6 +33,7 @@ func CLIWriteSequenceCSV(iterator obiiter.IBioSequence,
 		CSVSequence(CLIPrintSequence()),
 		CSVQuality(CLIPrintQuality()),
 		CSVAutoColumn(CLIAutoColumns()),
+		CSVNAValue(CLINAValue()),
 	)
 
 	csvIter := NewCSVSequenceIterator(iterator, opts...)

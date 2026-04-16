@@ -1,6 +1,7 @@
 package obicsv
 
 import (
+	"fmt"
 	"log"
 	"slices"
 
@@ -67,8 +68,19 @@ func CSVBatchFromSequences(batch obiiter.BioSequenceBatch, opt Options) obiiterc
 
 			if taxon != nil {
 				taxid = taxon.String()
+			} else if ta, ok := sequence.GetAttribute("taxid"); ok {
+				switch tv := ta.(type) {
+				case string:
+					taxid = tv
+				case int:
+					taxid = fmt.Sprintf("%d", tv)
+				case float64:
+					taxid = fmt.Sprintf("%d", int(tv))
+				default:
+					taxid = opt.CSVNAValue()
+				}
 			} else {
-				taxid = sequence.Taxid()
+				taxid = opt.CSVNAValue()
 			}
 
 			record["taxid"] = taxid
