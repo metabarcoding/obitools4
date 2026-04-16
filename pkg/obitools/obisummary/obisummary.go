@@ -99,6 +99,17 @@ func (data1 *DataSummary) Add(data2 *DataSummary) *DataSummary {
 	rep.sample_singletons = sumUpdateIntMap(data1.sample_singletons, data2.sample_singletons)
 	rep.sample_obiclean_bad = sumUpdateIntMap(data1.sample_obiclean_bad, data2.sample_obiclean_bad)
 
+	for k, m1 := range data1.map_summaries {
+		rep.map_summaries[k] = m1
+	}
+	for k, m2 := range data2.map_summaries {
+		if m1, ok := rep.map_summaries[k]; ok {
+			rep.map_summaries[k] = sumUpdateIntMap(m1, m2)
+		} else {
+			rep.map_summaries[k] = m2
+		}
+	}
+
 	return rep
 }
 
@@ -163,8 +174,9 @@ func ISummary(iterator obiiter.IBioSequence, summarise []string) map[string]inte
 	summaries := make([]*DataSummary, nproc)
 
 	for n := 0; n < nproc; n++ {
+		summaries[n] = NewDataSummary()
 		for _, v := range summarise {
-			summaries[n].map_summaries[v] = make(map[string]int, 0)
+			summaries[n].map_summaries[v] = make(map[string]int)
 		}
 	}
 
@@ -174,6 +186,11 @@ func ISummary(iterator obiiter.IBioSequence, summarise []string) map[string]inte
 			batch := iseq.Get()
 			for _, seq := range batch.Slice() {
 				summary.Update(seq)
+				for _, attr := range summarise {
+					if m, ok := seq.GetIntMap(attr); ok {
+						summary.map_summaries[attr] = sumUpdateIntMap(summary.map_summaries[attr], m)
+					}
+				}
 			}
 		}
 		waiter.Done()
@@ -181,11 +198,9 @@ func ISummary(iterator obiiter.IBioSequence, summarise []string) map[string]inte
 
 	waiter.Add(nproc)
 
-	summaries[0] = NewDataSummary()
 	go ff(iterator, summaries[0])
 
 	for i := 1; i < nproc; i++ {
-		summaries[i] = NewDataSummary()
 		go ff(iterator.Split(), summaries[i])
 	}
 
@@ -246,5 +261,14 @@ func ISummary(iterator obiiter.IBioSequence, summarise []string) map[string]inte
 			}
 		}
 	}
+
+	if len(rep.map_summaries) > 0 {
+		mapDict := make(map[string]interface{}, len(rep.map_summaries))
+		for attr, counts := range rep.map_summaries {
+			mapDict[attr] = counts
+		}
+		dict["map_summaries"] = mapDict
+	}
+
 	return dict
 }

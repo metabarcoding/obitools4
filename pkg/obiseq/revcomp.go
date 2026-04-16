@@ -118,6 +118,9 @@ func (sequence *BioSequence) _revcmpMutation() *BioSequence {
  */
 func ReverseComplementWorker(inplace bool) SeqWorker {
 	f := func(input *BioSequence) (BioSequenceSlice, error) {
+		if input.IsPaired() {
+			input.PairedWith().ReverseComplement(inplace)
+		}
 		return BioSequenceSlice{input.ReverseComplement(inplace)}, nil
 	}
 
