@@ -114,10 +114,10 @@ func IPCRTagPESequencesBatch(iterator obiiter.IBioSequence,
 					aanot["obimultiplex_direction"] = direction
 
 					aanot["obimultiplex_forward_match"] = forward_match
-					aanot["obimultiplex_forward_mismatches"] = forward_mismatches
+					aanot["obimultiplex_forward_error"] = forward_mismatches
 
 					aanot["obimultiplex_reverse_match"] = reverse_match
-					aanot["obimultiplex_reverse_mismatches"] = reverse_mismatches
+					aanot["obimultiplex_reverse_error"] = reverse_mismatches
 
 					aanot["sample"] = sample
 					aanot["experiment"] = experiment
@@ -125,10 +125,10 @@ func IPCRTagPESequencesBatch(iterator obiiter.IBioSequence,
 					banot["obimultiplex_direction"] = direction
 
 					banot["obimultiplex_forward_match"] = forward_match
-					banot["obimultiplex_forward_mismatches"] = forward_mismatches
+					banot["obimultiplex_forward_error"] = forward_mismatches
 
 					banot["obimultiplex_reverse_match"] = reverse_match
-					banot["obimultiplex_reverse_mismatches"] = reverse_mismatches
+					banot["obimultiplex_reverse_error"] = reverse_mismatches
 
 					banot["sample"] = sample
 					banot["experiment"] = experiment
