@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	log "github.com/sirupsen/logrus"
@@ -8,6 +9,7 @@ import (
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obimultiplex"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obipairing"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obitagpcr"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
@@ -39,6 +41,17 @@ func main() {
 		obitagpcr.OptionSet)
 
 	optionParser(os.Args)
+
+	if obimultiplex.CLIAskConfigTemplate() {
+		fmt.Print(obimultiplex.CLIConfigTemplate())
+		os.Exit(0)
+	}
+
+	if !obipairing.CLIHasPairedFiles() {
+		log.Error("You must provide both a forward file (-F) and a reverse file (-R)")
+		os.Exit(1)
+	}
+
 	pairs, err := obipairing.CLIPairedSequence()
 
 	if err != nil {

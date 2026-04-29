@@ -21,12 +21,10 @@ func PairingOptionSet(options *getoptions.GetOpt) {
 	options.StringVar(&_ForwardFile, "forward-reads", "",
 		options.Alias("F"),
 		options.ArgName("FILENAME_F"),
-		options.Required("You must provide at a forward file"),
 		options.Description("The file names containing the forward reads"))
 	options.StringVar(&_ReverseFile, "reverse-reads", "",
 		options.Alias("R"),
 		options.ArgName("FILENAME_R"),
-		options.Required("You must provide a reverse file"),
 		options.Description("The file names containing the reverse reads"))
 	options.IntVar(&_Delta, "delta", _Delta,
 		options.Alias("D"),
@@ -70,6 +68,10 @@ func CLIPairedSequence() (obiiter.IBioSequence, error) {
 	paired := forward.PairTo(reverse)
 
 	return paired, nil
+}
+
+func CLIHasPairedFiles() bool {
+	return _ForwardFile != "" && _ReverseFile != ""
 }
 
 func CLIDelta() int {

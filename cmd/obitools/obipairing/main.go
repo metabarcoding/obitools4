@@ -37,6 +37,11 @@ func main() {
 
 	optionParser(os.Args)
 
+	if !obipairing.CLIHasPairedFiles() {
+		log.Error("You must provide both a forward file (-F) and a reverse file (-R)")
+		os.Exit(1)
+	}
+
 	obidefault.SetStrictReadWorker(2)
 	obidefault.SetStrictWriteWorker(2)
 	pairs, err := obipairing.CLIPairedSequence()
