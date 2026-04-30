@@ -631,9 +631,9 @@ func ReadCSVNGSFilter(reader io.Reader) (*obingslibrary.NGSLibrary, error) {
 			return nil, fmt.Errorf("row %d has %d columns, expected %d", len(data), len(fields), len(header))
 		}
 
-		forward_primer := fields[forward_primerColIndex]
-		reverse_primer := fields[reverse_primerColIndex]
-		tags := _parseMainNGSFilterTags(fields[sample_tagColIndex])
+		forward_primer := strings.TrimSpace(fields[forward_primerColIndex])
+		reverse_primer := strings.TrimSpace(fields[reverse_primerColIndex])
+		tags := _parseMainNGSFilterTags(strings.TrimSpace(fields[sample_tagColIndex]))
 
 		marker, _ := ngsfilter.GetMarker(forward_primer, reverse_primer)
 		pcr, ok := marker.GetPCR(tags.Forward, tags.Reverse)
@@ -644,8 +644,8 @@ func ReadCSVNGSFilter(reader io.Reader) (*obingslibrary.NGSLibrary, error) {
 					i, tags.Forward, tags.Reverse, forward_primer, reverse_primer)
 		}
 
-		pcr.Experiment = fields[experimentColIndex]
-		pcr.Sample = fields[sampleColIndex]
+		pcr.Experiment = strings.TrimSpace(fields[experimentColIndex])
+		pcr.Sample = strings.TrimSpace(fields[sampleColIndex])
 
 		if extraColumns != nil {
 			pcr.Annotations = make(obiseq.Annotation)

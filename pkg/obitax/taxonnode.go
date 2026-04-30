@@ -29,6 +29,24 @@ type TaxNode struct {
 	alternatenames *map[*string]*string
 }
 
+// FullString returns the full string representation of the TaxNode in the form
+// "taxonomyCode:id [scientificName]@rank", regardless of the UseRawTaxids setting.
+// This is used internally when a parseable format is required (e.g. taxonomic_path).
+func (node *TaxNode) FullString(taxonomyCode string) string {
+	if node.HasScientificName() {
+		return fmt.Sprintf("%s:%v [%s]@%s",
+			taxonomyCode,
+			*node.id,
+			node.ScientificName(),
+			node.Rank(),
+		)
+	}
+
+	return fmt.Sprintf("%s:%v",
+		taxonomyCode,
+		*node.id)
+}
+
 // String returns a string representation of the TaxNode, including the taxonomy code,
 // the node ID, and the scientific name. The output format is "taxonomyCode:id [scientificName]".
 //
@@ -42,19 +60,7 @@ func (node *TaxNode) String(taxonomyCode string) string {
 		return *node.id
 	}
 
-	if node.HasScientificName() {
-		return fmt.Sprintf("%s:%v [%s]@%s",
-			taxonomyCode,
-			*node.id,
-			node.ScientificName(),
-			node.Rank(),
-		)
-	}
-
-	return fmt.Sprintf("%s:%v",
-		taxonomyCode,
-		*node.id)
-
+	return node.FullString(taxonomyCode)
 }
 
 // Id returns the unique identifier of the TaxNode.
