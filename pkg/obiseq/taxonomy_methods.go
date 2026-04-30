@@ -70,6 +70,12 @@ func (s *BioSequence) SetTaxid(taxid string, rank ...string) {
 				}
 			}
 
+		} else if obidefault.UseRawTaxids() {
+			// Without a loaded taxonomy, extract the bare ID from full-format strings
+			// like "code:12345 [Name]@rank" so that --raw-taxid is honoured everywhere.
+			if _, rawID, _, _, parseErr := obitax.ParseTaxonString(taxid); parseErr == nil {
+				taxid = rawID
+			}
 		}
 	}
 
@@ -177,7 +183,7 @@ func (sequence *BioSequence) SetPath(taxonomy *obitax.Taxonomy) []string {
 	lpath := path.Len() - 1
 
 	for i := lpath; i >= 0; i-- {
-		spath[lpath-i] = path.Get(i).String(taxonomy.Code())
+		spath[lpath-i] = path.Get(i).FullString(taxonomy.Code())
 	}
 
 	sequence.SetAttribute("taxonomic_path", spath)

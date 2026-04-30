@@ -1,0 +1,48 @@
+taxid,parent,taxonomic_rank,scientific_name
+taxon:1 [root]@no rank,taxon:1 [root]@no rank,no rank,root
+taxon:131567 [cellular organisms]@cellular root,taxon:1 [root]@no rank,cellular root,cellular organisms
+taxon:2759 [Eukaryota]@domain,taxon:131567 [cellular organisms]@cellular root,domain,Eukaryota
+taxon:33154 [Opisthokonta]@clade,taxon:2759 [Eukaryota]@domain,clade,Opisthokonta
+taxon:33208 [Metazoa]@kingdom,taxon:33154 [Opisthokonta]@clade,kingdom,Metazoa
+taxon:6072 [Eumetazoa]@clade,taxon:33208 [Metazoa]@kingdom,clade,Eumetazoa
+taxon:33213 [Bilateria]@clade,taxon:6072 [Eumetazoa]@clade,clade,Bilateria
+taxon:33511 [Deuterostomia]@clade,taxon:33213 [Bilateria]@clade,clade,Deuterostomia
+taxon:7711 [Chordata]@phylum,taxon:33511 [Deuterostomia]@clade,phylum,Chordata
+taxon:89593 [Craniata]@subphylum,taxon:7711 [Chordata]@phylum,subphylum,Craniata
+taxon:7742 [Vertebrata]@clade,taxon:89593 [Craniata]@subphylum,clade,Vertebrata
+taxon:7776 [Gnathostomata]@clade,taxon:7742 [Vertebrata]@clade,clade,Gnathostomata
+taxon:117570 [Teleostomi]@clade,taxon:7776 [Gnathostomata]@clade,clade,Teleostomi
+taxon:117571 [Euteleostomi]@clade,taxon:117570 [Teleostomi]@clade,clade,Euteleostomi
+taxon:8287 [Sarcopterygii]@superclass,taxon:117571 [Euteleostomi]@clade,superclass,Sarcopterygii
+taxon:1338369 [Dipnotetrapodomorpha]@clade,taxon:8287 [Sarcopterygii]@superclass,clade,Dipnotetrapodomorpha
+taxon:32523 [Tetrapoda]@clade,taxon:1338369 [Dipnotetrapodomorpha]@clade,clade,Tetrapoda
+taxon:32524 [Amniota]@clade,taxon:32523 [Tetrapoda]@clade,clade,Amniota
+taxon:40674 [Mammalia]@class,taxon:32524 [Amniota]@clade,class,Mammalia
+taxon:32525 [Theria]@clade,taxon:40674 [Mammalia]@class,clade,Theria
+taxon:9347 [Eutheria]@clade,taxon:32525 [Theria]@clade,clade,Eutheria
+taxon:1437010 [Boreoeutheria]@clade,taxon:9347 [Eutheria]@clade,clade,Boreoeutheria
+taxon:314146 [Euarchontoglires]@superorder,taxon:1437010 [Boreoeutheria]@clade,superorder,Euarchontoglires
+taxon:314145 [Laurasiatheria]@superorder,taxon:1437010 [Boreoeutheria]@clade,superorder,Laurasiatheria
+taxon:33554 [Carnivora]@order,taxon:314145 [Laurasiatheria]@superorder,order,Carnivora
+taxon:91561 [Artiodactyla]@order,taxon:314145 [Laurasiatheria]@superorder,order,Artiodactyla
+taxon:314147 [Glires]@clade,taxon:314146 [Euarchontoglires]@superorder,clade,Glires
+taxon:9845 [Ruminantia]@suborder,taxon:91561 [Artiodactyla]@order,suborder,Ruminantia
+taxon:35500 [Pecora]@infraorder,taxon:9845 [Ruminantia]@suborder,infraorder,Pecora
+taxon:9989 [Rodentia]@order,taxon:314147 [Glires]@clade,order,Rodentia
+taxon:379584 [Caniformia]@suborder,taxon:33554 [Carnivora]@order,suborder,Caniformia
+taxon:9608 [Canidae]@family,taxon:379584 [Caniformia]@suborder,family,Canidae
+taxon:9850 [Cervidae]@family,taxon:35500 [Pecora]@infraorder,family,Cervidae
+taxon:9881 [Odocoileinae]@subfamily,taxon:9850 [Cervidae]@family,subfamily,Odocoileinae
+taxon:33553 [Sciuromorpha]@suborder,taxon:9989 [Rodentia]@order,suborder,Sciuromorpha
+taxon:55153 [Sciuridae]@family,taxon:33553 [Sciuromorpha]@suborder,family,Sciuridae
+taxon:34878 [Cervinae]@subfamily,taxon:9850 [Cervidae]@family,subfamily,Cervinae
+taxon:9611 [Canis]@genus,taxon:9608 [Canidae]@family,genus,Canis
+taxon:9857 [Capreolus]@genus,taxon:9881 [Odocoileinae]@subfamily,genus,Capreolus
+taxon:9612 [Canis lupus]@species,taxon:9611 [Canis]@genus,species,Canis lupus
+taxon:337726 [Xerinae]@subfamily,taxon:55153 [Sciuridae]@family,subfamily,Xerinae
+taxon:9859 [Cervus]@genus,taxon:34878 [Cervinae]@subfamily,genus,Cervus
+taxon:337730 [Marmotini]@tribe,taxon:337726 [Xerinae]@subfamily,tribe,Marmotini
+taxon:9992 [Marmota]@genus,taxon:337730 [Marmotini]@tribe,genus,Marmota
+taxon:9860 [Cervus elaphus]@species,taxon:9859 [Cervus]@genus,species,Cervus elaphus
+taxon:9615 [Canis lupus familiaris]@subspecies,taxon:9612 [Canis lupus]@species,subspecies,Canis lupus familiaris
+taxon:9858 [Capreolus capreolus]@species,taxon:9857 [Capreolus]@genus,species,Capreolus capreolus
