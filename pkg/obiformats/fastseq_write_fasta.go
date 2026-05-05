@@ -90,6 +90,9 @@ func FormatFastaBatch(batch obiiter.BioSequenceBatch, formater FormatHeader, ski
 	log.Debugf("FormatFastaBatch: #%d : %d seqs", batch.Order(), batch.Len())
 
 	for _, seq := range batch.Slice() {
+		if len(seq.Id()) == 0 {
+			log.Fatalf("Sequence identifier is empty")
+		}
 		if seq.Len() > 0 {
 			// Write header directly into bs — no intermediate string
 			bs.WriteByte('>')
