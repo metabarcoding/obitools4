@@ -34,6 +34,26 @@ func MinMaxSlice[T constraints.Ordered](vec []T) (min, max T) {
 	return
 }
 
+func FilterMinSlice[T constraints.Ordered](vec []T, minimum T) []T {
+	result := make([]T, 0, len(vec))
+	for _, v := range vec {
+		if v >= minimum {
+			result = append(result, v)
+		}
+	}
+	return result
+}
+
+func FilterMaxSlice[T constraints.Ordered](vec []T, maximum T) []T {
+	result := make([]T, 0, len(vec))
+	for _, v := range vec {
+		if v <= maximum {
+			result = append(result, v)
+		}
+	}
+	return result
+}
+
 func MaxMap[K comparable, T constraints.Ordered](values map[K]T) (K, T, error) {
 	var maxKey K
 	var maxValue T
@@ -71,6 +91,46 @@ func MinMap[K comparable, T constraints.Ordered](values map[K]T) (K, T, error) {
 	}
 
 	return minKey, minValue, nil
+}
+
+func FilterMinMap[K comparable, T constraints.Ordered](values map[K]T, minimum T) map[K]T {
+	result := make(map[K]T)
+	for k, v := range values {
+		if v >= minimum {
+			result[k] = v
+		}
+	}
+	return result
+}
+
+func FilterMaxMap[K comparable, T constraints.Ordered](values map[K]T, maximum T) map[K]T {
+	result := make(map[K]T)
+	for k, v := range values {
+		if v <= maximum {
+			result[k] = v
+		}
+	}
+	return result
+}
+
+func SaturatingSubSlice[T Numeric](vec []T, sub T) []T {
+	result := make([]T, len(vec))
+	for i, v := range vec {
+		if v > sub {
+			result[i] = v - sub
+		}
+	}
+	return result
+}
+
+func SaturatingSubMap[K comparable, T Numeric](values map[K]T, sub T) map[K]T {
+	result := make(map[K]T)
+	for k, v := range values {
+		if v > sub {
+			result[k] = v - sub
+		}
+	}
+	return result
 }
 
 // Min returns the smallest element in a slice/array or map,
@@ -135,6 +195,116 @@ func Max(data interface{}) (interface{}, error) {
 	}
 }
 
+func FilterMin(data interface{}, minimum interface{}) (interface{}, error) {
+	v := reflect.ValueOf(data)
+	switch v.Kind() {
+	case reflect.Slice, reflect.Array:
+		if v.Len() == 0 {
+			return nil, errors.New("empty slice or array")
+		}
+		return filterMinFromIterable(v, minimum)
+	case reflect.Map:
+		if v.Len() == 0 {
+			return nil, errors.New("empty map")
+		}
+		return filterMinFromMap(v, minimum)
+	default:
+		if !isOrderedKind(v.Kind()) {
+			return nil, fmt.Errorf("unsupported type: %s", v.Kind())
+		}
+		return data, nil
+	}
+}
+
+func FilterMax(data interface{}, maximum interface{}) (interface{}, error) {
+	v := reflect.ValueOf(data)
+	switch v.Kind() {
+	case reflect.Slice, reflect.Array:
+		if v.Len() == 0 {
+			return nil, errors.New("empty slice or array")
+		}
+		return filterMaxFromIterable(v, maximum)
+	case reflect.Map:
+		if v.Len() == 0 {
+			return nil, errors.New("empty map")
+		}
+		return filterMaxFromMap(v, maximum)
+	default:
+		if !isOrderedKind(v.Kind()) {
+			return nil, fmt.Errorf("unsupported type: %s", v.Kind())
+		}
+		return data, nil
+	}
+}
+
+func SaturatingSub(data interface{}, sub interface{}) (interface{}, error) {
+	v := reflect.ValueOf(data)
+	switch v.Kind() {
+	case reflect.Slice, reflect.Array:
+		return saturatingSubFromIterable(v, sub)
+	case reflect.Map:
+		return saturatingSubFromMap(v, sub)
+	default:
+		if !isNumericKind(v.Kind()) {
+			return nil, fmt.Errorf("unsupported type: %s", v.Kind())
+		}
+		r, err := saturatingSubValues(v, reflect.ValueOf(sub))
+		if err != nil {
+			return nil, err
+		}
+		return r.Interface(), nil
+	}
+}
+
+func saturatingSubFromIterable(v reflect.Value, sub interface{}) (interface{}, error) {
+	subVal := reflect.ValueOf(sub)
+	result := reflect.MakeSlice(v.Type(), v.Len(), v.Len())
+	for i := 0; i < v.Len(); i++ {
+		r, err := saturatingSubValues(v.Index(i), subVal)
+		if err != nil {
+			return nil, err
+		}
+		result.Index(i).Set(r)
+	}
+	return result.Interface(), nil
+}
+
+func saturatingSubFromMap(v reflect.Value, sub interface{}) (interface{}, error) {
+	subVal := reflect.ValueOf(sub)
+	result := reflect.MakeMap(v.Type())
+	for _, key := range v.MapKeys() {
+		r, err := saturatingSubValues(v.MapIndex(key), subVal)
+		if err != nil {
+			return nil, err
+		}
+		if !r.IsZero() {
+			result.SetMapIndex(key, r)
+		}
+	}
+	return result.Interface(), nil
+}
+
+func saturatingSubValues(a, b reflect.Value) (reflect.Value, error) {
+	result := reflect.New(a.Type()).Elem()
+	switch a.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		if av, bv := a.Int(), b.Int(); av > bv {
+			result.SetInt(av - bv)
+		}
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		if av, bv := a.Uint(), b.Uint(); av > bv {
+			result.SetUint(av - bv)
+		}
+	case reflect.Float32, reflect.Float64:
+		if av, bv := a.Float(), b.Float(); av > bv {
+			result.SetFloat(av - bv)
+		}
+	default:
+		return reflect.Value{}, fmt.Errorf("unsupported type for saturating subtraction: %s", a.Kind())
+	}
+	return result, nil
+}
+
 // maxFromIterable scans a slice/array to find the maximum.
 func maxFromIterable(v reflect.Value) (interface{}, error) {
 	var best reflect.Value
@@ -163,6 +333,66 @@ func minFromIterable(v reflect.Value) (interface{}, error) {
 		}
 	}
 	return minVal.Interface(), nil
+}
+
+func filterMinFromIterable(v reflect.Value, minimum interface{}) (interface{}, error) {
+	minVal := reflect.ValueOf(minimum)
+	result := reflect.MakeSlice(v.Type(), 0, v.Len())
+	for i := 0; i < v.Len(); i++ {
+		elem := v.Index(i)
+		if !isOrderedKind(elem.Kind()) {
+			return nil, fmt.Errorf("unsupported element type: %s", elem.Kind())
+		}
+		if !less(elem, minVal) { // elem >= minimum
+			result = reflect.Append(result, elem)
+		}
+	}
+	return result.Interface(), nil
+}
+
+func filterMaxFromIterable(v reflect.Value, maximum interface{}) (interface{}, error) {
+	maxVal := reflect.ValueOf(maximum)
+	result := reflect.MakeSlice(v.Type(), 0, v.Len())
+	for i := 0; i < v.Len(); i++ {
+		elem := v.Index(i)
+		if !isOrderedKind(elem.Kind()) {
+			return nil, fmt.Errorf("unsupported element type: %s", elem.Kind())
+		}
+		if !greater(elem, maxVal) { // elem <= maximum
+			result = reflect.Append(result, elem)
+		}
+	}
+	return result.Interface(), nil
+}
+
+func filterMinFromMap(v reflect.Value, minimum interface{}) (interface{}, error) {
+	minVal := reflect.ValueOf(minimum)
+	result := reflect.MakeMap(v.Type())
+	for _, key := range v.MapKeys() {
+		elem := v.MapIndex(key)
+		if !isOrderedKind(elem.Kind()) {
+			return nil, fmt.Errorf("unsupported element type: %s", elem.Kind())
+		}
+		if !less(elem, minVal) { // elem >= minimum
+			result.SetMapIndex(key, elem)
+		}
+	}
+	return result.Interface(), nil
+}
+
+func filterMaxFromMap(v reflect.Value, maximum interface{}) (interface{}, error) {
+	maxVal := reflect.ValueOf(maximum)
+	result := reflect.MakeMap(v.Type())
+	for _, key := range v.MapKeys() {
+		elem := v.MapIndex(key)
+		if !isOrderedKind(elem.Kind()) {
+			return nil, fmt.Errorf("unsupported element type: %s", elem.Kind())
+		}
+		if !greater(elem, maxVal) { // elem <= maximum
+			result.SetMapIndex(key, elem)
+		}
+	}
+	return result.Interface(), nil
 }
 
 // maxFromMap scans map values to find the maximum.
@@ -197,6 +427,17 @@ func minFromMap(v reflect.Value) (interface{}, error) {
 		}
 	}
 	return minVal.Interface(), nil
+}
+
+func isNumericKind(k reflect.Kind) bool {
+	switch k {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
+		reflect.Float32, reflect.Float64:
+		return true
+	default:
+		return false
+	}
 }
 
 // isOrderedKind reports whether k supports comparison ordering.
