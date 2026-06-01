@@ -146,6 +146,65 @@ func __match__key__(text []byte) []int {
 	return []int{} // Not a key
 }
 
+func __match__array__(text []byte) []int {
+
+	state := 0
+	level := 0
+	start := 0
+	instring := byte(0)
+
+	for i, r := range text {
+		if state == 2 {
+			if r == ';' {
+				return []int{start, i + 1}
+			}
+			if r != ' ' && r != '\t' {
+				return []int{}
+			}
+		}
+
+		if state == 0 {
+			if r == '[' {
+				level++
+				state++
+				start = i
+				continue
+			}
+			if r != ' ' && r != '\t' {
+				return []int{}
+			}
+			continue
+		}
+
+		// state == 1: inside the array
+		if instring != 0 {
+			if r == instring {
+				instring = 0
+			}
+			continue
+		}
+
+		if r == '"' || r == '\'' {
+			instring = r
+			continue
+		}
+
+		if r == '[' || r == '{' {
+			level++
+			continue
+		}
+
+		if r == ']' || r == '}' {
+			level--
+			if level == 0 {
+				state++
+			}
+		}
+	}
+
+	return []int{}
+}
+
 func __match__general__(text []byte) []int {
 
 	for i, r := range text {
@@ -242,6 +301,21 @@ func ParseOBIFeatures(text string, annotations obiseq.Annotation) string {
 					stop = m[1] + 1
 				} else {
 
+					// array value
+					m = __match__array__(part)
+					if len(m) > 0 {
+						bvalue = bytes.TrimSpace(part[m[0]:(m[1] - 1)])
+						j := bytes.ReplaceAll(bvalue, []byte("'"), []byte(`"`))
+						j = __obi_header_map_int_key__.ReplaceAll(j, []byte(`$1"$2":`))
+						arr, err := _parse_json_array_interface(j)
+						if err != nil {
+							value = string(bvalue)
+						} else {
+							value = arr
+						}
+						stop = m[1] + 1
+					} else {
+
 					// Generic value
 
 					// m = __obi_header_value_general_pattern__.FindIndex(part)
@@ -264,6 +338,7 @@ func ParseOBIFeatures(text string, annotations obiseq.Annotation) string {
 						// no value
 						break
 					} // End of No value
+					} // End of not array
 				} // End of not dict
 			} // End of not string
 		} // End of not numeric
@@ -327,19 +402,19 @@ func WriteFastSeqOBIHeade(buffer *bytes.Buffer, sequence *obiseq.BioSequence) {
 					buffer.WriteString(fmt.Sprintf("%s=", key))
 					buffer.Write(tv)
 					buffer.WriteString("; ")
-				case map[string]int,
-					map[string]string,
-					map[string]interface{}:
-					tv, err := obiutils.JsonMarshal(t)
-					if err != nil {
-						log.Fatalf("Cannot convert %v value", value)
-					}
-					tv = bytes.ReplaceAll(tv, []byte(`"`), []byte("'"))
-					buffer.WriteString(fmt.Sprintf("%s=", key))
-					buffer.Write(tv)
-					buffer.WriteString("; ")
 				default:
-					buffer.WriteString(fmt.Sprintf("%s=%v; ", key, value))
+					if obiutils.IsAMap(value) || obiutils.IsASlice(value) || obiutils.IsAnArray(value) {
+						tv, err := obiutils.JsonMarshal(t)
+						if err != nil {
+							log.Fatalf("Cannot convert %v value", value)
+						}
+						tv = bytes.ReplaceAll(tv, []byte(`"`), []byte("'"))
+						buffer.WriteString(fmt.Sprintf("%s=", key))
+						buffer.Write(tv)
+						buffer.WriteString("; ")
+					} else {
+						buffer.WriteString(fmt.Sprintf("%s=%v; ", key, value))
+					}
 				}
 			}
 		}

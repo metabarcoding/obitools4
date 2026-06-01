@@ -141,6 +141,19 @@ var OBILang = gval.NewLanguage(
 	gval.Function("max", func(args ...interface{}) (interface{}, error) {
 		return obiutils.Max(args[0])
 	}),
+
+	gval.Function("filtermin", func(args ...interface{}) (interface{}, error) {
+		return obiutils.FilterMin(args[0], args[1])
+	}),
+
+	gval.Function("filtermax", func(args ...interface{}) (interface{}, error) {
+		return obiutils.FilterMax(args[0], args[1])
+	}),
+
+	gval.Function("saturatingsub", func(args ...interface{}) (interface{}, error) {
+		return obiutils.SaturatingSub(args[0], args[1])
+	}),
+
 	gval.Function("contains", func(args ...interface{}) (interface{}, error) {
 		if obiutils.IsAMap(args[0]) {
 			val := reflect.ValueOf(args[0]).MapIndex(reflect.ValueOf(args[1]))

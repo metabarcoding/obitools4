@@ -64,6 +64,9 @@ func FormatFastqBatch(batch obiiter.BioSequenceBatch,
 	first := true
 
 	for _, seq := range batch.Slice() {
+		if len(seq.Id()) == 0 {
+			log.Fatalf("Sequence identifier is empty")
+		}
 		if seq.Len() > 0 {
 			_formatFastq(&bs, seq, formater)
 
