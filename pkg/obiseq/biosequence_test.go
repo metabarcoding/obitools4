@@ -103,7 +103,7 @@ func TestNewBioSequence(t *testing.T) {
 // Return type: None.
 func TestNewBioSequenceWithQualities(t *testing.T) {
 	id := "123"
-	sequence := []byte("ATGC")
+	sequence := []byte("atgc")
 	definition := "DNA sequence"
 	qualities := []byte("1234")
 

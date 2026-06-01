@@ -276,6 +276,44 @@ func InterfaceToStringMap(i interface{}) (val map[string]string, err error) {
 	return
 }
 
+func InterfaceToMapOfIntSlice(i interface{}) (val map[string][]int, err error) {
+	err = nil
+	switch m := i.(type) {
+	case map[string][]int:
+		val = m
+	case map[string]interface{}:
+		val = make(map[string][]int, len(m))
+		for k, v := range m {
+			val[k], err = InterfaceToIntSlice(v)
+			if err != nil {
+				return
+			}
+		}
+	default:
+		err = &NotAMapInt{"value attribute cannot be casted to a map[string][]int"}
+	}
+	return
+}
+
+func InterfaceToMapOfStringSlice(i interface{}) (val map[string][]string, err error) {
+	err = nil
+	switch m := i.(type) {
+	case map[string][]string:
+		val = m
+	case map[string]interface{}:
+		val = make(map[string][]string, len(m))
+		for k, v := range m {
+			val[k], err = InterfaceToStringSlice(v)
+			if err != nil {
+				return
+			}
+		}
+	default:
+		err = &NotAMapInt{"value attribute cannot be casted to a map[string][]string"}
+	}
+	return
+}
+
 func InterfaceToStringSlice(i interface{}) (val []string, err error) {
 	err = nil
 

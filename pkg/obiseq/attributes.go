@@ -364,6 +364,24 @@ func (s *BioSequence) GetIntSlice(key string) ([]int, bool) {
 	return val, ok
 }
 
+func (s *BioSequence) GetMapOfIntSlice(key string) (map[string][]int, bool) {
+	v, ok := s.GetAttribute(key)
+	if !ok {
+		return nil, false
+	}
+	val, err := obiutils.InterfaceToMapOfIntSlice(v)
+	return val, err == nil
+}
+
+func (s *BioSequence) GetMapOfStringSlice(key string) (map[string][]string, bool) {
+	v, ok := s.GetAttribute(key)
+	if !ok {
+		return nil, false
+	}
+	val, err := obiutils.InterfaceToMapOfStringSlice(v)
+	return val, err == nil
+}
+
 // Count returns the value of the "count" attribute of the BioSequence.
 //
 // The count of a sequence is the number of times it has been observed in the dataset.
