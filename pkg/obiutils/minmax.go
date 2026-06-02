@@ -309,7 +309,7 @@ func saturatingSubValues(a, b reflect.Value) (reflect.Value, error) {
 func maxFromIterable(v reflect.Value) (interface{}, error) {
 	var best reflect.Value
 	for i := 0; i < v.Len(); i++ {
-		elem := v.Index(i)
+		elem := unwrapInterface(v.Index(i))
 		if !isOrderedKind(elem.Kind()) {
 			return nil, fmt.Errorf("unsupported element type: %s", elem.Kind())
 		}
@@ -324,7 +324,7 @@ func maxFromIterable(v reflect.Value) (interface{}, error) {
 func minFromIterable(v reflect.Value) (interface{}, error) {
 	var minVal reflect.Value
 	for i := 0; i < v.Len(); i++ {
-		elem := v.Index(i)
+		elem := unwrapInterface(v.Index(i))
 		if !isOrderedKind(elem.Kind()) {
 			return nil, fmt.Errorf("unsupported element type: %s", elem.Kind())
 		}
@@ -339,7 +339,7 @@ func filterMinFromIterable(v reflect.Value, minimum interface{}) (interface{}, e
 	minVal := reflect.ValueOf(minimum)
 	result := reflect.MakeSlice(v.Type(), 0, v.Len())
 	for i := 0; i < v.Len(); i++ {
-		elem := v.Index(i)
+		elem := unwrapInterface(v.Index(i))
 		if !isOrderedKind(elem.Kind()) {
 			return nil, fmt.Errorf("unsupported element type: %s", elem.Kind())
 		}
@@ -354,7 +354,7 @@ func filterMaxFromIterable(v reflect.Value, maximum interface{}) (interface{}, e
 	maxVal := reflect.ValueOf(maximum)
 	result := reflect.MakeSlice(v.Type(), 0, v.Len())
 	for i := 0; i < v.Len(); i++ {
-		elem := v.Index(i)
+		elem := unwrapInterface(v.Index(i))
 		if !isOrderedKind(elem.Kind()) {
 			return nil, fmt.Errorf("unsupported element type: %s", elem.Kind())
 		}
@@ -365,11 +365,121 @@ func filterMaxFromIterable(v reflect.Value, maximum interface{}) (interface{}, e
 	return result.Interface(), nil
 }
 
+// whichMaxFromIterable returns the index of the maximum element in a slice/array.
+func whichMaxFromIterable(v reflect.Value) (int, error) {
+	var best reflect.Value
+	bestIdx := 0
+	for i := 0; i < v.Len(); i++ {
+		elem := unwrapInterface(v.Index(i))
+		if !isOrderedKind(elem.Kind()) {
+			return 0, fmt.Errorf("unsupported element type: %s", elem.Kind())
+		}
+		if i == 0 || greater(elem, best) {
+			best = elem
+			bestIdx = i
+		}
+	}
+	return bestIdx, nil
+}
+
+// whichMinFromIterable returns the index of the minimum element in a slice/array.
+func whichMinFromIterable(v reflect.Value) (int, error) {
+	var minVal reflect.Value
+	minIdx := 0
+	for i := 0; i < v.Len(); i++ {
+		elem := unwrapInterface(v.Index(i))
+		if !isOrderedKind(elem.Kind()) {
+			return 0, fmt.Errorf("unsupported element type: %s", elem.Kind())
+		}
+		if i == 0 || less(elem, minVal) {
+			minVal = elem
+			minIdx = i
+		}
+	}
+	return minIdx, nil
+}
+
+// whichMaxFromMap returns the key associated with the maximum value in a map.
+func whichMaxFromMap(v reflect.Value) (interface{}, error) {
+	var best reflect.Value
+	var bestKey reflect.Value
+	first := true
+	for _, key := range v.MapKeys() {
+		elem := unwrapInterface(v.MapIndex(key))
+		if !isOrderedKind(elem.Kind()) {
+			return nil, fmt.Errorf("unsupported element type: %s", elem.Kind())
+		}
+		if first || greater(elem, best) {
+			best = elem
+			bestKey = key
+			first = false
+		}
+	}
+	return bestKey.Interface(), nil
+}
+
+// whichMinFromMap returns the key associated with the minimum value in a map.
+func whichMinFromMap(v reflect.Value) (interface{}, error) {
+	var minVal reflect.Value
+	var minKey reflect.Value
+	first := true
+	for _, key := range v.MapKeys() {
+		elem := unwrapInterface(v.MapIndex(key))
+		if !isOrderedKind(elem.Kind()) {
+			return nil, fmt.Errorf("unsupported element type: %s", elem.Kind())
+		}
+		if first || less(elem, minVal) {
+			minVal = elem
+			minKey = key
+			first = false
+		}
+	}
+	return minKey.Interface(), nil
+}
+
+// WhichMax returns the key (for a map) or index (for a slice/array) of the maximum value.
+func WhichMax(data interface{}) (interface{}, error) {
+	v := reflect.ValueOf(data)
+	switch v.Kind() {
+	case reflect.Slice, reflect.Array:
+		if v.Len() == 0 {
+			return nil, errors.New("empty slice or array")
+		}
+		return whichMaxFromIterable(v)
+	case reflect.Map:
+		if v.Len() == 0 {
+			return nil, errors.New("empty map")
+		}
+		return whichMaxFromMap(v)
+	default:
+		return nil, fmt.Errorf("unsupported type: %s", v.Kind())
+	}
+}
+
+// WhichMin returns the key (for a map) or index (for a slice/array) of the minimum value.
+func WhichMin(data interface{}) (interface{}, error) {
+	v := reflect.ValueOf(data)
+	switch v.Kind() {
+	case reflect.Slice, reflect.Array:
+		if v.Len() == 0 {
+			return nil, errors.New("empty slice or array")
+		}
+		return whichMinFromIterable(v)
+	case reflect.Map:
+		if v.Len() == 0 {
+			return nil, errors.New("empty map")
+		}
+		return whichMinFromMap(v)
+	default:
+		return nil, fmt.Errorf("unsupported type: %s", v.Kind())
+	}
+}
+
 func filterMinFromMap(v reflect.Value, minimum interface{}) (interface{}, error) {
 	minVal := reflect.ValueOf(minimum)
 	result := reflect.MakeMap(v.Type())
 	for _, key := range v.MapKeys() {
-		elem := v.MapIndex(key)
+		elem := unwrapInterface(v.MapIndex(key))
 		if !isOrderedKind(elem.Kind()) {
 			return nil, fmt.Errorf("unsupported element type: %s", elem.Kind())
 		}
@@ -384,7 +494,7 @@ func filterMaxFromMap(v reflect.Value, maximum interface{}) (interface{}, error)
 	maxVal := reflect.ValueOf(maximum)
 	result := reflect.MakeMap(v.Type())
 	for _, key := range v.MapKeys() {
-		elem := v.MapIndex(key)
+		elem := unwrapInterface(v.MapIndex(key))
 		if !isOrderedKind(elem.Kind()) {
 			return nil, fmt.Errorf("unsupported element type: %s", elem.Kind())
 		}
@@ -400,7 +510,7 @@ func maxFromMap(v reflect.Value) (interface{}, error) {
 	var best reflect.Value
 	first := true
 	for _, key := range v.MapKeys() {
-		elem := v.MapIndex(key)
+		elem := unwrapInterface(v.MapIndex(key))
 		if !isOrderedKind(elem.Kind()) {
 			return nil, fmt.Errorf("unsupported element type: %s", elem.Kind())
 		}
@@ -417,7 +527,7 @@ func minFromMap(v reflect.Value) (interface{}, error) {
 	var minVal reflect.Value
 	first := true
 	for _, key := range v.MapKeys() {
-		elem := v.MapIndex(key)
+		elem := unwrapInterface(v.MapIndex(key))
 		if !isOrderedKind(elem.Kind()) {
 			return nil, fmt.Errorf("unsupported element type: %s", elem.Kind())
 		}
@@ -438,6 +548,16 @@ func isNumericKind(k reflect.Kind) bool {
 	default:
 		return false
 	}
+}
+
+// unwrapInterface returns v.Elem() when v holds an interface value, otherwise v unchanged.
+// This is necessary when iterating map[string]interface{} or []interface{} via reflection:
+// the element Kind is reflect.Interface, not the underlying concrete type.
+func unwrapInterface(v reflect.Value) reflect.Value {
+	if v.Kind() == reflect.Interface {
+		return v.Elem()
+	}
+	return v
 }
 
 // isOrderedKind reports whether k supports comparison ordering.

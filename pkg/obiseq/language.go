@@ -141,6 +141,20 @@ var OBILang = gval.NewLanguage(
 	gval.Function("max", func(args ...interface{}) (interface{}, error) {
 		return obiutils.Max(args[0])
 	}),
+	gval.Function("which_max", func(args ...interface{}) (interface{}, error) {
+		result, err := obiutils.WhichMax(args[0])
+		if idx, ok := result.(int); ok {
+			return float64(idx), nil
+		}
+		return result, err
+	}),
+	gval.Function("which_min", func(args ...interface{}) (interface{}, error) {
+		result, err := obiutils.WhichMin(args[0])
+		if idx, ok := result.(int); ok {
+			return float64(idx), nil
+		}
+		return result, err
+	}),
 
 	gval.Function("filtermin", func(args ...interface{}) (interface{}, error) {
 		return obiutils.FilterMin(args[0], args[1])
