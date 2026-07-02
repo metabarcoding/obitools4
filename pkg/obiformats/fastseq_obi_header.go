@@ -17,7 +17,7 @@ import (
 )
 
 var __obi_header_value_string_pattern__ = regexp.MustCompile(`^'\s*([^']*'|"[^"]*")\s*;`)
-var __obi_header_value_numeric_pattern__ = regexp.MustCompile(`^\s*([+-]?\.\d+|[+-]?\d+(\.\d*)?([eE][+-]?\d+)?)\s*;`)
+var __obi_header_value_numeric_pattern__ = regexp.MustCompile(`^\s*[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?\s*;`)
 var __obi_header_map_int_key__ = regexp.MustCompile("([{,])([0-9]+):")
 
 func __match__dict__(text []byte) []int {
@@ -316,28 +316,28 @@ func ParseOBIFeatures(text string, annotations obiseq.Annotation) string {
 						stop = m[1] + 1
 					} else {
 
-					// Generic value
+						// Generic value
 
-					// m = __obi_header_value_general_pattern__.FindIndex(part)
-					m = __match__general__(part)
-					if len(m) > 0 {
-						bvalue = bytes.TrimSpace(part[m[0]:(m[1] - 1)])
+						// m = __obi_header_value_general_pattern__.FindIndex(part)
+						m = __match__general__(part)
+						if len(m) > 0 {
+							bvalue = bytes.TrimSpace(part[m[0]:(m[1] - 1)])
 
-						if __is_false__(bvalue) {
-							value = false
-						} else {
-							if __is_true__(bvalue) {
-								value = true
+							if __is_false__(bvalue) {
+								value = false
 							} else {
-								value = string(bvalue)
+								if __is_true__(bvalue) {
+									value = true
+								} else {
+									value = string(bvalue)
+								}
 							}
-						}
 
-						stop = m[1] + 1
-					} else {
-						// no value
-						break
-					} // End of No value
+							stop = m[1] + 1
+						} else {
+							// no value
+							break
+						} // End of No value
 					} // End of not array
 				} // End of not dict
 			} // End of not string
@@ -347,6 +347,8 @@ func ParseOBIFeatures(text string, annotations obiseq.Annotation) string {
 		case float64:
 			if vt == math.Floor(vt) {
 				annotations[key] = int(vt)
+			} else {
+				annotations[key] = vt
 			}
 		default:
 			annotations[key] = value
