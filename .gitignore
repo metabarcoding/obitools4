@@ -21,6 +21,8 @@ xx
 
 .rhistory
 /.vscode
+
+/benchmarck
 /build
 /bugs
 autodoc
