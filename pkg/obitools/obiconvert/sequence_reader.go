@@ -73,7 +73,9 @@ func ExpandListOfFiles(check_ext bool, filenames ...string) ([]string, error) {
 						strings.HasSuffix(path, "dat") ||
 						strings.HasSuffix(path, "dat.gz") ||
 						strings.HasSuffix(path, "ecopcr") ||
-						strings.HasSuffix(path, "ecopcr.gz") {
+						strings.HasSuffix(path, "ecopcr.gz") ||
+						strings.HasSuffix(path, "json") ||
+						strings.HasSuffix(path, "json.gz") {
 						log.Debugf("Appending %s file\n", path)
 						list_of_files.Add(path)
 					}
@@ -142,6 +144,8 @@ func CLIReadBioSequences(filenames ...string) (obiiter.IBioSequence, error) {
 			iterator, err = obiformats.ReadFastq(os.Stdin, opts...)
 		case "csv":
 			iterator, err = obiformats.ReadCSV(os.Stdin, opts...)
+		case "json":
+			iterator, err = obiformats.ReadJSON(os.Stdin, opts...)
 		default:
 			iterator, err = obiformats.ReadSequencesFromStdin(opts...)
 		}
@@ -163,6 +167,8 @@ func CLIReadBioSequences(filenames ...string) (obiiter.IBioSequence, error) {
 			reader = obiformats.ReadFastaFromFile
 		case "csv":
 			reader = obiformats.ReadCSVFromFile
+		case "json":
+			reader = obiformats.ReadJSONFromFile
 		case "ecopcr":
 			reader = obiformats.ReadEcoPCRFromFile
 		case "embl":

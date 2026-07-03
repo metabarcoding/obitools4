@@ -199,8 +199,111 @@ func _parse_json_array_interface(str []byte) ([]interface{}, error) {
 	return values, nil
 }
 
-func _parse_json_header_(header string, sequence *obiseq.BioSequence) string {
+// _parse_json_annotation_field parses a single key/value pair coming from a
+// JSON object (either a FASTA/FASTQ inline JSON header, or the "annotations"
+// field of a JSON sequence record) and applies it to the sequence, special
+// casing the well-known OBITools attributes (id, definition, count, taxid,
+// obiclean_*, merged_*).
+func _parse_json_annotation_field(key []byte, value []byte, dataType jsonparser.ValueType, sequence *obiseq.BioSequence) error {
 	annotations := sequence.Annotations()
+	var err error
+
+	skey := obiutils.UnsafeString(key)
+
+	switch {
+	case skey == "id":
+		sequence.SetId(string(value))
+	case skey == "definition":
+		sequence.SetDefinition(string(value))
+
+	case skey == "count":
+		if dataType != jsonparser.Number {
+			log.Fatalf("%s: Count attribut must be numeric: %s", sequence.Id(), string(value))
+		}
+		count, err := jsonparser.ParseInt(value)
+		if err != nil {
+			log.Fatalf("%s: Cannot parse count %s", sequence.Id(), string(value))
+		}
+		sequence.SetCount(int(count))
+
+	case skey == "obiclean_weight":
+		weight, err := _parse_json_map_int(value)
+		if err != nil {
+			log.Fatalf("%s: Cannot parse obiclean weight %s", sequence.Id(), string(value))
+		}
+		annotations[skey] = weight
+
+	case skey == "obiclean_status":
+		status, err := _parse_json_map_string(value)
+		if err != nil {
+			log.Fatalf("%s: Cannot parse obiclean status %s", sequence.Id(), string(value))
+		}
+		annotations[skey] = status
+
+	case strings.HasPrefix(skey, "merged_"):
+		if dataType == jsonparser.Object {
+			data, err := _parse_json_map_int(value)
+			if err != nil {
+				log.Fatalf("%s: Cannot parse merged slot %s: %v", sequence.Id(), skey, err)
+			} else {
+				annotations[skey] = obiseq.MapAsStatsOnValues(data)
+			}
+		} else {
+			log.Fatalf("%s: Cannot parse merged slot %s", sequence.Id(), skey)
+		}
+
+	case skey == "taxid":
+		if dataType == jsonparser.Number || dataType == jsonparser.String {
+			taxid := string(value)
+			sequence.SetTaxid(taxid)
+		} else {
+			log.Fatalf("%s: Cannot parse taxid %s", sequence.Id(), string(value))
+		}
+
+	case strings.HasSuffix(skey, "_taxid"):
+		if dataType == jsonparser.Number || dataType == jsonparser.String {
+			rank := skey[:len(skey)-len("_taxid")]
+
+			taxid := string(value)
+			sequence.SetTaxid(taxid, rank)
+		} else {
+			log.Fatalf("%s: Cannot parse taxid %s", sequence.Id(), string(value))
+		}
+
+	default:
+		skey = strings.Clone(skey)
+		switch dataType {
+		case jsonparser.String:
+			annotations[skey] = string(value)
+		case jsonparser.Number:
+			// Try to parse the number as an int at first then as float if that fails.
+			annotations[skey], err = jsonparser.ParseInt(value)
+			if err != nil {
+				annotations[skey], err = strconv.ParseFloat(obiutils.UnsafeString(value), 64)
+			}
+		case jsonparser.Array:
+			annotations[skey], err = _parse_json_array_interface(value)
+		case jsonparser.Object:
+			annotations[skey], err = _parse_json_map_interface(value)
+		case jsonparser.Boolean:
+			annotations[skey], err = jsonparser.ParseBoolean(value)
+		case jsonparser.Null:
+			annotations[skey] = nil
+		default:
+			log.Fatalf("Unknown data type %v", dataType)
+		}
+	}
+
+	if err != nil {
+		annotations[skey] = "NaN"
+		log.Fatalf("%s: Cannot parse value %s assicated to key %s into a %s value",
+			sequence.Id(), string(value), skey, dataType.String())
+	}
+
+	return err
+}
+
+func _parse_json_header_(header string, sequence *obiseq.BioSequence) string {
 	start := -1
 	stop := -1
 	level := 0
@@ -240,101 +343,7 @@ func _parse_json_header_(header string, sequence *obiseq.BioSequence) string {
 
 	jsonparser.ObjectEach(obiutils.UnsafeBytes(header[start:stop]),
 		func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
-			var err error
-
-			skey := obiutils.UnsafeString(key)
-
-			switch {
-			case skey == "id":
-				sequence.SetId(string(value))
-			case skey == "definition":
-				sequence.SetDefinition(string(value))
-
-			case skey == "count":
-				if dataType != jsonparser.Number {
-					log.Fatalf("%s: Count attribut must be numeric: %s", sequence.Id(), string(value))
-				}
-				count, err := jsonparser.ParseInt(value)
-				if err != nil {
-					log.Fatalf("%s: Cannot parse count %s", sequence.Id(), string(value))
-				}
-				sequence.SetCount(int(count))
-
-			case skey == "obiclean_weight":
-				weight, err := _parse_json_map_int(value)
-				if err != nil {
-					log.Fatalf("%s: Cannot parse obiclean weight %s", sequence.Id(), string(value))
-				}
-				annotations[skey] = weight
-
-			case skey == "obiclean_status":
-				status, err := _parse_json_map_string(value)
-				if err != nil {
-					log.Fatalf("%s: Cannot parse obiclean status %s", sequence.Id(), string(value))
-				}
-				annotations[skey] = status
-
-			case strings.HasPrefix(skey, "merged_"):
-				if dataType == jsonparser.Object {
-					data, err := _parse_json_map_int(value)
-					if err != nil {
-						log.Fatalf("%s: Cannot parse merged slot %s: %v", sequence.Id(), skey, err)
-					} else {
-						annotations[skey] = obiseq.MapAsStatsOnValues(data)
-					}
-				} else {
-					log.Fatalf("%s: Cannot parse merged slot %s", sequence.Id(), skey)
-				}
-
-			case skey == "taxid":
-				if dataType == jsonparser.Number || dataType == jsonparser.String {
-					taxid := string(value)
-					sequence.SetTaxid(taxid)
-				} else {
-					log.Fatalf("%s: Cannot parse taxid %s", sequence.Id(), string(value))
-				}
-
-			case strings.HasSuffix(skey, "_taxid"):
-				if dataType == jsonparser.Number || dataType == jsonparser.String {
-					rank := skey[:len(skey)-len("_taxid")]
-
-					taxid := string(value)
-					sequence.SetTaxid(taxid, rank)
-				} else {
-					log.Fatalf("%s: Cannot parse taxid %s", sequence.Id(), string(value))
-				}
-
-			default:
-				skey = strings.Clone(skey)
-				switch dataType {
-				case jsonparser.String:
-					annotations[skey] = string(value)
-				case jsonparser.Number:
-					// Try to parse the number as an int at first then as float if that fails.
-					annotations[skey], err = jsonparser.ParseInt(value)
-					if err != nil {
-						annotations[skey], err = strconv.ParseFloat(obiutils.UnsafeString(value), 64)
-					}
-				case jsonparser.Array:
-					annotations[skey], err = _parse_json_array_interface(value)
-				case jsonparser.Object:
-					annotations[skey], err = _parse_json_map_interface(value)
-				case jsonparser.Boolean:
-					annotations[skey], err = jsonparser.ParseBoolean(value)
-				case jsonparser.Null:
-					annotations[skey] = nil
-				default:
-					log.Fatalf("Unknown data type %v", dataType)
-				}
-			}
-
-			if err != nil {
-				annotations[skey] = "NaN"
-				log.Fatalf("%s: Cannot parse value %s assicated to key %s into a %s value",
-					sequence.Id(), string(value), skey, dataType.String())
-			}
-
-			return err
+			return _parse_json_annotation_field(key, value, dataType, sequence)
 		},
 	)
 
