@@ -18,6 +18,7 @@ var _UnidentifiedFile = ""
 var _AllowedMismatch = 2
 var _AllowsIndel = false
 var _ConservedError = false
+var _optionsParser *getoptions.GetOpt
 
 // PCROptionSet defines every options related to a simulated PCR.
 //
@@ -29,6 +30,8 @@ var _ConservedError = false
 // - option : is a pointer to a getoptions.GetOpt instance normaly
 // produced by the
 func MultiplexOptionSet(options *getoptions.GetOpt) {
+	_optionsParser = options
+
 	options.StringVar(&_NGSFilterFile, "tag-list", _NGSFilterFile,
 		options.Alias("s"),
 		options.Description("File name of the NGSFilter file describing PCRs."))
@@ -60,6 +63,15 @@ func OptionSet(options *getoptions.GetOpt) {
 
 func CLIAllowedMismatch() int {
 	return _AllowedMismatch
+}
+
+// CLIAllowedMismatchIsSet returns true if the user explicitly
+// specified --allowed-mismatches on the command line, as opposed
+// to relying on its default value. This allows per-primer mismatch
+// settings from the NGSFilter config file to take precedence unless
+// the user explicitly overrides them from the CLI.
+func CLIAllowedMismatchIsSet() bool {
+	return _optionsParser != nil && _optionsParser.Called("allowed-mismatches")
 }
 
 func CLIAllowsIndel() bool {

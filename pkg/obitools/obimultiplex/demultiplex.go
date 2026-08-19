@@ -15,13 +15,20 @@ func IExtractBarcode(iterator obiiter.IBioSequence) (obiiter.IBioSequence, error
 	opts := make([]obingslibrary.WithOption, 0, 10)
 
 	opts = append(opts,
-		obingslibrary.OptionAllowedMismatches(CLIAllowedMismatch()),
 		obingslibrary.OptionAllowedIndel(CLIAllowsIndel()),
 		obingslibrary.OptionUnidentified(CLIUnidentifiedFileName()),
 		obingslibrary.OptionDiscardErrors(!CLIConservedErrors()),
 		obingslibrary.OptionParallelWorkers(obidefault.ParallelWorkers()),
 		obingslibrary.OptionBatchSize(obidefault.BatchSize()),
 	)
+
+	// Only propagate the CLI --allowed-mismatches value if the user
+	// explicitly set it: otherwise the per-primer values defined in
+	// the NGSFilter config file (@primer_mismatches, @forward_mismatches,
+	// @reverse_mismatches) must be preserved.
+	if CLIAllowedMismatchIsSet() {
+		opts = append(opts, obingslibrary.OptionAllowedMismatches(CLIAllowedMismatch()))
+	}
 
 	ngsfilter, err := CLINGSFIlter()
 	if err != nil {

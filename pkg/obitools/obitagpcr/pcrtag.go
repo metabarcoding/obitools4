@@ -55,7 +55,7 @@ func IPCRTagPESequencesBatch(iterator obiiter.IBioSequence,
 		ngsfilter.SetAllowsIndels(true)
 	}
 
-	if obimultiplex.CLIAllowedMismatch() > 0 {
+	if obimultiplex.CLIAllowedMismatchIsSet() {
 		ngsfilter.SetAllowedMismatches(obimultiplex.CLIAllowedMismatch())
 	}
 

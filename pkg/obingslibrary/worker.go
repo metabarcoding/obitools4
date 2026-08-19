@@ -6,13 +6,14 @@ import (
 )
 
 type _Options struct {
-	discardErrors   bool
-	unidentified    string
-	allowedMismatch int
-	allowsIndel     bool
-	withProgressBar bool
-	parallelWorkers int
-	batchSize       int
+	discardErrors      bool
+	unidentified       string
+	allowedMismatch    int
+	allowedMismatchSet bool
+	allowsIndel        bool
+	withProgressBar    bool
+	parallelWorkers    int
+	batchSize          int
 }
 
 // Options stores a set of option usable by the
@@ -52,6 +53,7 @@ func OptionWithProgressBar(yes bool) WithOption {
 func OptionAllowedMismatches(count int) WithOption {
 	f := WithOption(func(opt Options) {
 		opt.pointer.allowedMismatch = count
+		opt.pointer.allowedMismatchSet = true
 	})
 
 	return f
@@ -95,6 +97,12 @@ func (options Options) Unidentified() string {
 
 func (options Options) AllowedMismatches() int {
 	return options.pointer.allowedMismatch
+}
+
+// AllowedMismatchesIsSet returns true if OptionAllowedMismatches
+// was explicitly applied to these options.
+func (options Options) AllowedMismatchesIsSet() bool {
+	return options.pointer.allowedMismatchSet
 }
 
 func (options Options) AllowsIndels() bool {
