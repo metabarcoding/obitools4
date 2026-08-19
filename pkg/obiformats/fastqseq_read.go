@@ -131,7 +131,7 @@ func _storeSequenceQuality(bytes *bytes.Buffer, out *obiseq.BioSequence, quality
 	out.SetQualities(q)
 }
 
-func FastqChunkParser(quality_shift byte, with_quality bool, UtoT bool) func(string, io.Reader) (obiseq.BioSequenceSlice, error) {
+func FastqChunkParser(quality_shift byte, with_quality bool, UtoT bool, fileName string) func(string, io.Reader) (obiseq.BioSequenceSlice, error) {
 	parser := func(source string, input io.Reader) (obiseq.BioSequenceSlice, error) {
 
 		var identifier string
@@ -160,12 +160,12 @@ func FastqChunkParser(quality_shift byte, with_quality bool, UtoT bool) func(str
 					// Beginning of sequence
 					state = 1
 				} else {
-					log.Fatalf("%s : sequence entry is not starting with @", source)
+					log.Fatalf("file %s: sequence entry is not starting with @", fileName)
 				}
 			case 1: // Beginning of identifier (Mandatory)
 				if is_sep {
 					// No identifier -> ERROR
-					log.Fatalf("%s : sequence identifier is empty", source)
+					log.Fatalf("file %s: sequence identifier is empty", fileName)
 				} else {
 					// Beginning of identifier
 					state = 2
@@ -221,7 +221,7 @@ func FastqChunkParser(quality_shift byte, with_quality bool, UtoT bool) func(str
 					// End of sequence
 					rawseq := seqBytes.Bytes()
 					if len(rawseq) == 0 {
-						log.Fatalf("@%s[%s] : sequence is empty", identifier, source)
+						log.Fatalf("file %s: record @%s has an empty sequence line", fileName, identifier)
 					}
 					s := obiseq.NewBioSequence(identifier, rawseq, definition)
 					s.SetSource(source)
@@ -241,8 +241,8 @@ func FastqChunkParser(quality_shift byte, with_quality bool, UtoT bool) func(str
 						context = append(
 							append([]byte{previous}, C),
 							context...)
-						log.Fatalf("%s [%s]: sequence contains invalid character %c (%s)",
-							source, identifier, C, string(context))
+						log.Fatalf("file %s: record @%s contains invalid character %c (%s)",
+							fileName, identifier, C, string(context))
 					}
 				}
 			case 7:
@@ -251,7 +251,7 @@ func FastqChunkParser(quality_shift byte, with_quality bool, UtoT bool) func(str
 				} else if C == '+' {
 					state = 8
 				} else {
-					log.Fatalf("@%s[%s] : sequence data not followed by a line starting with + but a %c", identifier, source, C)
+					log.Fatalf("file %s: record @%s: sequence data not followed by a line starting with + but a %c", fileName, identifier, C)
 				}
 			case 8:
 				// State consuming the + internal header line
@@ -282,7 +282,7 @@ func FastqChunkParser(quality_shift byte, with_quality bool, UtoT bool) func(str
 				} else if C == '@' {
 					state = 1
 				} else {
-					log.Fatalf("%s[%s] : sequence record not followed by a line starting with @", identifier, source)
+					log.Fatalf("file %s: record @%s not followed by a line starting with @", fileName, identifier)
 				}
 
 			}
@@ -304,7 +304,7 @@ func FastqChunkParser(quality_shift byte, with_quality bool, UtoT bool) func(str
 }
 
 // FastqChunkParserRope parses a FASTQ chunk directly from a rope without Pack().
-func FastqChunkParserRope(source string, rope *PieceOfChunk, quality_shift byte, with_quality, UtoT bool) (obiseq.BioSequenceSlice, error) {
+func FastqChunkParserRope(source string, rope *PieceOfChunk, quality_shift byte, with_quality, UtoT bool, fileName string) (obiseq.BioSequenceSlice, error) {
 	scanner := newRopeScanner(rope)
 	sequences := obiseq.MakeBioSequenceSlice(100)[:0]
 
@@ -334,7 +334,7 @@ func FastqChunkParserRope(source string, rope *PieceOfChunk, quality_shift byte,
 		// Line 2: sequence
 		sline := scanner.ReadLine()
 		if sline == nil {
-			log.Fatalf("@%s[%s]: unexpected EOF after header", id, source)
+			log.Fatalf("file %s: record @%s is truncated (header line with no sequence line following) — the FASTQ file appears incomplete", fileName, id)
 		}
 		seqDest := make([]byte, len(sline))
 		w := 0
@@ -350,7 +350,7 @@ func FastqChunkParserRope(source string, rope *PieceOfChunk, quality_shift byte,
 		}
 		seqDest = seqDest[:w]
 		if len(seqDest) == 0 {
-			log.Fatalf("@%s[%s]: sequence is empty", id, source)
+			log.Fatalf("file %s: record @%s has an empty sequence line", fileName, id)
 		}
 
 		// Line 3: + (skip)
@@ -382,16 +382,17 @@ func _ParseFastqFile(
 	out obiiter.IBioSequence,
 	quality_shift byte,
 	with_quality, UtoT bool,
+	fileName string,
 ) {
 
-	parser := FastqChunkParser(quality_shift, with_quality, UtoT)
+	parser := FastqChunkParser(quality_shift, with_quality, UtoT, fileName)
 
 	for chunks := range input {
 		var sequences obiseq.BioSequenceSlice
 		var err error
 
 		if chunks.Rope != nil {
-			sequences, err = FastqChunkParserRope(chunks.Source, chunks.Rope, quality_shift, with_quality, UtoT)
+			sequences, err = FastqChunkParserRope(chunks.Source, chunks.Rope, quality_shift, with_quality, UtoT, fileName)
 		} else {
 			sequences, err = parser(chunks.Source, chunks.Raw)
 		}
@@ -423,6 +424,8 @@ func ReadFastq(reader io.Reader, options ...WithOption) (obiiter.IBioSequence, e
 		false,
 	)
 
+	fileName := opt.FileName()
+
 	for i := 0; i < nworker; i++ {
 		out.Add(1)
 		go _ParseFastqFile(
@@ -431,6 +434,7 @@ func ReadFastq(reader io.Reader, options ...WithOption) (obiiter.IBioSequence, e
 			obidefault.ReadQualitiesShift(),
 			opt.ReadQualities(),
 			opt.UtoT(),
+			fileName,
 		)
 	}
 
@@ -456,7 +460,9 @@ func ReadFastq(reader io.Reader, options ...WithOption) (obiiter.IBioSequence, e
 }
 
 func ReadFastqFromFile(filename string, options ...WithOption) (obiiter.IBioSequence, error) {
-	options = append(options, OptionsSource(obiutils.RemoveAllExt((path.Base(filename)))))
+	options = append(options,
+		OptionsSource(obiutils.RemoveAllExt((path.Base(filename)))),
+		OptionsFileName(filename))
 
 	file, err := obiutils.Ropen(filename)
 

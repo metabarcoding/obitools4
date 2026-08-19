@@ -35,6 +35,7 @@ type __options__ struct {
 	csv_auto              bool
 	paired_filename       string
 	source                string
+	filename              string
 	with_feature_table    bool
 	with_pattern          bool
 	with_parent           bool
@@ -214,6 +215,16 @@ func (opt Options) HasSource() bool {
 
 func (opt Options) Source() string {
 	return opt.pointer.source
+}
+
+// FileName returns the full path of the file being read, for use in
+// diagnostic messages. It falls back to Source() when no explicit
+// file name has been set (e.g. reading from stdin or a raw reader).
+func (opt Options) FileName() string {
+	if opt.pointer.filename == "" {
+		return opt.pointer.source
+	}
+	return opt.pointer.filename
 }
 
 func (opt Options) WithFeatureTable() bool {
@@ -416,6 +427,14 @@ func OptionsFullFileBatch(full bool) WithOption {
 func OptionsSource(source string) WithOption {
 	f := WithOption(func(opt Options) {
 		opt.pointer.source = source
+	})
+
+	return f
+}
+
+func OptionsFileName(filename string) WithOption {
+	f := WithOption(func(opt Options) {
+		opt.pointer.filename = filename
 	})
 
 	return f

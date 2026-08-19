@@ -374,6 +374,17 @@ func (pattern ApatPattern) BestMatch(sequence ApatSequence, begin, length int) (
 	cpattern := (*[1 << 30]byte)(unsafe.Pointer(pattern.pointer.pointer.cpat))
 	frg := sequence.pointer.reference.Sequence()[start:end]
 
+	if len(frg) <= int(pattern.pointer.pointer.patlen) {
+		// The sequence is too short (e.g. the match is near one of its
+		// ends) to extract a fragment longer than the pattern, which
+		// obialign.LocatePattern requires. Keep the original match
+		// instead of refining it.
+		start = best[0]
+		end = best[1]
+		log.Debugln("Fragment too short for indel relocation, keeping original match", start, end, nerr)
+		return
+	}
+
 	log.Debugln(
 		string(frg),
 		string((*cpattern)[0:int(pattern.pointer.pointer.patlen)]),
@@ -480,18 +491,25 @@ func (pattern ApatPattern) AllMatches(sequence ApatSequence, begin, length int) 
 			cpattern := (*[1 << 30]byte)(unsafe.Pointer(pattern.pointer.pointer.cpat))
 			frg := sequence.pointer.reference.Sequence()[start:end]
 
-			pb, pe, score := obialign.LocatePattern(
-				sequence.pointer.reference.Id(),
-				(*cpattern)[0:int(pattern.pointer.pointer.patlen)],
-				frg)
+			// obialign.LocatePattern requires the fragment to be strictly
+			// longer than the pattern. When the match sits near one of the
+			// sequence ends, the fragment can be clamped to the sequence
+			// boundaries and end up too short; in that case keep the
+			// original (unrefined) match instead of crashing.
+			if len(frg) > int(pattern.pointer.pointer.patlen) {
+				pb, pe, score := obialign.LocatePattern(
+					sequence.pointer.reference.Id(),
+					(*cpattern)[0:int(pattern.pointer.pointer.patlen)],
+					frg)
 
-			// olderr := m[2]
-			m[2] = score
-			m[0] = start + pb
-			m[1] = start + pe
+				// olderr := m[2]
+				m[2] = score
+				m[0] = start + pb
+				m[1] = start + pe
 
-			// obilog.Warnf("seq[%d@%d:%d] %d: %s %d - %s:%s:%s", i, m[0], m[1], olderr, sequence.pointer.reference.Id(), score,
-			// 	frg, (*cpattern)[0:int(pattern.pointer.pointer.patlen)], sequence.pointer.reference.Sequence()[m[0]:m[1]])
+				// obilog.Warnf("seq[%d@%d:%d] %d: %s %d - %s:%s:%s", i, m[0], m[1], olderr, sequence.pointer.reference.Id(), score,
+				// 	frg, (*cpattern)[0:int(pattern.pointer.pointer.patlen)], sequence.pointer.reference.Sequence()[m[0]:m[1]])
+			}
 		}
 
 		if int(pattern.pointer.pointer.maxerr) >= m[2] {
