@@ -134,7 +134,7 @@ func TestUint128_QuoRem(t *testing.T) {
 	u := Uint128{w1: 3, w0: 8}
 	v := Uint128{w1: 0, w0: 4}
 	q, r := u.QuoRem(v)
-	assert.Equal(t, Uint128{w1: 0, w0: 2}, q)
+	assert.Equal(t, Uint128{w1: 0, w0: 13835058055282163714}, q)
 	assert.Equal(t, Uint128{w1: 0, w0: 0}, r)
 }
 
@@ -150,7 +150,7 @@ func TestUint128_Div(t *testing.T) {
 	u := Uint128{w1: 3, w0: 8}
 	v := Uint128{w1: 0, w0: 4}
 	q := u.Div(v)
-	assert.Equal(t, Uint128{w1: 0, w0: 2}, q)
+	assert.Equal(t, Uint128{w1: 0, w0: 13835058055282163714}, q)
 }
 
 func TestUint128_Div64(t *testing.T) {
@@ -183,7 +183,7 @@ func TestUint128_Cmp(t *testing.T) {
 func TestUint128_Cmp64(t *testing.T) {
 	u := Uint128{w1: 1, w0: 2}
 	v := uint64(3)
-	assert.Equal(t, -1, u.Cmp64(v))
+	assert.Equal(t, 1, u.Cmp64(v))
 }
 
 func TestUint128_Equals(t *testing.T) {

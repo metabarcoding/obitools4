@@ -777,7 +777,7 @@ func (library *NGSLibrary) ExtractMultiBarcodeSliceWorker(options ...WithOption)
 		library.SetAllowsIndels(true)
 	}
 
-	if opt.AllowedMismatches() > 0 {
+	if opt.AllowedMismatchesIsSet() {
 		library.SetAllowedMismatches(opt.AllowedMismatches())
 	}
 

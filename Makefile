@@ -156,8 +156,8 @@ bump-version:
 
 jjnew:
 	@echo "$(YELLOW)→ Creating a new commit...$(NC)"
-	@echo "$(BLUE)→ Documenting current commit...$(NC)"
-	@jj auto-describe
+	@echo "$(BLUE)→ Documenting undocumented commits...$(NC)"
+	@jj auto-doc
 	@echo "$(BLUE)→ Done.$(NC)"
 	@jj new
 	@echo "$(GREEN)✓ New commit created$(NC)"
@@ -171,8 +171,8 @@ jjpush:
 	@echo "$(GREEN)✓ Release complete$(NC)"
 
 jjpush-describe:
-	@echo "$(BLUE)→ Documenting current commit...$(NC)"
-	@jj auto-describe
+	@echo "$(BLUE)→ Documenting undocumented commits...$(NC)"
+	@jj auto-doc
 
 jjpush-bump:
 	@echo "$(BLUE)→ Creating new commit for version bump...$(NC)"

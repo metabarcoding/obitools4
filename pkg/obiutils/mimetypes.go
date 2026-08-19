@@ -102,6 +102,11 @@ func RegisterOBIMimeType() {
 			return ok
 		}
 
+		jsonDetector := func(raw []byte, limit uint32) bool {
+			raw = bytes.TrimLeft(raw, " \t\r\n")
+			return len(raw) > 0 && (raw[0] == '[' || raw[0] == '{')
+		}
+
 		mimetype.Lookup("text/plain").Extend(fastaDetector, "text/fasta", ".fasta")
 		mimetype.Lookup("text/plain").Extend(fastqDetector, "text/fastq", ".fastq")
 		mimetype.Lookup("text/plain").Extend(ecoPCR2Detector, "text/ecopcr2", ".ecopcr")
@@ -115,6 +120,7 @@ func RegisterOBIMimeType() {
 		mimetype.Lookup("application/octet-stream").Extend(genbankDetector, "text/genbank", ".seq")
 		mimetype.Lookup("application/octet-stream").Extend(emblDetector, "text/embl", ".dat")
 		mimetype.Lookup("application/octet-stream").Extend(csv, "text/csv", ".csv")
+		mimetype.Lookup("application/octet-stream").Extend(jsonDetector, "application/json", ".json")
 	}
 	__obimimetype_registred__ = true
 }

@@ -170,7 +170,7 @@ func CLISelectLandmarkSequences(iterator obiiter.IBioSequence) obiiter.IBioSeque
 		for i, seq := range library {
 			taxon := seq.Taxon(taxo)
 			if taxon == nil {
-				log.Fatal("%s: Cannot identify taxid %s in %s", seq.Id(), seq.Taxid(), taxo.Name())
+				log.Fatalf("%s: Cannot identify taxid %s in %s", seq.Id(), seq.Taxid(), taxo.Name())
 			}
 			taxa.Set(i, taxon)
 		}

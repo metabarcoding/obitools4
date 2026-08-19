@@ -28,10 +28,18 @@ func buffIndex(i, j, width int) int {
 //
 // The function returns the start and end positions of the best
 // match, as well as the number of errors in the best match.
+//
+// When the sequence is too short relative to the pattern for the
+// backtracking to reconstruct a valid alignment (e.g. the pattern
+// is longer than the sequence, or the match sits too close to a
+// sequence boundary), no reliable position can be computed. In that
+// case the function returns the sentinel (-1, -1, -1) instead of a
+// guessed, potentially wrong, position: callers must treat this as
+// "no match" rather than use the returned coordinates.
 func LocatePattern(id string, pattern, sequence []byte) (int, int, int) {
 
-	if len(pattern) >= len(sequence) {
-		log.Panicf("Sequence %s:Pattern %s must be shorter than sequence %s", id, pattern, sequence)
+	if len(sequence) == 0 {
+		log.Panicf("Sequence %s:Pattern %s must not be empty", id, pattern)
 	}
 
 	// Pattern spreads over the columns
@@ -158,5 +166,18 @@ func LocatePattern(id string, pattern, sequence []byte) (int, int, int) {
 	// obilog.Warnf("from : %d to: %d error: %d match: %v",
 	// 	i, end+1, -buffer[buffIndex(len(sequence)-1, len(pattern)-1, width)],
 	// 	string(sequence[i:(end+1)]))
+
+	if i < 0 || end == -1 {
+		// i < 0: the backtracking ran off the start of the sequence
+		// without fully consuming the pattern.
+		// end == -1: the backtracking loop never ran at all (e.g. a
+		// single-base pattern, jmax == 0), so no alignment boundary
+		// was ever established.
+		// Either way, no valid alignment exists for this (pattern,
+		// sequence) pair: signal it explicitly instead of returning
+		// an out-of-bounds or uncomputed position.
+		return -1, -1, -1
+	}
+
 	return i, end + 1, -buffer[buffIndex(len(sequence)-1, len(pattern)-1, width)]
 }

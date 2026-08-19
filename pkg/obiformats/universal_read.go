@@ -145,6 +145,8 @@ func ReadSequencesFromFile(filename string,
 		return ReadGenbank(reader, options...)
 	case "text/csv":
 		return ReadCSV(reader, options...)
+	case "application/json":
+		return ReadJSON(reader, options...)
 	default:
 		log.Fatalf("File %s has guessed format %s which is not yet implemented",
 			filename, mime.String())
