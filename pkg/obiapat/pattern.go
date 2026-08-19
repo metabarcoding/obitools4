@@ -373,17 +373,7 @@ func (pattern ApatPattern) BestMatch(sequence ApatSequence, begin, length int) (
 
 	cpattern := (*[1 << 30]byte)(unsafe.Pointer(pattern.pointer.pointer.cpat))
 	frg := sequence.pointer.reference.Sequence()[start:end]
-
-	if len(frg) <= int(pattern.pointer.pointer.patlen) {
-		// The sequence is too short (e.g. the match is near one of its
-		// ends) to extract a fragment longer than the pattern, which
-		// obialign.LocatePattern requires. Keep the original match
-		// instead of refining it.
-		start = best[0]
-		end = best[1]
-		log.Debugln("Fragment too short for indel relocation, keeping original match", start, end, nerr)
-		return
-	}
+	fragStart := start
 
 	log.Debugln(
 		string(frg),
@@ -395,11 +385,20 @@ func (pattern ApatPattern) BestMatch(sequence ApatSequence, begin, length int) (
 		(*cpattern)[0:int(pattern.pointer.pointer.patlen)],
 		frg)
 
-	// olderr := m[2]
+	if from < 0 {
+		// obialign.LocatePattern could not reconstruct a reliable
+		// alignment (e.g. the fragment is too short relative to the
+		// pattern). Reporting a guessed position would risk placing
+		// the primer boundary incorrectly, so treat it as no match
+		// at all rather than falling back to an unrefined position.
+		matched = false
+		log.Debugln("No reliable indel relocation, discarding match", sequence.pointer.reference.Id())
+		return
+	}
 
 	nerr = score
-	start = start + from
-	end = start + to
+	start = fragStart + from
+	end = fragStart + to
 	log.Debugf("BestMatch on %s : score=%d [%d..%d]", sequence.pointer.reference.Id(), score, start, nerr)
 	return
 }
@@ -478,6 +477,7 @@ func (pattern ApatPattern) AllMatches(sequence ApatSequence, begin, length int) 
 	for _, m := range res {
 		// Recompute the start and end position of the match
 		// when the pattern allows for indels
+		valid := true
 		if m[2] > 0 && pattern.pointer.pointer.hasIndel {
 			// obilog.Warnf("Locating indel on sequence %s[%s]", sequence.pointer.reference.Id(), pattern.String())
 			start := m[0] - m[2]*2
@@ -491,17 +491,20 @@ func (pattern ApatPattern) AllMatches(sequence ApatSequence, begin, length int) 
 			cpattern := (*[1 << 30]byte)(unsafe.Pointer(pattern.pointer.pointer.cpat))
 			frg := sequence.pointer.reference.Sequence()[start:end]
 
-			// obialign.LocatePattern requires the fragment to be strictly
-			// longer than the pattern. When the match sits near one of the
-			// sequence ends, the fragment can be clamped to the sequence
-			// boundaries and end up too short; in that case keep the
-			// original (unrefined) match instead of crashing.
-			if len(frg) > int(pattern.pointer.pointer.patlen) {
-				pb, pe, score := obialign.LocatePattern(
-					sequence.pointer.reference.Id(),
-					(*cpattern)[0:int(pattern.pointer.pointer.patlen)],
-					frg)
+			pb, pe, score := obialign.LocatePattern(
+				sequence.pointer.reference.Id(),
+				(*cpattern)[0:int(pattern.pointer.pointer.patlen)],
+				frg)
 
+			if pb < 0 {
+				// obialign.LocatePattern could not reconstruct a
+				// reliable alignment (e.g. the match sits too close
+				// to a sequence end for the fragment to be usable).
+				// Reporting a guessed position risks placing the
+				// primer boundary incorrectly, so drop the match
+				// entirely instead of keeping an unrefined guess.
+				valid = false
+			} else {
 				// olderr := m[2]
 				m[2] = score
 				m[0] = start + pb
@@ -512,7 +515,7 @@ func (pattern ApatPattern) AllMatches(sequence ApatSequence, begin, length int) 
 			}
 		}
 
-		if int(pattern.pointer.pointer.maxerr) >= m[2] {
+		if valid && int(pattern.pointer.pointer.maxerr) >= m[2] {
 			res[j] = m
 			j++
 		}
