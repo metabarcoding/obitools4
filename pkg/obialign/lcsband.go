@@ -40,7 +40,10 @@ const (
 type bandedLCSWorkspace struct {
 	aRev, bCode []uint32    // encoded bases (aRev is reversed), SIMD kernel only
 	rows        [3][]uint32 // antidiagonal (SIMD) or row (scalar) buffers
-	widened     int         // number of alignments that needed a second pass
+	aRev16      []uint16    // 16-bit encoded bases of the score-only kernel
+	bCode16     []uint16
+	rows16      [3][]uint16
+	widened     int // number of alignments that needed a second pass
 }
 
 var bandedLCSPool = sync.Pool{New: func() any { return new(bandedLCSWorkspace) }}
@@ -146,13 +149,7 @@ func bandedLCS(a, b []byte, maxError int, ws *bandedLCSWorkspace, useSIMD bool) 
 	}
 	run := func(g int) (int, int) {
 		kmin, kmax := bandOffsets(lA, lB, g)
-		var key uint32
-		if simdOK {
-			key = bandedLCSSIMD(lA, lB, kmin, kmax, ws)
-		} else {
-			key = bandedLCSScalar(a, b, kmin, kmax, ws)
-		}
-		return int(key >> 16), int(lcsLenBase - key&0xFFFF)
+		return ws.align(a, b, kmin, kmax, simdOK)
 	}
 
 	if maxError < 0 {
@@ -172,4 +169,17 @@ func bandedLCS(a, b []byte, maxError int, ws *bandedLCSWorkspace, useSIMD bool) 
 		return -1, -1
 	}
 	return lcs, alilen
+}
+
+// align runs the banded DP on the offsets [kmin, kmax] (kmin <= 0 <= kmax) and
+// returns the best (lcs, alilen) of the band. The bases must have been encoded
+// with encodeBases when simdOK is set.
+func (ws *bandedLCSWorkspace) align(a, b []byte, kmin, kmax int, simdOK bool) (int, int) {
+	var key uint32
+	if simdOK {
+		key = bandedLCSSIMD(len(a), len(b), kmin, kmax, ws)
+	} else {
+		key = bandedLCSScalar(a, b, kmin, kmax, ws)
+	}
+	return int(key >> 16), int(lcsLenBase - key&0xFFFF)
 }

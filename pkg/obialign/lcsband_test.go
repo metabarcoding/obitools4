@@ -286,3 +286,75 @@ func TestFastLCSScoreWrapper(t *testing.T) {
 		t.Errorf("got (%d,%d), want (-1,-1)", s, l)
 	}
 }
+
+// TestBandedLCSAtLeast checks the exactness of the bound expressed on the
+// score: the optimum when it reaches minLCS, (-1,-1) otherwise.
+func TestBandedLCSAtLeast(t *testing.T) {
+	rng := rand.New(rand.NewSource(13))
+	var buf BandedLCSBuffer
+	for _, alpha := range testAlphabets {
+		for it := 0; it < 1500; it++ {
+			a := randomFrom(rng, alpha.letters, 1+rng.Intn(100))
+			b := mutateFrom(rng, alpha.letters, a, rng.Float64()*0.5)
+			if len(b) == 0 {
+				continue
+			}
+			os, ol := fullDP(a, b)
+			for _, minLCS := range []int{-3, 0, 1, os - 1, os, os + 1, len(b) / 2, len(b), len(b) + 1} {
+				ws, wl := os, ol
+				if os < minLCS {
+					ws, wl = -1, -1
+				}
+				for _, got := range [][2]int{func() [2]int { s, l, _ := buf.AtLeast(a, b, minLCS); return [2]int{s, l} }(),
+					func() [2]int { s, l, _ := BandedLCSAtLeast(b, a, minLCS); return [2]int{s, l} }()} {
+					if got[0] != ws || got[1] != wl {
+						t.Fatalf("%s minLCS=%d a=%q b=%q: got (%d,%d), want (%d,%d)",
+							alpha.name, minLCS, a, b, got[0], got[1], ws, wl)
+					}
+				}
+			}
+		}
+	}
+	if _, _, err := buf.AtLeast(make([]byte, MaxBandedLCSLength+1), []byte("a"), 0); err != ErrSequenceTooLong {
+		t.Errorf("too long: err = %v", err)
+	}
+}
+
+// TestBandedLCSScoreAtLeast checks the score-only entry point, with sequences
+// long enough for the early stop of the kernel to be exercised.
+func TestBandedLCSScoreAtLeast(t *testing.T) {
+	rng := rand.New(rand.NewSource(17))
+	var buf BandedLCSBuffer
+	check := func(name string, a, b []byte) {
+		os, _ := fullDP(a, b)
+		for _, minLCS := range []int{-1, 0, os - 3, os - 1, os, os + 1, os + 5, len(b) - 1, len(b), (len(b) * 9) / 10, len(b) + 1} {
+			want := os
+			if os < minLCS {
+				want = -1
+			}
+			got, err := buf.ScoreAtLeast(a, b, minLCS)
+			if err != nil || got != want {
+				t.Fatalf("%s minLCS=%d a=%q b=%q: got %d (%v), want %d", name, minLCS, a, b, got, err, want)
+			}
+		}
+	}
+	for _, alpha := range testAlphabets {
+		for it := 0; it < 800; it++ {
+			a := randomFrom(rng, alpha.letters, 1+rng.Intn(60))
+			b := mutateFrom(rng, alpha.letters, a, rng.Float64()*0.6)
+			if len(b) > 0 {
+				check(alpha.name, a, b)
+			}
+		}
+	}
+	for it := 0; it < 150; it++ {
+		a := randomFrom(rng, "ACGT", 100+rng.Intn(400))
+		b := mutateFrom(rng, "ACGT", a, rng.Float64()*0.3)
+		if it%3 == 0 {
+			b = randomFrom(rng, "ACGT", 50+rng.Intn(300))
+		}
+		if len(b) > 0 {
+			check("long", a, b)
+		}
+	}
+}

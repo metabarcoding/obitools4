@@ -1,0 +1,9 @@
+families	default	-t 0.9
+families	exact	-t 0.9 -e
+families	shortest	-t 0.9 -l -e
+families	longest	-t 0.85 -L
+families	distance	-t 0.1 -d
+families	rawdist	-t 4 -r -d -e
+families	rawlcs	-t 40 -r
+families	ratio	-t 0.9 -R 0.5
+families	ascending	-t 0.9 -o

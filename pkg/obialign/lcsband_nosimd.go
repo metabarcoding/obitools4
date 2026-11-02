@@ -11,3 +11,7 @@ func encodeBases(ws *bandedLCSWorkspace, a, b []byte) {}
 func bandedLCSSIMD(lA, lB, kmin, kmax int, ws *bandedLCSWorkspace) uint32 {
 	return 0
 }
+
+func lcsScoreSIMD(a, b []byte, kmin, kmax, minLCS int, ws *bandedLCSWorkspace) int {
+	return -1
+}
