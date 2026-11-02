@@ -26,3 +26,16 @@ func SameIUPACNuc(a, b byte) bool {
 	}
 	return a == b
 }
+
+// IUPACNucMask returns the set of nucleotides denoted by the IUPAC code b
+// (case insensitive, U is read as T) as a 4 bits mask: bit 0 is A, bit 1 is C,
+// bit 2 is G and bit 3 is T. It returns 0 if b is not an IUPAC nucleotide code.
+func IUPACNucMask(b byte) byte {
+	if (b >= 'A') && (b <= 'Z') {
+		b |= 32
+	}
+	if (b < 'a') || (b > 'z') {
+		return 0
+	}
+	return _iupac[b-'a']
+}
