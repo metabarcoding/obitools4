@@ -163,8 +163,14 @@ func CLIOligoFamily() ([]string, error) {
 	}
 
 	filter := obikmer.NewKmerDissimilarityFilter(kmers, size, metric, dmin)
+	progress := startCliqueProgress(target)
 	result := obigraph.FindClique(ctx, len(kmers), filter, target,
-		obigraph.CliqueOptions{Workers: obidefault.ParallelWorkers(), Seed: 1})
+		obigraph.CliqueOptions{
+			Workers:  obidefault.ParallelWorkers(),
+			Seed:     1,
+			Progress: progress.Update,
+		})
+	progress.Stop(result.Reached)
 
 	switch {
 	case result.Reached:

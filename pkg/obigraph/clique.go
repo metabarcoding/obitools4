@@ -21,6 +21,10 @@ type CliqueOptions struct {
 	Workers int
 	// Seed seeds the random vertex orders of the restarts.
 	Seed int64
+	// Progress, if set, is called with the size of the best clique each time a
+	// larger one is found. Calls are serialized and made while a lock is held:
+	// it must return quickly and must not call FindClique.
+	Progress func(best int)
 }
 
 // CliqueResult is the outcome of FindClique.
@@ -68,6 +72,9 @@ func FindClique(ctx context.Context, n int, filter NeighborFilter, target int, o
 		mutex.Lock()
 		if len(clique) > len(best) {
 			best = append(best[:0], clique...)
+			if opts.Progress != nil {
+				opts.Progress(len(best))
+			}
 		}
 		mutex.Unlock()
 	}

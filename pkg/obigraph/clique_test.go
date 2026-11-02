@@ -141,3 +141,23 @@ func TestFindCliqueTimeout(t *testing.T) {
 		t.Fatalf("invalid best clique %v", r.Clique)
 	}
 }
+
+func TestFindCliqueProgress(t *testing.T) {
+	adj := randomGraph(rand.New(rand.NewSource(4)), 40, 0.7)
+
+	var seen []int
+	r := FindClique(context.Background(), 40, matrixFilter(adj), 5, CliqueOptions{
+		Progress: func(best int) { seen = append(seen, best) },
+	})
+	if !r.Reached {
+		t.Fatalf("size 5 should be reached: %+v", r)
+	}
+	if len(seen) == 0 || seen[len(seen)-1] != len(r.Clique) {
+		t.Fatalf("progress %v does not end at the clique size %d", seen, len(r.Clique))
+	}
+	for i := 1; i < len(seen); i++ {
+		if seen[i] <= seen[i-1] {
+			t.Fatalf("progress must be strictly increasing: %v", seen)
+		}
+	}
+}
