@@ -93,11 +93,6 @@ func CLIPrintTaxon() bool {
 		_outputTaxon = true
 	}
 
-	if i := obiutils.LookFor(_keepOnly, "scientific_name"); i >= 0 {
-		_keepOnly = obiutils.RemoveIndex(_keepOnly, i)
-		_outputTaxon = true
-	}
-
 	return _outputTaxon
 }
 func CLIPrintQuality() bool {
@@ -127,11 +122,6 @@ func CLIToBeKeptAttributes() []string {
 	}
 
 	if i := obiutils.LookFor(_keepOnly, "taxid"); i >= 0 {
-		_keepOnly = obiutils.RemoveIndex(_keepOnly, i)
-		_outputTaxon = true
-	}
-
-	if i := obiutils.LookFor(_keepOnly, "scientific_name"); i >= 0 {
 		_keepOnly = obiutils.RemoveIndex(_keepOnly, i)
 		_outputTaxon = true
 	}

@@ -5,7 +5,6 @@ import (
 	"container/heap"
 	"fmt"
 	"math"
-	"math/bits"
 	"os"
 	"slices"
 
@@ -608,14 +607,6 @@ func (graph *DeBruijnGraph) WriteGml(filename string) error {
 	defer f.Close()
 	_, err = f.WriteString(graph.Gml())
 	return err
-}
-
-// Calculating the hamming distance between two k-mers.
-func (g *DeBruijnGraph) HammingDistance(kmer1, kmer2 uint64) int {
-	ident := ^((kmer1 & kmer2) | (^kmer1 & ^kmer2))
-	ident |= (ident >> 1)
-	ident &= 0x5555555555555555 & g.kmermask
-	return bits.OnesCount64(ident)
 }
 
 type UInt64Heap []uint64
