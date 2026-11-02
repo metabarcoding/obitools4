@@ -11,6 +11,14 @@ NC     := \033[0m
 
 GOFLAGS=
 LDFLAGS=
+
+# The SIMD code (pkg/obikmer, simd package of Go >= 1.27) is only compiled with
+# GOEXPERIMENT=simd; without it, a portable scalar code is used instead.
+# The binaries select the vector width at run time (and fall back on an
+# emulation without SIMD hardware), so they run on any CPU.
+# Use `make GOEXPERIMENT= obitools` to build without SIMD.
+GOEXPERIMENT?=simd
+export GOEXPERIMENT
 GOCMD=go
 GOBUILD=$(GOCMD) build $(GOFLAGS) $(if $(LDFLAGS),-ldflags="$(LDFLAGS)")
 GOGENERATE=$(GOCMD) generate
