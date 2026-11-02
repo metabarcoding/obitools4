@@ -111,3 +111,29 @@ func TestParseKmerMetric(t *testing.T) {
 		t.Fatal("unknown metric must be refused")
 	}
 }
+
+// With a target out of reach (17 4-mers at Hamming distance >= 3 do not exist,
+// 16 do), the search must return the best family it can build, not a poor one
+// stuck by the pruning on the target, and the coloring bound must prove that
+// the target is out of reach.
+func TestFindClique_BestWhenTargetOutOfReach(t *testing.T) {
+	const k, dmin = 4, 3
+	kmers := allKmers(k)
+	filter := obikmer.NewKmerDissimilarityFilter(kmers, k, obikmer.HammingMetric, dmin)
+
+	for _, limit := range []int{0, 1024} {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		r := obigraph.FindClique(ctx, len(kmers), filter, 17, obigraph.CliqueOptions{Workers: 2, ColorLimit: limit})
+		cancel()
+		if r.Reached {
+			t.Fatal("17 4-mers at Hamming distance >= 3 cannot exist (sphere-packing bound 19, true maximum 16)")
+		}
+		if len(r.Clique) < 16 {
+			t.Fatalf("limit %d: expected the family of 16 to be found, got %d (exhausted %v, maximum %v)",
+				limit, len(r.Clique), r.Exhausted, r.Maximum)
+		}
+		if limit > 0 && !r.Exhausted {
+			t.Fatalf("limit %d: the coloring bound should prove that 17 is out of reach", limit)
+		}
+	}
+}

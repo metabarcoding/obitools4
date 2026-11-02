@@ -16,6 +16,12 @@ import (
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 )
 
+// cliqueColorLimit is the length of the longest list of candidates for which the
+// search computes its coloring bound. Measured on 7-mers and 8-mers, the larger
+// it is the better the families found in a given time, with little gain beyond
+// 1024 (while the cost of a coloring grows with the square of the length).
+const cliqueColorLimit = 1024
+
 // buildConstraints translates the command line options into constraints on
 // oligonucleotides of the given size.
 func buildConstraints(size int) (obikmer.KmerConstraints, error) {
@@ -166,21 +172,25 @@ func CLIOligoFamily() ([]string, error) {
 	progress := startCliqueProgress(target)
 	result := obigraph.FindClique(ctx, len(kmers), filter, target,
 		obigraph.CliqueOptions{
-			Workers:  obidefault.ParallelWorkers(),
-			Seed:     1,
-			Progress: progress.Update,
+			Workers:    obidefault.ParallelWorkers(),
+			Seed:       1,
+			ColorLimit: cliqueColorLimit,
+			Progress:   progress.Update,
 		})
 	progress.Stop(result.Reached)
 
 	switch {
 	case result.Reached:
 		log.Infof("family of %d oligonucleotides found", len(result.Clique))
+	case result.Maximum:
+		log.Warnf("no family of %d oligonucleotides exists with these constraints: "+
+			"the largest one has %d oligonucleotides (proven maximum)", target, len(result.Clique))
 	case result.Exhausted:
 		log.Warnf("no family of %d oligonucleotides exists with these constraints: "+
 			"the best family found has %d oligonucleotides", target, len(result.Clique))
 	default:
 		log.Warnf("time limit reached before finding a family of %d oligonucleotides: "+
-			"the best family found has %d oligonucleotides", target, len(result.Clique))
+			"the best family found has %d oligonucleotides (not proven maximum)", target, len(result.Clique))
 	}
 
 	family := make([]uint64, len(result.Clique))

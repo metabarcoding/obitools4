@@ -161,3 +161,89 @@ func TestFindCliqueProgress(t *testing.T) {
 		}
 	}
 }
+
+// The improving search must end with a proven maximum clique, even when the
+// target is out of reach; the focused one only proves the absence of a clique
+// of the target size.
+func TestFindCliqueModes(t *testing.T) {
+	rng := rand.New(rand.NewSource(5))
+	for trial := 0; trial < 40; trial++ {
+		n := 8 + rng.Intn(10)
+		adj := randomGraph(rng, n, 0.3+0.5*rng.Float64())
+		maxSize := bruteMaxClique(adj)
+		filter := matrixFilter(adj)
+
+		for _, workers := range []int{1, 3} {
+			for _, limit := range []int{0, 5, 1 << 20} {
+				r := FindClique(context.Background(), n, filter, maxSize+1,
+					CliqueOptions{Workers: workers, ColorLimit: limit, mode: modeImproving})
+				if r.Reached || !r.Exhausted || !r.Maximum {
+					t.Fatalf("trial %d limit %d: improving search should prove the maximum: %+v", trial, limit, r)
+				}
+				if len(r.Clique) != maxSize || !isClique(adj, r.Clique) {
+					t.Fatalf("trial %d limit %d: expected a maximum clique of %d, got %v", trial, limit, maxSize, r.Clique)
+				}
+
+				r = FindClique(context.Background(), n, filter, maxSize+1,
+					CliqueOptions{Workers: workers, ColorLimit: limit, mode: modeFocused})
+				if r.Reached || !r.Exhausted || r.Maximum {
+					t.Fatalf("trial %d limit %d: focused search proves absence only: %+v", trial, limit, r)
+				}
+
+				r = FindClique(context.Background(), n, filter, maxSize,
+					CliqueOptions{Workers: workers, ColorLimit: limit, mode: modeImproving})
+				if !r.Reached || len(r.Clique) < maxSize || !isClique(adj, r.Clique) {
+					t.Fatalf("trial %d limit %d: target %d not reached by the improving search: %+v", trial, limit, maxSize, r)
+				}
+			}
+		}
+	}
+}
+
+// When the target is out of reach, the default search must end with a proven
+// maximum clique, even if the coloring bound proves the absence of the target
+// before any clique has been found.
+func TestFindCliqueUnreachableTargetGivesMaximum(t *testing.T) {
+	rng := rand.New(rand.NewSource(6))
+	for trial := 0; trial < 40; trial++ {
+		n := 8 + rng.Intn(10)
+		adj := randomGraph(rng, n, 0.3+0.5*rng.Float64())
+		maxSize := bruteMaxClique(adj)
+
+		for _, workers := range []int{1, 3} {
+			for _, limit := range []int{0, 5, 1 << 20} {
+				r := FindClique(context.Background(), n, matrixFilter(adj), maxSize+1,
+					CliqueOptions{Workers: workers, ColorLimit: limit})
+				if r.Reached || !r.Exhausted || !r.Maximum {
+					t.Fatalf("trial %d workers %d limit %d: expected a proven maximum: %+v", trial, workers, limit, r)
+				}
+				if len(r.Clique) != maxSize || !isClique(adj, r.Clique) {
+					t.Fatalf("trial %d workers %d limit %d: expected a maximum clique of %d, got %v",
+						trial, workers, limit, maxSize, r.Clique)
+				}
+			}
+		}
+	}
+}
+
+// A long coloring must not delay the deadline.
+func TestFindCliqueColoringHonoursDeadline(t *testing.T) {
+	const n = 3000
+	adj := randomGraph(rand.New(rand.NewSource(7)), n, 0.5)
+	base := matrixFilter(adj)
+	slow := func(v int32, candidates, out []int32) []int32 {
+		time.Sleep(200 * time.Microsecond)
+		return base(v, candidates, out)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 300*time.Millisecond)
+	defer cancel()
+	start := time.Now()
+	r := FindClique(ctx, n, slow, 100, CliqueOptions{Workers: 2, ColorLimit: 1 << 20})
+	if elapsed := time.Since(start); elapsed > 2*time.Second {
+		t.Fatalf("deadline not honoured by the coloring: %v", elapsed)
+	}
+	if r.Reached || !isClique(adj, r.Clique) {
+		t.Fatalf("unexpected result %+v", r)
+	}
+}
