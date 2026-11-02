@@ -683,7 +683,8 @@ func (iterator IBioSequence) FilterOn(predicate obiseq.SequencePredicate,
 			}
 
 			seqs.slice = slice[:j]
-			trueIter.pointer.channel <- seqs
+			trueIter.Push(seqs)
+			// trueIter.pointer.channel <- seqs
 		}
 
 		trueIter.Done()
