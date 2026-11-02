@@ -44,13 +44,18 @@ OBITOOLS_DIRS:=$(sort $(patsubst %/,%,$(dir $(OBITOOLS_SRC))))
 OBITOOLS:=$(notdir $(OBITOOLS_DIRS))
 
 
+# Name of the target of a package: its path under pkg/, so that two packages of
+# the same name in different directories (pkg/obialign and
+# pkg/obitools/obialign) do not share a target.
+pkgname=$(subst /,-,$(patsubst pkg/%,%,$(1)))
+
 define MAKE_PKG_RULE
-pkg-$(notdir $(1)): $(1) pkg/obioptions/version.go
-	@echo -n - Building package $(notdir $(1))...
+pkg-$(call pkgname,$(1)): $(1) pkg/obioptions/version.go
+	@echo -n - Building package $(call pkgname,$(1))...
 	@$(GOBUILD) ./$(1) \
-	    2> pkg-$(notdir $(1)).log \
-		|| cat pkg-$(notdir $(1)).log
-	@rm -f pkg-$(notdir $(1)).log
+	    2> pkg-$(call pkgname,$(1)).log \
+		|| cat pkg-$(call pkgname,$(1)).log
+	@rm -f pkg-$(call pkgname,$(1)).log
 	@echo Done.
 endef
 

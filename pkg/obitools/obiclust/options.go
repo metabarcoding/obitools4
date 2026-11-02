@@ -1,19 +1,10 @@
 package obiclust
 
 import (
+	sim "git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obisimilarity"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
 	"github.com/DavidGamba/go-getoptions"
 	log "github.com/sirupsen/logrus"
-)
-
-// reference is the length used to normalize a score (or to express a raw
-// distance): the alignment length, the longest or the shortest sequence.
-type reference int
-
-const (
-	refAlignment reference = iota
-	refLongest
-	refShortest
 )
 
 var _threshold = 0.97
@@ -76,7 +67,7 @@ func ObiclustOptionSet(options *getoptions.GetOpt) {
 		options.Alias("R"),
 		options.ArgName("RATIO"),
 		options.Description("Maximum ratio between the counts of two sequences so that the less abundant one "+
-			"can be considered as a variant of the more abundant one (default: %3.2f)."))
+			"can be considered as a variant of the more abundant one."))
 
 	options.StringVar(&_sortKey, "sort", _sortKey,
 		options.Alias("s"),
@@ -133,16 +124,16 @@ func CLINormalized() bool {
 }
 
 // CLIReference returns the length used as reference to normalize the score.
-func CLIReference() reference {
+func CLIReference() sim.Reference {
 	n := 0
-	ref := refAlignment
+	ref := sim.RefAlignment
 	if _refShortest {
 		n++
-		ref = refShortest
+		ref = sim.RefShortest
 	}
 	if _refLongest {
 		n++
-		ref = refLongest
+		ref = sim.RefLongest
 	}
 	if _refAlignment {
 		n++

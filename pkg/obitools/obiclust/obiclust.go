@@ -2,56 +2,17 @@ package obiclust
 
 import (
 	"os"
-	"sync"
-	"sync/atomic"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obialign"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
+	sim "git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obisimilarity"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obicsv"
 	"github.com/schollz/progressbar/v3"
 	log "github.com/sirupsen/logrus"
 )
-
-// buildEntries describes the distinct sequences of the groups, the 4-mer
-// tables being computed in parallel.
-func buildEntries(recs []record, groups []group, workers int) []entry {
-	entries := make([]entry, len(groups))
-	tables := make([]table4, len(groups)) // contiguous, in the order the centers are scanned
-
-	var next atomic.Int64
-	var wg sync.WaitGroup
-	for w := 0; w < max(workers, 1); w++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			for {
-				g := int(next.Add(1)) - 1
-				if g >= len(groups) {
-					return
-				}
-				head := &recs[groups[g].start]
-				var sparse []uint16
-				if !head.ambiguous {
-					tables[g].fill(head.clean)
-					sparse = sparseWords(&tables[g])
-				}
-				entries[g] = entry{
-					seq:       head.clean,
-					length:    len(head.clean),
-					count:     groups[g].count,
-					table:     &tables[g],
-					sparse:    sparse,
-					ambiguous: head.ambiguous,
-				}
-			}
-		}()
-	}
-	wg.Wait()
-	return entries
-}
 
 // Params are the parameters of the clustering.
 type Params struct {
@@ -60,7 +21,7 @@ type Params struct {
 	Exact           bool // attach a sequence to the best center, not to the first matching one
 	Distance        bool // the score is a distance, not a similarity
 	Normalized      bool // the score is normalized by the reference length
-	Reference       reference
+	Reference       sim.Reference
 	SortKey         string // "count", "None", or an attribute
 	Ascending       bool
 	AcceptAmbiguous bool // keep the sequences with IUPAC letters other than acgt (they cannot be centers)
@@ -84,34 +45,20 @@ func ParamsFromCLI() Params {
 }
 
 // newScoring builds the scoring from the parameters, checking them as sumaclust does.
-func newScoring(p Params, entries []entry) *scoring {
-	threshold := p.Threshold
-
-	if threshold <= 0 || (p.Normalized && threshold > 1.0) {
+func newScoring(p Params, entries []sim.Entry) *sim.Scoring {
+	if p.Threshold <= 0 {
 		log.Fatal("Please specify a threshold > 0, and < 1 when scores are normalized.")
 	}
-
-	sc := &scoring{
-		normalize: p.Normalized,
-		lcsmode:   !p.Distance,
-		ref:       p.Reference,
-		ratio:     p.Ratio,
+	sc, err := sim.NewScoring(sim.Params{
+		Threshold:  p.Threshold,
+		Normalized: p.Normalized,
+		Distance:   p.Distance,
+		Reference:  p.Reference,
+		Ratio:      p.Ratio,
+	}, entries)
+	if err != nil {
+		log.Fatalf("Please specify a threshold > 0, and < 1 when scores are normalized: %v", err)
 	}
-	if !sc.lcsmode && sc.normalize {
-		threshold = 1.0 - threshold
-	}
-	sc.threshold = threshold
-
-	lmax := 0
-	for i := range entries {
-		lmax = max(lmax, entries[i].length)
-	}
-	if sc.similarityLike() {
-		sc.worst = 0.0
-	} else {
-		sc.worst = float64(lmax)
-	}
-	sc.prepareLengths(lmax)
 	return sc
 }
 
@@ -153,19 +100,22 @@ func Cluster(db obiseq.BioSequenceSlice, p Params, progress func(done, total int
 	}
 	log.Infof("%d distinct sequences", len(groups))
 
-	entries := buildEntries(recs, groups, p.Workers)
+	entries := sim.BuildEntries(len(groups), func(g int) ([]byte, int, bool) {
+		head := &recs[groups[g].start]
+		return head.clean, groups[g].count, head.ambiguous
+	}, p.Workers)
 	for i := range entries {
-		if entries[i].length > obialign.MaxBandedLCSLength {
+		if entries[i].Length > obialign.MaxBandedLCSLength {
 			log.Fatalf("The sequence %s is too long (%d bp, maximum %d bp)",
-				recs[groups[i].start].seq.Id(), entries[i].length, obialign.MaxBandedLCSLength)
+				recs[groups[i].start].seq.Id(), entries[i].Length, obialign.MaxBandedLCSLength)
 		}
 	}
 
 	sc := newScoring(p, entries)
-	if sc.similarityLike() {
-		log.Infof("Clustering sequences when similarity >= %f", sc.threshold)
+	if sc.SimilarityLike() {
+		log.Infof("Clustering sequences when similarity >= %f", sc.Threshold())
 	} else {
-		log.Infof("Clustering sequences when distance <= %f", sc.threshold)
+		log.Infof("Clustering sequences when distance <= %f", sc.Threshold())
 	}
 
 	cl := newClustering(entries, sc, !p.Exact, p.Workers)
@@ -185,10 +135,11 @@ func CLIOBIClust(iterator obiiter.IBioSequence) obiiter.IBioSequence {
 	log.Infof("Sequence dataset of %d sequences loaded", len(db))
 
 	var bar *progressbar.ProgressBar
+	barChecked := false // the bar is created once, even when it is disabled
 	last := 0
 	res := Cluster(db, ParamsFromCLI(), func(done, total int) {
-		if bar == nil {
-			bar = progressBar(total)
+		if !barChecked {
+			bar, barChecked = progressBar(total), true
 		}
 		if bar != nil {
 			bar.Add(done - last)

@@ -62,8 +62,9 @@ func bandedLCSAtLeast(a, b []byte, minLCS int, ws *bandedLCSWorkspace, useSIMD b
 	}
 
 	// The score alone is much cheaper than the score with the length of the
-	// alignment: the latter is only computed when the pair reaches minLCS.
-	if lcsScoreSIMD(a, b, kmin, kmax, minLCS, ws) < minLCS {
+	// alignment: the latter is only computed when the pair reaches minLCS. With
+	// no minimum there is nothing to reject, and the pass would be wasted.
+	if minLCS > 0 && lcsScoreSIMD(a, b, kmin, kmax, minLCS, ws) < minLCS {
 		return -1, -1
 	}
 	encodeBases(ws, a, b)

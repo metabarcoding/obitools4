@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
+	sim "git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obisimilarity"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 	log "github.com/sirupsen/logrus"
 )
@@ -28,45 +29,6 @@ type group struct {
 	start, end int
 	count      int
 	key        float64
-}
-
-// nucleotide classes of a byte
-const (
-	notNucleotide = iota
-	plainNucleotide
-	ambiguousNucleotide
-)
-
-var nucleotideClass = func() (t [256]uint8) {
-	for _, c := range "acgt" {
-		t[c] = plainNucleotide
-	}
-	for _, c := range "umrwsykvhdbn" {
-		t[c] = ambiguousNucleotide
-	}
-	return t
-}()
-
-// classify returns the nucleotides of a sequence and tells if it contains
-// IUPAC letters other than a, c, g and t. nil is returned if the sequence is
-// empty, or contains anything else than IUPAC letters (and also IUPAC letters
-// other than a, c, g and t unless ambiguous ones are accepted).
-func classify(s []byte, acceptAmbiguous bool) (clean []byte, ambiguous bool) {
-	if len(s) == 0 {
-		return nil, false
-	}
-	for _, c := range s {
-		switch nucleotideClass[c] {
-		case notNucleotide:
-			return nil, false
-		case ambiguousNucleotide:
-			if !acceptAmbiguous {
-				return nil, false
-			}
-			ambiguous = true
-		}
-	}
-	return s, ambiguous
 }
 
 // atof reads the leading number of a string as C atof does.
@@ -120,12 +82,12 @@ func prepare(db obiseq.BioSequenceSlice, key string, ascending, acceptAmbiguous 
 	discarded := 0
 
 	for pos, s := range db {
-		clean, ambiguous := classify(s.Sequence(), acceptAmbiguous)
-		if clean == nil {
+		ok, ambiguous := sim.Classify(s.Sequence(), acceptAmbiguous)
+		if !ok {
 			discarded++
 			continue
 		}
-		r := record{seq: s, pos: pos, clean: clean, count: s.Count(), ambiguous: ambiguous}
+		r := record{seq: s, pos: pos, clean: s.Sequence(), count: s.Count(), ambiguous: ambiguous}
 		if key != "None" {
 			r.key = sortKeyOf(s, key)
 		}

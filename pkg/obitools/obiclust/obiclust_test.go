@@ -12,6 +12,7 @@ import (
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obialign"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
+	sim "git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obisimilarity"
 )
 
 // readTestFasta reads a fasta file whose headers are "id count=N; key=V;".
@@ -75,11 +76,11 @@ func paramsFromSumaclust(t testing.TB, args []string) Params {
 		case "-e":
 			p.Exact = true
 		case "-l":
-			p.Reference = refShortest
+			p.Reference = sim.RefShortest
 		case "-L":
-			p.Reference = refLongest
+			p.Reference = sim.RefLongest
 		case "-a":
-			p.Reference = refAlignment
+			p.Reference = sim.RefAlignment
 		case "-d":
 			p.Distance = true
 		case "-r":
@@ -138,37 +139,37 @@ func TestSumaclustResults(t *testing.T) {
 }
 
 // referenceCluster transcribes the sequential algorithm of sumaclust.
-func referenceCluster(entries []entry, sc *scoring, fast bool) (center []int, score []float64) {
+func referenceCluster(entries []sim.Entry, sc *sim.Scoring, fast bool) (center []int, score []float64) {
 	n := len(entries)
 	center, score = make([]int, n), make([]float64, n)
 	var centers []int
 	var buf obialign.BandedLCSBuffer
 	for i := range entries {
-		scoremax, best := sc.worst, -1
+		best, bestScore := -1, 0.0
 		for _, c := range centers {
-			s := sc.pairScore(&entries[i], &entries[c], -1, &buf)
-			if sc.selects(s, scoremax) {
-				scoremax, best = s, c
+			s, ok := sc.PairScore(&entries[i], &entries[c], -1, &buf)
+			if ok && sc.Passes(s) && (best < 0 || sc.Beats(s, bestScore)) {
+				best, bestScore = c, s
 				if fast {
 					break
 				}
 			}
 		}
 		if best >= 0 {
-			center[i], score[i] = best, sc.memberScore(scoremax)
-		} else if entries[i].ambiguous {
+			center[i], score[i] = best, sc.Reported(bestScore)
+		} else if entries[i].Ambiguous {
 			center[i] = -1
 		} else {
-			center[i], score[i] = i, sc.centerScore(entries[i].length)
+			center[i], score[i] = i, sc.SelfScore(entries[i].Length)
 			centers = append(centers, i)
 		}
 	}
 	return center, score
 }
 
-func randomEntries(rng *rand.Rand, n int) []entry {
+func randomEntries(rng *rand.Rand, n int) []sim.Entry {
 	var roots [][]byte
-	entries := make([]entry, 0, n)
+	entries := make([]sim.Entry, 0, n)
 	for len(entries) < n {
 		var s []byte
 		if len(roots) == 0 || rng.Intn(5) == 0 {
@@ -191,8 +192,8 @@ func randomEntries(rng *rand.Rand, n int) []entry {
 				}
 			}
 		}
-		tab := buildTable4(s)
-		entries = append(entries, entry{seq: s, length: len(s), count: 1 + rng.Intn(20), table: tab, sparse: sparseWords(tab)})
+		tab := sim.NewTable4(s)
+		entries = append(entries, sim.Entry{Seq: s, Length: len(s), Count: 1 + rng.Intn(20), Table: tab, Sparse: sim.SparseWords(tab)})
 	}
 	return entries
 }
@@ -202,22 +203,25 @@ func randomEntries(rng *rand.Rand, n int) []entry {
 // result of the sequential algorithm.
 func TestParallelClusteringIsSequential(t *testing.T) {
 	rng := rand.New(rand.NewSource(21))
-	scorings := []scoring{
-		{threshold: 0.9, normalize: true, lcsmode: true, ref: refAlignment, ratio: 1, worst: 0},
-		{threshold: 0.85, normalize: true, lcsmode: true, ref: refShortest, ratio: 2, worst: 0},
-		{threshold: 0.9, normalize: true, lcsmode: false, ref: refLongest, ratio: 1, worst: 0},
-		{threshold: 35, normalize: false, lcsmode: true, ref: refAlignment, ratio: 1, worst: 0},
-		{threshold: 5, normalize: false, lcsmode: false, ref: refAlignment, ratio: 1, worst: 80},
+	scorings := []sim.Params{
+		{Threshold: 0.9, Normalized: true, Reference: sim.RefAlignment, Ratio: 1},
+		{Threshold: 0.85, Normalized: true, Reference: sim.RefShortest, Ratio: 2},
+		{Threshold: 0.9, Normalized: true, Distance: true, Reference: sim.RefLongest, Ratio: 1},
+		{Threshold: 35, Reference: sim.RefAlignment, Ratio: 1},
+		{Threshold: 5, Distance: true, Reference: sim.RefAlignment, Ratio: 1},
 	}
 	for round := 0; round < 4; round++ {
 		entries := randomEntries(rng, 300)
 		for si := range scorings {
-			sc := scorings[si]
+			sc, err := sim.NewScoring(scorings[si], entries)
+			if err != nil {
+				t.Fatal(err)
+			}
 			for _, fast := range []bool{true, false} {
-				wantCenter, wantScore := referenceCluster(entries, &sc, fast)
+				wantCenter, wantScore := referenceCluster(entries, sc, fast)
 				for _, workers := range []int{1, 3, 8} {
 					for _, blocks := range [][2]int{{0, 0}, {1, 1}, {2, 5}, {7, 7}, {50, 300}} {
-						cl := newClustering(entries, &sc, fast, workers)
+						cl := newClustering(entries, sc, fast, workers)
 						cl.blockMin, cl.blockMax = blocks[0], blocks[1]
 						cl.run(func(int) {})
 						for i := range entries {
@@ -229,28 +233,6 @@ func TestParallelClusteringIsSequential(t *testing.T) {
 					}
 				}
 			}
-		}
-	}
-}
-
-func TestClassify(t *testing.T) {
-	cases := []struct {
-		in        string
-		accept    bool
-		kept      bool
-		ambiguous bool
-	}{
-		{"acgt", false, true, false}, {"acgt", true, true, false},
-		{"acgtn", false, false, false}, {"acgtn", true, true, true},
-		{"acgtx", true, false, false}, {"nacgt", false, false, false},
-		{"acgt-", true, false, false}, {"acgu", true, true, true},
-		{"ACGT", true, false, false}, {"", true, false, false},
-		{"rykmswbdhvn", true, true, true}, {"rykmswbdhvn", false, false, false},
-	}
-	for _, c := range cases {
-		got, amb := classify([]byte(c.in), c.accept)
-		if (got != nil) != c.kept || amb != c.ambiguous {
-			t.Errorf("classify(%q, %v) = (%q, %v), want kept=%v ambiguous=%v", c.in, c.accept, got, amb, c.kept, c.ambiguous)
 		}
 	}
 }
@@ -349,85 +331,6 @@ func TestAmbiguousSequences(t *testing.T) {
 		if s.Id() == "ambfar" {
 			if center, _ := s.GetBoolAttribute("cluster_center"); center || s.HasAttribute("cluster_weight") {
 				t.Error("ambfar must have cluster_center=false and no weight")
-			}
-		}
-	}
-}
-
-// TestLengthTable checks that the values precomputed by length give the
-// scores of the direct computation, in every mode.
-func TestLengthTable(t *testing.T) {
-	rng := rand.New(rand.NewSource(33))
-	entries := randomEntries(rng, 120)
-	for i := 0; i < 20; i++ { // some very short sequences, which skip the filter
-		s := entries[i].seq[:8+rng.Intn(10)]
-		entries[i] = entry{seq: s, length: len(s), count: 1, table: buildTable4(s)}
-	}
-	lmax := 0
-	for i := range entries {
-		lmax = max(lmax, entries[i].length)
-	}
-	var buf obialign.BandedLCSBuffer
-	for _, ref := range []reference{refAlignment, refLongest, refShortest} {
-		for _, mode := range []scoring{
-			{threshold: 0.9, normalize: true, lcsmode: true},
-			{threshold: 0.8, normalize: true, lcsmode: false},
-			{threshold: 30, normalize: false, lcsmode: true},
-			{threshold: 6, normalize: false, lcsmode: false},
-		} {
-			direct := mode
-			direct.ref, direct.ratio = ref, 3
-			table := direct
-			table.prepareLengths(lmax)
-			if (ref == refShortest) != (table.byLength == nil) {
-				t.Fatalf("ref %v: table presence is wrong", ref)
-			}
-			for i := range entries {
-				for j := range entries {
-					a, b := direct.pairScore(&entries[i], &entries[j], -1, &buf), table.pairScore(&entries[i], &entries[j], -1, &buf)
-					if a != b {
-						t.Fatalf("ref %v mode %+v pair %d,%d: %v with the table, %v directly", ref, mode, i, j, b, a)
-					}
-				}
-			}
-		}
-	}
-}
-
-// TestBlockCommon checks the sums of a block of transposed tables against
-// commonWords.
-func TestBlockCommon(t *testing.T) {
-	width := simdBlockWidth()
-	if width == 0 {
-		t.Skip("blocks of tables are used with GOEXPERIMENT=simd only")
-	}
-	rng := rand.New(rand.NewSource(8))
-	seq := func(n int, alpha string) []byte {
-		s := make([]byte, n)
-		for i := range s {
-			s[i] = alpha[rng.Intn(len(alpha))]
-		}
-		return s
-	}
-	for it := 0; it < 200; it++ {
-		alpha := []string{"acgt", "ac", "a"}[it%3]
-		block := newTableBlock(width)
-		tabs := make([]*table4, width)
-		for j := range tabs {
-			tabs[j] = buildTable4(seq(rng.Intn(600), alpha))
-			block.set(width, j, tabs[j])
-		}
-		q := buildTable4(seq(rng.Intn(260), alpha))
-		words := sparseWords(q)
-		if words == nil {
-			continue
-		}
-		out := make([]uint8, 64)
-		block.common(width, words, out)
-		for j, tab := range tabs {
-			want := commonWordsRef(q, tab) - min(q.overflow, tab.overflow)
-			if int(out[j]) != want {
-				t.Fatalf("lane %d: %d, want %d", j, out[j], want)
 			}
 		}
 	}

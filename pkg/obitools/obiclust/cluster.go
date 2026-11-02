@@ -6,6 +6,7 @@ import (
 	"sync/atomic"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obialign"
+	sim "git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obisimilarity"
 )
 
 // clustering is the state of the star clustering of the distinct sequences,
@@ -32,16 +33,16 @@ import (
 // The result does not depend on the size of the blocks, which only trades the
 // sequential work of phase B against the synchronizations.
 type clustering struct {
-	entries []entry
-	sc      *scoring
+	entries []sim.Entry
+	sc      *sim.Scoring
 	fast    bool
 	workers int
 	// bounds of the size of the blocks, 0 for the defaults (tests only)
 	blockMin, blockMax int
 
 	centers []int // indices of the centers, in the order of creation
-	set     *centerSet
-	fresh   []center // the centers created in the current block
+	index   *sim.Index
+	fresh   []sim.Member // the centers created in the current block
 
 	center []int     // for each entry, the index of its center, -1 if it has none
 	score  []float64 // for each entry, the score with its center
@@ -54,7 +55,7 @@ type attachment struct {
 	score  float64
 }
 
-func newClustering(entries []entry, sc *scoring, fast bool, workers int) *clustering {
+func newClustering(entries []sim.Entry, sc *sim.Scoring, fast bool, workers int) *clustering {
 	c := &clustering{
 		entries: entries,
 		sc:      sc,
@@ -67,26 +68,32 @@ func newClustering(entries []entry, sc *scoring, fast bool, workers int) *cluste
 	for i := range c.center {
 		c.center[i] = -1
 	}
-	c.set = newCenterSet(simdBlockWidth())
+	c.index = sim.NewIndex()
 	return c
 }
 
 func (c *clustering) addCenter(i int) {
-	c.fresh = append(c.fresh, c.set.add(c.entries[i], i))
+	c.fresh = append(c.fresh, c.index.Add(c.entries[i], i))
 	c.centers = append(c.centers, i)
 	c.center[i] = i
-	c.score[i] = c.sc.centerScore(c.entries[i].length)
+	c.score[i] = c.sc.SelfScore(c.entries[i].Length)
+}
+
+// selects tells if a pair of score s, ok telling that it was scored, must
+// replace the best attachment found so far.
+func (c *clustering) selects(s float64, ok bool, best attachment) bool {
+	return ok && c.sc.Passes(s) && (best.center < 0 || c.sc.Beats(s, best.score))
 }
 
 // compare looks for the best center of entry i among the given ones. The
 // attachment `from` is the best one already known. The search stops at the
 // first match in fast mode.
-func (c *clustering) compare(i int, cents []center, from attachment, buf *obialign.BandedLCSBuffer) attachment {
+func (c *clustering) compare(i int, cents []sim.Member, from attachment, buf *obialign.BandedLCSBuffer) attachment {
 	best := from
 	for k := range cents {
-		s := c.sc.pairScore(&c.entries[i], &cents[k].entry, -1, buf)
-		if c.sc.selects(s, best.score) {
-			best = attachment{cents[k].idx, s}
+		s, ok := c.sc.PairScore(&c.entries[i], &cents[k].Entry, -1, buf)
+		if c.selects(s, ok, best) {
+			best = attachment{cents[k].ID, s}
 			if c.fast {
 				break
 			}
@@ -162,7 +169,7 @@ func (c *clustering) run(progress func(done int)) {
 			}
 			unmatched++
 			*a = c.compare(i, c.fresh, *a, &c.bufs[0])
-			if a.center < 0 && !c.entries[i].ambiguous {
+			if a.center < 0 && !c.entries[i].Ambiguous {
 				newCenters = append(newCenters, i)
 				c.addCenter(i)
 			}
@@ -181,7 +188,7 @@ func (c *clustering) run(progress func(done int)) {
 		for i := pos; i < end; i++ {
 			if a := att[i-pos]; a.center >= 0 {
 				c.center[i] = a.center
-				c.score[i] = c.sc.memberScore(a.score)
+				c.score[i] = c.sc.Reported(a.score)
 			}
 		}
 

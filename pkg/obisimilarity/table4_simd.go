@@ -1,24 +1,24 @@
 //go:build goexperiment.simd
 
-package obiclust
+package obisimilarity
 
 import "simd"
 
-// commonWords is the upper bound sumaclust uses for the number of 4-mers
-// shared by two sequences: the sum of the minima of the counters, plus the
-// minimum of the two overflows.
+// commonWords is the upper bound used for the number of 4-mers shared by two
+// sequences: the sum of the minima of the counters, plus the minimum of the
+// two overflows.
 //
 // The minima of the 256 counters are computed by vectors of bytes, and summed
 // in 16-bit lanes (at most 256*255 spread over the lanes, the lanes being at
 // least 8 in number, so that none of them overflows).
-func commonWords(t1, t2 *table4) int {
+func commonWords(t1, t2 *Table4) int {
 	var probe simd.Uint8s
 	vl := probe.Len()
 
 	acc := simd.BroadcastUint16s(0)
 	low := simd.BroadcastUint16s(0x00FF)
-	for i := 0; i < len(t1.count); i += vl {
-		m := simd.LoadUint8s(t1.count[i:]).Min(simd.LoadUint8s(t2.count[i:])).ReshapeToUint16s()
+	for i := 0; i < len(t1.Count); i += vl {
+		m := simd.LoadUint8s(t1.Count[i:]).Min(simd.LoadUint8s(t2.Count[i:])).ReshapeToUint16s()
 		acc = acc.Add(m.And(low)).Add(m.ShiftAllRight(8))
 	}
 
@@ -31,5 +31,5 @@ func commonWords(t1, t2 *table4) int {
 	for _, v := range lanes[:sums.Len()] {
 		total += int(v)
 	}
-	return total + min(t1.overflow, t2.overflow)
+	return total + min(t1.Overflow, t2.Overflow)
 }
