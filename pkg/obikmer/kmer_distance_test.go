@@ -110,3 +110,62 @@ func BenchmarkKmerLCSScalar21(b *testing.B) { benchBatch(b, 21, kmerLCSBatchScal
 func BenchmarkKmerLCSBatch21(b *testing.B)  { benchBatch(b, 21, kmerLCSBatch) }
 func BenchmarkKmerLCSScalar11(b *testing.B) { benchBatch(b, 11, kmerLCSBatchScalar) }
 func BenchmarkKmerLCSBatch11(b *testing.B)  { benchBatch(b, 11, kmerLCSBatch) }
+
+func TestKmerLCSPartnersMatchesReference(t *testing.T) {
+	rng := rand.New(rand.NewSource(6))
+	for _, k := range []int{1, 5, 21, 31} {
+		for _, n := range []int{0, 1, 7, 8, 9, 50} {
+			partners := make([]uint64, n)
+			for i := range partners {
+				partners[i] = randomKmer(rng, k)
+			}
+			prep := NewKmerLCSPartners(partners, k)
+			out := make([]KmerLCSResult, n)
+			for q := 0; q < 3; q++ { // reuse the same preparation for several queries
+				query := randomKmer(rng, k)
+				if !prep.Align(query, out) {
+					t.Fatalf("k=%d n=%d: Align refused", k, n)
+				}
+				for i, p := range partners {
+					if want := KmerLCS(query, p, k); out[i] != want {
+						t.Fatalf("k=%d n=%d partner %d: got %+v, want %+v", k, n, i, out[i], want)
+					}
+				}
+			}
+		}
+	}
+	if NewKmerLCSPartners(nil, 0) != nil || NewKmerLCSPartners(nil, 32) != nil {
+		t.Fatal("invalid k must give nil")
+	}
+}
+
+// All-pairs scenario: many queries against the same partners.
+func benchAllPairs(b *testing.B, k int, prepared bool) {
+	rng := rand.New(rand.NewSource(7))
+	partners := make([]uint64, 1024)
+	for i := range partners {
+		partners[i] = randomKmer(rng, k)
+	}
+	queries := make([]uint64, 64)
+	for i := range queries {
+		queries[i] = randomKmer(rng, k)
+	}
+	out := make([]KmerLCSResult, len(partners))
+	prep := NewKmerLCSPartners(partners, k)
+	b.ResetTimer()
+	for b.Loop() {
+		for _, q := range queries {
+			if prepared {
+				prep.Align(q, out)
+			} else {
+				KmerLCSBatch(q, partners, k, out)
+			}
+		}
+	}
+	b.ReportMetric(float64(b.Elapsed().Nanoseconds())/float64(b.N*len(partners)*len(queries)), "ns/pair")
+}
+
+func BenchmarkAllPairsBatch21(b *testing.B)    { benchAllPairs(b, 21, false) }
+func BenchmarkAllPairsPrepared21(b *testing.B) { benchAllPairs(b, 21, true) }
+func BenchmarkAllPairsBatch11(b *testing.B)    { benchAllPairs(b, 11, false) }
+func BenchmarkAllPairsPrepared11(b *testing.B) { benchAllPairs(b, 11, true) }

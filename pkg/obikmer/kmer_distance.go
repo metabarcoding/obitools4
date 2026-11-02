@@ -97,6 +97,38 @@ func KmerLCSBatch(query uint64, partners []uint64, k int, out []KmerLCSResult) b
 	return true
 }
 
+// KmerLCSPartners is a fixed set of k-mers prepared once to be aligned against
+// many queries with KmerLCSBatch-like speed, without redoing the per-call
+// reorganisation of the partners. It is read-only after creation and can be
+// shared between goroutines.
+type KmerLCSPartners struct {
+	prepared kmerLCSPrepared
+	n        int
+}
+
+// NewKmerLCSPartners prepares partners for repeated alignment.
+// It returns nil if k is not between 1 and 31. The slice is not copied when
+// built without GOEXPERIMENT=simd, so it must not be modified afterwards.
+func NewKmerLCSPartners(partners []uint64, k int) *KmerLCSPartners {
+	if k < 1 || k > 31 {
+		return nil
+	}
+	return &KmerLCSPartners{prepared: prepareKmerLCS(partners, k), n: len(partners)}
+}
+
+// Len returns the number of prepared partners.
+func (p *KmerLCSPartners) Len() int { return p.n }
+
+// Align computes the alignment of query against every prepared partner and
+// stores it in out. It returns false if out is shorter than Len().
+func (p *KmerLCSPartners) Align(query uint64, out []KmerLCSResult) bool {
+	if len(out) < p.n {
+		return false
+	}
+	p.prepared.align(query, out[:p.n])
+	return true
+}
+
 func kmerLCSBatchScalar(query uint64, partners []uint64, k int, out []KmerLCSResult) {
 	for i, p := range partners {
 		out[i] = KmerLCS(query, p, k)
