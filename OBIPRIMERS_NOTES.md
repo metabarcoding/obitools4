@@ -245,7 +245,8 @@ de la taxonomie et du FASTA non comprise ; ecoPrimers complet : 134 s et 350 s (
 **Bug existant repéré hors périmètre** : `go test -race` signale une course dans
 `obiutils/pipe.go` (`globalLockerCounter` est un `int` incrémenté et décrémenté depuis plusieurs
 goroutines, utilisé seulement pour des `log.Debugln`). Sans rapport avec obiprimers ; un `atomic.Int64`
-suffirait. Non modifié (code partagé) : à décider.
+suffisait. **Corrigé** (accord de l'utilisateur) : `globalLockerCounter` est un `atomic.Int64` dans
+`pkg/obiutils/pipe.go` ; le test de bout en bout passe désormais sous `-race`.
 
 Suite : étape 3 (recherche approchée des mots stricts, <= e substitutions, deux brins, dans exemples
 et contre-exemples), puis paires et indices.
