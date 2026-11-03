@@ -77,7 +77,9 @@ func (ps *primerSet) eachAmplicon(c *Corpus, p PairParams, index map[pairKey]int
 		}
 		var raw []byte
 		raw, sc.bases = c.bases(s, sc.bases)
-		ps.forEachOccurrenceIn(raw, ms, p, func(o occurrence) {
+		// Bs and Bd compare barcodes, which are identical only if their lengths
+		// are: the window of the targets is enough, whatever the role
+		ps.forEachOccurrenceIn(raw, ms, p, p.MinLength, p.MaxLength, func(o occurrence) {
 			if pi, ok := index[o.key]; ok {
 				visit(s, raw, o, pi)
 			}

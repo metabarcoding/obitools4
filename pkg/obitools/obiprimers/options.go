@@ -10,6 +10,8 @@ package obiprimers
 import (
 	"fmt"
 
+	log "github.com/sirupsen/logrus"
+
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obioptions"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiprimer"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obithermo"
@@ -26,6 +28,8 @@ var _primerLength = 18
 var _allowedMismatch = 3
 var _minLength = 0
 var _maxLength = 1000
+var _minLengthNeg = 0
+var _maxLengthNeg = 0
 var _threePrime = 0
 var _circular = false
 var _noMultiMatch = false
@@ -107,6 +111,16 @@ func OptionSet(options *getoptions.GetOpt) {
 		options.ArgName("LENGTH"),
 		options.Description("The amplified region, primers excluded, must be shorter than this."))
 
+	options.IntVar(&_minLengthNeg, "min-length-neg", _minLengthNeg,
+		options.ArgName("LENGTH"),
+		options.Description("In the counterexamples, any amplified region, primers excluded, longer than this "+
+			"counts as an amplification. 0 (default) means no lower bound: a short spurious product is a nuisance too."))
+
+	options.IntVar(&_maxLengthNeg, "max-length-neg", _maxLengthNeg,
+		options.ArgName("LENGTH"),
+		options.Description("In the counterexamples, any amplified region, primers excluded, shorter than this "+
+			"counts as an amplification. 0 (default) means the value of --max-length; a lower value is replaced by it."))
+
 	options.IntVar(&_threePrime, "three-prime", _threePrime,
 		options.Alias("3"),
 		options.ArgName("BASES"),
@@ -184,11 +198,21 @@ func CLISearchParams() (obiprimer.SearchParams, error) {
 		return obiprimer.SearchParams{}, err
 	}
 
+	maxLengthNeg := _maxLengthNeg
+	if maxLengthNeg != 0 && maxLengthNeg < _maxLength {
+		log.Warnf("--max-length-neg (%d) is lower than --max-length (%d): using %d", maxLengthNeg, _maxLength, _maxLength)
+	}
+	if maxLengthNeg < _maxLength {
+		maxLengthNeg = _maxLength
+	}
+
 	return obiprimer.SearchParams{
 		PrimerLength:   _primerLength,
 		MaxErrors:      _allowedMismatch,
 		MinLength:      _minLength,
 		MaxLength:      _maxLength,
+		MinLengthNeg:   _minLengthNeg,
+		MaxLengthNeg:   maxLengthNeg,
 		ThreePrime:     _threePrime,
 		StrictQuorum:   _strictQuorum,
 		Sensitivity:    _sensitivity,

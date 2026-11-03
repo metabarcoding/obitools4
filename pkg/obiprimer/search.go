@@ -13,6 +13,8 @@ type SearchParams struct {
 	MaxErrors      int     // -e: substitutions allowed between a primer and its sites (default 3)
 	MinLength      int     // -l: the amplicon (primers excluded) must be longer than this
 	MaxLength      int     // -L: and shorter than this
+	MinLengthNeg   int     // --min-length-neg: counterexample amplicons must be longer than this (0 = no bound)
+	MaxLengthNeg   int     // --max-length-neg: and shorter than this (0 or below MaxLength: MaxLength)
 	ThreePrime     int     // -3: number of 3' bases that must match exactly
 	StrictQuorum   float64 // -q: fraction of the examples containing the exact word (0.7)
 	Sensitivity    float64 // -s: fraction of the examples a primer must match (0.9)
@@ -108,6 +110,8 @@ func Search(c *Corpus, taxa *Taxa, p SearchParams) ([]PairStats, *SearchInfo, er
 		PrimerLength:   p.PrimerLength,
 		MinLength:      p.MinLength,
 		MaxLength:      p.MaxLength,
+		MinLengthNeg:   p.MinLengthNeg,
+		MaxLengthNeg:   p.MaxLengthNeg,
 		ThreePrime:     p.ThreePrime,
 		Sensitivity:    p.Sensitivity,
 		FalsePositive:  p.FalsePositive,

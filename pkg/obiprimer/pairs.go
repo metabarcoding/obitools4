@@ -14,9 +14,16 @@ import (
 // PairParams holds the parameters of the primer pair search, named after the
 // ecoPrimers options.
 type PairParams struct {
-	PrimerLength   int     // -O, word size
-	MinLength      int     // -l: the amplicon (primers excluded) must be longer than this
-	MaxLength      int     // -L: and shorter than this
+	PrimerLength int // -O, word size
+	MinLength    int // -l: the amplicon (primers excluded) must be longer than this
+	MaxLength    int // -L: and shorter than this
+	// MinLengthNeg and MaxLengthNeg bound the amplicons looked for in the
+	// counterexamples, where any amplification is unwanted, whatever its size:
+	// MinLengthNeg 0 means no lower bound (the primer sites cannot overlap, so
+	// an amplicon is at least 1 long), and a MaxLengthNeg lower than MaxLength
+	// (0 included) is raised to MaxLength.
+	MinLengthNeg   int
+	MaxLengthNeg   int
 	ThreePrime     int     // -3: number of 3' bases that must match exactly (0 = no constraint)
 	Sensitivity    float64 // -s: a primer must hit more than this fraction of the examples (0.9)
 	FalsePositive  float64 // -x: and less than this fraction of the counterexamples (0.1)
@@ -26,6 +33,15 @@ type PairParams struct {
 	HasReference   bool
 	AmpBudget      int    // amplicon records held at once in phase 2 (0 = DefaultAmpBudget)
 	Release        func() // see SearchParams.Release
+}
+
+// window returns the exclusive length bounds of the amplicons looked for in a
+// sequence of the given role.
+func (p PairParams) window(role Role) (minLen, maxLen int) {
+	if role == CounterExample {
+		return p.MinLengthNeg, max(p.MaxLengthNeg, p.MaxLength)
+	}
+	return p.MinLength, p.MaxLength
 }
 
 func (p PairParams) validate() error {
@@ -143,20 +159,22 @@ type occurrence struct {
 // length, good-primer and 3' constraints of ecoPrimers. buf is the buffer in
 // which the sequence is unpacked, if the corpus is packed.
 func (ps *primerSet) forEachOccurrence(c *Corpus, s int, buf []byte, p PairParams, fn func(occurrence)) []byte {
+	minLen, maxLen := p.window(c.Roles[s])
 	ms := ps.perSeq[s]
 	var raw []byte
 	if p.ThreePrime > 0 && len(ms) > 1 {
 		raw, buf = c.bases(s, buf)
 	}
-	ps.forEachOccurrenceIn(raw, ms, p, fn)
+	ps.forEachOccurrenceIn(raw, ms, p, minLen, maxLen, fn)
 	return buf
 }
 
 // forEachOccurrenceIn is forEachOccurrence over ms, the matches of a sequence
 // sorted by position (all of them, or only those of the primers of interest,
 // which yields the amplicons between these primers and none other), and raw its
-// bases, needed when the 3' bases must match exactly.
-func (ps *primerSet) forEachOccurrenceIn(raw []byte, ms []seqMatch, p PairParams, fn func(occurrence)) {
+// bases, needed when the 3' bases must match exactly. Only the amplicons whose
+// length is strictly between minLen and maxLen are reported.
+func (ps *primerSet) forEachOccurrenceIn(raw []byte, ms []seqMatch, p PairParams, minLen, maxLen int, fn func(occurrence)) {
 	lp := p.PrimerLength
 
 	for i := range ms {
@@ -166,11 +184,11 @@ func (ps *primerSet) forEachOccurrenceIn(raw []byte, ms []seqMatch, p PairParams
 				continue
 			}
 			length := dpos - lp
-			if length >= p.MaxLength {
+			if length >= maxLen {
 				break
 			}
 			up, down := ms[i], ms[j]
-			if length <= p.MinLength || !(ps.primers[up.primer].Good || ps.primers[down.primer].Good) {
+			if length <= minLen || !(ps.primers[up.primer].Good || ps.primers[down.primer].Good) {
 				continue
 			}
 
