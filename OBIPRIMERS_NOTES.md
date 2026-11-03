@@ -168,9 +168,7 @@ Validation :
 - Les 13 Tm imprimés par ecoPrimers sont retrouvés à +/- 0,05 °C près.
 
 Écarts volontaires avec ecoPrimers (à confirmer) :
-1. **273,15 au lieu de 273,0** : ecoPrimers calcule `Tm(K) - 273.0`. Les Tm de `obithermo` sont donc
-   0,15 °C plus bas que ceux d'ecoPrimers (le test tient compte du décalage). Une constante,
-   facile à inverser si la compatibilité exacte des colonnes Tm prime.
+1. **273,15 au lieu de 273,0** : ecoPrimers calcule `Tm(K) - 273.0`, `obithermo` utilise la valeur exacte 273,15 (Tm 0,15 °C plus bas ; le test tient compte du décalage). **Validé par l'utilisateur le 2026-11-03 : on garde 273,15.**
 2. **Owczarzy corrigé** : dans ecoPrimers, `gcContent` n'est jamais affecté (grep sur tout `src/`),
    donc `-m 2` lit de la mémoire non initialisée (`CNNParams` est sur la pile dans `main`).
    `obithermo` utilise la fraction GC de l'amorce. Non comparable au C ; testé par invariants
@@ -181,3 +179,35 @@ Validation :
 
 Pour plus tard : les k-mers d'obikmer sont codés A,C,G,T = 0..3, comme les tables de `obithermo` ;
 une variante `TmCode(uint64, k)` évitera le décodage quand le cœur appellera Tm par paire.
+
+## 9. Mode A, étape 2 : `obikmer.SeqKmerCounter` (2026-11-03)
+
+**Constat qui change le plan** : `KmerSetGroupBuilder` crée n x P écrivains `.skm` simultanés (un set par
+séquence, P >= 64). Pour 3 909 génomes cela fait > 250 000 fichiers ouverts : `KmerSetGroup` +
+`QuorumAtLeast` ne convient pas pour « dans combien de séquences ce k-mer apparaît ».
+
+**Solution** (enrichissement d'obikmer, pas de code local à obiprimers) : `pkg/obikmer/seqquorum.go` et
+`seqquorum_count.go`.
+- Phase 1, `AddSequence(id, seq, circular)` (concurrent) : super-kmers groupés par minimiseur, écrits avec
+  l'id de séquence dans **un seul** jeu de P fichiers (format `[uvarint id][uvarint len][2 bits/base]`).
+  Les bases non ACGTU découpent la séquence en segments : aucun k-mer ne contient d'ambiguïté (comme
+  le masque d'erreur d'ecoPrimers). Génome circulaire : on ajoute les k-1 premières bases.
+- Phase 2, `CountAtLeast(q)` : partitions traitées en parallèle (`obidefault.ParallelWorkers()`),
+  paires (k-mer canonique, id) triées, séquences distinctes comptées. Résultat en mémoire, trié
+  (il est filtré par le quorum : 255 mots pour Teleostei, 1 208 pour Cyprinidae chez ecoPrimers).
+- `SeqKmerCount.Repeated` reproduit le drapeau MULTIWORD d'ecoPrimers (k-mer présent plusieurs fois
+  dans une même séquence, les deux brins confondus), utile pour `-U` (pas de multi-match).
+- Mémoire de la phase 2 : ~16 octets par occurrence de k-mer des partitions en cours de traitement ;
+  P doit croître avec la taille totale des données.
+- Refactor neutre dans `skm_writer.go` / `skm_reader.go` : `appendPacked` et `unpackBases` extraits et
+  partagés avec le nouveau format (tests skm inchangés et verts).
+
+Tests (`seqquorum_test.go`) : oracle force brute indépendant (`EncodeCanonicalKmer` sur chaque fenêtre),
+6 configurations (k = 4, 7, 18, 31 ; linéaire/circulaire ; avec N/R ; m et P variés ; insertion
+concurrente ; motifs partagés sur les deux brins), plus cas des deux brins dans une même séquence,
+ambiguïtés + jonction circulaire, paramètres invalides. `go test ./pkg/obikmer/ -race` vert.
+Un bug trouvé par ces tests dans ma boucle de réduction (compteur de séquences) a été corrigé.
+
+Contrôle de bout en bout prévu (étape suivante) : `Strict primer count` d'ecoPrimers = **1 208**
+(Cyprinidae) et **255** (Teleostei) avec `-e 3 -3 2 -l 30 -L 150 -c`, k = 18, quorum 0,7 ; le calcul
+d'ecoPrimers est `floor(|E| x 0,7)` séquences (> longueur d'amorce).

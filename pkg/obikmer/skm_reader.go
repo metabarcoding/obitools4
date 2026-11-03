@@ -10,6 +10,16 @@ import (
 // decode2bit maps 2-bit codes back to nucleotide bytes.
 var decode2bit = [4]byte{'a', 'c', 'g', 't'}
 
+// unpackBases decodes the 2-bit packed bases in packed into dst (one lowercase
+// nucleotide per byte, len(dst) bases) and returns dst.
+func unpackBases(dst, packed []byte) []byte {
+	for i := range dst {
+		code := (packed[i/4] >> uint(6-(i%4)*2)) & 0x03
+		dst[i] = decode2bit[code]
+	}
+	return dst
+}
+
 // SkmReader reads super-kmers from a binary .skm file.
 type SkmReader struct {
 	r    *bufio.Reader
@@ -46,13 +56,7 @@ func (sr *SkmReader) Next() (SuperKmer, bool) {
 	}
 
 	// Decode to nucleotide bytes
-	seq := make([]byte, seqLen)
-	for i := 0; i < seqLen; i++ {
-		byteIdx := i / 4
-		bitPos := uint(6 - (i%4)*2)
-		code := (packed[byteIdx] >> bitPos) & 0x03
-		seq[i] = decode2bit[code]
-	}
+	seq := unpackBases(make([]byte, seqLen), packed)
 
 	return SuperKmer{
 		Sequence: seq,
