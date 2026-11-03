@@ -136,7 +136,7 @@ func TestPairsAgainstEcoPrimers(t *testing.T) {
 			for i, w := range sw.Words {
 				words[i] = w.Kmer
 			}
-			wm, err := matchApat(corpus, words, MatchParams{K: 18, MaxErrors: 3, Circular: true})
+			wm, err := MatchWords(corpus, words, MatchParams{K: 18, MaxErrors: 3, Circular: true})
 			if err != nil {
 				t.Fatal(err)
 			}

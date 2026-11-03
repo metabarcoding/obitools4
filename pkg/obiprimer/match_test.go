@@ -71,8 +71,8 @@ func TestMatchParamsValidation(t *testing.T) {
 		if _, err := matchNaive(c, nil, p); err == nil {
 			t.Errorf("%+v must be rejected", p)
 		}
-		if _, err := matchApat(c, nil, p); err == nil {
-			t.Errorf("%+v must be rejected by obiapat variant", p)
+		if _, err := MatchWords(c, nil, p); err == nil {
+			t.Errorf("%+v must be rejected by MatchWords", p)
 		}
 	}
 }
@@ -130,7 +130,7 @@ func TestMatchersAgreeWithReference(t *testing.T) {
 	for _, tc := range []struct {
 		k, e     int
 		circular bool
-	}{{18, 0, false}, {18, 1, true}, {18, 3, false}, {18, 3, true}, {12, 2, true}, {25, 4, false}} {
+	}{{18, 0, false}, {18, 1, true}, {18, 3, false}, {18, 3, true}, {12, 2, true}, {25, 4, false}, {18, 2, true}, {18, 5, false}, {31, 3, true}, {24, 3, false}, {9, 2, true}, {18, 6, true}, {18, 7, false}, {20, 8, true}, {12, 11, false}} {
 		t.Run(fmt.Sprintf("k%d-e%d-circ%v", tc.k, tc.e, tc.circular), func(t *testing.T) {
 			rng := rand.New(rand.NewSource(int64(tc.k*100 + tc.e)))
 			var wordStr []string
@@ -155,13 +155,13 @@ func TestMatchersAgreeWithReference(t *testing.T) {
 				t.Fatalf("test data too poor: only %d reference matches", total)
 			}
 
-			got, err := matchApat(c, words, p)
+			got, err := MatchWords(c, words, p)
 			if err != nil {
 				t.Fatal(err)
 			}
 			for i := range want {
 				if !reflect.DeepEqual(got[i].Matches, want[i].Matches) {
-					t.Fatalf("word %d: obiapat gives %v\nreference gives %v", i, got[i].Matches, want[i].Matches)
+					t.Fatalf("word %d: MatchWords gives %v\nreference gives %v", i, got[i].Matches, want[i].Matches)
 				}
 			}
 		})
@@ -200,7 +200,7 @@ func readEcoCounts(t *testing.T, path string) map[string]int {
 // strict word test). For every strict word, ecoPrimers logs the number of
 // example sequences in which the fuzzy search (-e 3, both strands, circular)
 // finds it; testdata/ecoprimers_*.words.tsv holds those numbers.
-func TestMatchApatAgainstEcoPrimers(t *testing.T) {
+func TestMatchWordsAgainstEcoPrimers(t *testing.T) {
 	dir := os.Getenv("OBIPRIMERS_TUTORIAL")
 	if dir == "" {
 		t.Skip("OBIPRIMERS_TUTORIAL not set")
@@ -244,7 +244,7 @@ func TestMatchApatAgainstEcoPrimers(t *testing.T) {
 			runtime.GC()
 			runtime.ReadMemStats(&before)
 			start := time.Now()
-			res, err := matchApat(corpus, words, MatchParams{K: 18, MaxErrors: 3, Circular: true})
+			res, err := MatchWords(corpus, words, MatchParams{K: 18, MaxErrors: 3, Circular: true})
 			elapsed := time.Since(start)
 			runtime.ReadMemStats(&after)
 			if err != nil {
@@ -258,10 +258,29 @@ func TestMatchApatAgainstEcoPrimers(t *testing.T) {
 			for _, s := range corpus.Seqs {
 				bases += s.Len()
 			}
-			t.Logf("obiapat: %d words x %d sequences (%.1f Mb) e=3 in %s (%.0f Mb/s per word-strand pass); %d matches; heap +%.0f MB, allocated %.0f MB",
-				len(words), len(corpus.Seqs), float64(bases)/1e6, elapsed.Round(time.Millisecond),
-				float64(bases)*float64(len(words))*2/1e6/elapsed.Seconds(), nm,
-				float64(after.HeapAlloc-before.HeapAlloc)/1e6, float64(after.TotalAlloc-before.TotalAlloc)/1e6)
+			t.Logf("%d words x %d sequences (%.1f Mb) e=3 in %s; %d matches; allocated %.0f MB",
+				len(words), len(corpus.Seqs), float64(bases)/1e6, elapsed.Round(time.Millisecond), nm,
+				float64(after.TotalAlloc-before.TotalAlloc)/1e6)
+
+			// On real sequences (with their ambiguity codes), the first ones must give
+			// exactly what the reference implementation gives.
+			sub := &Corpus{Seqs: corpus.Seqs[:40], Roles: corpus.Roles[:40]}
+			wantSub, err := matchNaive(sub, words, MatchParams{K: 18, MaxErrors: 3, Circular: true})
+			if err != nil {
+				t.Fatal(err)
+			}
+			gotSub, err := MatchWords(sub, words, MatchParams{K: 18, MaxErrors: 3, Circular: true})
+			if err != nil {
+				t.Fatal(err)
+			}
+			subMatches := 0
+			for i := range wantSub {
+				subMatches += len(wantSub[i].Matches)
+				if !reflect.DeepEqual(gotSub[i].Matches, wantSub[i].Matches) {
+					t.Fatalf("word %d differs from the reference on the first 40 sequences", i)
+				}
+			}
+			t.Logf("first 40 sequences identical to the reference (%d matches)", subMatches)
 
 			eco := readEcoCounts(t, filepath.Join("testdata", "ecoprimers_"+tc.name+".words.tsv"))
 			compared, differ := 0, 0

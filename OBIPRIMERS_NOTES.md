@@ -295,9 +295,9 @@ Variantes du protocole :
 2. Arrêt anticipé sous le quorum de 90 % : **écartée, mesuré inutile** (Teleostei : 255/255 mots
    conservés ; Cyprinidae : 1 201/1 208). Le parallélisme par séquence est déjà dans la variante 1.
 3. Bit-parallèle multi-mots en Go (SIMD) : **non écrite**. Cible : les ~74 % de balayage C.
-4. Index de voisinage / Aho-Corasick : écartée pour e >= 2 par le calcul (graines de 4 à 5 bases,
-   ~250 000 candidats par graine et par mot sur 65 Mb) ; `obicorazick` reste pertinent pour e = 0.
-   Non mesurée.
+4. Index de voisinage / Aho-Corasick : **j'avais écarté cette piste à tort** (voir section 13) : mon calcul
+   ne considérait que le découpage en e+1 morceaux (graines de 4 bases). Le découpage en deux moitiés avec
+   voisinage à distance floor(e/2) est très sélectif et a gagné.
 
 Décision en suspens : écrire la variante 3 maintenant, ou d'abord finir le pipeline (paires et indices)
 et profiler l'ensemble pour savoir si l'appariement domine encore.
@@ -357,3 +357,56 @@ contient la taxonomie NCBI complète).
 
 Non fait : option `-U` (pas de multi-match), séquence de référence `-R`, sets d'amorces, sortie CSV,
 CLI. Prochaine étape : variante 3 (bit-parallèle multi-mots, SIMD).
+
+## 13. Mode A, étape 5 : recherche approchée par index de graines (2026-11-03)
+
+**Correction d'une erreur de ma part.** À la section 11 j'écartais l'index de graines « par le calcul » :
+je n'avais considéré que le principe des tiroirs avec e+1 morceaux (graines de 4 à 5 bases, des
+centaines de milliers de candidats). C'était la mauvaise configuration. Avec **deux moitiés** de
+k/2 bases : une fenêtre à <= e = 2d+1 erreurs a au plus d = floor(e/2) erreurs dans l'une des deux
+moitiés. On indexe donc, pour chaque moitié de chaque motif (mot et son complément inverse), la moitié
+et ses voisins à distance d : 1 + 3L valeurs pour d = 1 (28 pour L = 9, dans 4^9 = 262 144). Sur du
+texte aléatoire cela fait ~0,0002 x W candidats par position et par moitié au lieu de 2W comparaisons.
+
+Code : `pkg/obiprimer/match_seed.go`, fonction exportée **`MatchWords`** (remplace la variante `obiapat`,
+supprimée). Détails : fenêtre glissante 2 bits/base ; bases ambiguës suivies par un masque (erreur
+sûre, aucune correspondance) ; fenêtres circulaires par extension de k-1 bases ; index direct pour les
+moitiés de <= 11 bases, haché sur 22 bits au-delà (k >= 24) ; doublons évités par recherche binaire
+dans la liste de l'index gauche ; vérification exacte par popcount sur le code complet.
+
+Justesse : égal à l'oracle `matchNaive` sur 11 configurations (k = 9, 12, 18, 24, 25, 31 ; e = 0 à 5 ;
+linéaire/circulaire ; séquences avec n, r, y, k, m ; cas hachés) ; égal à l'oracle sur les 40
+premières séquences réelles de chaque jeu ; égal à `obiapat` sur l'intégralité des 999 407
+occurrences de Teleostei ; et mêmes nombres de séquences que le journal d'ecoPrimers, mot par mot
+(1 207 et 255 mots, 0 différence).
+
+Mesures `e = 3`, M3 Max :
+
+| Jeu | obiapat 1 worker | MatchWords 1 worker | obiapat 16 workers | MatchWords 16 workers |
+|---|---|---|---|---|
+| Teleostei (255 mots, 65 Mb) | 113 s | **0,42 s** (x270) | 9,4 s | **43 ms** (x220) |
+| Cyprinidae (1 207 mots, 5,4 Mb) | non mesuré | non mesuré | 3,8 s | **13 ms** |
+
+Mémoire allouée par l'appariement : 120 Mo (Teleostei), 51 Mo (Cyprinidae), essentiellement le
+stockage des occurrences.
+
+**Profil du pipeline complet, 16 workers** (lecture du FASTA gz comprise, taxonomie exclue) :
+
+| Étape | Cyprinidae | Teleostei |
+|---|---|---|
+| lecture + sélection | 0,46 s | 0,42 s |
+| mots stricts | 0,10 s | 1,02 s |
+| recherche approchée | 0,014 s | 0,041 s |
+| paires + indices + Tm | 1,09 s | 1,20 s |
+| total | ~1,7 s | ~2,7 s |
+
+ecoPrimers complet : 134 s et 350 s, soit environ 80 et 130 fois plus. Les résultats complets restent
+ceux de la section 12 (Cyprinidae identique sur toutes les colonnes ; Teleostei : mêmes 407 paires,
+6 à -1 séquence).
+
+**Décision SIMD** : l'appariement ne représente plus que 1 % du temps, donc un noyau SIMD pour la
+recherche n'a plus d'objet. Les étapes restantes (lecture 0,4 s, mots stricts 1 s sur Teleostei,
+paires 1,1 s) sont celles à profiler si l'on veut aller plus loin ; le tri des paires (kmer, id)
+dans `SeqKmerCounter` et la phase 2 de `FindPairs` en sont les candidats.
+
+Non fait : option `-U`, `-R`, sets d'amorces, mode B, sortie CSV, CLI `obiprimers`.
