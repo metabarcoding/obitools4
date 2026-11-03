@@ -17,6 +17,12 @@ import (
 // tests need OBIPRIMERS_TUTORIAL, see TestStrictWordsAgainstEcoPrimers).
 func loadTutorial(t *testing.T) (*Corpus, *Taxa, *obitax.Taxonomy) {
 	t.Helper()
+	return loadTutorialWith(t, nil)
+}
+
+// loadTutorialWith is loadTutorial with counterexample clades (ecoPrimers -i).
+func loadTutorialWith(t *testing.T, ignore []string) (*Corpus, *Taxa, *obitax.Taxonomy) {
+	t.Helper()
 	dir := os.Getenv("OBIPRIMERS_TUTORIAL")
 	if dir == "" {
 		t.Skip("OBIPRIMERS_TUTORIAL not set")
@@ -33,7 +39,11 @@ func loadTutorial(t *testing.T) (*Corpus, *Taxa, *obitax.Taxonomy) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	corpus, err := LoadCorpus(seqs, Selection{Restrict: restrict})
+	sel := Selection{Restrict: restrict}
+	if sel.Ignore, err = BelongingTo(taxonomy, ignore); err != nil {
+		t.Fatal(err)
+	}
+	corpus, err := LoadCorpus(seqs, sel)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -171,5 +181,63 @@ func TestReferenceSitesAreRealSites(t *testing.T) {
 				t.Error("no pair amplifies the reference")
 			}
 		})
+	}
+}
+
+// ecoPrimers with counterexamples: -r 7953 -i 1 (the Cyprinidae against all the
+// other sequences of the database, 7497 counterexamples of 7387 species), -e 3
+// -3 2 -l 30 -L 150 -c. ecoPrimers needed 45 minutes and keeps 173 pairs.
+// testdata/ecoprimers_Cyprinidae_I1.pairs.tsv holds for each: the primers, the
+// good flags, the amplified example and counterexample sequences, the amplified
+// example and counterexample taxa, and the identified taxa.
+func TestCounterExamplesAgainstEcoPrimers(t *testing.T) {
+	corpus, taxa, _ := loadTutorialWith(t, []string{"1"})
+	if c := corpus.Counts(); c.Examples != 325 || c.CounterExamples != 7497 || taxa.CounterExamples != 7387 {
+		t.Fatalf("counts %+v, %d counterexample species (ecoPrimers: 325, 7497, 7387)", c, taxa.CounterExamples)
+	}
+	pairs, info, err := Search(corpus, taxa, tutorialParams(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("%+v", *info)
+
+	f, err := os.Open(filepath.Join("testdata", "ecoprimers_Cyprinidae_I1.pairs.tsv"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+	type row struct {
+		good string
+		v    [5]int
+	}
+	want := map[string]row{}
+	sc := bufio.NewScanner(f)
+	for sc.Scan() {
+		var p1, p2 string
+		var r row
+		if _, err := fmt.Sscanf(sc.Text(), "%s\t%s\t%s\t%d\t%d\t%d\t%d\t%d", &p1, &p2, &r.good,
+			&r.v[0], &r.v[1], &r.v[2], &r.v[3], &r.v[4]); err != nil {
+			t.Fatal(err)
+		}
+		want[p1+"/"+p2] = r
+	}
+
+	if len(pairs) != len(want) {
+		t.Errorf("%d pairs, ecoPrimers reports %d", len(pairs), len(want))
+	}
+	bad := 0
+	for _, g := range pairs {
+		w, ok := want[g.Primer1+"/"+g.Primer2]
+		if !ok {
+			t.Errorf("pair %s/%s is not in the ecoPrimers result", g.Primer1, g.Primer2)
+			continue
+		}
+		good := string("bG"[b2i(g.Good1)]) + string("bG"[b2i(g.Good2)])
+		got := [5]int{g.Examples, g.CounterExamples, g.ExampleTaxa, g.CounterTaxa, g.Identified}
+		if got != w.v || good != w.good {
+			if bad++; bad <= 3 {
+				t.Errorf("pair %s/%s: got %s %v, ecoPrimers %s %v", g.Primer1, g.Primer2, good, got, w.good, w.v)
+			}
+		}
 	}
 }

@@ -6,6 +6,7 @@ import (
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiprimer"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
 	log "github.com/sirupsen/logrus"
@@ -13,6 +14,16 @@ import (
 
 const noTaxonomyAdvice = "no taxonomy: use the -t option, or give sequences annotated with their " +
 	"taxonomic path (obiannotate --taxonomic-path)"
+
+// dropTaxonomicPath deletes the taxonomic path of the sequences. The primer
+// search needs the taxa of the sequences, which it reads from their taxid, not
+// their path: once the taxonomy is built, the paths (a list of about twenty
+// strings per sequence) only take memory.
+func dropTaxonomicPath(sequences obiiter.IBioSequence) obiiter.IBioSequence {
+	return sequences.MakeIWorker(obiseq.AnnotatorToSeqWorker(func(s *obiseq.BioSequence) {
+		s.DeleteAttribute(obiseq.TaxonomicPathAttribute)
+	}), false)
+}
 
 // embeddedTaxonomyInMemory extracts the taxonomy from the taxonomic paths
 // carried by the sequences, which it has to hold in memory since the iterator
@@ -22,6 +33,10 @@ func embeddedTaxonomyInMemory(sequences obiiter.IBioSequence) (obiiter.IBioSeque
 	taxonomy, err := slice.ExtractTaxonomy(nil, false)
 	if err != nil {
 		return obiiter.NilIBioSequence, nil, fmt.Errorf("%s: %w", noTaxonomyAdvice, err)
+	}
+	// every sequence is held in memory here: free the paths right away
+	for _, s := range slice {
+		s.DeleteAttribute(obiseq.TaxonomicPathAttribute)
 	}
 	return obiiter.IBatchOver(source, slice, obidefault.BatchSize()), taxonomy, nil
 }
@@ -39,7 +54,10 @@ func embeddedTaxonomyInMemory(sequences obiiter.IBioSequence) (obiiter.IBioSeque
 func readSequencesAndTaxonomy(args []string, given *obitax.Taxonomy) (obiiter.IBioSequence, *obitax.Taxonomy, error) {
 	if given != nil {
 		sequences, err := obiconvert.CLIReadBioSequences(args...)
-		return sequences, given, err
+		if err != nil {
+			return obiiter.NilIBioSequence, nil, err
+		}
+		return dropTaxonomicPath(sequences), given, nil
 	}
 
 	if len(args) == 0 {
@@ -66,7 +84,10 @@ func readSequencesAndTaxonomy(args []string, given *obitax.Taxonomy) (obiiter.IB
 	log.Infof("Embedded taxonomy extracted: %d taxa", taxonomy.Len())
 
 	sequences, err := obiconvert.CLIReadBioSequences(args...)
-	return sequences, taxonomy, err
+	if err != nil {
+		return obiiter.NilIBioSequence, nil, err
+	}
+	return dropTaxonomicPath(sequences), taxonomy, nil
 }
 
 // CLIReadSequencesAndTaxonomy reads the sequences of the command line and

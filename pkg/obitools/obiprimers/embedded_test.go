@@ -139,3 +139,59 @@ func TestPrimerPairsNeedsATaxonomy(t *testing.T) {
 		t.Error("a nil taxonomy must be refused")
 	}
 }
+
+// hasPath reports whether any sequence still carries its taxonomic path, and
+// how many still have their taxid (which the search needs).
+func scanSequences(it obiiter.IBioSequence) (withPath, withTaxid, total int) {
+	for it.Next() {
+		batch := it.Get()
+		for _, s := range batch.Slice() {
+			total++
+			if s.HasAttribute(obiseq.TaxonomicPathAttribute) {
+				withPath++
+			}
+			if s.HasAttribute("taxid") {
+				withTaxid++
+			}
+		}
+	}
+	return
+}
+
+// Once the taxonomy is built the paths only take memory: they are dropped,
+// whatever the way the taxonomy was obtained, and nothing else is.
+func TestTaxonomicPathIsDroppedAfterExtraction(t *testing.T) {
+	path := writeTemp(t, embeddedFasta)
+
+	sequences, _, err := readSequencesAndTaxonomy([]string{path}, nil) // two passes over a file
+	if err != nil {
+		t.Fatal(err)
+	}
+	if withPath, withTaxid, total := scanSequences(sequences); total != 3 || withPath != 0 || withTaxid != 3 {
+		t.Errorf("file: %d sequences, %d with a path left, %d with a taxid", total, withPath, withTaxid)
+	}
+
+	other := obitax.NewTaxonomy("other", "other", obitax.DefaultTaxidAlphabet) // -t given
+	sequences, _, err = readSequencesAndTaxonomy([]string{path}, other)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if withPath, _, total := scanSequences(sequences); total != 3 || withPath != 0 {
+		t.Errorf("with -t: %d sequences, %d with a path left", total, withPath)
+	}
+
+	var slice obiseq.BioSequenceSlice // standard input
+	for _, id := range []string{"a", "b"} {
+		seq := obiseq.NewBioSequence(id, []byte("acgtacgt"), "")
+		seq.SetAttribute("taxid", "taxon:10 [X]@species")
+		seq.SetAttribute(obiseq.TaxonomicPathAttribute, []string{"taxon:1 [root]@no rank", "taxon:10 [X]@species"})
+		slice = append(slice, seq)
+	}
+	sequences, _, err = embeddedTaxonomyInMemory(obiiter.IBatchOver("stdin", slice, 10))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if withPath, withTaxid, total := scanSequences(sequences); total != 2 || withPath != 0 || withTaxid != 2 {
+		t.Errorf("stdin: %d sequences, %d with a path left, %d with a taxid", total, withPath, withTaxid)
+	}
+}
