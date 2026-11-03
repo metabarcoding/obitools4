@@ -140,9 +140,9 @@ func CLIPrimerPairs(sequences obiiter.IBioSequence, taxonomy *obitax.Taxonomy) (
 	}
 
 	counts := corpus.Counts()
-	log.Infof("%d example sequences (%d %s), %d counterexamples (%d %s), %d ignored",
+	log.Infof("%d example sequences (%d %s), %d counterexamples (%d %s), %d other sequences",
 		counts.Examples, taxa.ExampleTaxa, CLIRank(),
-		counts.CounterExamples, taxa.CounterExamples, CLIRank(), counts.Ignored)
+		counts.CounterExamples, taxa.CounterExamples, CLIRank(), counts.Others)
 
 	pairs, info, err := obiprimer.Search(corpus, taxa, params)
 	if info != nil {
@@ -153,8 +153,8 @@ func CLIPrimerPairs(sequences obiiter.IBioSequence, taxonomy *obitax.Taxonomy) (
 		}
 		log.Infof("%d approximate occurrences; %d conserved primers, %d good",
 			info.Matches, info.Pair.Primers, info.Pair.GoodPrimers)
-		log.Infof("%d candidate pairs, %d amplifying enough examples, %d retained",
-			info.Pair.CandidatePairs, info.Pair.RetainedPairs, len(pairs))
+		log.Infof("%d candidate pairs, %d amplifying enough examples, %d possibly specific enough, %d retained",
+			info.Pair.CandidatePairs, info.Pair.RetainedPairs, info.Pair.Candidates, len(pairs))
 	}
 	return pairs, err
 }

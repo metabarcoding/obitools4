@@ -14,9 +14,12 @@ import (
 type Role uint8
 
 const (
-	// Ignored sequences are not used at all.
-	Ignored Role = iota
-	// Example sequences are those the primers must amplify.
+	// Other sequences are non-targets: nothing is required of them, so they
+	// count neither in the sensitivity nor in the false positive quorums, but
+	// the amplicons they give are taken into account to decide whether a target
+	// is identified (see Bs and Bd).
+	Other Role = iota
+	// Example sequences are the targets: the primers must amplify them.
 	Example
 	// CounterExample sequences are those the primers must not amplify.
 	CounterExample
@@ -28,7 +31,7 @@ const (
 //   - a sequence is an Example when it belongs to Restrict (all sequences when
 //     Restrict is nil) and not to Except;
 //   - otherwise it is a CounterExample when it belongs to Ignore or to Except;
-//   - otherwise it is Ignored.
+//   - otherwise it is Other.
 //
 // Nil predicates mean "no such constraint".
 type Selection struct {
@@ -48,7 +51,7 @@ func (s Selection) Role(seq *obiseq.BioSequence) Role {
 	case inExcept, s.Ignore != nil && s.Ignore(seq):
 		return CounterExample
 	default:
-		return Ignored
+		return Other
 	}
 }
 

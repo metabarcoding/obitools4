@@ -59,7 +59,7 @@ func TestEmbeddedTaxonomyFromFiles(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if c := corpus.Counts(); c.Examples != 2 || c.Ignored != 1 {
+	if c := corpus.Counts(); c.Examples != 2 || c.Others != 1 {
 		t.Errorf("restricting to family 5: %+v", c)
 	}
 

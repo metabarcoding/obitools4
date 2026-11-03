@@ -18,9 +18,10 @@ var csvColumns = []string{
 	"examples", "counterexamples", // 11-12 sequences amplified
 	"yule",                                // 13
 	"example_taxa", "counterexample_taxa", // 14-15 taxa amplified
-	"bc",                                      // 16 coverage
-	"identified_taxa",                         // 17
-	"bs",                                      // 18 specificity
+	"bc",                                      // 16 coverage: target taxa amplified / target taxa
+	"identified_taxa",                         // 17 target taxa all of whose barcodes belong to them alone
+	"bs",                                      // 18 specificity: identified / amplified target taxa
+	"bd",                                      // barcode discrimination (new): share of the target barcodes leading to one taxon
 	"min_length", "max_length", "mean_length", // 19-21
 }
 
@@ -44,6 +45,7 @@ func pairRecord(index int, p obiprimer.PairStats) obiitercsv.CSVRecord {
 		"yule":         round(float64(p.Yule), 4),
 		"example_taxa": p.ExampleTaxa, "counterexample_taxa": p.CounterTaxa,
 		"bc": round(float64(p.Bc), 4), "identified_taxa": p.Identified, "bs": round(float64(p.Bs), 4),
+		"bd":         round(float64(p.Bd), 4),
 		"min_length": p.MinLen, "max_length": p.MaxLen, "mean_length": round(p.MeanLen, 2),
 	}
 	if p.RefLocation != "" {

@@ -221,6 +221,9 @@ func (ps *primerSet) countPairs(c *Corpus, p PairParams) map[pairKey]*pairAcc {
 			defer wg.Done()
 			acc := partial[w]
 			for s := range jobs {
+				if c.Roles[s] == Other {
+					continue // only the quorums are counted here
+				}
 				isExample := c.Roles[s] == Example
 				ps.forEachOccurrence(c, s, p, func(o occurrence) {
 					a := acc[o.key]

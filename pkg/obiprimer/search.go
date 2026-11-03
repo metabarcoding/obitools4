@@ -87,7 +87,7 @@ func Search(c *Corpus, taxa *Taxa, p SearchParams) ([]PairStats, *SearchInfo, er
 		return nil, info, err
 	}
 	if p.NoMultiMatch {
-		wm, info.MultiMatch = DropMultiMatch(wm)
+		wm, info.MultiMatch = DropMultiMatch(wm, c)
 	}
 	for _, w := range wm {
 		info.Matches += len(w.Matches)

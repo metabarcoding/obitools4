@@ -15,29 +15,32 @@ import (
 type Counts struct {
 	Examples        int
 	CounterExamples int
-	Ignored         int
+	Others          int
 }
 
-// Corpus is the set of sequences used by the primer search: the examples and
-// the counterexamples, in input order. Sequences with the Ignored role are not
-// kept (as in ecoPrimers), only counted.
+// Corpus is the set of sequences of the primer search, in input order, each
+// with its role: the examples (the targets), the counterexamples, and all the
+// other sequences, which are loaded as well since the amplicons they give
+// decide whether a target is identified.
 //
 // The primer search needs several passes over the sequences (words are
 // searched approximately in every one of them), so the corpus lives in memory.
 type Corpus struct {
-	Seqs    []*obiseq.BioSequence
-	Roles   []Role // Roles[i] is Example or CounterExample
-	Ignored int    // number of sequences dropped by the selection
+	Seqs  []*obiseq.BioSequence
+	Roles []Role // Roles[i] is the role of Seqs[i]
 }
 
 // Counts returns the number of sequences by role.
 func (c *Corpus) Counts() Counts {
-	n := Counts{Ignored: c.Ignored}
+	var n Counts
 	for _, r := range c.Roles {
-		if r == Example {
+		switch r {
+		case Example:
 			n.Examples++
-		} else {
+		case CounterExample:
 			n.CounterExamples++
+		default:
+			n.Others++
 		}
 	}
 	return n
@@ -49,31 +52,24 @@ type corpusEntry struct {
 	role         Role
 }
 
-// LoadCorpus reads every sequence of seqs, once, and keeps those selected as
-// examples or counterexamples. The order of the input is preserved whatever
+// LoadCorpus reads every sequence of seqs, once, and keeps all of them with the
+// role given by the selection. The order of the input is preserved whatever
 // the number of reader goroutines.
 func LoadCorpus(seqs obiiter.IBioSequence, sel Selection) (*Corpus, error) {
 	var mu sync.Mutex
 	var entries []corpusEntry
-	ignored := 0
 
 	consumer := func(it obiiter.IBioSequence, wg *sync.WaitGroup) {
 		defer wg.Done()
 		var local []corpusEntry
-		localIgnored := 0
 		for it.Next() {
 			batch := it.Get()
 			for i, seq := range batch.Slice() {
-				if role := sel.Role(seq); role == Ignored {
-					localIgnored++
-				} else {
-					local = append(local, corpusEntry{batch.Order(), i, seq, role})
-				}
+				local = append(local, corpusEntry{batch.Order(), i, seq, sel.Role(seq)})
 			}
 		}
 		mu.Lock()
 		entries = append(entries, local...)
-		ignored += localIgnored
 		mu.Unlock()
 	}
 
@@ -94,9 +90,8 @@ func LoadCorpus(seqs obiiter.IBioSequence, sel Selection) (*Corpus, error) {
 	})
 
 	c := &Corpus{
-		Seqs:    make([]*obiseq.BioSequence, len(entries)),
-		Roles:   make([]Role, len(entries)),
-		Ignored: ignored,
+		Seqs:  make([]*obiseq.BioSequence, len(entries)),
+		Roles: make([]Role, len(entries)),
 	}
 	for i, e := range entries {
 		c.Seqs[i], c.Roles[i] = e.seq, e.role

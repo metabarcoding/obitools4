@@ -138,7 +138,8 @@ func matchCorpus(c *Corpus, words []uint64, mk scannerMaker) []WordMatches {
 }
 
 // SequencesMatched returns, for the matches of one word, the number of
-// distinct example and counterexample sequences it occurs in.
+// distinct example and counterexample sequences it occurs in. The other
+// sequences are not counted.
 func (w WordMatches) SequencesMatched(c *Corpus) (examples, counterExamples int) {
 	last := ^uint32(0)
 	for _, m := range w.Matches {
@@ -146,9 +147,10 @@ func (w WordMatches) SequencesMatched(c *Corpus) (examples, counterExamples int)
 			continue
 		}
 		last = m.Seq
-		if c.Roles[m.Seq] == Example {
+		switch c.Roles[m.Seq] {
+		case Example:
 			examples++
-		} else {
+		case CounterExample:
 			counterExamples++
 		}
 	}

@@ -18,15 +18,16 @@ func DropRepeatedWords(words []obikmer.SeqKmerCount) (kept []obikmer.SeqKmerCoun
 }
 
 // DropMultiMatch removes the words having two or more approximate occurrences,
-// both strands counted, in at least one sequence of the corpus, whatever its
-// role. It is the second half of the ecoPrimers -U option: the primers that
-// can anneal at several places of a sequence are discarded.
-func DropMultiMatch(wm []WordMatches) (kept []WordMatches, dropped int) {
+// both strands counted, in at least one example or counterexample sequence. It
+// is the second half of the ecoPrimers -U option: the primers that can anneal
+// at several places of a sequence they must (or must not) amplify are
+// discarded. The other sequences are not considered.
+func DropMultiMatch(wm []WordMatches, c *Corpus) (kept []WordMatches, dropped int) {
 	kept = make([]WordMatches, 0, len(wm))
 	for _, w := range wm {
 		multi := false
 		for i := 1; i < len(w.Matches); i++ {
-			if w.Matches[i].Seq == w.Matches[i-1].Seq {
+			if w.Matches[i].Seq == w.Matches[i-1].Seq && c.Roles[w.Matches[i].Seq] != Other {
 				multi = true
 				break
 			}

@@ -74,9 +74,18 @@ func readEcoRows(t *testing.T, path string) []ecoRow {
 // Opt-in end-to-end comparison with the complete ecoPrimers result tables of
 // the tutorial: same parameters (-e 3 -3 2 -l 30 -L 150 -c, -r taxid).
 //
-// Cyprinidae is reproduced exactly: its 3448 pairs agree on every column
-// (primers, good flags, sequence and taxon counts, Bc, Bs, lengths, GC, Tm and
-// lowest Tm). Teleostei finds the same 407 pairs, and 6 of them count one
+// Bs and the number of identified taxa are NOT compared: obiprimers defines
+// them differently (a taxon is identified only if all its barcodes are its own,
+// and every amplified sequence counts, targets or not), so they are lower. The
+// specificity threshold is switched off so that the pairs ecoPrimers dropped
+// with its own Bs are still produced, and only the pairs of ecoPrimers are
+// checked. What is checked: that every pair of ecoPrimers is found, with the
+// same good flags, sequence and taxon counts, Yule, Bc, lengths, GC, Tm and
+// lowest Tm; and that identified taxa never exceed those of ecoPrimers' more
+// lenient rule on the same amplified sequences.
+//
+// Cyprinidae is reproduced exactly on these columns for its 3448 pairs.
+// Teleostei finds the same 407 pairs, and 6 of them count one
 // sequence less than ecoPrimers (NC_033548, whose downstream site is
 // NGGGGAGGCAAGTCGTAA). The 3' check of ecoPrimers reads an N through the
 // shift register of extractSite, where the code 4 of N spills on the next base
@@ -143,7 +152,7 @@ func TestPairsAgainstEcoPrimers(t *testing.T) {
 			lap("approximate search")
 			got, _, err := FindPairs(corpus, taxa, wm, PairParams{
 				PrimerLength: 18, MinLength: 30, MaxLength: 150, ThreePrime: 2,
-				Sensitivity: 0.9, FalsePositive: 0.1, MinSpecificity: 0.6, Circular: true,
+				Sensitivity: 0.9, FalsePositive: 0.1, MinSpecificity: 0, Circular: true,
 			}, obithermo.DefaultModel())
 			if err != nil {
 				t.Fatal(err)
@@ -186,7 +195,7 @@ func TestPairsAgainstEcoPrimers(t *testing.T) {
 				// amplicon (NC_033548) whose 3' primer site ends with an N. We reject it,
 				// so the counts can be exactly one lower and nothing else may differ.
 				lower := func(got, want int) bool { return got == want || got == want-1 }
-				diverges := g.Examples != w.in || g.ExampleTaxa != w.intaxa || g.Identified != w.well
+				diverges := g.Examples != w.in || g.ExampleTaxa != w.intaxa
 				if diverges {
 					divergent++
 				}
@@ -196,15 +205,15 @@ func TestPairsAgainstEcoPrimers(t *testing.T) {
 				if !lower(g.ExampleTaxa, w.intaxa) || g.CounterTaxa != w.outtax {
 					note("taxa", w, "got %d/%d want %d/%d", g.ExampleTaxa, g.CounterTaxa, w.intaxa, w.outtax)
 				}
-				if !lower(g.Identified, w.well) {
-					note("identified", w, "got %d want %d", g.Identified, w.well)
+				if !diverges && g.Identified > w.well {
+					note("identified", w, "got %d, more than the %d of ecoPrimers' lenient rule", g.Identified, w.well)
 				}
 				tol := 0.0006
 				if diverges {
 					tol = 0.0021
 				}
-				if !near(float64(g.Yule), w.yule, tol) || !near(float64(g.Bc), w.bc, tol) || !near(float64(g.Bs), w.bs, tol) {
-					note("indices", w, "yule/bc/bs got %.4f/%.4f/%.4f want %.3f/%.3f/%.3f", g.Yule, g.Bc, g.Bs, w.yule, w.bc, w.bs)
+				if !near(float64(g.Yule), w.yule, tol) || !near(float64(g.Bc), w.bc, tol) {
+					note("indices", w, "yule/bc got %.4f/%.4f want %.3f/%.3f", g.Yule, g.Bc, w.yule, w.bc)
 				}
 				if g.MinLen != w.mind || g.MaxLen != w.maxd || !near(g.MeanLen, w.avg, 0.006) {
 					note("lengths", w, "got %d/%d/%.2f want %d/%d/%.2f", g.MinLen, g.MaxLen, g.MeanLen, w.mind, w.maxd, w.avg)
@@ -220,16 +229,10 @@ func TestPairsAgainstEcoPrimers(t *testing.T) {
 					note("mintm", w, "got %.2f/%.2f want %.1f/%.1f", g.MinTm1+0.15, g.MinTm2+0.15, w.mtm1, w.mtm2)
 				}
 			}
-			t.Logf("missing from ours: %d; extra in ours: %d; mismatching fields: %v; pairs one sequence below ecoPrimers: %d",
+			t.Logf("missing from ours: %d; pairs of ours that ecoPrimers dropped with its Bs: %d; mismatching fields: %v; pairs one sequence below ecoPrimers: %d",
 				missing, len(byKey), bad, divergent)
 			if divergent != tc.divergent {
 				t.Errorf("%d pairs differ from ecoPrimers by one sequence, expected %d", divergent, tc.divergent)
-			}
-			for k := range byKey {
-				if len(byKey) > 0 {
-					t.Errorf("extra pair %s", k)
-				}
-				break
 			}
 		})
 	}

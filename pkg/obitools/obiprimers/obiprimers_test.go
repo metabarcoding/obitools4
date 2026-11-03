@@ -12,7 +12,7 @@ func samplePairs() []obiprimer.PairStats {
 		{
 			Primer1: "ACACCGCCCGTCACTCTC", Primer2: "CCAAGTGCACCTTCCGGT", Good1: true, Good2: false,
 			Examples: 3837, CounterExamples: 2, Yule: 0.98249996, ExampleTaxa: 3805, CounterTaxa: 1,
-			Bc: 0.98169, Identified: 2650, Bs: 0.69647, MinLen: 54, MaxLen: 140, MeanLen: 74.75123,
+			Bc: 0.98169, Identified: 2650, Bs: 0.69647, Bd: 0.90566, MinLen: 54, MaxLen: 140, MeanLen: 74.75123,
 			Tm1: 62.46, Tm2: 60.74, MinTm1: 36.81, MinTm2: math.NaN(), GC1: 12, GC2: 11,
 		},
 		{Primer1: "AAAA", Primer2: "TTTT", Tm1: math.NaN(), Tm2: math.NaN(), MinTm1: math.NaN(), MinTm2: math.NaN()},
@@ -42,8 +42,8 @@ func TestPairsToCSVIterator(t *testing.T) {
 	if r["index"] != 1 || r["primer1"] != "ACACCGCCCGTCACTCTC" || r["good1"] != true || r["good2"] != false {
 		t.Errorf("unexpected record %v", r)
 	}
-	if r["yule"] != 0.9825 || r["bc"] != 0.9817 || r["bs"] != 0.6965 || r["mean_length"] != 74.75 {
-		t.Errorf("indices are not rounded as expected: %v %v %v %v", r["yule"], r["bc"], r["bs"], r["mean_length"])
+	if r["yule"] != 0.9825 || r["bc"] != 0.9817 || r["bs"] != 0.6965 || r["bd"] != 0.9057 || r["mean_length"] != 74.75 {
+		t.Errorf("indices are not rounded as expected: %v %v %v %v %v", r["yule"], r["bc"], r["bs"], r["bd"], r["mean_length"])
 	}
 	if r["tm1"] != 62.5 || r["tm2"] != 60.7 || r["tm1_min"] != 36.8 {
 		t.Errorf("temperatures: %v %v %v", r["tm1"], r["tm2"], r["tm1_min"])

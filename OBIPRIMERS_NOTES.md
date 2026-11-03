@@ -3,6 +3,32 @@
 Ré-implémentation d'ecoPrimers dans obitools4. Ce fichier garde l'état des recherches,
 des mesures et de l'avancement. Dernière mise à jour : 2026-11-03.
 
+## État courant (à lire en premier)
+
+**Les trois indices de qualité d'une paire** (définitions en vigueur depuis la section 25 ; elles remplacent
+celles d'ecoPrimers, qui figurent encore dans les sections 1 à 18 comme historique) :
+
+| Indice | Définition |
+|---|---|
+| **Bc** | taxons cibles amplifiés / taxons cibles |
+| **Bs** | taxons cibles **identifiés** / taxons cibles amplifiés. Un taxon cible est identifié si **tous** ses barcodes ne sont portés que par lui, parmi **toutes** les séquences amplifiées par la paire (cibles, non-cibles, contre-exemples). Un barcode partagé rend mal identifiés **les deux** taxons. |
+| **Bd** (nouveau) | part des barcodes portés par les cibles qui mènent sans ambiguïté à **un seul** taxon |
+
+Un seul calcul pour chacun, aucune variante ni colonne alternative. Les trois sont dans **toutes** les sorties
+CSV (`bc`, `bs`, `bd`). Toute séquence sans taxon au rang choisi est un taxon anonyme distinct (un barcode
+qu'elle partage est ambigu). Le seuil `-T` reste à 0,6.
+
+**Rôles des séquences** : cible (exemple), contre-exemple, **non-cible** (toutes les autres, qui ne sont plus
+écartées : elles sont chargées en mémoire et leurs amplicons comptent dans Bs et Bd, pas dans les quorums).
+Pour exclure des séquences de l'analyse, filtrer l'entrée en amont (`obigrep`).
+
+**Conséquence pour les validations contre ecoPrimers (sections 12, 15, 17, 18)** : elles restent exactes sur
+ce qu'elles comparent (paires, drapeaux good, séquences et taxons amplifiés, Bc, Yule, longueurs, GC, Tm), mais
+**Bs et `identifiés` ne sont plus comparables** à ceux d'ecoPrimers ; ils sont validés autrement (section 25).
+
+Sections en attente de décision de l'utilisateur : voie B (21.4), statistique de Tm (22.3-a), nombre de partitions
+automatique, mémoire, tests shell, documentation, test `-e 0` (ecoPrimers n'avait pas terminé).
+
 Sources de référence :
 - Article : `~/Sync/travail/__MOI__/ecoprimers/Documents/Riaz et al. 2011 ... .pdf` (NAR 39:e145)
 - Code C : `~/Sync/travail/__MOI__/ecoprimers/src/` (binaire : `/usr/local/bin/ecoprimers`)
@@ -1027,7 +1053,7 @@ qui le portent. Un taxon cible t est **bien identifié** s'il existe un amplicon
 3. **Séquence non cible sans taxon au rang choisi** : la traiter comme un taxon anonyme distinct (prudent :
    elle empêche l'identification d'une cible qui partage son amplicon) ou l'ignorer ? Je propose le premier.
 
-## 24. Règle d'identification de Bs, et l'indice BD (2026-11-03)
+## 24. Règle d'identification de Bs, et l'indice Bd (2026-11-03)
 
 **Statut : spécification, aucun code.** Complète et corrige la section 23.
 
@@ -1038,10 +1064,10 @@ qui le portent. Un taxon cible t est **bien identifié** s'il existe un amplicon
 2. **Règle d'identification : une espèce est bien identifiée si TOUS ses barcodes ne sont associés qu'à
    elle.** Dès qu'un barcode est partagé entre deux espèces, **les deux** sont mal identifiées. Cette règle
    remplace celle de 23.4-2 (que j'avais proposé de garder).
-3. **Nouvel indice BD (barcode discrimination)** proposé par l'utilisateur : la part des **barcodes** qui
+3. **Nouvel indice Bd (barcode discrimination)** proposé par l'utilisateur : la part des **barcodes** qui
    mènent sans ambiguïté à une espèce cible. Exemple de l'utilisateur : A porte les barcodes A1 et A2, B porte
    A2 et B1. Ni A ni B ne sont bien identifiées (elles partagent A2), mais **A1 et B1 sont discriminants**, A2
-   ne l'est pas. Ici Bs = 0/2 et BD = 2/3. (Avec la règle d'ecoPrimers on aurait Bs = 2/2.)
+   ne l'est pas. Ici Bs = 0/2 et Bd = 2/3. (Avec la règle d'ecoPrimers on aurait Bs = 2/2.)
 
 ### 24.2 ecoPrimers applique bien l'autre règle (vérifié)
 
@@ -1051,7 +1077,7 @@ taxon est donc compté **dès qu'un** de ses amplicons lui est propre. Confirmat
 cette règle reproduit toutes les colonnes `identifiés` et Bs de plus de vingt tables d'ecoPrimers (sections
 12, 15, 17, 18) ; (ii) recalcul indépendant avec `obipcr` + Python sur la paire n° 1 de `Cyprinidae.ecoprimers`
 (320 amplicons chez `obipcr`, 318 chez ecoPrimers qui impose `-3 2`) : règle « au moins un barcode unique »
-239/312 = 0,766 contre 237/310 = 0,765 pour ecoPrimers ; règle « tous uniques » 238/312 = 0,763 ; **BD =
+239/312 = 0,766 contre 237/310 = 0,765 pour ecoPrimers ; règle « tous uniques » 238/312 = 0,763 ; **Bd =
 240/265 = 0,906** (265 barcodes distincts). **Portée de (ii)** : sur cette paire les deux règles ne diffèrent
 que d'**une** espèce sur 312, car les données du tutoriel ont un génome par espèce (4 espèces seulement
 portent plusieurs barcodes) : ce recalcul ne tranche pas entre les règles à lui seul ; la preuve est le code
@@ -1064,7 +1090,7 @@ et les tables reproduites.
 - **Non-régression** : la règle changeant, l'égalité des colonnes `identifiés` et Bs avec ecoPrimers n'est plus
   atteignable, même avec un corpus restreint aux cibles et contre-exemples (annule la proposition de 23.3 sur ce
   point). Toutes les autres colonnes (séquences, taxons, Bc, Yule, longueurs, GC, Tm, drapeaux good) restent
-  comparables. Pour Bs, BD et `identifiés` : tests sur cas synthétiques (dont l'exemple A1/A2/B1 ci-dessus) et
+  comparables. Pour Bs, Bd et `identifiés` : tests sur cas synthétiques (dont l'exemple A1/A2/B1 ci-dessus) et
   **vérification indépendante** par `obipcr` + script, comme en 24.2, sur des paires choisies.
 - **Seuil `-T` (spécificité minimale, 0,6 par défaut)** : calibré sur l'ancienne règle, plus indulgente. Le
   défaut sera peut-être à revoir ; à décider avec la spécification complète.
@@ -1074,9 +1100,108 @@ et les tables reproduites.
 
 ### 24.4 Questions restantes
 
-1. **BD** : l'inclure dans la sortie, et dans le classement ? Dénominateur proposé : les barcodes distincts
+1. **Bd** : l'inclure dans la sortie, et dans le classement ? Dénominateur proposé : les barcodes distincts
    portés par **au moins une cible** (un barcode propre à une non-cible ne « mène » pas à une espèce cible) ;
    comptage par barcode distinct, sans pondération par le nombre de séquences.
 2. **Non-cible sans taxon au rang choisi** (23.4-3, proposé, non confirmé) : taxon anonyme distinct, donc
    barcode partagé = ambigu (prudent).
 3. **`-T` par défaut** (voir ci-dessus).
+
+## 25. Mise en œuvre des nouvelles définitions de Bc, Bs et Bd (2026-11-03)
+
+Demande de l'utilisateur : mettre à jour le document et `obiprimers` pour que les trois indices soient calculés
+selon leur nouvelle définition. Décisions prises dans la discussion (sections 23 et 24) : un seul Bs ; tout en
+mémoire ; dénominateur de Bs = cibles amplifiées ; identification par **tous** les barcodes ; Bd ajouté et
+présent dans toutes les sorties ; non-cible sans taxon = taxon anonyme (ambigu) ; seuil `-T` inchangé (0,6).
+
+### 25.1 Changements de code
+
+- **Rôles** (`roles.go`, `corpus.go`) : `Ignored` devient `Other` (non-cible) ; `LoadCorpus` conserve toutes les
+  séquences ; `Counts.Others` ; `Corpus.Ignored` supprimé. Les quorums (sensibilité, faux positifs) ne
+  comptent que cibles et contre-exemples (`SequencesMatched`, phase 1 de `countPairs` qui saute les
+  non-cibles) ; `Taxa.CounterExamples` ne compte que les contre-exemples.
+- **`-U`** (`DropMultiMatch(wm, corpus)`) : ne considère que les cibles et contre-exemples, comme ecoPrimers
+  (la validation de la section 15 reste exacte) ; une non-cible qui contient deux sites ne fait pas écarter le mot.
+- **`resolution.go`** (nouveau) : `resolve` calcule, à partir des amplicons d'une paire, les cibles
+  amplifiées, les contre-exemples amplifiés, les taxons identifiés, les barcodes portés par les cibles et ceux
+  qui sont discriminants. États de barcode : ambigu / anonyme / porté par une cible. `lenientIdentified` est
+  la borne supérieure décrite en 25.2.
+- **`amplicons.go`** (nouveau) : enregistrement d'un amplicon par séquence amplifiée, **tout rôle confondu**
+  (hash 64 bits, paire, taxon, rôle ; 24 octets). Chaque worker trie ses enregistrements par paire ; ils ne
+  sont ni copiés ni regroupés (l'ancienne version les dupliquait) ; les Tm minimales sont des minima par
+  worker, fusionnés à la fin ; l'évaluation des paires est parallèle.
+- **`pairs_eval.go`** : `PairStats.Bd` ; `evaluate` utilise `resolve`.
+- **Sortie CSV** : colonne `bd` ajoutée juste après `bs`. L'aide de `-r` décrit les non-cibles ; le journal
+  indique « other sequences » et le nombre de paires qui passent la borne de Bs.
+
+### 25.2 Un problème de mémoire, et son remède exact
+
+Première version : le pic de mémoire passait de **1,36 Go à 5,6 Go** (Cyprinidae, `-r 7953`), car la phase 2
+gardait l'amplicon de toutes les séquences amplifiées pour les 25 699 paires qui passent les quorums, alors que
+seules ~3 400 seront retenues.
+
+Remède, **sans aucun changement de résultat** : un taxon identifié par la nouvelle règle (tous ses barcodes
+propres parmi tout ce qui est amplifié) l'est aussi par la règle d'ecoPrimers (au moins un barcode propre parmi les
+seules cibles), avec le même nombre de taxons cibles amplifiés. Donc `Bs_nouveau <= Bs_borne`. La phase 2 est
+scindée : **2a**, amplicons des seules cibles (comme avant : Tm minimales, sites de la référence, borne de
+Bs) ; **2b**, amplicons de toutes les séquences **pour les seules paires dont la borne atteint le seuil**.
+Propriété vérifiée par `TestLenientIdentifiedIsAnUpperBound` (3 000 tirages aléatoires avec taxons anonymes,
+plusieurs rôles, enregistrements en plusieurs morceaux).
+
+Résultat (Cyprinidae `-r 7953 -e 3 --three-prime 2 -l 30 -L 150 -c`, M3 Max) :
+
+| | pic mémoire | temps | paires |
+|---|---|---|---|
+| avant (ancienne définition) | 1 363 Mo | 6,5 s | 3 448 |
+| nouvelle définition, sans élagage | 5 604 Mo | non mesuré | 3 247 |
+| **nouvelle définition, avec élagage** | **1 217 à 1 372 Mo** | **4,7 à 5,3 s** | **3 247** |
+
+42 506 paires candidates, 25 699 passent les quorums, **3 448** passent la borne (c'est exactement le nombre de
+l'ancienne table), **3 247** passent le seuil avec la nouvelle règle. Mise en garde : avec `-T 0` aucune paire
+n'est élaguée et la mémoire remonte (les tests à `-T 0` atteignent ~5,5 Go de tas, taxonomie NCBI comprise).
+Piste non engagée si cela devient gênant : traiter les paires survivantes par lots bornés.
+
+### 25.3 Valeurs : ancienne contre nouvelle règle (Cyprinidae, paire n° 1)
+
+`CAAGCCAGCCACATAACC` / `TTCTATAACGGGTGATGC` : 310 taxons cibles amplifiés ; ecoPrimers : 237 identifiés,
+Bs = 0,7645 ; obiprimers : **233** identifiés, **Bs = 0,7516**, **Bd = 0,8935**. L'écart est faible ici car la
+base a un génome par espèce (peu de barcodes multiples) et que les non-cibles amplifiées par cette paire sont
+peu nombreuses à partager un barcode ; il sera plus marqué sur des bases à plusieurs séquences par espèce.
+
+### 25.4 Validation indépendante (obipcr + Python, base entière, `--three-prime 0`, `-T 0`)
+
+Six paires (les deux premières de la sortie et quatre tirées au hasard), amplicons obtenus par `obipcr -e 3
+-l 31 -L 149 -c` sur les **7 822 séquences**, Bs et Bd recalculés par un script qui n'utilise aucun code d'obiprimers.
+Les paires amplifient de 3 202 à 7 796 séquences de la base entière (dont des milliers de non-cibles) :
+
+| Paire | taxons cibles amplifiés | identifiés | Bs | Bd |
+|---|---|---|---|---|
+| 1 | 314 = 314 | 237 = 237 | 0,755 = 0,755 | 0,892 = 0,892 |
+| 2 | 314 = 314 | 237 = 237 | 0,755 = 0,755 | 0,892 = 0,892 |
+| 3 | 314 = 314 | 5 = 5 | 0,016 = 0,016 | 0,357 = 0,357 |
+| 4 | 315 = 315 | 14 = 14 | 0,044 = 0,044 | 14/27 = 0,5185 = 0,5185 |
+| 5 | 315 = 315 | 7 = 7 | 0,022 = 0,022 | 0,233 = 0,233 |
+| 6 | 314 = 314 | 15 = 15 | 0,048 = 0,048 | 0,469 = 0,469 |
+
+(format « obipcr+Python = obiprimers ».) Accord exact sur les 6 paires. Ces paires ont des Bs très bas : avec
+tout ce qui est amplifié, un amplicon est vite partagé avec une non-cible. C'est l'effet recherché de la nouvelle
+définition. Limite : la paire de référence 1 reste un cas où les deux règles diffèrent peu ; le cas qui les
+distingue nettement (plusieurs barcodes par espèce) est couvert par les tests synthétiques (exemple A1/A2/B1 de
+l'utilisateur, non-cible et contre-exemple partageant un barcode, taxon anonyme).
+
+### 25.5 Tests
+
+Nouveaux : `resolution_test.go` (exemple de l'utilisateur : Bs = 0/2, Bd = 2/3 ; tous uniques ; même espèce
+plusieurs séquences ; non-cible ou contre-exemple partageant un barcode ; comptes de taxons ; taxon anonyme ;
+ordre et découpage en morceaux ; borne supérieure) ; `TestNonTargetSharingABarcodeLowersBsAndBd` (de bout en
+bout : une non-cible copie l'amplicon d'une cible, Bs = 7/8 et Bd = 7/8, quorums inchangés ; puis deux
+contre-exemples amplifiés : 6 identifiés, Bd = 0,75, taxons contre-exemples = 2).
+
+Adaptés : les tests opt-in contre ecoPrimers (`TestPairsAgainstEcoPrimers`, `TestNoMultiMatchAgainstEcoPrimers`,
+`TestCounterExamplesAgainstEcoPrimers`) désactivent le seuil de spécificité, vérifient que **chaque paire
+d'ecoPrimers est trouvée** avec les mêmes comptes de séquences et de taxons, Yule, Bc, longueurs, GC, Tm et
+drapeaux good, et que les taxons identifiés ne dépassent jamais ceux de la règle indulgente d'ecoPrimers. Résultats :
+Cyprinidae 3 448 paires, 0 absente, 0 champ différent ; Teleostei 407, 0 absente, 6 à une séquence de moins
+(l'artefact du `N`, section 12) ; `-U` 1 366, 0 absente, 0 différente ; contre-exemples 173, 0 absente, 0
+différente. obiprimers produit en plus 22 251 (Cyprinidae) et 2 389 (Teleostei) paires qu'ecoPrimers avait écartées avec son
+propre Bs.

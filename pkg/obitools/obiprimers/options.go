@@ -51,9 +51,11 @@ func OptionSet(options *getoptions.GetOpt) {
 	options.StringSliceVar(&_restrict, "restrict-to-taxon", 1, 1,
 		options.Alias("r"),
 		options.ArgName("TAXID"),
-		options.Description("Restricts the examples (the sequences the primers must amplify) to the "+
-			"sequences belonging to this taxon. Other sequences are ignored, unless they are "+
-			"counterexamples. Can be repeated. Without this option every sequence is an example."))
+		options.Description("Restricts the examples (the targets, the sequences the primers must amplify) to "+
+			"the sequences belonging to this taxon. The other sequences are non-targets: they are not "+
+			"required to be amplified, but the barcodes they give are taken into account to decide "+
+			"whether a target is identified (Bs, Bd). Can be repeated. Without this option every "+
+			"sequence is an example."))
 
 	options.StringSliceVar(&_ignore, "ignore-taxon", 1, 1,
 		options.Alias("i"),

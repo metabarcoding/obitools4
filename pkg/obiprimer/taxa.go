@@ -58,9 +58,10 @@ func (c *Corpus) AssignTaxa(taxonomy *obitax.Taxonomy, rank string) (*Taxa, erro
 			t.nodes = append(t.nodes, taxon)
 		}
 		t.Of[i] = id
-		if c.Roles[i] == Example {
+		switch c.Roles[i] {
+		case Example:
 			exSeen[id] = struct{}{}
-		} else {
+		case CounterExample:
 			coSeen[id] = struct{}{}
 		}
 	}

@@ -21,11 +21,12 @@ type PairStats struct {
 	CounterExamples int
 	Yule            float32 // Examples/|E| - CounterExamples/|C|
 
-	ExampleTaxa    int     // taxa amplified among the examples
-	CounterTaxa    int     // taxa amplified among the counterexamples
-	Bc             float32 // coverage: ExampleTaxa over all the example taxa
-	Identified     int     // example taxa with an amplicon no other taxon shares
+	ExampleTaxa    int     // target taxa amplified
+	CounterTaxa    int     // counterexample taxa amplified
+	Bc             float32 // coverage: ExampleTaxa over all the target taxa
+	Identified     int     // target taxa all of whose barcodes belong to them alone (see resolution.go)
 	Bs             float32 // specificity: Identified over ExampleTaxa
+	Bd             float32 // barcode discrimination: share of the target barcodes leading to a single taxon
 	MinLen, MaxLen int
 	MeanLen        float64
 	Tm1, Tm2       float64 // melting temperature of the primers against their perfect target
@@ -50,44 +51,7 @@ type PairInfo struct {
 	GoodPrimers    int // of which good ones
 	CandidatePairs int // pairs delimiting an amplicon in at least one sequence
 	RetainedPairs  int // pairs passing the sensitivity and false positive quorums, before the Bs filter
-}
-
-// ampRecord is an amplicon of a retained pair, in one sequence.
-type ampRecord struct {
-	pair     int32
-	seq      int32
-	hash     uint64
-	tm1, tm2 float32 // NaN when unavailable
-}
-
-// refHit is an amplicon of a retained pair on the reference sequence.
-type refHit struct {
-	up, down seqMatch
-	swapped  bool
-}
-
-// ampHash hashes the amplicon between the two primers read from the side of
-// the first primer of the pair (reverse complemented when the upstream match is
-// the second primer), so that identical amplicons give the same value
-// whatever their strand. Non ACGT bases hash as a fifth symbol.
-func ampHash(raw []byte, from, to int, reverse bool) uint64 {
-	const prime = 1099511628211
-	h := uint64(14695981039346656037) ^ uint64(to-from)
-	h *= prime
-	if !reverse {
-		for _, b := range raw[from:to] {
-			h = (h ^ uint64(baseCode[b])) * prime
-		}
-		return h
-	}
-	for i := to - 1; i >= from; i-- {
-		c := baseCode[raw[i]]
-		if c < 4 {
-			c = 3 - c
-		}
-		h = (h ^ uint64(c)) * prime
-	}
-	return h
+	Candidates     int // of which pairs whose Bs upper bound reaches the threshold (their amplicons are gathered in full)
 }
 
 // FindPairs searches the primer pairs from the approximate occurrences of the
@@ -145,24 +109,63 @@ func FindPairs(c *Corpus, taxa *Taxa, wm []WordMatches, p PairParams, model *obi
 		index[k] = int32(i)
 	}
 
-	// Phase 2: the amplicons of the retained pairs only.
-	records, refs := ps.collectAmplicons(c, p, index, model)
-	byPair := make([][]ampRecord, len(kept))
-	for _, r := range records {
-		byPair[r.pair] = append(byPair[r.pair], r)
+	// Phase 2a: the amplicons of the target sequences, which give the melting
+	// temperatures, the reference sites, and an upper bound of Bs. It is cheap
+	// and rejects most pairs on the specificity threshold.
+	first := ps.collectAmplicons(c, taxa, p, index, collectOptions{examplesOnly: true, model: model, reference: true})
+	var survivors []int // indices in kept
+	for i := range kept {
+		targets, identified := lenientIdentified(first.pair(int32(i))...)
+		if targets > 0 && float32(identified)/float32(targets) >= float32(p.MinSpecificity) {
+			survivors = append(survivors, i)
+		}
 	}
+	first.parts = nil
+	info.Candidates = len(survivors)
+
+	// Phase 2b: for the survivors only, the amplicons of every sequence, whatever
+	// its role: they decide which target taxa are identified.
+	index2 := make(map[pairKey]int32, len(survivors))
+	for j, i := range survivors {
+		index2[kept[i]] = int32(j)
+	}
+	amps := ps.collectAmplicons(c, taxa, p, index2, collectOptions{})
+
+	results := make([]*PairStats, len(survivors))
+	jobs := make(chan int)
+	var wg sync.WaitGroup
+	for range obidefault.ParallelWorkers() {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for j := range jobs {
+				i := survivors[j]
+				k := kept[i]
+				st, ok := ps.evaluate(taxa, counts, p, k, acc[k], resolve(amps.pair(int32(j))...),
+					first.minTm1[i], first.minTm2[i], model)
+				if !ok {
+					continue
+				}
+				if h, found := first.refs[int32(i)]; found {
+					// evaluate orders the primers by string; the amplicon is read from the first one
+					s1 := orientedWord(ps.primers[k.p1].Word, p.PrimerLength, k.a1)
+					s2 := orientedWord(ps.primers[k.p2].Word, p.PrimerLength, k.a2)
+					st.RefLocation, st.RefAmplicon = referenceSites(c.Seqs[p.Reference].Sequence(), h, p, s2 < s1)
+				}
+				results[j] = &st
+			}
+		}()
+	}
+	for j := range survivors {
+		jobs <- j
+	}
+	close(jobs)
+	wg.Wait()
 
 	var out []PairStats
-	for i, k := range kept {
-		st, ok := ps.evaluate(c, taxa, p, k, acc[k], byPair[i], model)
-		if ok {
-			if h, found := refs[int32(i)]; found {
-				// evaluate orders the primers by string; the amplicon is read from the first one
-				s1 := orientedWord(ps.primers[k.p1].Word, p.PrimerLength, k.a1)
-				s2 := orientedWord(ps.primers[k.p2].Word, p.PrimerLength, k.a2)
-				st.RefLocation, st.RefAmplicon = referenceSites(c.Seqs[p.Reference].Sequence(), h, p, s2 < s1)
-			}
-			out = append(out, st)
+	for _, st := range results {
+		if st != nil {
+			out = append(out, *st)
 		}
 	}
 	slices.SortFunc(out, func(a, b PairStats) int {
@@ -181,174 +184,21 @@ func boolCmp(a, b bool) int {
 	return 1
 }
 
-// collectAmplicons gathers, in parallel, one record per amplicon of a retained pair.
-func (ps *primerSet) collectAmplicons(c *Corpus, p PairParams, index map[pairKey]int32, model *obithermo.Model) ([]ampRecord, map[int32]refHit) {
-	lp := p.PrimerLength
-	workers := obidefault.ParallelWorkers()
-	parts := make([][]ampRecord, workers)
+// evaluate puts the indices of one retained pair in a PairStats. It reports
+// false when the pair must be dropped (no target taxon amplified, or
+// specificity under the threshold).
+func (ps *primerSet) evaluate(taxa *Taxa, counts Counts, p PairParams, k pairKey, a *pairAcc, res resolution,
+	minTm1, minTm2 float32, model *obithermo.Model) (PairStats, bool) {
 
-	// oriented[primer][0] is the reverse complement of the word, [1] the word itself.
-	oriented := make([][2][]byte, len(ps.primers))
-	for i, pr := range ps.primers {
-		oriented[i][0] = []byte(orientedWord(pr.Word, lp, false))
-		oriented[i][1] = []byte(orientedWord(pr.Word, lp, true))
-	}
-	nan := float32(math.NaN())
-
-	// The reference sequence is handled by a single worker, which is the only
-	// writer of refs; the first (leftmost) amplicon of each pair is kept.
-	refs := map[int32]refHit{}
-
-	jobs := make(chan int)
-	var wg sync.WaitGroup
-	for w := range workers {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			var site1, site2 [32]byte
-			for s := range jobs {
-				raw := c.Seqs[s].Sequence()
-				n := len(raw)
-				isExample := c.Roles[s] == Example
-				ps.forEachOccurrence(c, s, p, func(o occurrence) {
-					pi, ok := index[o.key]
-					if !ok {
-						return
-					}
-					if p.HasReference && s == p.Reference {
-						if old, seen := refs[pi]; !seen || o.up.pos < old.up.pos {
-							refs[pi] = refHit{o.up, o.down, o.swapped}
-						}
-					}
-					rec := ampRecord{pair: pi, seq: int32(s), tm1: nan, tm2: nan}
-					if isExample {
-						rec.hash = ampHash(raw, int(o.up.pos)+lp, int(o.down.pos), o.swapped)
-						if model != nil {
-							fp := oriented[o.up.primer][b2i(!o.up.reverse)]
-							rp := oriented[o.down.primer][b2i(o.down.reverse)]
-							fsite, rsite := site1[:lp], site2[:lp]
-							okF := windowAsIs(fsite, raw, int(o.up.pos), n, p.Circular)
-							okR := windowRevComp(rsite, raw, int(o.down.pos), n, p.Circular)
-							tmF, tmR := nan, nan
-							if okF {
-								if t, err := model.Tm(fp, fsite); err == nil {
-									tmF = float32(t)
-								}
-							}
-							if okR {
-								if t, err := model.Tm(rp, rsite); err == nil {
-									tmR = float32(t)
-								}
-							}
-							if o.swapped {
-								rec.tm1, rec.tm2 = tmR, tmF
-							} else {
-								rec.tm1, rec.tm2 = tmF, tmR
-							}
-						}
-					}
-					parts[w] = append(parts[w], rec)
-				})
-			}
-		}()
-	}
-	for s := range c.Seqs {
-		jobs <- s
-	}
-	close(jobs)
-	wg.Wait()
-
-	var all []ampRecord
-	for _, part := range parts {
-		all = append(all, part...)
-	}
-	return all, refs
-}
-
-func b2i(b bool) int {
-	if b {
-		return 1
-	}
-	return 0
-}
-
-const upper = "ACGT"
-
-// windowAsIs copies the len(dst) bases at pos as upper-case ACGT; it reports
-// false if one of them is not A, C, G or T.
-func windowAsIs(dst, raw []byte, pos, n int, circular bool) bool {
-	for t := range dst {
-		i := pos + t
-		if circular {
-			i %= n
-		}
-		c := baseCode[raw[i]]
-		if c > 3 {
-			return false
-		}
-		dst[t] = upper[c]
-	}
-	return true
-}
-
-// windowRevComp writes the reverse complement of the len(dst) bases at pos.
-func windowRevComp(dst, raw []byte, pos, n int, circular bool) bool {
-	l := len(dst)
-	for t := range dst {
-		i := pos + l - 1 - t
-		if circular {
-			i %= n
-		}
-		c := baseCode[raw[i]]
-		if c > 3 {
-			return false
-		}
-		dst[t] = upper[3-c]
-	}
-	return true
-}
-
-// evaluate computes the indices of one retained pair. It reports false when the
-// pair must be dropped (no taxon amplified, or specificity under the threshold).
-func (ps *primerSet) evaluate(c *Corpus, taxa *Taxa, p PairParams, k pairKey, a *pairAcc,
-	recs []ampRecord, model *obithermo.Model) (PairStats, bool) {
-
-	exTaxa := map[int32]struct{}{}
-	coTaxa := map[int32]struct{}{}
-	ampTaxon := map[uint64]int32{} // amplicon -> its taxon, or -2 when shared
-	for _, r := range recs {
-		t := taxa.Of[r.seq]
-		if t < 0 {
-			continue
-		}
-		if c.Roles[r.seq] != Example {
-			coTaxa[t] = struct{}{}
-			continue
-		}
-		exTaxa[t] = struct{}{}
-		if prev, seen := ampTaxon[r.hash]; !seen {
-			ampTaxon[r.hash] = t
-		} else if prev != t {
-			ampTaxon[r.hash] = -2
-		}
-	}
-	if len(exTaxa) == 0 {
+	if res.targetTaxa == 0 {
 		return PairStats{}, false
 	}
-	identified := map[int32]struct{}{}
-	for _, t := range ampTaxon {
-		if t >= 0 {
-			identified[t] = struct{}{}
-		}
-	}
-
-	counts := c.Counts()
 	st := PairStats{
 		Examples:        int(a.examples),
 		CounterExamples: int(a.counters),
-		ExampleTaxa:     len(exTaxa),
-		CounterTaxa:     len(coTaxa),
-		Identified:      len(identified),
+		ExampleTaxa:     res.targetTaxa,
+		CounterTaxa:     res.counterTaxa,
+		Identified:      res.identified,
 		MinLen:          int(a.minLen),
 		MaxLen:          int(a.maxLen),
 		MeanLen:         float64(a.sumLen) / float64(a.amplicons),
@@ -359,11 +209,20 @@ func (ps *primerSet) evaluate(c *Corpus, taxa *Taxa, p PairParams, k pairKey, a 
 		qfp = float32(a.counters) / float32(counts.CounterExamples)
 	}
 	st.Yule = q - qfp
-	st.Bc = float32(st.ExampleTaxa) / float32(taxa.ExampleTaxa)
-	st.Bs = float32(st.Identified) / float32(st.ExampleTaxa)
+	st.Bc = float32(res.targetTaxa) / float32(taxa.ExampleTaxa)
+	st.Bs = float32(res.identified) / float32(res.targetTaxa)
+	st.Bd = float32(res.discriminant) / float32(res.barcodes)
 	if st.Bs < float32(p.MinSpecificity) {
 		return PairStats{}, false
 	}
+
+	return ps.finish(st, p, k, a, minTm1, minTm2, model), true
+}
+
+// finish adds the primers, their composition and melting temperatures, and puts
+// the two primers in string order.
+func (ps *primerSet) finish(st PairStats, p PairParams, k pairKey, a *pairAcc,
+	minTm1, minTm2 float32, model *obithermo.Model) PairStats {
 
 	lp := p.PrimerLength
 	st.Primer1 = orientedWord(ps.primers[k.p1].Word, lp, k.a1)
@@ -375,23 +234,11 @@ func (ps *primerSet) evaluate(c *Corpus, taxa *Taxa, p PairParams, k pairKey, a 
 	if model != nil {
 		st.Tm1, _ = model.SelfTm([]byte(st.Primer1))
 		st.Tm2, _ = model.SelfTm([]byte(st.Primer2))
-		m1, m2 := float32(math.Inf(1)), float32(math.Inf(1))
-		for _, r := range recs {
-			if c.Roles[r.seq] != Example {
-				continue
-			}
-			if r.tm1 == r.tm1 { // not NaN
-				m1 = min(m1, r.tm1)
-			}
-			if r.tm2 == r.tm2 {
-				m2 = min(m2, r.tm2)
-			}
+		if !math.IsInf(float64(minTm1), 1) {
+			st.MinTm1 = float64(minTm1)
 		}
-		if !math.IsInf(float64(m1), 1) {
-			st.MinTm1 = float64(m1)
-		}
-		if !math.IsInf(float64(m2), 1) {
-			st.MinTm2 = float64(m2)
+		if !math.IsInf(float64(minTm2), 1) {
+			st.MinTm2 = float64(minTm2)
 		}
 	}
 
@@ -402,5 +249,5 @@ func (ps *primerSet) evaluate(c *Corpus, taxa *Taxa, p PairParams, k pairKey, a 
 		st.Tm1, st.Tm2 = st.Tm2, st.Tm1
 		st.MinTm1, st.MinTm2 = st.MinTm2, st.MinTm1
 	}
-	return st, true
+	return st
 }

@@ -74,7 +74,7 @@ func TestSearchFindsThePlantedPair(t *testing.T) {
 	if p == nil {
 		t.Fatalf("the planted pair was not found among %d pairs (%+v)", len(pairs), info)
 	}
-	if p.Examples != 8 || p.MinLen != 40 || p.MaxLen != 40 || p.Bs != 1 || p.Bc != 1 {
+	if p.Examples != 8 || p.MinLen != 40 || p.MaxLen != 40 || p.Bs != 1 || p.Bc != 1 || p.Bd != 1 {
 		t.Errorf("unexpected indices %+v", *p)
 	}
 	if p.RefLocation != "" {
@@ -183,9 +183,11 @@ func TestDropMultiMatch(t *testing.T) {
 		{Word: 2, Matches: []Match{{0, 5, 0, false}, {0, 50, 1, false}}}, // two in sequence 0
 		{Word: 3, Matches: []Match{{2, 5, 0, false}, {2, 5, 0, true}}},   // both strands of one sequence
 		{Word: 4}, // no match at all: kept
+		{Word: 5, Matches: []Match{{3, 1, 0, false}, {3, 8, 0, false}}}, // twice, but in a non-target: kept
 	}
-	kept, dropped := DropMultiMatch(wm)
-	if dropped != 2 || len(kept) != 2 || kept[0].Word != 1 || kept[1].Word != 4 {
+	c := corpusOf([]Role{Example, Example, CounterExample, Other}, "a", "a", "a", "a")
+	kept, dropped := DropMultiMatch(wm, c)
+	if dropped != 2 || len(kept) != 3 || kept[0].Word != 1 || kept[1].Word != 4 || kept[2].Word != 5 {
 		t.Errorf("kept %v, dropped %d", kept, dropped)
 	}
 }
@@ -195,5 +197,78 @@ func TestDropRepeatedWords(t *testing.T) {
 	kept, dropped := DropRepeatedWords(words)
 	if dropped != 1 || len(kept) != 2 || kept[0].Kmer != 1 || kept[1].Kmer != 3 {
 		t.Errorf("kept %v, dropped %d", kept, dropped)
+	}
+}
+
+// A non-target amplified with the very barcode of a target taxon makes this
+// target badly identified, although its barcode is unique among the targets;
+// it counts in neither the sensitivity nor the false positive quorums.
+func TestNonTargetSharingABarcodeLowersBsAndBd(t *testing.T) {
+	s := newSynthetic(8, -1, 11)
+
+	alone, _, err := Search(s.corpus, s.taxa, s.params())
+	if err != nil {
+		t.Fatal(err)
+	}
+	p0 := find(alone, s.f, s.r)
+	if p0 == nil || p0.Bs != 1 || p0.Bd != 1 {
+		t.Fatalf("without the non-target: %+v", p0)
+	}
+
+	// a copy of sequence 3, of another taxon, that is not a target
+	copy3 := append([]byte(nil), s.corpus.Seqs[3].Sequence()...)
+	s.corpus.Seqs = append(s.corpus.Seqs, obiseq.NewBioSequence("other", copy3, ""))
+	s.corpus.Roles = append(s.corpus.Roles, Other)
+	s.taxa.Of = append(s.taxa.Of, 100)
+
+	pairs, _, err := Search(s.corpus, s.taxa, s.params())
+	if err != nil {
+		t.Fatal(err)
+	}
+	p := find(pairs, s.f, s.r)
+	if p == nil {
+		t.Fatal("the planted pair must still be found")
+	}
+	if p.Examples != 8 || p.ExampleTaxa != 8 || p.Bc != 1 {
+		t.Errorf("the non-target must not change the quorums nor Bc: %+v", *p)
+	}
+	if p.Identified != 7 || p.Bs != 0.875 {
+		t.Errorf("target 3 shares its barcode with the non-target: identified %d, Bs %v (want 7, 0.875)", p.Identified, p.Bs)
+	}
+	if p.Bd != 0.875 {
+		t.Errorf("Bd %v, want 7 discriminant barcodes of 8", p.Bd)
+	}
+	if p.CounterTaxa != 0 || p.CounterExamples != 0 {
+		t.Errorf("a non-target is not a counterexample: %+v", *p)
+	}
+
+	// Now counterexamples: two copies (of sequences 3 and 5) that the pair amplifies and
+	// one unrelated sequence that it does not. 2 of 3 amplified is under the 0.9 quorum.
+	s.corpus.Roles[len(s.corpus.Roles)-1] = CounterExample
+	copy5 := append([]byte(nil), s.corpus.Seqs[5].Sequence()...)
+	s.corpus.Seqs = append(s.corpus.Seqs, obiseq.NewBioSequence("counter5", copy5, ""))
+	s.corpus.Roles = append(s.corpus.Roles, CounterExample)
+	s.taxa.Of = append(s.taxa.Of, 101)
+	unrelated := []byte(strings.ToLower(randDNA(rand.New(rand.NewSource(5)), 300)))
+	s.corpus.Seqs = append(s.corpus.Seqs, obiseq.NewBioSequence("unrelated", unrelated, ""))
+	s.corpus.Roles = append(s.corpus.Roles, CounterExample)
+	s.taxa.Of = append(s.taxa.Of, 102)
+
+	pq := s.params()
+	pq.FalsePositive = 0.9
+	pairs, _, err = Search(s.corpus, s.taxa, pq)
+	if err != nil {
+		t.Fatal(err)
+	}
+	pc := find(pairs, s.f, s.r)
+	if pc == nil {
+		t.Fatal("the pair amplifies 2 of 3 counterexamples (< 0.9): it must be retained")
+	}
+	if pc.CounterExamples != 2 || pc.CounterTaxa != 2 {
+		t.Errorf("counterexamples amplified %d (taxa %d), want 2 and 2", pc.CounterExamples, pc.CounterTaxa)
+	}
+	if pc.Identified != 6 || pc.Bd != 0.75 {
+		t.Errorf("targets 3 and 5 share their barcode with a counterexample: identified %d (want 6), Bd %v (want 0.75)",
+			pc.Identified, pc.Bd)
 	}
 }

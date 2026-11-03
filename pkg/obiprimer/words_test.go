@@ -27,18 +27,18 @@ func TestSelectionRoles(t *testing.T) {
 	}{
 		{"nothing set: everything is an example",
 			Selection{}, map[string]Role{"r1": Example, "x1": Example, "i1": Example, "o1": Example}},
-		{"restrict only: the rest is dropped",
+		{"restrict only: the rest are non-targets",
 			Selection{Restrict: idPrefix("r")},
-			map[string]Role{"r1": Example, "x1": Ignored, "i1": Ignored, "o1": Ignored}},
+			map[string]Role{"r1": Example, "x1": Other, "i1": Other, "o1": Other}},
 		{"restrict + ignore",
 			Selection{Restrict: idPrefix("r"), Ignore: idPrefix("i")},
-			map[string]Role{"r1": Example, "i1": CounterExample, "o1": Ignored}},
+			map[string]Role{"r1": Example, "i1": CounterExample, "o1": Other}},
 		{"exception inside restrict becomes a counterexample",
 			Selection{Restrict: idPrefix("r").Or(idPrefix("x")), Except: idPrefix("x")},
-			map[string]Role{"r1": Example, "x1": CounterExample, "o1": Ignored}},
+			map[string]Role{"r1": Example, "x1": CounterExample, "o1": Other}},
 		{"example wins over ignore when both match",
 			Selection{Restrict: idPrefix("r"), Ignore: idPrefix("r").Or(idPrefix("i"))},
-			map[string]Role{"r1": Example, "i1": CounterExample, "o1": Ignored}},
+			map[string]Role{"r1": Example, "i1": CounterExample, "o1": Other}},
 	}
 	for _, tc := range cases {
 		for id, want := range tc.want {
@@ -116,7 +116,7 @@ func TestFindStrictWords(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if res.Counts != (Counts{Examples: 10, CounterExamples: 1, Ignored: 1}) {
+	if res.Counts != (Counts{Examples: 10, CounterExamples: 1, Others: 1}) {
 		t.Fatalf("counts = %+v", res.Counts)
 	}
 	if res.MinSequences != 7 {
