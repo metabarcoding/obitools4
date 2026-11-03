@@ -211,3 +211,41 @@ Un bug trouvé par ces tests dans ma boucle de réduction (compteur de séquence
 Contrôle de bout en bout prévu (étape suivante) : `Strict primer count` d'ecoPrimers = **1 208**
 (Cyprinidae) et **255** (Teleostei) avec `-e 3 -3 2 -l 30 -L 150 -c`, k = 18, quorum 0,7 ; le calcul
 d'ecoPrimers est `floor(|E| x 0,7)` séquences (> longueur d'amorce).
+
+## 10. Mode A, étape 2b : mots stricts de bout en bout (2026-11-03)
+
+Code : `pkg/obiprimer/roles.go` (`Role`, `Selection`, `BelongingTo`) et `words.go` (`WordSearch`,
+`StrictWords`, `FindStrictWords`, `MinSequences`). Tests : `words_test.go`.
+
+- `Selection` reproduit `-r` (restrict), `-i` (ignore) et `-E` (exception) d'ecoPrimers, vérifié sur les
+  quatre cas du tableau de la section 4 : exemple = dans Restrict et hors Except ; sinon contre-exemple si
+  dans Ignore ou Except ; sinon ignoré. Prédicats construits avec `obiseq.IsSubCladeOf` (existant).
+- `FindStrictWords` lit les séquences une fois (consommateurs parallèles via `Split()`), indexe les
+  exemples dans un `SeqKmerCounter`, puis `CountAtLeast(floor(exemples x quorum))`. Quorum calculé avec
+  une petite tolérance (10 x 0,7 = 7) au lieu de la multiplication en float32 du C.
+
+**Contrôle contre ecoPrimers** (test opt-in : `OBIPRIMERS_TUTORIAL=<dossier du tutoriel> go test ./pkg/obiprimer/`) :
+
+| Jeu | Exemples | Quorum | Mots obiprimers | Mots ecoPrimers |
+|---|---|---|---|---|
+| Teleostei | 3 909 | 2 736 | **255** | 255 (identique) |
+| Cyprinidae | 325 | 227 | **1 207** | 1 208 |
+
+Écart de Cyprinidae : un mot en plus chez ecoPrimers, `TTTATGAAAACAAATAAA`. Comparaison des deux listes
+complètes (le journal d'ecoPrimers imprime ses 1 208 mots) : tous les autres mots sont identiques. Un
+comptage par force brute (deux brins, jonction circulaire) trouve ce mot dans **225** séquences sur 325,
+sous le quorum de 227 : ecoPrimers le garde à tort. Le mécanisme exact n'est pas établi (`merge.c` élague
+avec `remainingSeq + count >= quorum` pendant une fusion en place avec file d'attente ; non investigué
+plus loin). Impact : ce mot n'apparaît dans **aucune** des 3 448 paires finales de
+`Cyprinidae.ecoprimers`. Le test fige 1 207 avec cette explication.
+
+Mesure : étape « mots stricts » seule, 0,5 s (Cyprinidae) et 1,1 s (Teleostei) sur cette machine, lecture
+de la taxonomie et du FASTA non comprise ; ecoPrimers complet : 134 s et 350 s (non décomposé par étape).
+
+**Bug existant repéré hors périmètre** : `go test -race` signale une course dans
+`obiutils/pipe.go` (`globalLockerCounter` est un `int` incrémenté et décrémenté depuis plusieurs
+goroutines, utilisé seulement pour des `log.Debugln`). Sans rapport avec obiprimers ; un `atomic.Int64`
+suffirait. Non modifié (code partagé) : à décider.
+
+Suite : étape 3 (recherche approchée des mots stricts, <= e substitutions, deux brins, dans exemples
+et contre-exemples), puis paires et indices.
