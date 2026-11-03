@@ -46,7 +46,7 @@ var _partitions = 256
 func OptionSet(options *getoptions.GetOpt) {
 	obiconvert.InputOptionSet(options)
 	obiconvert.OutputModeOptionSet(options, true)
-	obioptions.LoadTaxonomyOptionSet(options, true, false)
+	obioptions.LoadTaxonomyOptionSet(options, false, false)
 
 	options.StringSliceVar(&_restrict, "restrict-to-taxon", 1, 1,
 		options.Alias("r"),

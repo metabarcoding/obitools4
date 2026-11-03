@@ -423,7 +423,7 @@ Options (noms alignés sur `obipcr` et `obigrep` quand ils existent) :
 
 | Option | ecoPrimers | Défaut |
 |---|---|---|
-| `-t/--taxonomy` (obligatoire) | `-d` (base) | |
+| `-t/--taxonomy` (facultatif depuis la section 16) | `-d` (base) | taxonomie embarquée |
 | `-r/--restrict-to-taxon` | `-r` | tous les exemples |
 | `-i/--ignore-taxon` | `-i` | |
 | `-E/--exception-taxon` | `-E` | |
@@ -532,3 +532,57 @@ l'intention, pas le C :
 - `obiutils` : `TestSetString` est **instable** (échoue ~4 fois sur 6) : `Set.String()` parcourt une map Go
   et le test attend `[1 2 3]`. Sans rapport avec obiprimers, non corrigé.
 - Un défaut de mon test précédent (`TestCLISearchParams` laissait `_salt = -1`) a été corrigé.
+
+## 16. Taxonomie embarquée dans les séquences (2026-11-03)
+
+Demande : comme `obitag`, `obiprimers` doit pouvoir se passer de `-t` quand les séquences ont été annotées
+avec `obiannotate --taxonomic-path` (attribut `taxonomic_path` : liste « code:taxid [nom]@rang » de la racine
+au taxon).
+
+Code : `pkg/obitools/obiprimers/obiprimers.go` (`readSequencesAndTaxonomy`, `embeddedTaxonomyInMemory`,
+`CLIReadSequencesAndTaxonomy`), `-t` rendu facultatif (`LoadTaxonomyOptionSet(options, false, false)`),
+`CLIPrimerPairs(sequences, taxonomy)` reçoit désormais la taxonomie. Réutilise l'existant :
+`IBioSequence.ExtractTaxonomy` et `BioSequenceSlice.ExtractTaxonomy` (le mécanisme d'`obitag`).
+
+Règles : `-t` donné (taxonomie par défaut déjà chargée) : il l'emporte, les chemins embarqués sont ignorés ;
+sinon la taxonomie est extraite des séquences et définie comme taxonomie par défaut, comme `obitag`.
+- **Fichiers** : deux passes. La première ne retient que les chemins taxonomiques (mémoire = taxonomie
+  seule), la seconde lit le corpus. Une seule passe obligerait à garder toutes les séquences en mémoire,
+  puisque la sélection des exemples (`-r`, `-i`, `-E`) a besoin de la taxonomie.
+- **Entrée standard** (non relisible) : séquences gardées en mémoire (`Load()`), taxonomie extraite, puis
+  réémises par `IBatchOver`.
+- **Pas de chemin** : erreur « no taxonomy: use the -t option, or give sequences annotated with their
+  taxonomic path (obiannotate --taxonomic-path): path is empty ». L'extraction est stricte, comme celle
+  d'`obitag` : une seule séquence sans chemin fait échouer l'extraction.
+- `--with-leaves` (séquence = feuille de son taxon), acceptée par le jeu d'options partagé de taxonomie,
+  est **sans effet** sur obiprimers.
+
+**Contrôle** (fichier `mito.vert.path.fasta.gz` produit par `obiannotate -t ... --taxonomic-path`, 6,3 s) :
+
+| Cas | Résultat |
+|---|---|
+| sans `-t`, fichier | CSV **identique octet pour octet** (`cmp`) au CSV obtenu avec `-t` (3 448 paires) |
+| sans `-t`, entrée standard | CSV identique |
+| `-t` + fichier annoté | CSV identique, pas d'extraction (le `-t` l'emporte) |
+| sans `-t`, fichier non annoté | erreur explicite, code de sortie 1 |
+
+La taxonomie embarquée ne contient que 13 039 taxons (ceux des chemins) contre 2,6 millions de nœuds pour
+la taxonomie NCBI complète. **Effet sur la mémoire et le temps (Cyprinidae)** :
+
+| | avec `-t` NCBI | taxonomie embarquée (fichier) | embarquée (stdin) |
+|---|---|---|---|
+| temps | 7,4 s | **2,65 s** | 1,27 s (lecture depuis `gzcat`) |
+| pic mémoire | 2,82 Go | **1,50 Go** | 1,23 Go |
+
+(le fichier annoté pèse 43,9 Mo au lieu de 39,0 Mo en gzip.) Ce gain vient du chargeur de taxonomie NCBI
+évité ; il ne change rien à l'algorithme.
+
+Tests (`embedded_test.go`) : extraction depuis des fichiers avec restriction `-r` sur un taxid de la
+taxonomie embarquée et attribution des espèces, extraction en mémoire, erreur avec conseil, précédence de
+`-t`, taxonomie nulle refusée.
+
+**Correctif de code partagé** : en testant sous `-race` la lecture des fichiers, le détecteur a signalé une
+course dans `obiiter.IBioSequence.RebatchBySize` (appelée par `CLIReadBioSequences`) : la goroutine
+réaffectait la variable capturée `iterator` (`iterator = iterator.SortBatches()`) pendant que la fonction
+appelante lisait `iterator.IsPaired()`. Corrigé avec une variable locale (`sorted`), comportement inchangé ;
+les tests de `obiiter`, `obiformats` et `obitools/...` passent.
