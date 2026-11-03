@@ -301,3 +301,59 @@ Variantes du protocole :
 
 Décision en suspens : écrire la variante 3 maintenant, ou d'abord finir le pipeline (paires et indices)
 et profiler l'ensemble pour savoir si l'appariement domine encore.
+
+## 12. Mode A, étape 4 : paires et indices (2026-11-03)
+
+Code : `taxa.go` (`Taxa`, `Corpus.AssignTaxa`), `pairs.go` (paramètres, amorces conservées, énumération
+des amplicons, contrainte du 3', comptage), `pairs_eval.go` (`FindPairs`, `PairStats`, Bc, Bs, Yule, Tm),
+test opt-in `TestPairsAgainstEcoPrimers`.
+
+Fidèle à ecoPrimers : amorce conservée = trouvée dans >= floor(|E| x 0,9) exemples ; « good » si en plus
+<= floor(|C| x 0,1) contre-exemples ; une paire a au moins une amorce good ; longueur d'amplicon
+strictement entre `-l` et `-L` ; clé de paire (amorce 1, sens, amorce 2, sens) ordonnée par mot
+canonique ; paire retenue si q > 0,9 et qfp < 0,1 (comparaisons en float32 comme le C) et Bs >= 0,6 ;
+Bc = taxons amplifiés / taxons exemples ; **Bs = taxons identifiés / taxons amplifiés par la paire**
+(et non / tous les taxons : c'est ce que fait le code, l'article est ambigu) ; un taxon est identifié si
+au moins un de ses amplicons n'est partagé avec aucun autre taxon ; tri par Yule x Bs.
+
+Choix d'implémentation (mémoire) : deux phases. Phase 1 ne garde que des compteurs par paire (séquences
+exemples/contre-exemples, longueurs) ; phase 2 ne revisite que les paires retenues (407 / 3 448) et
+n'enregistre qu'un hash 64 bits d'amplicon par occurrence au lieu de stocker les amplicons. ecoPrimers
+conserve un amplicon par occurrence de chaque paire candidate (42 682 paires pour Cyprinidae).
+
+**Contrôle contre les tables complètes d'ecoPrimers** (mêmes paramètres, `-e 3 -3 2 -l 30 -L 150 -c`) :
+
+| Jeu | Paires | Résultat |
+|---|---|---|
+| Cyprinidae | 3 448 / 3 448 | **identique sur toutes les colonnes** : amorces, good, séquences, taxons, Bc, Bs, longueurs, GC, Tm, Tm minimale |
+| Teleostei | 407 / 407 | mêmes paires ; **6 comptent 1 séquence de moins** (NC_033548) |
+
+Cause de l'écart Teleostei **établie par expérience** : l'`extractSite` d'ecoPrimers lit un `N` (code 4)
+dans un registre à décalage ; le 4 déborde sur la base voisine et `~4 & 3` vaut 3 (T), donc un `N` en 3'
+peut être accepté par accident. En émulant exactement ce registre dans le test du 3' (modification
+temporaire, annulée), les **deux tables sont reproduites à 100 %** sur toutes les colonnes. Non conservé :
+une base ambiguë ne peut pas être une correspondance 3' vérifiée. Le test fige donc l'écart (6 paires,
+-1 séquence, rien d'autre ne diffère). Une première émulation plus grossière (N lu comme A) était
+fausse : elle créait un écart dans Cyprinidae.
+
+Autres écarts connus, non testés sur ces données : fenêtres à cheval sur la jonction circulaire, que
+le C lit au-delà du tableau (comportement indéfini) alors que nous reprenons au début ; Tm minimale
+ignorant les sites contenant une base ambiguë (le C en tire des valeurs arbitraires).
+
+**Profil du pipeline complet (16 workers, M3 Max)**, le critère de l'option A :
+
+| Étape | Cyprinidae | Teleostei |
+|---|---|---|
+| lecture + sélection | 0,45 s | 0,44 s |
+| taxons | 0,00 s | 0,00 s |
+| mots stricts | 0,14 s | 1,04 s |
+| **recherche approchée** | **4,14 s** | **10,18 s** |
+| paires + indices + Tm | 1,04 s | 1,12 s |
+| total | ~5,8 s | ~12,8 s |
+
+ecoPrimers complet : 134 s et 350 s. **L'appariement approché reste 72 % à 80 % du total : la variante
+SIMD (variante 3) est justifiée par la mesure.** Mémoire : non isolée (le tas de 2,3 à 2,8 Go du test
+contient la taxonomie NCBI complète).
+
+Non fait : option `-U` (pas de multi-match), séquence de référence `-R`, sets d'amorces, sortie CSV,
+CLI. Prochaine étape : variante 3 (bit-parallèle multi-mots, SIMD).
