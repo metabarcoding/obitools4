@@ -250,3 +250,54 @@ suffisait. **Corrigé** (accord de l'utilisateur) : `globalLockerCounter` est un
 
 Suite : étape 3 (recherche approchée des mots stricts, <= e substitutions, deux brins, dans exemples
 et contre-exemples), puis paires et indices.
+
+## 11. Mode A, étape 3 : recherche approchée (2026-11-03)
+
+Code : `pkg/obiprimer/corpus.go` (`Corpus`, `LoadCorpus` : exemples + contre-exemples en mémoire, ordre
+d'entrée conservé, ignorés comptés seulement, comme ecoPrimers), `match.go` (types `Match`,
+`WordMatches`, `MatchParams`, harnais parallèle `matchCorpus` indépendant du nombre de workers),
+`match_naive.go` (oracle en Go pur), `match_apat.go` (variante `obiapat`). `FindStrictWords` travaille
+maintenant sur un `Corpus`.
+
+**Règle d'appariement** (celle d'ecoPrimers, figée dans `MatchParams`) : substitutions seules ; toute base
+hors A, C, G, T (U lu comme T) dans la séquence compte comme une erreur ; toutes les fenêtres à <= e
+erreurs sont rapportées, chevauchantes comprises ; fenêtres à cheval sur la jonction si circulaire.
+**`obiapat` ne suit pas cette règle de lui-même** : il lit les codes IUPAC dans la séquence (un N
+correspond à toutes les bases). La variante `obiapat` remplace donc les symboles ambigus par `z` (rien
+ne lui correspond), sur une copie, seulement pour les séquences qui en contiennent.
+
+Vérification de justesse :
+- oracle validé à la main sur 12 cas (brins, N, IUPAC, U, jonction, chevauchement, séquence trop courte) ;
+- `obiapat` == oracle position par position et nombre d'erreurs compris, 6 configurations (k = 12, 18,
+  25 ; e = 0 à 4 ; linéaire/circulaire ; séquences avec n, r, y, k, m ; mots plantés sur les deux brins
+  avec 0 à 3 substitutions et à la jonction) ;
+- **bout en bout** : pour chaque mot strict, nombre de séquences exemples touchées == celui que
+  ecoPrimers a journalisé (`e = 3`) : **1 207 mots Cyprinidae et 255 mots Teleostei, 0 différence**.
+  Les nombres d'ecoPrimers sont dans `testdata/ecoprimers_*.words.tsv` ; test opt-in
+  `TestMatchApatAgainstEcoPrimers` (`OBIPRIMERS_TUTORIAL`, `OBIPRIMERS_WORKERS=n` pour fixer les cœurs).
+  (Cyprinidae : 1 207 des 1 208 mots d'ecoPrimers, le mot en trop de la section 10 est exclu.)
+
+Mesures, `e = 3`, génomes circulaires, M3 Max :
+
+| Jeu | Mots x séquences | Matches | 16 workers | 1 worker | Mémoire ajoutée |
+|---|---|---|---|---|---|
+| Cyprinidae | 1 207 x 325 (5,4 Mb) | 416 386 | 3,8 s | non mesuré | 53 Mo |
+| Teleostei | 255 x 3 909 (65 Mb) | 999 407 | 10,7 s | **113 s** (293 Mb/s par passe mot-brin) | 151 Mo |
+
+ecoPrimers complet (non décomposé par étape) : 134 s et 350 s, 1,9 et 2,1 Go.
+
+Profil monothread (Teleostei, `go tool pprof`) : 74 % dans `runtime.cgocall` (le balayage C), 11 % en
+surcoût de transition cgo (`pthread_cond_signal`), tri/GC marginaux. Il y a 2 millions d'appels cgo
+(255 mots x 2 brins x 3 909 séquences).
+
+Variantes du protocole :
+1. `obiapat` mot par mot, parallélisé par séquence : **retenue comme référence de production** pour l'instant.
+2. Arrêt anticipé sous le quorum de 90 % : **écartée, mesuré inutile** (Teleostei : 255/255 mots
+   conservés ; Cyprinidae : 1 201/1 208). Le parallélisme par séquence est déjà dans la variante 1.
+3. Bit-parallèle multi-mots en Go (SIMD) : **non écrite**. Cible : les ~74 % de balayage C.
+4. Index de voisinage / Aho-Corasick : écartée pour e >= 2 par le calcul (graines de 4 à 5 bases,
+   ~250 000 candidats par graine et par mot sur 65 Mb) ; `obicorazick` reste pertinent pour e = 0.
+   Non mesurée.
+
+Décision en suspens : écrire la variante 3 maintenant, ou d'abord finir le pipeline (paires et indices)
+et profiler l'ensemble pour savoir si l'appariement domine encore.

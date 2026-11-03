@@ -107,8 +107,11 @@ func TestFindStrictWords(t *testing.T) {
 	add("zz1", randDNA(rng, 50)+motif)
 
 	sel := Selection{Restrict: idPrefix("ex").Or(idPrefix("cx")), Ignore: idPrefix("cx"), Except: idPrefix("cx")}
-	res, err := FindStrictWords(obiiter.IBatchOver("t", data, 3), sel,
-		WordSearch{PrimerLength: k, Quorum: 0.7, Partitions: 8, TmpDir: t.TempDir()})
+	corpus, err := LoadCorpus(obiiter.IBatchOver("t", data, 3), sel)
+	if err != nil {
+		t.Fatal(err)
+	}
+	res, err := FindStrictWords(corpus, WordSearch{PrimerLength: k, Quorum: 0.7, Partitions: 8, TmpDir: t.TempDir()})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -151,14 +154,17 @@ func TestFindStrictWordsParameters(t *testing.T) {
 	it := func() obiiter.IBioSequence {
 		return obiiter.IBatchOver("t", obiseq.BioSequenceSlice{obiseq.NewBioSequence("a", []byte("acgtacgtacgtacgtacgtacgt"), "")}, 1)
 	}
-	if _, err := FindStrictWords(it(), Selection{}, WordSearch{PrimerLength: 1, Quorum: 0.7}); err == nil {
+	corpus, err := LoadCorpus(it(), Selection{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := FindStrictWords(corpus, WordSearch{PrimerLength: 1, Quorum: 0.7}); err == nil {
 		t.Error("primer length 1 must fail")
 	}
-	if _, err := FindStrictWords(it(), Selection{}, WordSearch{PrimerLength: 18, Quorum: 0}); err == nil {
+	if _, err := FindStrictWords(corpus, WordSearch{PrimerLength: 18, Quorum: 0}); err == nil {
 		t.Error("quorum 0 must fail")
 	}
-	if _, err := FindStrictWords(it(), Selection{Restrict: idPrefix("zz")},
-		WordSearch{PrimerLength: 18, Quorum: 0.7}); err == nil {
+	if _, err := LoadCorpus(it(), Selection{Restrict: idPrefix("zz")}); err == nil {
 		t.Error("no example must fail")
 	}
 }
@@ -206,7 +212,11 @@ func TestStrictWordsAgainstEcoPrimers(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			res, err := FindStrictWords(seqs, Selection{Restrict: restrict},
+			corpus, err := LoadCorpus(seqs, Selection{Restrict: restrict})
+			if err != nil {
+				t.Fatal(err)
+			}
+			res, err := FindStrictWords(corpus,
 				WordSearch{PrimerLength: 18, Quorum: 0.7, Circular: true, TmpDir: t.TempDir()})
 			if err != nil {
 				t.Fatal(err)

@@ -4,10 +4,8 @@ import (
 	"fmt"
 	"math"
 	"sync"
-	"sync/atomic"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obikmer"
 )
 
@@ -18,13 +16,6 @@ type WordSearch struct {
 	Circular     bool    // sequences are circular (ecoPrimers -c)
 	Partitions   int     // partition files of the counter (default 256)
 	TmpDir       string  // parent of the temporary directory ("" = system default)
-}
-
-// Counts gives the number of sequences by role.
-type Counts struct {
-	Examples        int
-	CounterExamples int
-	Ignored         int
 }
 
 // StrictWords is the result of the strict word search: the canonical words of
@@ -44,12 +35,12 @@ func MinSequences(examples int, quorum float64) int {
 	return int(math.Floor(float64(examples)*quorum + 1e-9))
 }
 
-// FindStrictWords reads every sequence of seqs once, indexes the example
-// sequences, and returns the words reaching the quorum. Sequences no longer
-// than the word size are counted as examples but cannot contain any word, as
-// in ecoPrimers. Words are canonical (the smaller of the word and its reverse
-// complement), so both strands are searched.
-func FindStrictWords(seqs obiiter.IBioSequence, sel Selection, cfg WordSearch) (*StrictWords, error) {
+// FindStrictWords indexes the example sequences of the corpus and returns the
+// words reaching the quorum. Sequences no longer than the word size are
+// counted as examples but cannot contain any word, as in ecoPrimers. Words are
+// canonical (the smaller of the word and its reverse complement), so both
+// strands are searched.
+func FindStrictWords(c *Corpus, cfg WordSearch) (*StrictWords, error) {
 	if cfg.PrimerLength < 2 || cfg.PrimerLength > 31 {
 		return nil, fmt.Errorf("obiprimer: primer length must be between 2 and 31, got %d", cfg.PrimerLength)
 	}
@@ -66,50 +57,27 @@ func FindStrictWords(seqs obiiter.IBioSequence, sel Selection, cfg WordSearch) (
 	}
 	defer counter.Close()
 
-	var nextID atomic.Uint32
-	var examples, counters, ignored atomic.Int64
-
-	consumer := func(it obiiter.IBioSequence, wg *sync.WaitGroup) {
-		defer wg.Done()
-		for it.Next() {
-			for _, seq := range it.Get().Slice() {
-				switch sel.Role(seq) {
-				case Example:
-					examples.Add(1)
-					if seq.Len() > cfg.PrimerLength {
-						counter.AddSequence(nextID.Add(1)-1, seq.Sequence(), cfg.Circular)
-					}
-				case CounterExample:
-					counters.Add(1)
-				default:
-					ignored.Add(1)
+	jobs := make(chan int)
+	var wg sync.WaitGroup
+	for range obidefault.ParallelWorkers() {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for i := range jobs {
+				if seq := c.Seqs[i]; c.Roles[i] == Example && seq.Len() > cfg.PrimerLength {
+					counter.AddSequence(uint32(i), seq.Sequence(), cfg.Circular)
 				}
 			}
-		}
+		}()
 	}
-
-	var wg sync.WaitGroup
-	for i := 1; i < obidefault.ParallelWorkers(); i++ {
-		wg.Add(1)
-		go consumer(seqs.Split(), &wg)
+	for i := range c.Seqs {
+		jobs <- i
 	}
-	wg.Add(1)
-	go consumer(seqs, &wg)
+	close(jobs)
 	wg.Wait()
 
-	res := &StrictWords{
-		PrimerLength: cfg.PrimerLength,
-		Counts: Counts{
-			Examples:        int(examples.Load()),
-			CounterExamples: int(counters.Load()),
-			Ignored:         int(ignored.Load()),
-		},
-	}
+	res := &StrictWords{PrimerLength: cfg.PrimerLength, Counts: c.Counts()}
 	res.MinSequences = MinSequences(res.Counts.Examples, cfg.Quorum)
-	if res.Counts.Examples == 0 {
-		return nil, fmt.Errorf("obiprimer: no example sequence selected")
-	}
-
 	res.Words, err = counter.CountAtLeast(max(res.MinSequences, 1))
 	if err != nil {
 		return nil, err
