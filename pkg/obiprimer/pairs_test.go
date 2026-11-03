@@ -141,7 +141,7 @@ func TestPairsAgainstEcoPrimers(t *testing.T) {
 				t.Fatal(err)
 			}
 			lap("approximate search")
-			got, err := FindPairs(corpus, taxa, wm, PairParams{
+			got, _, err := FindPairs(corpus, taxa, wm, PairParams{
 				PrimerLength: 18, MinLength: 30, MaxLength: 150, ThreePrime: 2,
 				Sensitivity: 0.9, FalsePositive: 0.1, MinSpecificity: 0.6, Circular: true,
 			}, obithermo.DefaultModel())

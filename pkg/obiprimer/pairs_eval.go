@@ -36,6 +36,14 @@ type PairStats struct {
 // Score is the ranking criterion of ecoPrimers.
 func (p PairStats) Score() float32 { return p.Yule * p.Bs }
 
+// PairInfo summarizes the pair search, for reporting.
+type PairInfo struct {
+	Primers        int // conserved words kept as candidate primers
+	GoodPrimers    int // of which good ones
+	CandidatePairs int // pairs delimiting an amplicon in at least one sequence
+	RetainedPairs  int // pairs passing the sensitivity and false positive quorums, before the Bs filter
+}
+
 // ampRecord is an amplicon of a retained pair, in one sequence.
 type ampRecord struct {
 	pair     int32
@@ -78,21 +86,29 @@ func ampHash(raw []byte, from, to int, reverse bool) uint64 {
 // is sorted by decreasing Yule*Bs.
 //
 // model computes the melting temperatures; nil leaves them NaN.
-func FindPairs(c *Corpus, taxa *Taxa, wm []WordMatches, p PairParams, model *obithermo.Model) ([]PairStats, error) {
+func FindPairs(c *Corpus, taxa *Taxa, wm []WordMatches, p PairParams, model *obithermo.Model) ([]PairStats, PairInfo, error) {
+	var info PairInfo
 	if err := p.validate(); err != nil {
-		return nil, err
+		return nil, info, err
 	}
 	if taxa == nil || len(taxa.Of) != len(c.Seqs) {
-		return nil, fmt.Errorf("obiprimer: taxa do not match the corpus")
+		return nil, info, fmt.Errorf("obiprimer: taxa do not match the corpus")
 	}
 	ps := selectPrimers(c, wm, p)
+	info.Primers = len(ps.primers)
+	for _, pr := range ps.primers {
+		if pr.Good {
+			info.GoodPrimers++
+		}
+	}
 	if len(ps.primers) == 0 {
-		return nil, nil
+		return nil, info, nil
 	}
 
 	// Phase 1: which pairs amplify enough examples and few enough counterexamples.
 	counts := c.Counts()
 	acc := ps.countPairs(c, p)
+	info.CandidatePairs = len(acc)
 	sens, fpq := float32(p.Sensitivity), float32(p.FalsePositive)
 	var kept []pairKey
 	for k, a := range acc {
@@ -105,6 +121,7 @@ func FindPairs(c *Corpus, taxa *Taxa, wm []WordMatches, p PairParams, model *obi
 			kept = append(kept, k)
 		}
 	}
+	info.RetainedPairs = len(kept)
 	slices.SortFunc(kept, func(a, b pairKey) int {
 		return cmp.Or(cmp.Compare(a.p1, b.p1), cmp.Compare(a.p2, b.p2),
 			boolCmp(a.a1, b.a1), boolCmp(a.a2, b.a2))
@@ -131,7 +148,7 @@ func FindPairs(c *Corpus, taxa *Taxa, wm []WordMatches, p PairParams, model *obi
 	slices.SortFunc(out, func(a, b PairStats) int {
 		return cmp.Or(-cmp.Compare(a.Score(), b.Score()), cmp.Compare(a.Primer1, b.Primer1), cmp.Compare(a.Primer2, b.Primer2))
 	})
-	return out, nil
+	return out, info, nil
 }
 
 func boolCmp(a, b bool) int {

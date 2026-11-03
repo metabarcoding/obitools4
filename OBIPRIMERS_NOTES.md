@@ -410,3 +410,66 @@ paires 1,1 s) sont celles à profiler si l'on veut aller plus loin ; le tri des 
 dans `SeqKmerCounter` et la phase 2 de `FindPairs` en sont les candidats.
 
 Non fait : option `-U`, `-R`, sets d'amorces, mode B, sortie CSV, CLI `obiprimers`.
+
+## 14. Commande `obiprimers`, mode A (2026-11-03)
+
+Code : `pkg/obiprimer/search.go` (`SearchParams`, `DefaultSearchParams`, `Search`, `SearchInfo` ;
+`FindPairs` renvoie maintenant aussi un `PairInfo`), `pkg/obitools/obiprimers/{options,obiprimers,output}.go`,
+`cmd/obitools/obiprimers/main.go`, test `obiprimers_test.go`. Le `Makefile` découvre la commande tout seul
+(`wildcard cmd/obitools/*/*.go`). Pattern : `InputOptionSet` + `OutputModeOptionSet` + `-t` obligatoire,
+sortie par `obiitercsv` + `obicsv.CLICSVWriter` (donc `-o`, `--compress`), comme `obitaxonomy`.
+
+Options (noms alignés sur `obipcr` et `obigrep` quand ils existent) :
+
+| Option | ecoPrimers | Défaut |
+|---|---|---|
+| `-t/--taxonomy` (obligatoire) | `-d` (base) | |
+| `-r/--restrict-to-taxon` | `-r` | tous les exemples |
+| `-i/--ignore-taxon` | `-i` | |
+| `-E/--exception-taxon` | `-E` | |
+| `--rank` | `-t` | species |
+| `-c/--circular` | `-c` | non |
+| `--primer-length` | `-O` | 18 |
+| `-e/--allowed-mismatches` | `-e` | 3 |
+| `-l/--min-length`, `-L/--max-length` | `-l`, `-L` | 0, 1000 |
+| `-3/--three-prime` | `-3` | 0 |
+| `-q/--strict-quorum` | `-q` | 0,7 |
+| `-s/--sensitivity` | `-s` | 0,9 |
+| `-x/--false-positive` | `-x` | 0,1 |
+| `-T/--specificity` | `-T` | 0,6 |
+| `--salt-correction`, `--salt`, `--primer-concentration` | `-m`, `-a` | santalucia, 0,05 M, 8e-7 M |
+| `--partitions` | (nouveau) | 256 |
+
+`-O` n'a pas d'alias court : dans obitools4 il désigne l'en-tête OBI en sortie. Non reprises : `-U`
+(pas de multi-match), `-R` (séquence de référence), `-p/-b/-M/-k` (sets et liens), `-f`, `-v`, `-A`.
+
+Sortie CSV (en-têtes nommés, ordre des colonnes d'ecoPrimers) : `index, primer1, primer2, tm1, tm1_min,
+tm2, tm2_min, gc1, gc2, good1, good2, examples, counterexamples, yule, example_taxa,
+counterexample_taxa, bc, identified_taxa, bs, min_length, max_length, mean_length`. Tm arrondies à
+0,1 °C, indices à 4 décimales, `NA` quand une Tm est indisponible. Le résumé (nombres de mots, de paires,
+d'exemples...) va dans le journal (stderr), pas dans le CSV : les lignes `#` d'ecoPrimers sont donc
+remplacées par des messages `INFO`.
+
+**Contrôle** : `obiprimers -t ncbitaxo_20250211.tgz -r 7953 -e 3 --three-prime 2 -l 30 -L 150 -c
+mito.vert.fasta.gz` : 3 448 lignes, comparées à `Cyprinidae.ecoprimers` champ par champ (script jetable) :
+**0 différence**. Teleostei : 407 lignes (les 6 écarts d'une séquence de la section 12 s'appliquent).
+
+Mesures du binaire complet (M3 Max, 16 workers, taxonomie NCBI complète comprise) :
+
+| Jeu | Temps | Pic mémoire | ecoPrimers (temps, pic) |
+|---|---|---|---|
+| Cyprinidae | 7,4 s | 2,82 Go | 134 s, 1,86 Go |
+| Teleostei | 8,4 s | 3,42 Go | 350 s, 2,11 Go |
+
+**Le pic de mémoire est PLUS ÉLEVÉ qu'ecoPrimers**, malgré un temps 18 à 40 fois meilleur. Éléments mesurés :
+le chargeur de taxonomie NCBI existant coûte à lui seul 1,07 Go (`obitaxonomy`, mesuré) ; avec
+`GOGC=25` le pic de Cyprinidae passe de 2,82 à 1,98 Go (donc ~0,85 Go de ramasse-miettes en retard, au
+prix de 2x de temps CPU) ; le reste (~0,9 Go au-dessus de la taxonomie pour 5,4 Mb d'exemples) n'est pas
+analysé. Pistes non explorées : ne pas parser les 131 Mb du FASTA des séquences ignorées, libérer la
+taxonomie après `AssignTaxa`, régler le GC de la commande.
+
+Avertissements `Taxid ... has to be updated` : viennent du mécanisme existant d'obitools (taxids
+fusionnés dans le FASTA) ; `--update-taxid` les corrige à la lecture.
+
+Reste à faire : mode B, `-U`, `-R`, tests shell `obitests/obitools/obiprimers` (données dans le dépôt),
+documentation, réduction de la mémoire, comparaison systématique `--rank` autre que species.
