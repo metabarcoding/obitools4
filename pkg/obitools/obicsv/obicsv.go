@@ -50,6 +50,10 @@ func CLICSVWriter(iterator *obiitercsv.ICSVRecord,
 	var err error
 	var newIter *obiitercsv.ICSVRecord
 
+	// The --compress option applies to every CSV written from the command
+	// line; options given by the caller come after and take precedence.
+	options = append([]WithOption{OptionsCompressed(obidefault.CompressOutput())}, options...)
+
 	if obiconvert.CLIOutPutFileName() != "-" {
 		options = append(options, OptionFileName(obiconvert.CLIOutPutFileName()))
 	}
