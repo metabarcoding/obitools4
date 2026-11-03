@@ -22,6 +22,8 @@ type PairParams struct {
 	FalsePositive  float64 // -x: and less than this fraction of the counterexamples (0.1)
 	MinSpecificity float64 // -T: pairs with a lower Bs are dropped (0.6)
 	Circular       bool    // -c
+	Reference      int     // -R: corpus index of the reference sequence (used when HasReference)
+	HasReference   bool
 }
 
 func (p PairParams) validate() error {

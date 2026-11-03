@@ -28,6 +28,8 @@ var _minLength = 0
 var _maxLength = 1000
 var _threePrime = 0
 var _circular = false
+var _noMultiMatch = false
+var _reference = ""
 
 var _strictQuorum = 0.7
 var _sensitivity = 0.9
@@ -71,6 +73,17 @@ func OptionSet(options *getoptions.GetOpt) {
 	options.BoolVar(&_circular, "circular", _circular,
 		options.Alias("c"),
 		options.Description("Considers the sequences as circular (whole organelle genomes)."))
+
+	options.BoolVar(&_noMultiMatch, "no-multi-match", _noMultiMatch,
+		options.Alias("U"),
+		options.Description("Discards the primers that match, with the allowed mismatches, more than once "+
+			"in any sequence (examples and counterexamples, both strands)."))
+
+	options.StringVar(&_reference, "reference", _reference,
+		options.Alias("R"),
+		options.ArgName("SEQUENCE_ID"),
+		options.Description("Identifier of an example sequence taken as reference: for each pair amplifying it, "+
+			"adds the location of the primer sites and the amplified sequence."))
 
 	options.IntVar(&_primerLength, "primer-length", _primerLength,
 		options.ArgName("LENGTH"),
@@ -146,6 +159,9 @@ func CLIIgnoreTaxa() []string { return _ignore }
 // CLIExceptionTaxa returns the taxids of the sub-clades turned into counterexamples.
 func CLIExceptionTaxa() []string { return _except }
 
+// CLIReference returns the identifier of the reference sequence, or "".
+func CLIReference() string { return _reference }
+
 // CLIRank returns the taxonomic rank of the coverage and specificity indices.
 func CLIRank() string { return _rank }
 
@@ -176,6 +192,8 @@ func CLISearchParams() (obiprimer.SearchParams, error) {
 		FalsePositive:  _falsePositive,
 		MinSpecificity: _specificity,
 		Circular:       _circular,
+		NoMultiMatch:   _noMultiMatch,
+		Reference:      _reference,
 		Partitions:     _partitions,
 		Model:          model,
 	}, nil

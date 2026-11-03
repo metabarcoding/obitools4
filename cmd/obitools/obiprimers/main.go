@@ -35,7 +35,7 @@ func main() {
 		log.Fatalf("%v", err)
 	}
 
-	obicsv.CLICSVWriter(obiprimers.PairsToCSVIterator(pairs), true)
+	obicsv.CLICSVWriter(obiprimers.PairsToCSVIterator(pairs, obiprimers.CLIReference() != ""), true)
 
 	obiutils.WaitForLastPipe()
 }

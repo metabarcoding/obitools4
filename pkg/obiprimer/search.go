@@ -19,6 +19,8 @@ type SearchParams struct {
 	FalsePositive  float64 // -x: fraction of the counterexamples it may match (0.1)
 	MinSpecificity float64 // -T: pairs with a lower Bs are dropped (0.6)
 	Circular       bool    // -c: sequences are circular
+	NoMultiMatch   bool    // -U: discard the primers matching several times in a sequence
+	Reference      string  // -R: identifier of an example sequence on which the amplicons are located ("" = none)
 
 	Partitions int // partitions of the k-mer counter (default 256)
 	TmpDir     string
@@ -41,6 +43,8 @@ type SearchInfo struct {
 	StrictWords int // words found without error in at least StrictQuorum of the examples
 	MinStrict   int // that quorum, in sequences
 	Matches     int // approximate occurrences of those words
+	Repeated    int // strict words dropped because repeated in an example (-U)
+	MultiMatch  int // words dropped because matching several times in a sequence (-U)
 	Pair        PairInfo
 }
 
@@ -63,6 +67,16 @@ func Search(c *Corpus, taxa *Taxa, p SearchParams) ([]PairStats, *SearchInfo, er
 		return nil, nil, err
 	}
 	info := &SearchInfo{Counts: sw.Counts, StrictWords: len(sw.Words), MinStrict: sw.MinSequences}
+	if p.NoMultiMatch {
+		sw.Words, info.Repeated = DropRepeatedWords(sw.Words)
+	}
+
+	refIndex := -1
+	if p.Reference != "" {
+		if refIndex, err = c.IndexOfExample(p.Reference); err != nil {
+			return nil, info, err
+		}
+	}
 
 	words := make([]uint64, len(sw.Words))
 	for i, w := range sw.Words {
@@ -71,6 +85,9 @@ func Search(c *Corpus, taxa *Taxa, p SearchParams) ([]PairStats, *SearchInfo, er
 	wm, err := MatchWords(c, words, MatchParams{K: p.PrimerLength, MaxErrors: p.MaxErrors, Circular: p.Circular})
 	if err != nil {
 		return nil, info, err
+	}
+	if p.NoMultiMatch {
+		wm, info.MultiMatch = DropMultiMatch(wm)
 	}
 	for _, w := range wm {
 		info.Matches += len(w.Matches)
@@ -85,6 +102,8 @@ func Search(c *Corpus, taxa *Taxa, p SearchParams) ([]PairStats, *SearchInfo, er
 		FalsePositive:  p.FalsePositive,
 		MinSpecificity: p.MinSpecificity,
 		Circular:       p.Circular,
+		Reference:      refIndex,
+		HasReference:   refIndex >= 0,
 	}, p.Model)
 	info.Pair = pinfo
 	return pairs, info, err

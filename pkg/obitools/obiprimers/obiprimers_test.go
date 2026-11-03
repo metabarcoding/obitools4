@@ -20,7 +20,7 @@ func samplePairs() []obiprimer.PairStats {
 }
 
 func TestPairsToCSVIterator(t *testing.T) {
-	it := PairsToCSVIterator(samplePairs())
+	it := PairsToCSVIterator(samplePairs(), false)
 
 	header := it.Header()
 	if len(header) != len(csvColumns) || header[0] != "index" || header[1] != "primer1" {
@@ -60,7 +60,7 @@ func TestPairsToCSVIterator(t *testing.T) {
 }
 
 func TestEmptyResultStillHasAHeader(t *testing.T) {
-	it := PairsToCSVIterator(nil)
+	it := PairsToCSVIterator(nil, false)
 	if len(it.Header()) != len(csvColumns) {
 		t.Fatalf("header %v", it.Header())
 	}
@@ -88,6 +88,9 @@ func TestEveryColumnIsProduced(t *testing.T) {
 }
 
 func TestCLISearchParams(t *testing.T) {
+	savedMethod, savedSalt := _saltMethod, _salt
+	defer func() { _saltMethod, _salt = savedMethod, savedSalt }()
+
 	p, err := CLISearchParams()
 	if err != nil {
 		t.Fatal(err)
@@ -111,5 +114,49 @@ func TestCLISearchParams(t *testing.T) {
 	_salt = -1
 	if _, err = CLISearchParams(); err == nil {
 		t.Error("a negative salt concentration must be refused")
+	}
+}
+
+func TestReferenceColumns(t *testing.T) {
+	pairs := samplePairs()
+	pairs[0].RefLocation = "join(61..78,119..136)"
+	pairs[0].RefAmplicon = "acgt"
+
+	it := PairsToCSVIterator(pairs, true)
+	header := it.Header()
+	n := len(csvColumns)
+	if len(header) != n+2 || header[n] != "reference_location" || header[n+1] != "reference_amplicon" {
+		t.Fatalf("header %v", header)
+	}
+
+	var records []map[string]interface{}
+	for it.Next() {
+		batch := it.Get()
+		for _, r := range batch.Slice() {
+			records = append(records, r)
+		}
+	}
+	if records[0]["reference_location"] != "join(61..78,119..136)" || records[0]["reference_amplicon"] != "acgt" {
+		t.Errorf("reference columns of the first pair: %v", records[0])
+	}
+	if _, present := records[1]["reference_location"]; present {
+		t.Error("a pair that does not amplify the reference must have no location (NA)")
+	}
+
+	// without a reference the columns are absent
+	if got := len(PairsToCSVIterator(pairs, false).Header()); got != n {
+		t.Errorf("%d columns without reference, want %d", got, n)
+	}
+}
+
+func TestSearchParamsCarryTheNewOptions(t *testing.T) {
+	_noMultiMatch, _reference = true, "NC_000001"
+	defer func() { _noMultiMatch, _reference = false, "" }()
+	p, err := CLISearchParams()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !p.NoMultiMatch || p.Reference != "NC_000001" || CLIReference() != "NC_000001" {
+		t.Errorf("-U/-R not carried: %+v", p)
 	}
 }

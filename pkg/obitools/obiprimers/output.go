@@ -24,6 +24,9 @@ var csvColumns = []string{
 	"min_length", "max_length", "mean_length", // 19-21
 }
 
+// referenceColumns are added when a reference sequence is given.
+var referenceColumns = []string{"reference_location", "reference_amplicon"}
+
 // round returns x rounded to the given number of decimals; the CSV writer
 // prints it with its shortest representation.
 func round(x float64, decimals int) float64 {
@@ -43,6 +46,10 @@ func pairRecord(index int, p obiprimer.PairStats) obiitercsv.CSVRecord {
 		"bc": round(float64(p.Bc), 4), "identified_taxa": p.Identified, "bs": round(float64(p.Bs), 4),
 		"min_length": p.MinLen, "max_length": p.MaxLen, "mean_length": round(p.MeanLen, 2),
 	}
+	if p.RefLocation != "" {
+		r["reference_location"] = p.RefLocation
+		r["reference_amplicon"] = p.RefAmplicon
+	}
 	for key, v := range map[string]float64{"tm1": p.Tm1, "tm1_min": p.MinTm1, "tm2": p.Tm2, "tm2_min": p.MinTm2} {
 		if !math.IsNaN(v) {
 			r[key] = round(v, 1)
@@ -51,12 +58,19 @@ func pairRecord(index int, p obiprimer.PairStats) obiitercsv.CSVRecord {
 	return r
 }
 
-// PairsToCSVIterator streams the pairs, in order, as CSV records.
-func PairsToCSVIterator(pairs []obiprimer.PairStats) *obiitercsv.ICSVRecord {
+// PairsToCSVIterator streams the pairs, in order, as CSV records. With
+// withReference the two reference columns are written (NA for the pairs that
+// do not amplify the reference sequence).
+func PairsToCSVIterator(pairs []obiprimer.PairStats, withReference bool) *obiitercsv.ICSVRecord {
 	iterator := obiitercsv.NewICSVRecord()
 	iterator.Add(1)
 	for _, column := range csvColumns {
 		iterator.AppendField(column)
+	}
+	if withReference {
+		for _, column := range referenceColumns {
+			iterator.AppendField(column)
+		}
 	}
 
 	go func() {

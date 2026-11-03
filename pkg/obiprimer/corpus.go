@@ -106,3 +106,18 @@ func LoadCorpus(seqs obiiter.IBioSequence, sel Selection) (*Corpus, error) {
 	}
 	return c, nil
 }
+
+// IndexOfExample returns the index of the example sequence with the given
+// identifier. It is an error if there is none, or if the sequence is a
+// counterexample.
+func (c *Corpus) IndexOfExample(id string) (int, error) {
+	for i, s := range c.Seqs {
+		if s.Id() == id {
+			if c.Roles[i] != Example {
+				return -1, fmt.Errorf("obiprimer: reference sequence %q is a counterexample, it must be an example", id)
+			}
+			return i, nil
+		}
+	}
+	return -1, fmt.Errorf("obiprimer: reference sequence %q is not among the selected example sequences", id)
+}

@@ -471,5 +471,64 @@ taxonomie après `AssignTaxa`, régler le GC de la commande.
 Avertissements `Taxid ... has to be updated` : viennent du mécanisme existant d'obitools (taxids
 fusionnés dans le FASTA) ; `--update-taxid` les corrige à la lecture.
 
-Reste à faire : mode B, `-U`, `-R`, tests shell `obitests/obitools/obiprimers` (données dans le dépôt),
+Reste à faire : mode B, tests shell `obitests/obitools/obiprimers` (données dans le dépôt),
 documentation, réduction de la mémoire, comparaison systématique `--rank` autre que species.
+(`-U` et `-R` : faits, section 15.)
+
+## 15. Options `-U` (no multi-match) et `-R` (référence) (2026-11-03)
+
+Code : `pkg/obiprimer/multimatch.go` (`DropRepeatedWords`, `DropMultiMatch`), `reference.go`
+(`referenceSites`, `span`), `Corpus.IndexOfExample`, champs `SearchParams.NoMultiMatch/Reference`,
+`PairStats.RefLocation/RefAmplicon`, options CLI `-U/--no-multi-match` et `-R/--reference`, colonnes CSV
+`reference_location` et `reference_amplicon` (présentes seulement avec `-R`, `NA` pour une paire qui
+n'amplifie pas la référence). Tests : `search_test.go` (synthétiques), `search_real_test.go` (opt-in).
+
+### -U
+
+Sémantique lue dans le C (`aproxpattern.c` et `ahocorasick.c`, qui donnent la même règle) : un mot est
+écarté s'il a >= 2 occurrences approchées, **deux brins confondus**, dans **une** séquence quelconque du
+corpus (exemple ou contre-exemple). Le drapeau « multi-mot » du comptage strict (`Repeated`, mot présent
+plusieurs fois dans un exemple) n'en est qu'un cas particulier ; ecoPrimers l'applique d'abord pour
+alléger la recherche, nous aussi (`DropRepeatedWords` puis `DropMultiMatch`).
+
+**Contrôle contre ecoPrimers `-U`** (Cyprinidae, 98,7 s, 1,18 Go) : **1 366 paires, identiques sur tous les
+champs** (primers, good, séquences, taxons, Bc, Bs, Yule, longueurs, GC, Tm). Notre journal :
+34 mots stricts écartés comme répétés, 469 écartés pour multi-match, 703 amorces conservées.
+`testdata/ecoprimers_Cyprinidae_U.pairs.tsv` garde les valeurs de référence (test opt-in
+`TestNoMultiMatchAgainstEcoPrimers`).
+
+Détail sans conséquence sur les résultats : avec `-e 0`, ecoPrimers (chemin Aho-Corasick) ne filtre pas les
+amorces par le quorum de sensibilité et définit « good » par les seuls contre-exemples ; nous appliquons le
+même filtre qu'avec `-e > 0`. Une amorce sous le quorum ne peut pas figurer dans une paire retenue
+(une paire amplifie au plus autant d'exemples que ses amorces en touchent), donc les tables finales
+sont les mêmes ; seuls les décomptes du journal peuvent différer. Non vérifié par une exécution `-e 0`.
+
+### -R
+
+Contrairement à `-U`, **le `-R` d'ecoPrimers est faux** : `refsequence` reçoit le numéro de la séquence
+(`pairs.c`) puis sert d'indice dans la liste des amplicons de la paire (`ecoprimer.c`, `printapair`).
+Mesuré sur Cyprinidae : avec la référence `NC_022183` ecoPrimers coïncide avec nous sur les coordonnées
+des 3 448 paires (coïncidence : l'indice tombe juste) ; avec `NC_083213`, **seuls 382 de ses 3 405
+emplacements sont de vrais sites d'amorces dans la séquence, contre 3 405 sur 3 405 pour obiprimers**
+(vérifié par un script indépendant et par `TestReferenceSitesAreRealSites`). Nous implémentons donc
+l'intention, pas le C :
+
+- `reference_location` : emplacement GenBank 1-based des deux sites, de gauche à droite,
+  `join(a..b,c..d)`, entouré de `complement()` quand `primer1` (tel qu'écrit dans le CSV) se fixe sur le brin
+  moins. Fenêtre à cheval sur la jonction circulaire : coupée en deux (`a..n,1..m`).
+- `reference_amplicon` : région entre les sites, amorces exclues, en minuscules, lue depuis `primer1`.
+- **Orientation** : ecoPrimers oriente l'amplicon par rapport à l'ordre canonique des mots, nous par rapport
+  à `primer1` du CSV (plus lisible). Sur NC_022183 : coordonnées identiques pour les 3 448 paires,
+  amplicon identique pour 2 572 et complémenté-inversé pour 836, tout le reste égal.
+- Plusieurs amplicons de la paire sur la référence : on garde le plus à gauche (le C garde le dernier,
+  par écrasement, mais ses valeurs sont de toute façon indéfinies).
+- Référence introuvable ou contre-exemple : **erreur** (le C ignore silencieusement).
+- Vérifications : 3 408 paires sur NC_022183 et 3 405 sur NC_083213, sites à <= 3 erreurs, amplicon égal à
+  la séquence (ou son complément inverse), orientation cohérente (2 184 paires `primer1` sur le brin +,
+  1 224 sur le brin -).
+
+### Autres constats
+
+- `obiutils` : `TestSetString` est **instable** (échoue ~4 fois sur 6) : `Set.String()` parcourt une map Go
+  et le test attend `[1 2 3]`. Sans rapport avec obiprimers, non corrigé.
+- Un défaut de mon test précédent (`TestCLISearchParams` laissait `_salt = -1`) a été corrigé.

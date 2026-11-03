@@ -31,6 +31,14 @@ type PairStats struct {
 	Tm1, Tm2       float64 // melting temperature of the primers against their perfect target
 	MinTm1, MinTm2 float64 // lowest melting temperature over the example amplicons
 	GC1, GC2       int
+
+	// With a reference sequence (-R): where the pair amplifies it. RefLocation
+	// is the GenBank location of the two primer sites (1-based, left to right),
+	// wrapped in complement() when Primer1 binds the other strand; RefAmplicon
+	// is the amplified region, primers excluded, read from Primer1 to Primer2.
+	// Both are empty when the pair does not amplify the reference.
+	RefLocation string
+	RefAmplicon string
 }
 
 // Score is the ranking criterion of ecoPrimers.
@@ -50,6 +58,12 @@ type ampRecord struct {
 	seq      int32
 	hash     uint64
 	tm1, tm2 float32 // NaN when unavailable
+}
+
+// refHit is an amplicon of a retained pair on the reference sequence.
+type refHit struct {
+	up, down seqMatch
+	swapped  bool
 }
 
 // ampHash hashes the amplicon between the two primers read from the side of
@@ -132,7 +146,7 @@ func FindPairs(c *Corpus, taxa *Taxa, wm []WordMatches, p PairParams, model *obi
 	}
 
 	// Phase 2: the amplicons of the retained pairs only.
-	records := ps.collectAmplicons(c, p, index, model)
+	records, refs := ps.collectAmplicons(c, p, index, model)
 	byPair := make([][]ampRecord, len(kept))
 	for _, r := range records {
 		byPair[r.pair] = append(byPair[r.pair], r)
@@ -142,6 +156,12 @@ func FindPairs(c *Corpus, taxa *Taxa, wm []WordMatches, p PairParams, model *obi
 	for i, k := range kept {
 		st, ok := ps.evaluate(c, taxa, p, k, acc[k], byPair[i], model)
 		if ok {
+			if h, found := refs[int32(i)]; found {
+				// evaluate orders the primers by string; the amplicon is read from the first one
+				s1 := orientedWord(ps.primers[k.p1].Word, p.PrimerLength, k.a1)
+				s2 := orientedWord(ps.primers[k.p2].Word, p.PrimerLength, k.a2)
+				st.RefLocation, st.RefAmplicon = referenceSites(c.Seqs[p.Reference].Sequence(), h, p, s2 < s1)
+			}
 			out = append(out, st)
 		}
 	}
@@ -162,7 +182,7 @@ func boolCmp(a, b bool) int {
 }
 
 // collectAmplicons gathers, in parallel, one record per amplicon of a retained pair.
-func (ps *primerSet) collectAmplicons(c *Corpus, p PairParams, index map[pairKey]int32, model *obithermo.Model) []ampRecord {
+func (ps *primerSet) collectAmplicons(c *Corpus, p PairParams, index map[pairKey]int32, model *obithermo.Model) ([]ampRecord, map[int32]refHit) {
 	lp := p.PrimerLength
 	workers := obidefault.ParallelWorkers()
 	parts := make([][]ampRecord, workers)
@@ -174,6 +194,10 @@ func (ps *primerSet) collectAmplicons(c *Corpus, p PairParams, index map[pairKey
 		oriented[i][1] = []byte(orientedWord(pr.Word, lp, true))
 	}
 	nan := float32(math.NaN())
+
+	// The reference sequence is handled by a single worker, which is the only
+	// writer of refs; the first (leftmost) amplicon of each pair is kept.
+	refs := map[int32]refHit{}
 
 	jobs := make(chan int)
 	var wg sync.WaitGroup
@@ -190,6 +214,11 @@ func (ps *primerSet) collectAmplicons(c *Corpus, p PairParams, index map[pairKey
 					pi, ok := index[o.key]
 					if !ok {
 						return
+					}
+					if p.HasReference && s == p.Reference {
+						if old, seen := refs[pi]; !seen || o.up.pos < old.up.pos {
+							refs[pi] = refHit{o.up, o.down, o.swapped}
+						}
 					}
 					rec := ampRecord{pair: pi, seq: int32(s), tm1: nan, tm2: nan}
 					if isExample {
@@ -233,7 +262,7 @@ func (ps *primerSet) collectAmplicons(c *Corpus, p PairParams, index map[pairKey
 	for _, part := range parts {
 		all = append(all, part...)
 	}
-	return all
+	return all, refs
 }
 
 func b2i(b bool) int {
