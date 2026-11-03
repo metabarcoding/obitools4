@@ -24,6 +24,8 @@ type PairParams struct {
 	Circular       bool    // -c
 	Reference      int     // -R: corpus index of the reference sequence (used when HasReference)
 	HasReference   bool
+	AmpBudget      int    // amplicon records held at once in phase 2 (0 = DefaultAmpBudget)
+	Release        func() // see SearchParams.Release
 }
 
 func (p PairParams) validate() error {
@@ -51,12 +53,19 @@ type Primer struct {
 	Good bool
 }
 
-// seqMatch is one occurrence of a primer in one sequence.
+// seqMatch is one occurrence of a primer in one sequence, on 8 bytes: there
+// are millions of them.
 type seqMatch struct {
-	primer  int32
-	pos     uint32
-	reverse bool
+	primer int32
+	place  uint32 // position << 1, plus 1 when the primer is found reversed
 }
+
+func newSeqMatch(primer int32, pos uint32, reverse bool) seqMatch {
+	return seqMatch{primer, pos<<1 | uint32(b2i(reverse))}
+}
+
+func (m seqMatch) pos() uint32   { return m.place >> 1 }
+func (m seqMatch) reverse() bool { return m.place&1 == 1 }
 
 // primerSet is the conserved words and, for each corpus sequence, their
 // occurrences sorted by position.
@@ -76,21 +85,41 @@ func selectPrimers(c *Corpus, wm []WordMatches, p PairParams) *primerSet {
 	inQ := quorumCount(counts.Examples, p.Sensitivity)
 	outQ := quorumCount(counts.CounterExamples, p.FalsePositive)
 
-	ps := &primerSet{perSeq: make([][]seqMatch, len(c.Seqs))}
-	for _, w := range wm {
-		ex, co := w.SequencesMatched(c)
-		if ex < inQ {
+	ex, co := make([]int, len(wm)), make([]int, len(wm))
+	parallelFor(len(wm), func(_, i int) { ex[i], co[i] = wm[i].SequencesMatched(c) })
+
+	// the occurrences of the words kept, by sequence, each in a slice of the
+	// exact size (and not in one big array: a few hundred bytes to some kB each
+	// find room in the free memory, which a single block of tens of MB does not)
+	ps := &primerSet{perSeq: make([][]seqMatch, c.Len())}
+	size := make([]int, c.Len())
+	for i, w := range wm {
+		if ex[i] < inQ {
 			continue
 		}
-		id := int32(len(ps.primers))
-		ps.primers = append(ps.primers, Primer{w.Word, ex, co, co <= outQ})
+		ps.primers = append(ps.primers, Primer{w.Word, ex[i], co[i], co[i] <= outQ})
 		for _, m := range w.Matches {
-			ps.perSeq[m.Seq] = append(ps.perSeq[m.Seq], seqMatch{id, m.Pos, m.Reverse})
+			size[m.Seq]++
 		}
 	}
-	for _, ms := range ps.perSeq {
-		slices.SortStableFunc(ms, func(a, b seqMatch) int { return cmp.Compare(a.pos, b.pos) })
+	for s, n := range size {
+		if n > 0 {
+			ps.perSeq[s] = make([]seqMatch, 0, n)
+		}
 	}
+	id := int32(0)
+	for i, w := range wm {
+		if ex[i] < inQ {
+			continue
+		}
+		for _, m := range w.Matches {
+			ps.perSeq[m.Seq] = append(ps.perSeq[m.Seq], newSeqMatch(id, m.Pos, m.Reverse))
+		}
+		id++
+	}
+	parallelFor(c.Len(), func(_, s int) {
+		slices.SortStableFunc(ps.perSeq[s], func(a, b seqMatch) int { return cmp.Compare(a.pos(), b.pos()) })
+	})
 	return ps
 }
 
@@ -111,18 +140,28 @@ type occurrence struct {
 }
 
 // forEachOccurrence calls fn for every amplicon of sequence s, applying the
-// length, good-primer and 3' constraints of ecoPrimers.
-func (ps *primerSet) forEachOccurrence(c *Corpus, s int, p PairParams, fn func(occurrence)) {
+// length, good-primer and 3' constraints of ecoPrimers. buf is the buffer in
+// which the sequence is unpacked, if the corpus is packed.
+func (ps *primerSet) forEachOccurrence(c *Corpus, s int, buf []byte, p PairParams, fn func(occurrence)) []byte {
 	ms := ps.perSeq[s]
-	lp := p.PrimerLength
 	var raw []byte
-	if p.ThreePrime > 0 {
-		raw = c.Seqs[s].Sequence()
+	if p.ThreePrime > 0 && len(ms) > 1 {
+		raw, buf = c.bases(s, buf)
 	}
+	ps.forEachOccurrenceIn(raw, ms, p, fn)
+	return buf
+}
+
+// forEachOccurrenceIn is forEachOccurrence over ms, the matches of a sequence
+// sorted by position (all of them, or only those of the primers of interest,
+// which yields the amplicons between these primers and none other), and raw its
+// bases, needed when the 3' bases must match exactly.
+func (ps *primerSet) forEachOccurrenceIn(raw []byte, ms []seqMatch, p PairParams, fn func(occurrence)) {
+	lp := p.PrimerLength
 
 	for i := range ms {
 		for j := i + 1; j < len(ms); j++ {
-			dpos := int(ms[j].pos) - int(ms[i].pos)
+			dpos := int(ms[j].pos()) - int(ms[i].pos())
 			if dpos <= lp {
 				continue
 			}
@@ -137,7 +176,7 @@ func (ps *primerSet) forEachOccurrence(c *Corpus, s int, p PairParams, fn func(o
 
 			// The upstream match is read as is (primer 1 of the pair when its word
 			// is smaller), the downstream one as the reverse primer.
-			key := pairKey{up.primer, down.primer, !up.reverse, down.reverse}
+			key := pairKey{up.primer, down.primer, !up.reverse(), down.reverse()}
 			swapped := !(ps.primers[key.p2].Word > ps.primers[key.p1].Word)
 			if swapped {
 				key = pairKey{key.p2, key.p1, key.a2, key.a1}
@@ -172,23 +211,23 @@ func (ps *primerSet) threePrimeMatches(raw []byte, up, down seqMatch, p PairPara
 	for t := lp - p.ThreePrime; t < lp; t++ {
 		// forward primer: the word when found direct, its reverse complement otherwise
 		var f byte
-		if !up.reverse {
+		if !up.reverse() {
 			f = wordBase(fw, lp, t)
 		} else {
 			f = 3 - wordBase(fw, lp, lp-1-t)
 		}
-		if s := at(int(up.pos) + t); s > 3 || s != f {
+		if s := at(int(up.pos()) + t); s > 3 || s != f {
 			return false
 		}
 
 		// reverse primer: the word when found reverse, its reverse complement otherwise
 		var r byte
-		if down.reverse {
+		if down.reverse() {
 			r = wordBase(rv, lp, t)
 		} else {
 			r = 3 - wordBase(rv, lp, lp-1-t)
 		}
-		if s := at(int(down.pos) + lp - 1 - t); s > 3 || 3-s != r {
+		if s := at(int(down.pos()) + lp - 1 - t); s > 3 || 3-s != r {
 			return false
 		}
 	}
@@ -220,12 +259,13 @@ func (ps *primerSet) countPairs(c *Corpus, p PairParams) map[pairKey]*pairAcc {
 		go func() {
 			defer wg.Done()
 			acc := partial[w]
+			var buf []byte
 			for s := range jobs {
 				if c.Roles[s] == Other {
 					continue // only the quorums are counted here
 				}
 				isExample := c.Roles[s] == Example
-				ps.forEachOccurrence(c, s, p, func(o occurrence) {
+				buf = ps.forEachOccurrence(c, s, buf, p, func(o occurrence) {
 					a := acc[o.key]
 					if a == nil {
 						a = &pairAcc{minLen: ^uint32(0)}
@@ -250,7 +290,7 @@ func (ps *primerSet) countPairs(c *Corpus, p PairParams) map[pairKey]*pairAcc {
 			}
 		}()
 	}
-	for s := range c.Seqs {
+	for s := range c.Roles {
 		jobs <- s
 	}
 	close(jobs)

@@ -34,8 +34,8 @@ func referenceSites(raw []byte, h refHit, p PairParams, swappedByOrder bool) (lo
 	// the exchange due to the string order flips it again.
 	firstIsUpstream := h.swapped == swappedByOrder
 
-	location = "join(" + span(int(h.up.pos), lp, n, p.Circular) + "," + span(int(h.down.pos), lp, n, p.Circular) + ")"
-	region := []byte(strings.ToLower(string(raw[int(h.up.pos)+lp : int(h.down.pos)])))
+	location = "join(" + span(int(h.up.pos()), lp, n, p.Circular) + "," + span(int(h.down.pos()), lp, n, p.Circular) + ")"
+	region := []byte(strings.ToLower(string(raw[int(h.up.pos())+lp : int(h.down.pos())])))
 	if firstIsUpstream {
 		return location, string(region)
 	}

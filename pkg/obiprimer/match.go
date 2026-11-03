@@ -8,7 +8,6 @@ import (
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obikmer"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 )
 
 // Match is one approximate occurrence of a word in a corpus sequence.
@@ -54,15 +53,18 @@ func (p MatchParams) validate() error {
 	return nil
 }
 
-// hit is a Match before its sequence index is known to be final.
+// hit is a Match before its sequence is known: the sequence it belongs to is
+// the one being scanned.
 type hit struct {
-	word int
-	m    Match
+	word    uint32
+	pos     uint32
+	errors  uint8
+	reverse bool
 }
 
 // scanFunc finds every occurrence of every word, on both strands, in one
-// sequence and reports them through emit.
-type scanFunc func(seq *obiseq.BioSequence, emit func(word, pos, errors int, reverse bool))
+// sequence (its bases) and reports them through emit.
+type scanFunc func(raw []byte, emit func(word, pos, errors int, reverse bool))
 
 // scannerMaker returns an independent scanFunc; each worker gets its own so
 // that scanners can keep private buffers.
@@ -83,8 +85,13 @@ func wordStrings(words []uint64, k int) (fwd, rev []string) {
 // matchCorpus runs the scanners over every sequence of the corpus in parallel
 // and assembles the per-word results. The output does not depend on the number
 // of workers.
+//
+// The occurrences of a sequence are kept in a slice of their exact size, then
+// counted per word, so that the occurrences of all the words are laid out in
+// one allocation of the exact size too: nothing grows by doubling, nor is held
+// twice for long.
 func matchCorpus(c *Corpus, words []uint64, mk scannerMaker) []WordMatches {
-	perSeq := make([][]hit, len(c.Seqs))
+	perSeq := make([][]hit, c.Len())
 
 	jobs := make(chan int)
 	var wg sync.WaitGroup
@@ -93,31 +100,46 @@ func matchCorpus(c *Corpus, words []uint64, mk scannerMaker) []WordMatches {
 		go func() {
 			defer wg.Done()
 			scan := mk()
+			var buf []hit
+			var raw, bases []byte
 			for i := range jobs {
-				var hits []hit
-				scan(c.Seqs[i], func(word, pos, errors int, reverse bool) {
-					hits = append(hits, hit{word, Match{uint32(i), uint32(pos), uint8(errors), reverse}})
+				buf = buf[:0]
+				raw, bases = c.bases(i, bases)
+				scan(raw, func(word, pos, errors int, reverse bool) {
+					buf = append(buf, hit{uint32(word), uint32(pos), uint8(errors), reverse})
 				})
-				perSeq[i] = hits
+				if len(buf) > 0 {
+					perSeq[i] = slices.Clone(buf)
+				}
 			}
 		}()
 	}
-	for i := range c.Seqs {
+	for i := range c.Roles {
 		jobs <- i
 	}
 	close(jobs)
 	wg.Wait()
 
 	res := make([]WordMatches, len(words))
-	for i, w := range words {
-		res[i].Word = w
-	}
+	count := make([]int, len(words))
 	for _, hits := range perSeq {
 		for _, h := range hits {
-			res[h.word].Matches = append(res[h.word].Matches, h.m)
+			count[h.word]++
 		}
 	}
-	for i := range res {
+	for i, w := range words {
+		res[i].Word = w
+		if count[i] > 0 {
+			res[i].Matches = make([]Match, 0, count[i])
+		}
+	}
+	for s, hits := range perSeq {
+		for _, h := range hits {
+			res[h.word].Matches = append(res[h.word].Matches, Match{uint32(s), h.pos, h.errors, h.reverse})
+		}
+		perSeq[s] = nil // the hits of the sequence are no longer needed
+	}
+	parallelFor(len(res), func(_, i int) {
 		slices.SortFunc(res[i].Matches, func(a, b Match) int {
 			if c := cmp.Compare(a.Seq, b.Seq); c != 0 {
 				return c
@@ -133,7 +155,7 @@ func matchCorpus(c *Corpus, words []uint64, mk scannerMaker) []WordMatches {
 			}
 			return 0
 		})
-	}
+	})
 	return res
 }
 

@@ -22,6 +22,14 @@ type SearchParams struct {
 	NoMultiMatch   bool    // -U: discard the primers matching several times in a sequence
 	Reference      string  // -R: identifier of an example sequence on which the amplicons are located ("" = none)
 
+	// Release, if not nil, is called when a stage has just freed a lot of memory
+	// and the next one is about to take some: the command makes the runtime hand
+	// it back to the system then, which the garbage collector would only do
+	// slowly, and the peak of memory would be the sum of the stages.
+	Release func()
+
+	AmpBudget int // amplicon records held at once by the pair evaluation (0 = DefaultAmpBudget)
+
 	Partitions int // partitions of the k-mer counter (default 256)
 	TmpDir     string
 
@@ -33,7 +41,7 @@ func DefaultSearchParams() SearchParams {
 	return SearchParams{
 		PrimerLength: 18, MaxErrors: 3, MinLength: 0, MaxLength: 1000,
 		StrictQuorum: 0.7, Sensitivity: 0.9, FalsePositive: 0.1, MinSpecificity: 0.6,
-		Partitions: 256, Model: obithermo.DefaultModel(),
+		Model: obithermo.DefaultModel(),
 	}
 }
 
@@ -82,6 +90,9 @@ func Search(c *Corpus, taxa *Taxa, p SearchParams) ([]PairStats, *SearchInfo, er
 	for i, w := range sw.Words {
 		words[i] = w.Kmer
 	}
+	if p.Release != nil {
+		p.Release() // the strict word search has just freed its occurrences
+	}
 	wm, err := MatchWords(c, words, MatchParams{K: p.PrimerLength, MaxErrors: p.MaxErrors, Circular: p.Circular})
 	if err != nil {
 		return nil, info, err
@@ -104,6 +115,8 @@ func Search(c *Corpus, taxa *Taxa, p SearchParams) ([]PairStats, *SearchInfo, er
 		Circular:       p.Circular,
 		Reference:      refIndex,
 		HasReference:   refIndex >= 0,
+		AmpBudget:      p.AmpBudget,
+		Release:        p.Release,
 	}, p.Model)
 	info.Pair = pinfo
 	return pairs, info, err

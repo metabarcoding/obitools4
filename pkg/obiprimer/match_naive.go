@@ -1,7 +1,5 @@
 package obiprimer
 
-import "git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
-
 // baseCode maps a nucleotide to 0..3 (A,C,G,T; U is T) and everything else to 4,
 // which never equals a word base.
 var baseCode = func() (t [256]byte) {
@@ -39,8 +37,7 @@ func matchNaive(c *Corpus, words []uint64, p MatchParams) ([]WordMatches, error)
 
 	mk := func() scanFunc {
 		var codes []byte
-		return func(seq *obiseq.BioSequence, emit func(word, pos, errors int, reverse bool)) {
-			raw := seq.Sequence()
+		return func(raw []byte, emit func(word, pos, errors int, reverse bool)) {
 			n := len(raw)
 			if n < p.K {
 				return

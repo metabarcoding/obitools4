@@ -40,7 +40,7 @@ var _saltMethod = "santalucia"
 var _salt = obithermo.DefaultSalt
 var _primerConc = obithermo.DefaultPrimerConc
 
-var _partitions = 256
+var _partitions = 0
 
 // OptionSet registers the options of obiprimers.
 func OptionSet(options *getoptions.GetOpt) {
@@ -148,8 +148,9 @@ func OptionSet(options *getoptions.GetOpt) {
 
 	options.IntVar(&_partitions, "partitions", _partitions,
 		options.ArgName("COUNT"),
-		options.Description("Number of temporary partition files used to count the conserved words. "+
-			"Increase it for very large inputs (memory per partition grows with data size / COUNT)."))
+		options.Description("Number of temporary partition files used to count the conserved words "+
+			"(0 = chosen from the size of the examples: 256 to 1024). The memory of the count is bounded "+
+			"whatever the number; more files only make the largest partitions smaller."))
 }
 
 // CLIRestrictTaxa returns the taxids restricting the examples.
@@ -198,5 +199,6 @@ func CLISearchParams() (obiprimer.SearchParams, error) {
 		Reference:      _reference,
 		Partitions:     _partitions,
 		Model:          model,
+		Release:        releaseMemory,
 	}, nil
 }

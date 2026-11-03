@@ -27,7 +27,7 @@ ce qu'elles comparent (paires, drapeaux good, séquences et taxons amplifiés, B
 **Bs et `identifiés` ne sont plus comparables** à ceux d'ecoPrimers ; ils sont validés autrement (section 25).
 
 Sections en attente de décision de l'utilisateur : voie B (21.4), statistique de Tm (22.3-a), nombre de partitions
-automatique, mémoire, tests shell, documentation, test `-e 0` (ecoPrimers n'avait pas terminé).
+automatique (fait, section 26), mémoire (fait, section 26), tests shell, documentation, test `-e 0` (ecoPrimers n'avait pas terminé).
 
 Sources de référence :
 - Article : `~/Sync/travail/__MOI__/ecoprimers/Documents/Riaz et al. 2011 ... .pdf` (NAR 39:e145)
@@ -1205,3 +1205,150 @@ Cyprinidae 3 448 paires, 0 absente, 0 champ différent ; Teleostei 407, 0 absent
 (l'artefact du `N`, section 12) ; `-U` 1 366, 0 absente, 0 différente ; contre-exemples 173, 0 absente, 0
 différente. obiprimers produit en plus 22 251 (Cyprinidae) et 2 389 (Teleostei) paires qu'ecoPrimers avait écartées avec son
 propre Bs.
+
+## 26. Optimisation de la mémoire (2026-11-03)
+
+Mission : réduire la mémoire de `obiprimers` **sans changer un octet de la sortie**, en procédant par la mesure.
+Contraintes respectées : tout reste en mémoire (l'entrée standard marche), un seul calcul par indice
+(`resolution.go` garde ses définitions), aucun paquet partagé modifié (`obiformats`, `obiiter`, `obiseq`,
+`obitax`, `obidefault` : `git diff` vide ; seuls `pkg/obiprimer`, `pkg/obikmer/seqquorum*.go`,
+`pkg/obitools/obiprimers` et `cmd/obitools/obiprimers` changent). Pas de commit.
+
+### 26.1 Méthode, et pièges
+
+- **Garde-fou** : binaire de référence construit avant toute modification ; six CSV de référence (Cyprinidae
+  `-r 7953`, Teleostei `-r 32443`, `-r 7953 -i 1`, `-U`, `-R NC_083213`, entrée standard) comparés par `cmp`
+  après **chaque** étape : identiques à chaque fois. Idem pour `-T 0` (25 699 paires), `-t` (taxonomie NCBI) et le
+  test d'échelle (Metazoa) comparés au binaire de référence.
+- **Mesure** : exécutions entrelacées, médiane (5 à 9 exécutions ; le pic RSS d'une même commande varie de ±100 Mo
+  avant, de ±10 Mo après). Le **temps CPU utilisateur est trompeur** : 40 % des échantillons d'un profil CPU sont du
+  `runtime.usleep` des P inactifs. Pour juger le vrai coût d'un changement, comparer aussi avec `--max-cpu 2`.
+- **Le RSS n'est pas le tas** (observation, pas hypothèse : mesures croisées `ps` + `runtime.MemStats` toutes les
+  60 ms). Sur cette machine le RSS ne descend jamais pendant l'exécution et suit `Sys`, même quand le runtime
+  annonce avoir *relâché* 258 Mo (`HeapReleased`). Une cause plausible, **non vérifiée** : macOS continue à compter
+  les pages rendues par `madvise` tant que le système ne les reprend pas. Conséquence pratique, vérifiée par
+  l'expérience du §26.3 (étapes 5 et 6) : ce qui fait monter le RSS, ce sont les très gros tableaux contigus
+  alloués successivement, qui n'entrent pas dans les trous du tas et font mapper de la mémoire neuve.
+- Les profils de tas par étape (tas après GC forcé, `inuse_space`) sont faits sur une copie du dépôt dans `/tmp`
+  avec des marqueurs temporaires (`MemStage`) ; rien n'en reste dans le code.
+
+### 26.2 Rapport de profil, avant toute modification (Cyprinidae, 7 822 séquences)
+
+Tas vivant après GC, par étape, et ce qui le compose :
+
+| Étape | vivant | composition |
+|---|---|---|
+| lecture terminée | 178 Mo | 165 Mo d'octets de séquence (131 Mo utiles : 26 % de marge laissée par les `append`) + attributs |
+| appariement approché | 274 Mo | + 97 Mo de `[]WordMatches` (82 Mo utiles) |
+| `selectPrimers` | 283 Mo | `perSeq` 109 Mo (82 utiles), construit par `append` (238 Mo alloués), tri stable en série : **0,74 s** |
+| phase 2a | 511 Mo | + **214 Mo** d'`ampRecord` (8,1 millions × 24 o, avec la marge des `append`) |
+| phase 2b | 517 Mo | + **220 Mo** (9,2 millions × 24 o) ; 2,17 Go alloués au total par ces `append` |
+| fin | pic du tas 1 005 Mo | environ 2 × le vivant (`GOGC=100`) |
+
+Les 1,1 Go « inexpliqués » étaient donc : (a) les enregistrements d'amplicons, 24 octets, marge des `append`,
+copiés par pair puis triés ; (b) les occurrences stockées deux fois pendant `selectPrimers` (`WordMatches` puis
+`perSeq`) avec des `append` en doublement ; (c) le retard du ramasse-miettes (le tas monte à ~2 × le vivant) ;
+(d) la mémoire libérée par une étape qui n'est pas réutilisée par la suivante (§26.1). **Hypothèses réfutées** :
+la lecture n'est pas le pic à cette taille (tas ≤ 330 Mo) ; `SeqKmerCounter` n'y est pour rien (il n'indexe que
+les 325 exemples, 5 Mo) ; `GOGC=25` ne double pas le temps utilisateur ici (+7 % sur la référence, +5 % avec les
+changements ci-dessous).
+
+### 26.3 Optimisations, dans l'ordre où elles ont été faites
+
+Médianes entrelacées (RSS en Mo, temps réel, temps utilisateur) ; « avant » est le binaire de l'étape précédente
+mesuré **dans la même série** (les valeurs absolues changent d'une série à l'autre, d'où les deux colonnes).
+
+| # | Changement | RSS avant → après | réel | utilisateur |
+|---|---|---|---|---|
+| 1 | **Amplicons** (`ampstore.go`, `amplicons.go`, `pairs_phase2.go`) : enregistrement de **12 octets** (deux tableaux parallèles `hash`/`taxon+rôle` au lieu de 24 octets), taille exacte connue avant l'écriture (passe de comptage par worker, puis écriture sans compteur partagé), ni copie ni tri ; **lots bornés** de paires (budget `DefaultAmpBudget` = 20 millions d'enregistrements, 240 Mo) ; maps de `resolve` réutilisées | 1 402 → 866 | 3,76 → 2,77 s | 18,9 → 13,5 s |
+| 2 | **Occurrences** (`match.go`, `pairs.go`) : `hit` de 12 octets, regroupement par mot en tranches de taille exacte, `seqMatch` de **8 octets**, tris parallélisés | 949 → 704 | 2,80 → 2,04 s | 13,5 → 13,2 s |
+| 3 | **Séquences à 2 bits par base** (`packed.go`) : plages d'exceptions pour tout octet ≠ a/c/g/t (restitution exacte), décodage dans un tampon par worker ; 178 → 42 Mo vivants | 705 → 628 | = | 13,4 → 13,8 s |
+| 4 | **Compactage à la lecture** (`LoadPackedCorpus`, `corpus_load.go`) : chaque séquence est compactée et son taxon cherché par les goroutines de lecture, l'objet `BioSequence` n'est jamais gardé | petit jeu : sans effet mesurable ; **échelle : 1 999 → 1 390** | = | = |
+| 5 | **Crochet `Release`** (`SearchParams.Release`, branché sur `debug.FreeOSMemory`) aux frontières d'étapes ; `debug.SetGCPercent` (étape 7) | 660 → 532 | = | = |
+| 6 | **Tranches exactes par mot / par séquence / par paire** au lieu d'un seul tableau de 55 à 110 Mo | 546 → 365 | 2,12 → 2,19 s | 13,6 → 13,8 s |
+| 7 | **Ramasse-miettes** : `SetGCPercent` dès le début de la commande (`memory.go`), sauf si `GOGC` est fixé par l'utilisateur | 370 → 305 avec 25 ; 292 avec 50 (autre série) | = | 13,9 → 14,4 s avec 25 |
+
+**Étape 1, un faux départ instructif** : la première version (comptage exact, écriture dans un tableau partagé,
+compteurs atomiques) faisait gagner 15 % de RSS mais coûtait **+18 % de CPU** (la passe de comptage énumère
+deux fois les 7 822 séquences). Deux corrections : des curseurs privés par worker (le plan de comptage fixe
+aussi quel worker lit quelle séquence, la passe d'écriture le rejoue), et surtout ne garder pour ces deux passes
+que les occurrences **des amorces qui figurent dans les paires concernées** (613 amorces sur 1 200 pour les
+survivants de la phase 2b) : l'énumération des paires d'occurrences est quadratique en densité. Résultat à
+`--max-cpu 2` : réel 10,35 → 7,33 s et CPU 18,8 → 13,3 s **par rapport à la référence**. Même résultat par
+construction : une paire dont une des deux amorces est absente de la liste ne peut pas être produite.
+
+**Étape 5, le choix du pourcentage** : `GOGC=50` donne l'essentiel du gain pour presque rien de CPU ; `25` retire
+encore 150 Mo à l'échelle pour +5 % de CPU. Retenu : 50 (`gcPercent` dans `memory.go`).
+
+### 26.4 Résultat final (médianes entrelacées ; binaire de référence → binaire final)
+
+| Cas | RSS | temps réel | temps utilisateur |
+|---|---|---|---|
+| Cyprinidae, fichier (9 exécutions) | **1 376 → 292 Mo** (−79 %) | 3,77 → 2,15 s | 19,2 → 14,2 s |
+| Cyprinidae, entrée standard (7) | 1 365 → 369 Mo | 2,91 → 1,33 s | 17,2 → 12,7 s |
+| Teleostei `-r 32443` (5) | 1 047 → 378 Mo | 3,41 → 2,58 s | 21,6 → 20,8 s |
+| Cyprinidae `-T 0`, aucune paire élaguée (3) | **5 883 → 409 Mo** | 6,06 → 4,82 s | 46,3 → 46,1 s |
+| avec `-t` (taxonomie NCBI complète) (3) | 2 664 → 1 273 Mo | 10,2 → 8,7 s | 32,7 → 29,5 s |
+| échelle : 18 061 génomes, 593 Mb, `-r 33208` (3) | 3 189 → 1 370 Mo | 9,06 → 8,95 s | 64,5 → 68,2 s |
+
+Pour comparaison, ecoPrimers (C) : 1,86 Go (Cyprinidae), 2,11 Go (Teleostei). Les tests : `go test ./pkg/obiprimer/
+./pkg/obitools/obiprimers/ ./pkg/obithermo/ ./pkg/obikmer/ -race -count=1` verts ; tests opt-in sur les données
+réelles (`OBIPRIMERS_TUTORIAL`) verts (65 s) : mêmes paires qu'ecoPrimers, 0 absente, 0 champ différent.
+
+Tests ajoutés : `TestAmpBatches` et `TestAmpBudgetDoesNotChangeTheResult` (tout budget, jusqu'à un enregistrement,
+donne les mêmes paires, indices et sites de référence) ; `TestPackedSeqRoundTrip` (toutes les longueurs modulo 4,
+N, IUPAC, `u`, plages), `TestPackedCorpusGivesTheSameSearch` (recherche sur corpus compacté ou non, avec
+ambiguïtés, référence, 3', circulaire) ; `TestLoadPackedCorpusEqualsLoadThenAssign` ; pour le compteur de k-mers :
+budget sans effet sur les comptes, décompte des occurrences par partition, budget d'occurrences,
+`DefaultPartitions`.
+
+### 26.5 Le test d'échelle (jamais fait avant) et le compteur de k-mers
+
+Sur 593 Mb d'un seul tenant (16 027 exemples), la mémoire n'est plus dominée par la phase 2 (aucune paire n'est
+trouvée avec les Metazoa pour cibles : 18-mers conservés chez 70 % des cibles = 0) mais par deux autres postes,
+que le petit jeu ne montrait pas :
+
+1. **Le comptage des mots stricts** (`SeqKmerCounter`, 16 octets par occurrence de k-mer, 526 millions
+   d'occurrences). Défauts trouvés : le tampon réutilisé par chaque worker gardait la taille de la plus grosse
+   partition traitée (jusqu'à 106 Mo) ; la plus grosse partition fait 6 fois la médiane. Corrigé
+   (`seqquorum*.go`) : les occurrences de chaque partition sont comptées à l'écriture et la partition est chargée
+   dans un tableau de taille exacte ; un **budget d'occurrences** (`DefaultOccurrenceBudget` = 32 millions, 512 Mo)
+   borne ce que les workers chargent ensemble, partitions les plus grosses d'abord (une partition plus grosse que le
+   budget passe seule) ; **nombre de partitions automatique** (`DefaultPartitions` : 256, jusqu'à 1 024 quand la
+   partition moyenne dépasserait ~1 million d'occurrences ; `--partitions 0`, nouveau défaut). La mémoire du comptage
+   ne dépend plus de la répartition des k-mers. Le budget est un compromis temps/mémoire, **mesuré** (16 cœurs,
+   RSS total / réel) : 8 M → 1 348 Mo / 14,4 s ; 16 M → 1 621 Mo / 10,2 s ; **32 M → 1 838 Mo / 8,75 s** ; sans
+   limite → 2 157 Mo / 8,70 s. 32 M ne coûte rien en temps.
+2. **La lecture** : les lots de 2 000 séquences (défaut commun des obitools) sont de ~33 Mo de bases chacun ;
+   avec 16 workers et les lots qui attendent entre les étapes, 793 Mo restaient vivants pendant la lecture.
+   `--batch-size-max` à 100 par défaut pour cette commande (`SetReadingDefaults`, appelée avant l'analyse des
+   options, qui l'emportent) : à l'échelle 1 819 → 1 190 Mo (−35 %, budget de k-mers à 32 M), temps réel +2,5 %, CPU +7 % ;
+   petit jeu : 306 → 274 Mo, +4 % de CPU. `--batch-mem` (existant)
+   a aussi été évalué : 4 M → 2 312 → 1 582 Mo (+6 % CPU), mais le plafond en nombre de séquences est plus efficace.
+   **À signaler** : le texte d'aide commun de `--batch-size-max` (paquet `obioptions`, partagé, non modifié) dit
+   « default 2000 » alors que le défaut affiché par `getoptions` est maintenant 100 pour `obiprimers`.
+
+### 26.6 Pistes écartées, et pourquoi
+
+- **Clé `uint64` pour les tables de paires** (au lieu de la structure de 12 octets) : aucun gain mesurable
+  (22,8 → 22,1 s de CPU à 2 cœurs, bruit). Annulé.
+- **`GOGC=25` par défaut** : 5 % de CPU de plus que 50 pour 150 Mo de moins à l'échelle, rien sur le petit jeu.
+  `GOGC` fixé par l'utilisateur est respecté, donc 25 reste à portée de main.
+- **Budget d'amplicons plus petit** (`DefaultAmpBudget`) : non réglé finement. 20 millions d'enregistrements
+  (240 Mo) tiennent en un lot pour les cas usuels ; `-T 0` passe en plusieurs lots sans perte de temps mesurable.
+- **Relire le fichier** : exclu (entrée standard).
+
+### 26.7 Ce qui reste, et décisions à prendre
+
+- **Entrée standard** (369 Mo au lieu de 292) : les séquences sont gardées comme objets pendant l'extraction de la
+  taxonomie embarquée (`embeddedTaxonomyInMemory`), avant d'être compactées. Les compacter dès la lecture
+  demanderait de scinder la sélection (qui a besoin de la taxonomie) : non fait.
+- **Taxonomie NCBI (`-t`)** : ~1,07 Go à elle seule (chargeur `obitax`, partagé, hors périmètre). La taxonomie
+  embarquée (`obiannotate --taxonomic-path`) l'évite. À dire dans l'aide : non fait.
+- **Budget du compteur de k-mers** (32 M occurrences) : décision de l'utilisateur si la mémoire prime sur le
+  temps (16 M : −12 % de RSS à l'échelle pour +16 % de temps).
+- `Corpus.Pack()` n'est plus appelé que par les tests (et utile à qui bâtit un corpus à la main) ; l'ancien chemin
+  `LoadCorpus` + `AssignTaxa` reste pour les tests. À supprimer si l'on veut un seul chemin.
+- Le crochet `Release` appelle une collecte complète à chaque frontière d'étape (4 appels dans le cas usuel : après
+  la lecture, avant l'appariement, avant chaque lot de 2a et de 2b) ; sans effet mesurable sur le temps.
+

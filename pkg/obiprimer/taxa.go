@@ -2,6 +2,7 @@ package obiprimer
 
 import (
 	"fmt"
+	"slices"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
 )
@@ -23,42 +24,54 @@ type Taxa struct {
 // Name returns the taxon with the given index, for reporting.
 func (t *Taxa) Name(i int32) *obitax.Taxon { return t.nodes[i] }
 
-// AssignTaxa determines the taxon of every sequence of the corpus at rank.
-func (c *Corpus) AssignTaxa(taxonomy *obitax.Taxonomy, rank string) (*Taxa, error) {
+// checkRank reports an error if the taxonomy has no such rank.
+func checkRank(taxonomy *obitax.Taxonomy, rank string) error {
 	if taxonomy == nil {
-		return nil, fmt.Errorf("obiprimer: a taxonomy is required to compute taxon statistics")
+		return fmt.Errorf("obiprimer: a taxonomy is required to compute taxon statistics")
 	}
-	ranks := taxonomy.RankList()
-	known := false
-	for _, r := range ranks {
-		if r == rank {
-			known = true
-			break
-		}
+	if !slices.Contains(taxonomy.RankList(), rank) {
+		return fmt.Errorf("obiprimer: unknown taxonomic rank %q", rank)
 	}
-	if !known {
-		return nil, fmt.Errorf("obiprimer: unknown taxonomic rank %q", rank)
-	}
+	return nil
+}
 
-	t := &Taxa{Rank: rank, Of: make([]int32, len(c.Seqs))}
+// AssignTaxa determines the taxon of every sequence of the corpus at rank. The
+// sequences must not be packed (see LoadPackedCorpus).
+func (c *Corpus) AssignTaxa(taxonomy *obitax.Taxonomy, rank string) (*Taxa, error) {
+	if err := checkRank(taxonomy, rank); err != nil {
+		return nil, err
+	}
+	taxons := make([]*obitax.Taxon, len(c.Seqs))
+	for i, seq := range c.Seqs {
+		taxons[i] = seq.Taxon(taxonomy).TaxonAtRank(rank)
+	}
+	return buildTaxa(rank, taxons, c.Roles)
+}
+
+// buildTaxa gives the sequences, whose taxon at rank is taxons[i] (nil when
+// there is none), their dense taxon index.
+func buildTaxa(rank string, taxons []*obitax.Taxon, roles []Role) (*Taxa, error) {
+	t := &Taxa{Rank: rank, Of: make([]int32, len(taxons))}
 	index := map[*obitax.TaxNode]int32{}
 	exSeen := map[int32]struct{}{}
 	coSeen := map[int32]struct{}{}
 
-	for i, seq := range c.Seqs {
+	for i, taxon := range taxons {
 		t.Of[i] = -1
-		taxon := seq.Taxon(taxonomy).TaxonAtRank(rank)
 		if taxon == nil {
 			continue
 		}
 		id, ok := index[taxon.Node]
 		if !ok {
+			if len(t.nodes) >= maxTaxa {
+				return nil, fmt.Errorf("obiprimer: more than %d taxa at rank %q", maxTaxa, rank)
+			}
 			id = int32(len(t.nodes))
 			index[taxon.Node] = id
 			t.nodes = append(t.nodes, taxon)
 		}
 		t.Of[i] = id
-		switch c.Roles[i] {
+		switch roles[i] {
 		case Example:
 			exSeen[id] = struct{}{}
 		case CounterExample:

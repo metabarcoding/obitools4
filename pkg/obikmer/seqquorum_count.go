@@ -41,6 +41,16 @@ func (c *SeqKmerCounter) CountAtLeast(minSeq int) ([]SeqKmerCount, error) {
 	}
 
 	workers := min(obidefault.ParallelWorkers(), c.p)
+
+	// the largest partitions first: they are the hardest to fit in the budget
+	// and the last ones to finish, if they come late
+	order := make([]int, c.p)
+	for i := range order {
+		order[i] = i
+	}
+	slices.SortStableFunc(order, func(a, b int) int { return cmp.Compare(c.parts[b].kmers, c.parts[a].kmers) })
+	budget := newOccurrenceBudget(c.budget)
+
 	jobs := make(chan int)
 	results := make([][]SeqKmerCount, c.p)
 
@@ -52,13 +62,19 @@ func (c *SeqKmerCounter) CountAtLeast(minSeq int) ([]SeqKmerCount, error) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			var occ []kmerOcc // reused between partitions
+			var occ []kmerOcc // reused between partitions of similar sizes
 			for p := range jobs {
+				n := c.parts[p].kmers
+				held := budget.acquire(n)
+				if cap(occ) < n || cap(occ) > 2*n+1024 {
+					occ = make([]kmerOcc, 0, n)
+				}
 				var err error
 				occ, err = c.loadPartition(p, occ[:0])
 				if err == nil {
 					results[p] = reduceOccurrences(occ, minSeq)
 				}
+				budget.release(held)
 				if err != nil {
 					errMu.Lock()
 					if firstErr == nil {
@@ -69,7 +85,7 @@ func (c *SeqKmerCounter) CountAtLeast(minSeq int) ([]SeqKmerCount, error) {
 			}
 		}()
 	}
-	for p := range c.p {
+	for _, p := range order {
 		jobs <- p
 	}
 	close(jobs)
@@ -152,4 +168,40 @@ func reduceOccurrences(occ []kmerOcc, minSeq int) []SeqKmerCount {
 		i = j
 	}
 	return out
+}
+
+// occurrenceBudget bounds the k-mer occurrences held in memory at once by the
+// goroutines that load the partitions.
+type occurrenceBudget struct {
+	mu    sync.Mutex
+	freed *sync.Cond
+	total int
+	free  int
+}
+
+func newOccurrenceBudget(total int) *occurrenceBudget {
+	b := &occurrenceBudget{total: total, free: total}
+	b.freed = sync.NewCond(&b.mu)
+	return b
+}
+
+// acquire waits until n occurrences fit in the budget and takes them; a request
+// above the whole budget waits for the budget to be free and takes all of it.
+// It returns what was taken, to give back with release.
+func (b *occurrenceBudget) acquire(n int) int {
+	n = min(n, b.total)
+	b.mu.Lock()
+	for b.free < n {
+		b.freed.Wait()
+	}
+	b.free -= n
+	b.mu.Unlock()
+	return n
+}
+
+func (b *occurrenceBudget) release(n int) {
+	b.mu.Lock()
+	b.free += n
+	b.mu.Unlock()
+	b.freed.Broadcast()
 }

@@ -3,8 +3,6 @@ package obiprimer
 import (
 	"math/bits"
 	"slices"
-
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 )
 
 // seedIndex maps the value of one half of a window to the patterns that are
@@ -136,8 +134,7 @@ func MatchWords(c *Corpus, words []uint64, p MatchParams) ([]WordMatches, error)
 	maxErr := p.MaxErrors
 
 	mk := func() scanFunc {
-		return func(seq *obiseq.BioSequence, emit func(word, pos, errors int, reverse bool)) {
-			raw := seq.Sequence()
+		return func(raw []byte, emit func(word, pos, errors int, reverse bool)) {
 			n := len(raw)
 			if n < k {
 				return

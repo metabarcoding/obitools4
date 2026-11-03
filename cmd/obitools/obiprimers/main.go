@@ -12,6 +12,8 @@ import (
 )
 
 func main() {
+	obiprimers.SetReadingDefaults()
+
 	optionParser := obioptions.GenerateOptionParser(
 		"obiprimers",
 		"designs the primer pairs amplifying a set of example sequences and evaluates the DNA barcode they delimit. "+

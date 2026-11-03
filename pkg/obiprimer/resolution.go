@@ -43,49 +43,67 @@ type resolution struct {
 	discriminant int // of which lead to a single taxon
 }
 
-// resolve computes the resolution of one pair from its amplicons. The slices
-// need not be sorted; they are only read.
-func resolve(parts ...[]ampRecord) resolution {
+// resolver computes the indices of pairs one after the other, reusing its maps
+// (a pair needs a few thousand entries, and there are thousands of pairs).
+type resolver struct {
+	state    map[uint64]barcodeState
+	targets  map[int32]struct{}
+	counters map[int32]struct{}
+	bad      map[int32]struct{}
+	owner    map[uint64]int32
+}
+
+func newResolver() *resolver {
+	return &resolver{
+		state:    map[uint64]barcodeState{},
+		targets:  map[int32]struct{}{},
+		counters: map[int32]struct{}{},
+		bad:      map[int32]struct{}{},
+		owner:    map[uint64]int32{},
+	}
+}
+
+// resolve computes the resolution of one pair from its amplicons, in any order.
+func resolve(a ampSlice) resolution { return newResolver().resolve(a) }
+
+func (rs *resolver) resolve(a ampSlice) resolution {
 	var res resolution
+	clear(rs.state)
+	clear(rs.targets)
+	clear(rs.counters)
+	clear(rs.bad)
 
-	state := map[uint64]barcodeState{}
-	targets := map[int32]struct{}{}
-	counters := map[int32]struct{}{}
+	for i, h := range a.hash {
+		taxon, role := unpackTaxon(a.tax[i])
+		st := rs.state[h]
+		switch {
+		case taxon < 0:
+			st.flags |= barcodeAnonymous
+		case st.taxon == 0:
+			st.taxon = taxon + 1
+		case st.taxon != taxon+1:
+			st.flags |= barcodeAmbiguous
+		}
+		if taxon >= 0 {
+			switch role {
+			case Example:
+				st.flags |= barcodeTarget
+				rs.targets[taxon] = struct{}{}
+			case CounterExample:
+				rs.counters[taxon] = struct{}{}
+			}
+		}
+		rs.state[h] = st
+	}
 
-	for _, part := range parts {
-		for _, r := range part {
-			st := state[r.hash]
-			switch {
-			case r.taxon < 0:
-				st.flags |= barcodeAnonymous
-			case st.taxon == 0:
-				st.taxon = r.taxon + 1
-			case st.taxon != r.taxon+1:
-				st.flags |= barcodeAmbiguous
-			}
-			if r.taxon >= 0 {
-				switch r.role {
-				case Example:
-					st.flags |= barcodeTarget
-					targets[r.taxon] = struct{}{}
-				case CounterExample:
-					counters[r.taxon] = struct{}{}
-				}
-			}
-			state[r.hash] = st
+	for i, h := range a.hash {
+		taxon, role := unpackTaxon(a.tax[i])
+		if role == Example && taxon >= 0 && rs.state[h].ambiguous() {
+			rs.bad[taxon] = struct{}{}
 		}
 	}
 
-	bad := map[int32]struct{}{}
-	for _, part := range parts {
-		for _, r := range part {
-			if r.role == Example && r.taxon >= 0 && state[r.hash].ambiguous() {
-				bad[r.taxon] = struct{}{}
-			}
-		}
-	}
-
-	for _, st := range state {
+	for _, st := range rs.state {
 		if st.flags&barcodeTarget != 0 {
 			res.barcodes++
 			if !st.ambiguous() {
@@ -93,8 +111,8 @@ func resolve(parts ...[]ampRecord) resolution {
 			}
 		}
 	}
-	res.targetTaxa, res.counterTaxa = len(targets), len(counters)
-	res.identified = len(targets) - len(bad)
+	res.targetTaxa, res.counterTaxa = len(rs.targets), len(rs.counters)
+	res.identified = len(rs.targets) - len(rs.bad)
 	return res
 }
 
@@ -107,27 +125,30 @@ func resolve(parts ...[]ampRecord) resolution {
 // counted here too. So identified <= the second result, with the same number of
 // target taxa, which lets a pair be rejected on the specificity threshold without
 // gathering the amplicons of the non-target sequences.
-func lenientIdentified(parts ...[]ampRecord) (targetTaxa, identified int) {
-	owner := map[uint64]int32{} // barcode -> its taxon, or -1 when shared
-	targets := map[int32]struct{}{}
-	for _, part := range parts {
-		for _, r := range part {
-			if r.role != Example || r.taxon < 0 {
-				continue
-			}
-			targets[r.taxon] = struct{}{}
-			if prev, seen := owner[r.hash]; !seen {
-				owner[r.hash] = r.taxon
-			} else if prev != r.taxon {
-				owner[r.hash] = -1
-			}
+func lenientIdentified(a ampSlice) (targetTaxa, identified int) {
+	return newResolver().lenientIdentified(a)
+}
+
+func (rs *resolver) lenientIdentified(a ampSlice) (targetTaxa, identified int) {
+	clear(rs.owner) // barcode -> its taxon, or -1 when shared
+	clear(rs.targets)
+	for i, h := range a.hash {
+		taxon, role := unpackTaxon(a.tax[i])
+		if role != Example || taxon < 0 {
+			continue
+		}
+		rs.targets[taxon] = struct{}{}
+		if prev, seen := rs.owner[h]; !seen {
+			rs.owner[h] = taxon
+		} else if prev != taxon {
+			rs.owner[h] = -1
 		}
 	}
-	alone := map[int32]struct{}{}
-	for _, t := range owner {
+	clear(rs.bad) // here: the taxa owning a barcode
+	for _, t := range rs.owner {
 		if t >= 0 {
-			alone[t] = struct{}{}
+			rs.bad[t] = struct{}{}
 		}
 	}
-	return len(targets), len(alone)
+	return len(rs.targets), len(rs.bad)
 }

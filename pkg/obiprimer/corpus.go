@@ -1,15 +1,14 @@
 package obiprimer
 
 import (
-	"cmp"
 	"fmt"
-	"slices"
-	"sync"
 
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 )
+
+// maxSeqLen bounds the length of a sequence: the position of a primer site and
+// its strand share 32 bits (see seqMatch).
+const maxSeqLen = 1 << 31
 
 // Counts gives the number of sequences by role.
 type Counts struct {
@@ -26,8 +25,11 @@ type Counts struct {
 // The primer search needs several passes over the sequences (words are
 // searched approximately in every one of them), so the corpus lives in memory.
 type Corpus struct {
-	Seqs  []*obiseq.BioSequence
-	Roles []Role // Roles[i] is the role of Seqs[i]
+	Seqs  []*obiseq.BioSequence // nil entries once the corpus is packed
+	Roles []Role                // Roles[i] is the role of Seqs[i]
+
+	packed []packedSeq // see Pack
+	ids    []string
 }
 
 // Counts returns the number of sequences by role.
@@ -46,68 +48,12 @@ func (c *Corpus) Counts() Counts {
 	return n
 }
 
-type corpusEntry struct {
-	batch, index int
-	seq          *obiseq.BioSequence
-	role         Role
-}
-
-// LoadCorpus reads every sequence of seqs, once, and keeps all of them with the
-// role given by the selection. The order of the input is preserved whatever
-// the number of reader goroutines.
-func LoadCorpus(seqs obiiter.IBioSequence, sel Selection) (*Corpus, error) {
-	var mu sync.Mutex
-	var entries []corpusEntry
-
-	consumer := func(it obiiter.IBioSequence, wg *sync.WaitGroup) {
-		defer wg.Done()
-		var local []corpusEntry
-		for it.Next() {
-			batch := it.Get()
-			for i, seq := range batch.Slice() {
-				local = append(local, corpusEntry{batch.Order(), i, seq, sel.Role(seq)})
-			}
-		}
-		mu.Lock()
-		entries = append(entries, local...)
-		mu.Unlock()
-	}
-
-	var wg sync.WaitGroup
-	for i := 1; i < obidefault.ParallelWorkers(); i++ {
-		wg.Add(1)
-		go consumer(seqs.Split(), &wg)
-	}
-	wg.Add(1)
-	go consumer(seqs, &wg)
-	wg.Wait()
-
-	slices.SortFunc(entries, func(a, b corpusEntry) int {
-		if c := cmp.Compare(a.batch, b.batch); c != 0 {
-			return c
-		}
-		return cmp.Compare(a.index, b.index)
-	})
-
-	c := &Corpus{
-		Seqs:  make([]*obiseq.BioSequence, len(entries)),
-		Roles: make([]Role, len(entries)),
-	}
-	for i, e := range entries {
-		c.Seqs[i], c.Roles[i] = e.seq, e.role
-	}
-	if c.Counts().Examples == 0 {
-		return nil, fmt.Errorf("obiprimer: no example sequence selected")
-	}
-	return c, nil
-}
-
 // IndexOfExample returns the index of the example sequence with the given
 // identifier. It is an error if there is none, or if the sequence is a
 // counterexample.
 func (c *Corpus) IndexOfExample(id string) (int, error) {
-	for i, s := range c.Seqs {
-		if s.Id() == id {
+	for i := range c.Roles {
+		if c.ID(i) == id {
 			if c.Roles[i] != Example {
 				return -1, fmt.Errorf("obiprimer: reference sequence %q is a counterexample, it must be an example", id)
 			}
@@ -115,4 +61,53 @@ func (c *Corpus) IndexOfExample(id string) (int, error) {
 		}
 	}
 	return -1, fmt.Errorf("obiprimer: reference sequence %q is not among the selected example sequences", id)
+}
+
+// Len returns the number of sequences.
+func (c *Corpus) Len() int { return len(c.Roles) }
+
+// SeqLen returns the length of sequence i.
+func (c *Corpus) SeqLen(i int) int {
+	if c.Seqs[i] != nil {
+		return c.Seqs[i].Len()
+	}
+	return c.packed[i].n
+}
+
+// ID returns the identifier of sequence i.
+func (c *Corpus) ID(i int) string {
+	if c.Seqs[i] != nil {
+		return c.Seqs[i].Id()
+	}
+	return c.ids[i]
+}
+
+// bases returns the bases of sequence i, lower case. A packed sequence is
+// unpacked into buf, grown if need be, which the caller keeps for the next call
+// (the second result); an unpacked one is returned as it is. The result must
+// not be modified, and is valid until the next call with the same buffer.
+func (c *Corpus) bases(i int, buf []byte) (raw, newBuf []byte) {
+	if c.Seqs[i] != nil {
+		return c.Seqs[i].Sequence(), buf
+	}
+	buf = c.packed[i].unpack(buf)
+	return buf, buf
+}
+
+// Pack replaces the sequences by their packed form, on 2 bits per base, and
+// frees the sequence objects (their annotations, their slack): the primer search
+// only needs the bases, the identifiers, and the taxa, which must have been
+// assigned before (AssignTaxa). A packed corpus holds about a quarter of the
+// memory of the bases themselves.
+func (c *Corpus) Pack() {
+	if c.packed != nil {
+		return
+	}
+	c.packed = make([]packedSeq, len(c.Seqs))
+	c.ids = make([]string, len(c.Seqs))
+	parallelFor(len(c.Seqs), func(_, i int) {
+		c.packed[i] = packBases(c.Seqs[i].Sequence())
+		c.ids[i] = c.Seqs[i].Id()
+		c.Seqs[i] = nil
+	})
 }

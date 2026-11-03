@@ -94,6 +94,7 @@ func readSequencesAndTaxonomy(args []string, given *obitax.Taxonomy) (obiiter.IB
 // returns them with the taxonomy to use, set as the default taxonomy: the one
 // of the -t option, or else the one embedded in the sequences.
 func CLIReadSequencesAndTaxonomy(args []string) (obiiter.IBioSequence, *obitax.Taxonomy, error) {
+	tuneMemory()
 	given := obitax.DefaultTaxonomy()
 	sequences, taxonomy, err := readSequencesAndTaxonomy(args, given)
 	if err != nil {
@@ -130,11 +131,8 @@ func CLIPrimerPairs(sequences obiiter.IBioSequence, taxonomy *obitax.Taxonomy) (
 	}
 
 	log.Infof("Reading the sequences")
-	corpus, err := obiprimer.LoadCorpus(sequences, sel)
-	if err != nil {
-		return nil, err
-	}
-	taxa, err := corpus.AssignTaxa(taxonomy, CLIRank())
+	// the sequences are packed, and their taxa looked up, as they are read
+	corpus, taxa, err := obiprimer.LoadPackedCorpus(sequences, sel, taxonomy, CLIRank())
 	if err != nil {
 		return nil, err
 	}
@@ -143,6 +141,8 @@ func CLIPrimerPairs(sequences obiiter.IBioSequence, taxonomy *obitax.Taxonomy) (
 	log.Infof("%d example sequences (%d %s), %d counterexamples (%d %s), %d other sequences",
 		counts.Examples, taxa.ExampleTaxa, CLIRank(),
 		counts.CounterExamples, taxa.CounterExamples, CLIRank(), counts.Others)
+
+	releaseMemory() // the sequences were read through large transient buffers
 
 	pairs, info, err := obiprimer.Search(corpus, taxa, params)
 	if info != nil {

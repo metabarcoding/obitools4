@@ -5,9 +5,7 @@ import (
 	"fmt"
 	"math"
 	"slices"
-	"sync"
 
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obithermo"
 )
 
@@ -69,10 +67,11 @@ func FindPairs(c *Corpus, taxa *Taxa, wm []WordMatches, p PairParams, model *obi
 	if err := p.validate(); err != nil {
 		return nil, info, err
 	}
-	if taxa == nil || len(taxa.Of) != len(c.Seqs) {
+	if taxa == nil || len(taxa.Of) != c.Len() {
 		return nil, info, fmt.Errorf("obiprimer: taxa do not match the corpus")
 	}
 	ps := selectPrimers(c, wm, p)
+	wm = nil // the occurrences are in ps now
 	info.Primers = len(ps.primers)
 	for _, pr := range ps.primers {
 		if pr.Good {
@@ -104,63 +103,22 @@ func FindPairs(c *Corpus, taxa *Taxa, wm []WordMatches, p PairParams, model *obi
 		return cmp.Or(cmp.Compare(a.p1, b.p1), cmp.Compare(a.p2, b.p2),
 			boolCmp(a.a1, b.a1), boolCmp(a.a2, b.a2))
 	})
-	index := make(map[pairKey]int32, len(kept))
-	for i, k := range kept {
-		index[k] = int32(i)
-	}
 
 	// Phase 2a: the amplicons of the target sequences, which give the melting
 	// temperatures, the reference sites, and an upper bound of Bs. It is cheap
 	// and rejects most pairs on the specificity threshold.
-	first := ps.collectAmplicons(c, taxa, p, index, collectOptions{examplesOnly: true, model: model, reference: true})
+	first := ps.boundPairs(c, taxa, p, kept, model)
 	var survivors []int // indices in kept
 	for i := range kept {
-		targets, identified := lenientIdentified(first.pair(int32(i))...)
-		if targets > 0 && float32(identified)/float32(targets) >= float32(p.MinSpecificity) {
+		if first.targets[i] > 0 && float32(first.identified[i])/float32(first.targets[i]) >= float32(p.MinSpecificity) {
 			survivors = append(survivors, i)
 		}
 	}
-	first.parts = nil
 	info.Candidates = len(survivors)
 
 	// Phase 2b: for the survivors only, the amplicons of every sequence, whatever
 	// its role: they decide which target taxa are identified.
-	index2 := make(map[pairKey]int32, len(survivors))
-	for j, i := range survivors {
-		index2[kept[i]] = int32(j)
-	}
-	amps := ps.collectAmplicons(c, taxa, p, index2, collectOptions{})
-
-	results := make([]*PairStats, len(survivors))
-	jobs := make(chan int)
-	var wg sync.WaitGroup
-	for range obidefault.ParallelWorkers() {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			for j := range jobs {
-				i := survivors[j]
-				k := kept[i]
-				st, ok := ps.evaluate(taxa, counts, p, k, acc[k], resolve(amps.pair(int32(j))...),
-					first.minTm1[i], first.minTm2[i], model)
-				if !ok {
-					continue
-				}
-				if h, found := first.refs[int32(i)]; found {
-					// evaluate orders the primers by string; the amplicon is read from the first one
-					s1 := orientedWord(ps.primers[k.p1].Word, p.PrimerLength, k.a1)
-					s2 := orientedWord(ps.primers[k.p2].Word, p.PrimerLength, k.a2)
-					st.RefLocation, st.RefAmplicon = referenceSites(c.Seqs[p.Reference].Sequence(), h, p, s2 < s1)
-				}
-				results[j] = &st
-			}
-		}()
-	}
-	for j := range survivors {
-		jobs <- j
-	}
-	close(jobs)
-	wg.Wait()
+	results := ps.evaluatePairs(c, taxa, p, kept, survivors, acc, first, model)
 
 	var out []PairStats
 	for _, st := range results {

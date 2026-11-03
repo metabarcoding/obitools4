@@ -3,9 +3,11 @@ package obiprimers
 import (
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiprimer"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
@@ -193,5 +195,53 @@ func TestTaxonomicPathIsDroppedAfterExtraction(t *testing.T) {
 	}
 	if withPath, withTaxid, total := scanSequences(sequences); total != 2 || withPath != 0 || withTaxid != 2 {
 		t.Errorf("stdin: %d sequences, %d with a path left, %d with a taxid", total, withPath, withTaxid)
+	}
+}
+
+// LoadPackedCorpus must give the same corpus and taxa as LoadCorpus followed by
+// AssignTaxa, whatever the number of reading goroutines.
+func TestLoadPackedCorpusEqualsLoadThenAssign(t *testing.T) {
+	path := writeTemp(t, embeddedFasta)
+	defer obidefault.SetMaxCPU(obidefault.MaxCPU())
+	for _, workers := range []int{1, 4} {
+		obidefault.SetMaxCPU(workers)
+
+		sequences, taxonomy, err := readSequencesAndTaxonomy([]string{path}, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		restrict, _ := obiprimer.BelongingTo(taxonomy, []string{"5"})
+		sel := obiprimer.Selection{Restrict: restrict}
+		want, err := obiprimer.LoadCorpus(sequences, sel)
+		if err != nil {
+			t.Fatal(err)
+		}
+		wantTaxa, err := want.AssignTaxa(taxonomy, "species")
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		sequences, _, err = readSequencesAndTaxonomy([]string{path}, taxonomy)
+		if err != nil {
+			t.Fatal(err)
+		}
+		got, gotTaxa, err := obiprimer.LoadPackedCorpus(sequences, sel, taxonomy, "species")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got.Counts() != want.Counts() || got.Len() != want.Len() {
+			t.Errorf("workers %d: counts %+v / %+v", workers, got.Counts(), want.Counts())
+		}
+		for i := range want.Roles {
+			if got.Roles[i] != want.Roles[i] || got.ID(i) != want.ID(i) || got.SeqLen(i) != want.SeqLen(i) || got.Seqs[i] != nil {
+				t.Errorf("workers %d, sequence %d differs", workers, i)
+			}
+		}
+		if !reflect.DeepEqual(gotTaxa.Of, wantTaxa.Of) || gotTaxa.ExampleTaxa != wantTaxa.ExampleTaxa {
+			t.Errorf("workers %d: taxa %v / %v", workers, gotTaxa.Of, wantTaxa.Of)
+		}
+	}
+	if _, _, err := obiprimer.LoadPackedCorpus(obiiter.NilIBioSequence, obiprimer.Selection{}, nil, "species"); err == nil {
+		t.Error("a nil taxonomy must be refused")
 	}
 }

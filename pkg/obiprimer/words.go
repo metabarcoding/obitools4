@@ -14,7 +14,7 @@ type WordSearch struct {
 	PrimerLength int     // word size (ecoPrimers -O, 18 by default; 2..31)
 	Quorum       float64 // fraction of example sequences that must contain the word (ecoPrimers -q, 0.7)
 	Circular     bool    // sequences are circular (ecoPrimers -c)
-	Partitions   int     // partition files of the counter (default 256)
+	Partitions   int     // partition files of the counter (0 = chosen from the size of the examples, see obikmer.DefaultPartitions)
 	TmpDir       string  // parent of the temporary directory ("" = system default)
 }
 
@@ -48,7 +48,15 @@ func FindStrictWords(c *Corpus, cfg WordSearch) (*StrictWords, error) {
 		return nil, fmt.Errorf("obiprimer: quorum must be in ]0,1], got %g", cfg.Quorum)
 	}
 	if cfg.Partitions <= 0 {
-		cfg.Partitions = 256
+		// the k-mer occurrences to count: those of the examples, which are the
+		// only sequences indexed
+		total := 0
+		for i, r := range c.Roles {
+			if r == Example && c.SeqLen(i) > cfg.PrimerLength {
+				total += c.SeqLen(i)
+			}
+		}
+		cfg.Partitions = obikmer.DefaultPartitions(total)
 	}
 
 	counter, err := obikmer.NewSeqKmerCounter(cfg.TmpDir, cfg.PrimerLength, 0, cfg.Partitions)
@@ -63,14 +71,17 @@ func FindStrictWords(c *Corpus, cfg WordSearch) (*StrictWords, error) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
+			var buf []byte
 			for i := range jobs {
-				if seq := c.Seqs[i]; c.Roles[i] == Example && seq.Len() > cfg.PrimerLength {
-					counter.AddSequence(uint32(i), seq.Sequence(), cfg.Circular)
+				if c.Roles[i] == Example && c.SeqLen(i) > cfg.PrimerLength {
+					var raw []byte
+					raw, buf = c.bases(i, buf)
+					counter.AddSequence(uint32(i), raw, cfg.Circular)
 				}
 			}
 		}()
 	}
-	for i := range c.Seqs {
+	for i := range c.Roles {
 		jobs <- i
 	}
 	close(jobs)
