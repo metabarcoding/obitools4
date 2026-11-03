@@ -465,7 +465,9 @@ func (iterator IBioSequence) RebatchBySize(maxBytes int, maxCount int) IBioSeque
 
 	go func() {
 		order := 0
-		iterator = iterator.SortBatches()
+		// a local variable: reassigning the captured iterator would race with
+		// the IsPaired call below, made by the caller on the same variable
+		sorted := iterator.SortBatches()
 		buffer := obiseq.MakeBioSequenceSlice()
 		bufBytes := 0
 		source := ""
@@ -479,8 +481,8 @@ func (iterator IBioSequence) RebatchBySize(maxBytes int, maxCount int) IBioSeque
 			}
 		}
 
-		for iterator.Next() {
-			seqs := iterator.Get()
+		for sorted.Next() {
+			seqs := sorted.Get()
 			source = seqs.Source()
 			for _, s := range seqs.Slice() {
 				sz := s.MemorySize()
@@ -683,7 +685,8 @@ func (iterator IBioSequence) FilterOn(predicate obiseq.SequencePredicate,
 			}
 
 			seqs.slice = slice[:j]
-			trueIter.pointer.channel <- seqs
+			trueIter.Push(seqs)
+			// trueIter.pointer.channel <- seqs
 		}
 
 		trueIter.Done()

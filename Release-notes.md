@@ -2,6 +2,23 @@
 
 ## New changes
 
+### New features
+
+- New `obioligotag` command, a re-implementation of the `oligotag` command of
+  OBITools 2. It builds a family of oligonucleotides (tags) of at least
+  `--family-size` members that are pairwise at a distance of at least
+  `--distance`. Candidates are either generated (`--oligo-size`, up to 12) or
+  read from a file (`--oligo-list`, sequence file or one oligonucleotide per
+  line). They can be restricted by alphabet (`--alphabet`, for instance `ACT`
+  to forbid G), GC content, homopolymers and IUPAC patterns. The distance is
+  either the Hamming distance or the LCS-mode alignment distance
+  (`--distance-type`).
+
+- New functions in `obikmer` to compare and enumerate k-mers encoded as
+  `uint64`: `HammingDistance`, `KmerLCS` and `KmerLCSBatch` (SIMD when built with
+  `GOEXPERIMENT=simd`), `IterConstrainedKmers`, and in `obigraph` a clique search
+  (`FindClique`) that does not need the adjacency matrix.
+
 ### Bug fixes
 
 - In `obipairing` correct the misspelling of the `obiparing_*` tags where the `i`

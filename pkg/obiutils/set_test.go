@@ -300,3 +300,29 @@ func TestIntersection(t *testing.T) {
 		t.Errorf("Intersection of two sets with no common elements returned incorrect result. Expected: %v, got: %v", expectedResult4, result4)
 	}
 }
+
+// The representation of a set must not depend on the (random) order of the map.
+func TestSetStringIsStable(t *testing.T) {
+	ints := NewSet(30, 4, 100, 2, 7, 15, 1)
+	for i := 0; i < 50; i++ {
+		if got := ints.String(); got != "[1 2 4 7 15 30 100]" {
+			t.Fatalf("ints: %s", got)
+		}
+	}
+	if got := NewSet("pear", "apple", "fig").String(); got != "[apple fig pear]" {
+		t.Errorf("strings: %s", got)
+	}
+	if got := NewSet(2.5, -1.0, 0.25).String(); got != "[-1 0.25 2.5]" {
+		t.Errorf("floats: %s", got)
+	}
+	type id int
+	if got := NewSet(id(3), id(1), id(2)).String(); got != "[1 2 3]" {
+		t.Errorf("named integer type: %s", got)
+	}
+	type pair struct{ a, b int }
+	for i := 0; i < 20; i++ { // no natural order: still stable
+		if got := NewSet(pair{2, 1}, pair{1, 2}, pair{1, 1}).String(); got != "[{1 1} {1 2} {2 1}]" {
+			t.Fatalf("structs: %s", got)
+		}
+	}
+}

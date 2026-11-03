@@ -2,12 +2,13 @@ package obiutils
 
 import (
 	"sync"
+	"sync/atomic"
 
 	log "github.com/sirupsen/logrus"
 )
 
 var globalLocker sync.WaitGroup
-var globalLockerCounter = 0
+var globalLockerCounter atomic.Int64
 
 // RegisterAPipe increments the global lock counter and adds a new pipe to the global wait group.
 //
@@ -15,8 +16,8 @@ var globalLockerCounter = 0
 // No return values.
 func RegisterAPipe() {
 	globalLocker.Add(1)
-	globalLockerCounter++
-	log.Debugln(globalLockerCounter, " Pipes are registered now")
+	n := globalLockerCounter.Add(1)
+	log.Debugln(n, " Pipes are registered now")
 }
 
 // UnregisterPipe decrements the global lock counter and signals that a pipe has finished.
@@ -25,8 +26,8 @@ func RegisterAPipe() {
 // No return values.
 func UnregisterPipe() {
 	globalLocker.Done()
-	globalLockerCounter--
-	log.Debugln(globalLockerCounter, "are still registered")
+	n := globalLockerCounter.Add(-1)
+	log.Debugln(n, "are still registered")
 }
 
 // WaitForLastPipe waits until all registered pipes have finished.

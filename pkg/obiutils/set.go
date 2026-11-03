@@ -1,6 +1,10 @@
 package obiutils
 
-import "fmt"
+import (
+	"fmt"
+	"reflect"
+	"slices"
+)
 
 type Set[E comparable] map[E]struct{}
 
@@ -61,12 +65,43 @@ func (s Set[E]) Members() []E {
 	return result
 }
 
+// compareMembers orders two set members: numbers by value, strings
+// alphabetically, anything else by its printed form. It is only used to give
+// the string representation of a set a stable order.
+func compareMembers(a, b any) int {
+	va, vb := reflect.ValueOf(a), reflect.ValueOf(b)
+	switch {
+	case va.CanInt() && vb.CanInt():
+		return cmpOrdered(va.Int(), vb.Int())
+	case va.CanUint() && vb.CanUint():
+		return cmpOrdered(va.Uint(), vb.Uint())
+	case va.CanFloat() && vb.CanFloat():
+		return cmpOrdered(va.Float(), vb.Float())
+	case va.Kind() == reflect.String && vb.Kind() == reflect.String:
+		return cmpOrdered(va.String(), vb.String())
+	}
+	return cmpOrdered(fmt.Sprint(a), fmt.Sprint(b))
+}
+
+func cmpOrdered[T int64 | uint64 | float64 | string](a, b T) int {
+	switch {
+	case a < b:
+		return -1
+	case a > b:
+		return 1
+	}
+	return 0
+}
+
 // String returns a string representation of the set.
 //
-// It returns a string representation of the set by formatting the set's members using the fmt.Sprintf function.
-// The resulting string is then returned.
+// The members are formatted with fmt, in increasing order: a Go map has no
+// order, and a representation changing from one call to the next is of no use
+// to print, log or compare.
 func (s Set[E]) String() string {
-	return fmt.Sprintf("%v", s.Members())
+	members := s.Members()
+	slices.SortFunc(members, func(a, b E) int { return compareMembers(a, b) })
+	return fmt.Sprintf("%v", members)
 }
 
 // Union returns a new set that is the union of the current set and the specified set.

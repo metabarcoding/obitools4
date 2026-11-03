@@ -11,6 +11,14 @@ NC     := \033[0m
 
 GOFLAGS=
 LDFLAGS=
+
+# The SIMD code (pkg/obikmer, simd package of Go >= 1.27) is only compiled with
+# GOEXPERIMENT=simd; without it, a portable scalar code is used instead.
+# The binaries select the vector width at run time (and fall back on an
+# emulation without SIMD hardware), so they run on any CPU.
+# Use `make GOEXPERIMENT= obitools` to build without SIMD.
+GOEXPERIMENT?=simd
+export GOEXPERIMENT
 GOCMD=go
 GOBUILD=$(GOCMD) build $(GOFLAGS) $(if $(LDFLAGS),-ldflags="$(LDFLAGS)")
 GOGENERATE=$(GOCMD) generate
@@ -36,13 +44,18 @@ OBITOOLS_DIRS:=$(sort $(patsubst %/,%,$(dir $(OBITOOLS_SRC))))
 OBITOOLS:=$(notdir $(OBITOOLS_DIRS))
 
 
+# Name of the target of a package: its path under pkg/, so that two packages of
+# the same name in different directories (pkg/obialign and
+# pkg/obitools/obialign) do not share a target.
+pkgname=$(subst /,-,$(patsubst pkg/%,%,$(1)))
+
 define MAKE_PKG_RULE
-pkg-$(notdir $(1)): $(1) pkg/obioptions/version.go
-	@echo -n - Building package $(notdir $(1))...
+pkg-$(call pkgname,$(1)): $(1) pkg/obioptions/version.go
+	@echo -n - Building package $(call pkgname,$(1))...
 	@$(GOBUILD) ./$(1) \
-	    2> pkg-$(notdir $(1)).log \
-		|| cat pkg-$(notdir $(1)).log
-	@rm -f pkg-$(notdir $(1)).log
+	    2> pkg-$(call pkgname,$(1)).log \
+		|| cat pkg-$(call pkgname,$(1)).log
+	@rm -f pkg-$(call pkgname,$(1)).log
 	@echo Done.
 endef
 

@@ -8,7 +8,7 @@ All the sources of the [*OBITools4*](http://metabarcoding.org/obitools4) can be 
 
 ## Prerequisites
 
-The *OBITools4* are developped using the [GO programming language](https://go.dev/), we stick to the latest version of the language, today the $1.21.4$. If you want to download and compile the sources yourself, you first need to install the corresponding compiler on your system. Some parts of the soft are also written in C, therefore a recent C compiler is also requested, GCC on Linux or Windows, the Developer Tools on Mac.
+The *OBITools4* are developped using the [GO programming language](https://go.dev/), we stick to the latest version of the language, today the $1.27$. If you want to download and compile the sources yourself, you first need to install the corresponding compiler on your system. Some computations (distances between k-mers) use the experimental `simd` package of Go: the `Makefile` compiles them with `GOEXPERIMENT=simd`, and the installation script uses a Go 1.27 compiler for that reason. The resulting programs run on any processor, a portable code being used when no SIMD instruction is available. Some parts of the soft are also written in C, therefore a recent C compiler is also requested, GCC on Linux or Windows, the Developer Tools on Mac.
 
 Whatever the installation you decide for, you will have to ensure that a C compiler is available on your system.
 

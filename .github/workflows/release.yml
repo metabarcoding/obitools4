@@ -16,7 +16,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.26"
+          go-version: "1.27"
       - name: Checkout obitools4 project
         uses: actions/checkout@v5
       - name: Run tests
@@ -54,7 +54,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.26"
+          go-version: "1.27"
 
       - name: Extract version from tag
         id: get_version
@@ -78,7 +78,8 @@ jobs:
             -v "$(pwd):/src" \
             -w /src \
             -e VERSION="${VERSION}" \
-            golang:1.26-alpine \
+            -e GOEXPERIMENT=simd \
+            golang:1.27-alpine \
             sh -c "apk add --no-cache gcc musl-dev zlib-dev zlib-static make && \
                    make LDFLAGS='-linkmode=external -extldflags=-static' obitools"
           mkdir -p artifacts

@@ -48,6 +48,14 @@ func ReadSequencesBatchFromFiles(filenames []string,
 
 				log.Printf("Start reading of file : %s", filename)
 
+				// The batches of a file reach us in any order (parallel parsing
+				// of the headers). They are numbered here in arrival order, so
+				// the order of the file must be restored first, unless the
+				// order of the data is not wanted (several concurrent readers).
+				if concurrent_readers == 1 {
+					iter = iter.SortBatches()
+				}
+
 				for iter.Next() {
 					batch := iter.Get()
 					batchiter.Push(batch.Reorder(nextCounter()))

@@ -176,6 +176,10 @@ func (sequence *BioSequence) SetFamily(taxonomy *obitax.Taxonomy) *obitax.Taxon 
 	return sequence.SetTaxonAtRank(taxonomy, "family")
 }
 
+// TaxonomicPathAttribute is the attribute holding the taxonomic path of a
+// sequence, from the root to its taxon (see obiannotate --taxonomic-path).
+const TaxonomicPathAttribute = "taxonomic_path"
+
 func (sequence *BioSequence) SetPath(taxonomy *obitax.Taxonomy) []string {
 	taxon := sequence.Taxon(taxonomy)
 	path := taxon.Path()
@@ -186,13 +190,13 @@ func (sequence *BioSequence) SetPath(taxonomy *obitax.Taxonomy) []string {
 		spath[lpath-i] = path.Get(i).FullString(taxonomy.Code())
 	}
 
-	sequence.SetAttribute("taxonomic_path", spath)
+	sequence.SetAttribute(TaxonomicPathAttribute, spath)
 
 	return spath
 }
 
 func (sequence *BioSequence) Path() []string {
-	path, ok := sequence.GetAttribute("taxonomic_path")
+	path, ok := sequence.GetAttribute(TaxonomicPathAttribute)
 
 	if !ok {
 		if taxo := obitax.DefaultTaxonomy(); taxo != nil {

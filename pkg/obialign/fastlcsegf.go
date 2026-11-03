@@ -2,6 +2,7 @@ package obialign
 
 import (
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
+	log "github.com/sirupsen/logrus"
 )
 
 // FastLCSEGFScoreByte calculates the score of the Longest Common Subsequence (LCS) between two byte slices.
@@ -355,27 +356,35 @@ func FastLCSEGFScore(seqA, seqB *obiseq.BioSequence, maxError int, buffer *[]uin
 	return FastLCSEGFScoreByte(seqA.Sequence(), seqB.Sequence(), maxError, true, buffer)
 }
 
-// FastLCSScore calculates the score of the longest common subsequence between two bio sequences.
+// FastLCSScore calculates the score of the longest common subsequence between two bio sequences,
+// and the length of the shortest alignment achieving it (the distance is alilen - lcs).
 //
-// if maxError > 0, the maximum allowed error between the sequences is maxError.
-// Otherwise, no error checking is done.
-// If the actual number of errors is larger than maxError, -1 is returned for both values.
+// If maxError >= 0, the result is exact when its distance is at most maxError,
+// and (-1, -1) is returned otherwise. If maxError < 0, no limit is applied.
+// See BandedLCS, which does the work.
 //
 // The score matrix is:
-//   - Matching: 1
+//   - Matching: 1 (bases are compared with the IUPAC rules)
 //   - Mismatch or gap: 0
+//
+// The program stops with a fatal error if a sequence is longer than
+// MaxBandedLCSLength.
 //
 // Parameters:
 // - seqA: The first bio sequence.
 // - seqB: The second bio sequence.
 // - maxError: The maximum allowed error between the sequences. If set to -1, no limit is applied.
-// - buffer: A pointer to a uint64 slice to store intermediate results. If nil, a new slice is created.
+// - buffer: Unused, kept for compatibility; the working memory is pooled.
 //
 // Returns:
 // - The score of the longest common subsequence.
 // - The length of the shortest alignment corresponding to the LCS.
 func FastLCSScore(seqA, seqB *obiseq.BioSequence, maxError int, buffer *[]uint64) (int, int) {
-	score, alilen, _ := FastLCSEGFScoreByte(seqA.Sequence(), seqB.Sequence(), maxError, false, buffer)
+	score, alilen, err := BandedLCS(seqA.Sequence(), seqB.Sequence(), maxError)
+	if err != nil {
+		log.Fatalf("FastLCSScore on sequences %s (%d bp) and %s (%d bp): %v (maximum %d bp)",
+			seqA.Id(), seqA.Len(), seqB.Id(), seqB.Len(), err, MaxBandedLCSLength)
+	}
 
 	return score, alilen
 }

@@ -2,6 +2,11 @@
 
 # Default values
 URL="https://go.dev/dl/"
+# Series of the Go compiler used to build OBITools4. The SIMD code relies on the
+# experimental simd package of Go (GOEXPERIMENT=simd), whose API may change
+# between Go versions: the build is therefore tied to the series the code was
+# written for rather than to the latest release.
+GO_SERIES="1.27"
 GITHUB_REPO="https://github.com/metabarcoding/obitools4"
 INSTALL_DIR="/usr/local"
 OBITOOLS_PREFIX=""
@@ -174,9 +179,15 @@ GOFILE=$(curl -s "$URL" \
             | grep 'class="download"' \
             | grep "\.tar\.gz" \
             | sed -E 's@^.*/dl/(go[1-9].+\.tar\.gz)".*$@\1@' \
+            | awk -v prefix="go${GO_SERIES}." 'index($0, prefix) == 1' \
             | grep -i "$OS" \
             | grep -i "$ARCH" \
             | head -1)
+
+if [ -z "$GOFILE" ]; then
+  echo "Error: no Go ${GO_SERIES} archive found for ${OS}/${ARCH} at ${URL}" 1>&2
+  exit 1
+fi
 
 GOURL=$(curl -s "${URL}${GOFILE}" \
         | sed -E 's@^.*href="(.*\.tar\.gz)".*$@\1@')
@@ -191,8 +202,12 @@ export PATH
 export GOPATH="$(pwd)/gopath"
 export GOCACHE="$(pwd)/cache"
 export GOTOOLCHAIN=local
+# OBITools4 is built with the SIMD code enabled (it falls back on a portable
+# code at run time if the processor has no SIMD instructions).
+export GOEXPERIMENT=simd
 
 echo "GOROOT=$GOROOT" 1>&2
+echo "GOEXPERIMENT=$GOEXPERIMENT" 1>&2
 echo "GOCACHE=$GOCACHE" 1>&2
 mkdir -p "$GOPATH" "$GOCACHE"
 
