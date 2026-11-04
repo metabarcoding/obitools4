@@ -21,7 +21,8 @@ type compiled struct {
 	// core is searched; the frame only decides which windows fit in the sequence.
 	left, right int
 	coreLen     int
-	levels      int // error levels searched: min(maxErr, coreLen)
+	levels      int  // error levels searched: min(maxErr, coreLen)
+	bndm        bool // the strict search of a linear sequence uses BNDM (see strict.go)
 
 	mask  [256]uint64 // mask[b] has bit i when byte b matches the core position i
 	end   uint64      // bit of the last core position
@@ -69,6 +70,7 @@ func MakeApatPattern(pattern string, errormax int, allowsIndel bool) (ApatPatter
 			pattern, c.coreLen, MaxCoreLength)
 	}
 	c.levels = min(errormax, c.coreLen)
+	c.bndm = c.levels == 0 && c.advance() >= minAdvance
 
 	if c.coreLen > 0 {
 		for b := range 256 {

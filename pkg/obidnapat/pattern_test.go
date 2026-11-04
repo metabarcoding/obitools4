@@ -137,3 +137,24 @@ func TestSemantics(t *testing.T) {
 	// the strands
 	check(find("AACCGG", 1, "ttaaccgctt"), [][3]int{{2, 8, 1}}, "one error")
 }
+
+// TestAdvanceCalibration prints the estimate next to the cases of BenchmarkStrict
+// (random cores of known measured gain), to fix minAdvance.
+func TestAdvanceCalibration(t *testing.T) {
+	for _, tc := range []struct{ name, pat string }{
+		{"len 4", "ACGT"}, {"len 6", "ACGTAC"}, {"len 8", "ACGTACGT"}, {"len 10", "ACGTACGTAC"},
+		{"len 12", "ACGTACGTACGT"}, {"len 16", "ACGTACGTACGTACGT"}, {"len 20", "ACGTACGTACGTACGTACGT"},
+		{"len 63", strings.Repeat("ACGT", 15) + "ACG"},
+		{"20 / 3 two-base", "ACRTACGYACGTACSTACGT"},
+		{"20 / 12 N", "ANNNACGNNNNANNNTACNT"},
+		{"20 / 20 two-base", "RYSWKMRYSWKMRYSWKMRY"},
+		{"10 / 3 two-base", "ARCGYAGTSC"},
+		{"12 / 6 two-base", "ARCGYAGWSCKA"},
+	} {
+		p, err := MakeApatPattern(tc.pat, 0, false)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Logf("%-20s advance %.2f  bndm=%v", tc.name, p.c.advance(), p.c.bndm)
+	}
+}

@@ -169,3 +169,39 @@ func TestAgainstOracle(t *testing.T) {
 		}
 	}
 }
+
+// TestStrictAgainstOracle checks the strict search on its own: patterns of 1 to
+// 63 positions (any length, and framed or not), no error allowed, with the BNDM
+// forced on and then off, each against the naive search.
+func TestStrictAgainstOracle(t *testing.T) {
+	rng := rand.New(rand.NewSource(11))
+	found := 0
+	for iter := 0; iter < iterations(8000); iter++ {
+		pat := randomPattern(rng, 1+rng.Intn(63), true)
+		p, err := MakeApatPattern(pat, 0, false)
+		if err != nil {
+			continue // a pattern whose core exceeds 63 positions
+		}
+		alphabet := []string{"acgt", "acgt", "acgtn", "acgtrykmn-", "ac"}[rng.Intn(5)]
+		seq := randomSequence(rng, alphabet, rng.Intn(400), concrete(rng, p))
+		begin, length := -1+rng.Intn(60), -1
+		if rng.Intn(2) == 0 {
+			length = rng.Intn(300)
+		}
+		want := oracle(p, seq, begin, length, false)
+		for _, useBNDM := range []bool{true, false} {
+			q := ApatPattern{c: new(compiled)}
+			*q.c = *p.c
+			q.c.bndm = useBNDM && q.c.coreLen > 0
+			got := q.c.search(nil, seq, begin, length, false)
+			if !sameMatches(got, want) {
+				t.Fatalf("pattern %q bndm=%v begin=%d length=%d seq=%q\n got  %v\n want %v",
+					pat, useBNDM, begin, length, seq, got, want)
+			}
+		}
+		found += len(want)
+	}
+	if found < 500 {
+		t.Errorf("the draws hold only %d matches", found)
+	}
+}

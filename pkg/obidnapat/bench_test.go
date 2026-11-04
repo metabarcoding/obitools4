@@ -95,3 +95,74 @@ func BenchmarkFlanks(b *testing.B) {
 		}
 	})
 }
+
+func withBNDM(p ApatPattern, on bool) ApatPattern {
+	q := ApatPattern{c: new(compiled)}
+	*q.c = *p.c
+	q.c.bndm = on
+	return q
+}
+
+// BenchmarkStrict compares, for no error allowed, obiapat, the Shift-And and the
+// BNDM, on 1 Mb, by length of the core and by number of degenerate positions.
+func BenchmarkStrict(b *testing.B) {
+	rng := rand.New(rand.NewSource(9))
+	seq := benchSeq(1 << 20)
+	bs := newSeq(seq)
+	ls, _ := obiapat.MakeApatSequence(newSeq(append([]byte(nil), seq...)), false)
+	random := func(n int) string {
+		out := make([]byte, n)
+		for i := range out {
+			out[i] = "ACGT"[rng.Intn(4)]
+		}
+		return string(out)
+	}
+	degenerate := func(core string, k int, code string) string {
+		out := []byte(core)
+		for _, i := range rng.Perm(len(out))[:k] {
+			out[i] = code[rng.Intn(len(code))]
+		}
+		return string(out)
+	}
+	cases := map[string]string{}
+	var names []string
+	add := func(name, pat string) { cases[name] = pat; names = append(names, name) }
+	for _, m := range []int{4, 6, 8, 10, 12, 16, 20, 30, 50, 63} {
+		add(fmt.Sprintf("len=%02d", m), random(m))
+	}
+	for _, k := range []int{3, 6, 10} {
+		add(fmt.Sprintf("len=20/%02d two-base codes", k), degenerate(random(20), k, "RYSWKM"))
+	}
+	add("len=20/03 three-base codes", degenerate(random(20), 3, "BDHV"))
+	add("len=20/02 N inside", degenerate(random(20), 2, "N"))
+	add("len=20/12 N inside", degenerate(random(20), 12, "N"))
+	add("len=20/16 two-base codes", degenerate(random(20), 16, "RYSWKM"))
+	add("len=20/20 two-base codes", degenerate(random(20), 20, "RYSWKM"))
+	add("len=20/10 N+three-base", degenerate(degenerate(random(20), 10, "N"), 6, "BDHV"))
+	add("len=10/03 two-base codes", degenerate(random(10), 3, "RYSWKM"))
+	add("len=12/06 two-base codes", degenerate(random(12), 6, "RYSWKM"))
+	for _, name := range names {
+		pat := cases[name]
+		lp, _ := obiapat.MakeApatPattern(pat, 0, false)
+		p, _ := MakeApatPattern(pat, 0, false)
+		b.Run(name+"/obiapat", func(b *testing.B) {
+			b.SetBytes(int64(len(seq)))
+			for i := 0; i < b.N; i++ {
+				lp.FindAllIndex(ls, 0, -1)
+			}
+		})
+		for _, v := range []struct {
+			name string
+			on   bool
+		}{{"shiftand", false}, {"bndm", true}} {
+			q := withBNDM(p, v.on)
+			b.Run(name+"/"+v.name, func(b *testing.B) {
+				b.SetBytes(int64(len(seq)))
+				var dst [][3]int
+				for i := 0; i < b.N; i++ {
+					dst = q.AppendAllIndex(dst[:0], bs, 0, -1)
+				}
+			})
+		}
+	}
+}

@@ -116,6 +116,9 @@ func (c *compiled) search(dst [][3]int, seq []byte, begin, length int, circular 
 	// the core text, in positions of the unrolled sequence
 	var st state
 	from, to := begin+c.left, lastStart+c.left+c.coreLen
+	if c.bndm && !circular {
+		return c.runBNDM(dst, seq[from:to], from)
+	}
 	for v := from; v < to; {
 		p := v % n
 		take := min(to-v, n-p)
