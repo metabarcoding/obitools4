@@ -146,15 +146,7 @@ func CLIPrimerPairs(sequences obiiter.IBioSequence, taxonomy *obitax.Taxonomy) (
 
 	pairs, info, err := obiprimer.Search(corpus, taxa, params)
 	if info != nil {
-		log.Infof("%d strict words (found without error in at least %d examples)", info.StrictWords, info.MinStrict)
-		if params.NoMultiMatch {
-			log.Infof("no multi-match: %d strict words dropped as repeated, %d words dropped for matching several times in a sequence",
-				info.Repeated, info.MultiMatch)
-		}
-		log.Infof("%d approximate occurrences; %d conserved primers, %d good",
-			info.Matches, info.Pair.Primers, info.Pair.GoodPrimers)
-		log.Infof("%d candidate pairs, %d amplifying enough examples, %d possibly specific enough, %d retained",
-			info.Pair.CandidatePairs, info.Pair.RetainedPairs, info.Pair.Candidates, len(pairs))
+		log.Infof("%d pairs retained", len(pairs))
 	}
 	return pairs, err
 }

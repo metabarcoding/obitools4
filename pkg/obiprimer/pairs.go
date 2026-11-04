@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"fmt"
 	"slices"
+	"sort"
 	"strings"
 	"sync"
 
@@ -192,10 +193,16 @@ func (ps *primerSet) forEachOccurrenceIn(raw []byte, ms []seqMatch, p PairParams
 				continue
 			}
 
-			// The upstream match is read as is (primer 1 of the pair when its word
-			// is smaller), the downstream one as the reverse primer.
+			// The upstream match is read as is (primer 1 of the pair when it
+			// comes first), the downstream one as the reverse primer. The same
+			// amplicon read on the other strand is the pair (R, F) instead of
+			// (F, R): the primers are ordered by (word, direct flag), false
+			// before true, so that both give the same key. Ordering by the word
+			// alone left the two views of a pair of one word, one primer being
+			// the reverse complement of the other, as two different keys.
 			key := pairKey{up.primer, down.primer, !up.reverse(), down.reverse()}
-			swapped := !(ps.primers[key.p2].Word > ps.primers[key.p1].Word)
+			w1, w2 := ps.primers[key.p1].Word, ps.primers[key.p2].Word
+			swapped := w2 < w1 || (w2 == w1 && key.a1 && !key.a2)
 			if swapped {
 				key = pairKey{key.p2, key.p1, key.a2, key.a1}
 			}
@@ -262,13 +269,76 @@ type pairAcc struct {
 	minLen, maxLen     uint32
 }
 
-// countPairs enumerates the amplicons of every sequence, in parallel, and
+// sensitivityNeeded is the smallest number of examples, out of e, that a pair
+// must amplify to pass the sensitivity test q > sens (the test of FindPairs,
+// in float32 as there). It is e+1 when no number does.
+func sensitivityNeeded(e int, sens float32) int {
+	return sort.Search(e+1, func(n int) bool { return float32(n)/float32(e) > sens })
+}
+
+// countPairs enumerates the amplicons of the sequences, in parallel, and
 // returns for each pair the sequences it amplifies and the length statistics
 // of its example amplicons.
+//
+// Only the pairs that can pass the sensitivity test are returned, which is what
+// FindPairs keeps: a pair passing it misses at most M = E - needed examples,
+// so it is found in at least one of any M+1 examples. The pairs are therefore
+// registered from M+1 examples only (those with the fewest primer sites, to
+// keep the set small), and the other examples and the counterexamples are only
+// used to count the amplicons of the pairs already registered. Registering the
+// pairs of every sequence would build millions of pairs, nearly all of them
+// found in a counterexample alone, to drop them at once. The counts of a
+// retained pair are those of an exhaustive enumeration.
 func (ps *primerSet) countPairs(c *Corpus, p PairParams) map[pairKey]*pairAcc {
+	counts := c.Counts()
+	if counts.Examples == 0 {
+		return map[pairKey]*pairAcc{}
+	}
+	needed := sensitivityNeeded(counts.Examples, float32(p.Sensitivity))
+	nFirst := counts.Examples - needed + 1 // examples a pair may miss, plus one
+	if nFirst <= 0 {
+		return map[pairKey]*pairAcc{} // no pair can amplify enough examples
+	}
+
+	var examples, counters []int
+	for s, r := range c.Roles {
+		switch r {
+		case Example:
+			examples = append(examples, s)
+		case CounterExample:
+			counters = append(counters, s)
+		}
+	}
+	slices.SortStableFunc(examples, func(a, b int) int { return cmp.Compare(len(ps.perSeq[a]), len(ps.perSeq[b])) })
+	nFirst = min(nFirst, len(examples))
+
+	cand := ps.scanPairs(c, p, examples[:nFirst], nil, "Registering candidate pairs")
+	rest := append(slices.Clone(examples[nFirst:]), counters...)
+	more := ps.scanPairs(c, p, rest, cand, "Counting candidate pairs")
+	for k, a := range more {
+		mergeAcc(cand[k], a)
+	}
+	return cand
+}
+
+// scanPairs enumerates the amplicons of the sequences seqs and accumulates them
+// by pair. With a non-nil known, only the amplicons of the pairs of known are
+// counted (and only their primers are looked at); the result then holds a
+// subset of the keys of known, to be merged into it.
+func (ps *primerSet) scanPairs(c *Corpus, p PairParams, seqs []int, known map[pairKey]*pairAcc, label string) map[pairKey]*pairAcc {
 	workers := obidefault.ParallelWorkers()
 	partial := make([]map[pairKey]*pairAcc, workers)
 
+	var wanted []bool
+	if known != nil {
+		wanted = make([]bool, len(ps.primers))
+		for k := range known {
+			wanted[k.p1], wanted[k.p2] = true, true
+		}
+	}
+
+	bar := newStageBar(label, len(seqs))
+	defer bar.Done()
 	jobs := make(chan int)
 	var wg sync.WaitGroup
 	for w := range workers {
@@ -278,12 +348,34 @@ func (ps *primerSet) countPairs(c *Corpus, p PairParams) map[pairKey]*pairAcc {
 			defer wg.Done()
 			acc := partial[w]
 			var buf []byte
+			var sites []seqMatch
 			for s := range jobs {
-				if c.Roles[s] == Other {
-					continue // only the quorums are counted here
-				}
+				bar.Add(1)
 				isExample := c.Roles[s] == Example
-				buf = ps.forEachOccurrence(c, s, buf, p, func(o occurrence) {
+				minLen, maxLen := p.window(c.Roles[s])
+				ms := ps.perSeq[s]
+				if wanted != nil {
+					sites = sites[:0]
+					for _, m := range ms {
+						if wanted[m.primer] {
+							sites = append(sites, m)
+						}
+					}
+					ms = sites
+				}
+				if len(ms) < 2 {
+					continue // an amplicon needs two primer sites
+				}
+				var raw []byte
+				if p.ThreePrime > 0 {
+					raw, buf = c.bases(s, buf)
+				}
+				ps.forEachOccurrenceIn(raw, ms, p, minLen, maxLen, func(o occurrence) {
+					if known != nil {
+						if _, ok := known[o.key]; !ok {
+							return
+						}
+					}
 					a := acc[o.key]
 					if a == nil {
 						a = &pairAcc{minLen: ^uint32(0)}
@@ -308,7 +400,7 @@ func (ps *primerSet) countPairs(c *Corpus, p PairParams) map[pairKey]*pairAcc {
 			}
 		}()
 	}
-	for s := range c.Roles {
+	for _, s := range seqs {
 		jobs <- s
 	}
 	close(jobs)
@@ -318,20 +410,24 @@ func (ps *primerSet) countPairs(c *Corpus, p PairParams) map[pairKey]*pairAcc {
 	total := partial[0]
 	for _, m := range partial[1:] {
 		for k, a := range m {
-			t := total[k]
-			if t == nil {
+			if t := total[k]; t == nil {
 				total[k] = a
-				continue
+			} else {
+				mergeAcc(t, a)
 			}
-			t.examples += a.examples
-			t.counters += a.counters
-			t.amplicons += a.amplicons
-			t.sumLen += a.sumLen
-			t.minLen = min(t.minLen, a.minLen)
-			t.maxLen = max(t.maxLen, a.maxLen)
 		}
 	}
 	return total
+}
+
+// mergeAcc adds the counts of src, found in other sequences, to dst.
+func mergeAcc(dst, src *pairAcc) {
+	dst.examples += src.examples
+	dst.counters += src.counters
+	dst.amplicons += src.amplicons
+	dst.sumLen += src.sumLen
+	dst.minLen = min(dst.minLen, src.minLen)
+	dst.maxLen = max(dst.maxLen, src.maxLen)
 }
 
 // orientedWord returns the upper-case primer string 5'->3': the canonical word

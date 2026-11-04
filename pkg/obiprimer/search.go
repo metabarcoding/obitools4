@@ -3,6 +3,8 @@ package obiprimer
 import (
 	"fmt"
 
+	log "github.com/sirupsen/logrus"
+
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obithermo"
 )
 
@@ -77,8 +79,10 @@ func Search(c *Corpus, taxa *Taxa, p SearchParams) ([]PairStats, *SearchInfo, er
 		return nil, nil, err
 	}
 	info := &SearchInfo{Counts: sw.Counts, StrictWords: len(sw.Words), MinStrict: sw.MinSequences}
+	log.Infof("%d strict words (found without error in at least %d examples)", info.StrictWords, info.MinStrict)
 	if p.NoMultiMatch {
 		sw.Words, info.Repeated = DropRepeatedWords(sw.Words)
+		log.Infof("no multi-match: %d strict words dropped as repeated", info.Repeated)
 	}
 
 	refIndex := -1
@@ -101,10 +105,12 @@ func Search(c *Corpus, taxa *Taxa, p SearchParams) ([]PairStats, *SearchInfo, er
 	}
 	if p.NoMultiMatch {
 		wm, info.MultiMatch = DropMultiMatch(wm, c)
+		log.Infof("no multi-match: %d words dropped for matching several times in a sequence", info.MultiMatch)
 	}
 	for _, w := range wm {
 		info.Matches += len(w.Matches)
 	}
+	log.Infof("%d approximate occurrences of %d words", info.Matches, len(wm))
 
 	pairs, pinfo, err := FindPairs(c, taxa, wm, PairParams{
 		PrimerLength:   p.PrimerLength,

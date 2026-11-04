@@ -93,6 +93,8 @@ func wordStrings(words []uint64, k int) (fwd, rev []string) {
 func matchCorpus(c *Corpus, words []uint64, mk scannerMaker) []WordMatches {
 	perSeq := make([][]hit, c.Len())
 
+	bar := newStageBar("Matching words", c.Len())
+	defer bar.Done()
 	jobs := make(chan int)
 	var wg sync.WaitGroup
 	for range obidefault.ParallelWorkers() {
@@ -103,6 +105,7 @@ func matchCorpus(c *Corpus, words []uint64, mk scannerMaker) []WordMatches {
 			var buf []hit
 			var raw, bases []byte
 			for i := range jobs {
+				bar.Add(1)
 				buf = buf[:0]
 				raw, bases = c.bases(i, bases)
 				scan(raw, func(word, pos, errors int, reverse bool) {

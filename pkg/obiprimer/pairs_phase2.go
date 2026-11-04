@@ -1,7 +1,10 @@
 package obiprimer
 
 import (
+	"fmt"
 	"sync"
+
+	log "github.com/sirupsen/logrus"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obithermo"
@@ -72,7 +75,7 @@ type bound struct {
 func (ps *primerSet) boundPairs(c *Corpus, taxa *Taxa, p PairParams, kept []pairKey,
 	model *obithermo.Model) *bound {
 
-	plan := ps.planAmplicons(c, p, batchIndex(kept, 0, len(kept)), true)
+	plan := ps.planAmplicons("Counting target amplicons", c, p, batchIndex(kept, 0, len(kept)), true)
 	res := &bound{
 		targets:    make([]int, len(kept)),
 		identified: make([]int, len(kept)),
@@ -85,12 +88,15 @@ func (ps *primerSet) boundPairs(c *Corpus, taxa *Taxa, p PairParams, kept []pair
 		resolvers[i] = newResolver()
 	}
 
-	for _, b := range ampBatches(plan.total(), p.ampBudget()) {
+	batches := ampBatches(plan.total(), p.ampBudget())
+	log.Infof("%d pairs, %d target amplicons, %d batch(es)", len(kept), sumInts(plan.total()), len(batches))
+	clock := newBatchClock("Target amplicons", len(batches))
+	for nb, b := range batches {
 		lo, hi := b[0], b[1]
 		p.release() // the previous batch, or the stage before, is garbage
 		store := newAmpStore(plan, lo, hi)
 		sites := ps.collectAmplicons(c, taxa, p, batchIndex(kept, lo, hi), plan, store,
-			collectOptions{examplesOnly: true, model: model, reference: true})
+			collectOptions{examplesOnly: true, model: model, reference: true, label: fmt.Sprintf("Target amplicons, batch %d/%d", nb+1, len(batches))})
 		store.check()
 		parallelFor(hi-lo, func(w, i int) {
 			res.targets[lo+i], res.identified[lo+i] = resolvers[w].lenientIdentified(store.pair(i))
@@ -100,6 +106,7 @@ func (ps *primerSet) boundPairs(c *Corpus, taxa *Taxa, p PairParams, kept []pair
 		for i, h := range sites.refs {
 			res.refs[int32(lo)+i] = h
 		}
+		clock.Done(nb + 1)
 	}
 	return res
 }
@@ -121,7 +128,7 @@ func (ps *primerSet) evaluatePairs(c *Corpus, taxa *Taxa, p PairParams, kept []p
 	}
 	// the amplicons of every sequence are counted first: the store is allocated
 	// at its exact size, and the batches are cut on the exact counts
-	plan := ps.planAmplicons(c, p, batchIndex(keys, 0, len(keys)), false)
+	plan := ps.planAmplicons("Counting all amplicons", c, p, batchIndex(keys, 0, len(keys)), false)
 
 	counts := c.Counts()
 	var refBases []byte
@@ -132,11 +139,15 @@ func (ps *primerSet) evaluatePairs(c *Corpus, taxa *Taxa, p PairParams, kept []p
 	for i := range resolvers {
 		resolvers[i] = newResolver()
 	}
-	for _, b := range ampBatches(plan.total(), p.ampBudget()) {
+	batches := ampBatches(plan.total(), p.ampBudget())
+	log.Infof("%d pairs to evaluate, %d amplicons, %d batch(es)", len(keys), sumInts(plan.total()), len(batches))
+	clock := newBatchClock("All amplicons", len(batches))
+	for nb, b := range batches {
 		lo, hi := b[0], b[1]
 		p.release()
 		store := newAmpStore(plan, lo, hi)
-		ps.collectAmplicons(c, taxa, p, batchIndex(keys, lo, hi), plan, store, collectOptions{})
+		ps.collectAmplicons(c, taxa, p, batchIndex(keys, lo, hi), plan, store,
+			collectOptions{label: fmt.Sprintf("All amplicons, batch %d/%d", nb+1, len(batches))})
 		store.check()
 		parallelFor(hi-lo, func(w, n int) {
 			j := lo + n
@@ -155,6 +166,14 @@ func (ps *primerSet) evaluatePairs(c *Corpus, taxa *Taxa, p PairParams, kept []p
 			}
 			results[j] = &st
 		})
+		clock.Done(nb + 1)
 	}
 	return results
+}
+
+func sumInts(v []int) (n int) {
+	for _, x := range v {
+		n += x
+	}
+	return
 }

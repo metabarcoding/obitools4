@@ -65,6 +65,8 @@ func FindStrictWords(c *Corpus, cfg WordSearch) (*StrictWords, error) {
 	}
 	defer counter.Close()
 
+	bar := newStageBar("Counting strict words", len(c.Roles))
+	defer bar.Done()
 	jobs := make(chan int)
 	var wg sync.WaitGroup
 	for range obidefault.ParallelWorkers() {
@@ -73,6 +75,7 @@ func FindStrictWords(c *Corpus, cfg WordSearch) (*StrictWords, error) {
 			defer wg.Done()
 			var buf []byte
 			for i := range jobs {
+				bar.Add(1)
 				if c.Roles[i] == Example && c.SeqLen(i) > cfg.PrimerLength {
 					var raw []byte
 					raw, buf = c.bases(i, buf)
