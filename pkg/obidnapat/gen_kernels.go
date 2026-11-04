@@ -3,6 +3,11 @@
 // gen_kernels writes scan_unrolled.go: the search kernels of 1 to maxUnrolled
 // error levels, with the state of each level in a variable of its own (the
 // compiler keeps them in registers). Run it with go generate.
+//
+// A variant without the allow mask, for the patterns that have no #, was tried
+// and dropped: one operation less per level, but the arm64 compiler of Go 1.27
+// then swaps two registers at each turn of the loop and lengthens the chain of
+// dependencies, and the kernels came out 15 to 40 % slower.
 package main
 
 import (

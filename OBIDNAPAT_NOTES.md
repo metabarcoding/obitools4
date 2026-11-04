@@ -75,10 +75,18 @@ position, donc BNDM ne s'arrête plus), textes avec beaucoup d'occurrences, circ
 
 Le coût du motif encadré est celui du cœur seul. **Le noyau générique à tableau est lent** : avant génération des noyaux déroulés, `e = 4` / `5` / `6` / `8` donnaient ~390 / 355 / 260 / 210 Mo/s (et un premier essai du noyau générique était même plus lent qu'`obiapat` à `e = 5`). Les noyaux déroulés ne montrent pas de palier jusqu'à 8 niveaux (pas de débordement de registres observé) ; au-delà de 8 on retombe sur le générique, non mesuré après coup. Les tests tirent `e` de 0 à 10 pour couvrir les deux.
 
+## Essais écartés (ne pas les refaire sans raison nouvelle)
+
+| Essai | Résultat | Cause |
+|---|---|---|
+| noyaux sans le masque `allow` pour les motifs sans `#` (une opération de moins par niveau) | **plus lents** : e=1 ~600 contre ~915 Mo/s, e=3 565 contre 770, e=8 420 contre 509 ; même avec des temporaires explicites | vu à l'assembleur (`go tool objdump`, arm64, Go 1.27) : le compilateur ajoute 3 `MOVD` qui échangent deux registres à chaque tour et réassocie les `ORR`, ce qui allonge la chaîne critique. Défaut de génération de code, pas d'algorithme ; pourrait changer avec une autre version de Go |
+| noyau générique à tableau pour 4 niveaux et plus | ~390 Mo/s à e=4, ~260 à e=6, ~210 à e=8 (un premier essai : plus lent qu'`obiapat`) | état en mémoire. Remplacé par les noyaux générés (e=1..8) ; le noyau à tableau ne sert plus qu'à e ≥ 9 |
+| BNDM pour les motifs courts ou très dégénérés | perte jusqu'à −55 % (motif de 4), −15 % (20 positions dont 12 `N`) | sauts trop courts ; remplacé par le choix à la compilation (`advance()` ≥ 3,6) |
+
 ## Suite
 
 1. ~~Voie stricte~~ faite (BNDM). Reste : strict multi-motifs (Wu-Manber avec décalage par q-gramme, ou Aho-Corasick), BNDM sur séquence circulaire, Shift-And à plusieurs flux pour les motifs courts.
 2. `PatternSet` : empaquetage de plusieurs motifs (et des deux brins) dans les mots de 64 bits, occurrences étiquetées ; puis SIMD par voies de motifs.
 3. Port de `ManberIndel` (avec la logique `obialign.LocatePattern` inchangée), pour `obiannotate` et `obingslibrary`.
 4. Migration des appelants (`obipcr`, `obisplit`, `obigrep`, `obiannotate`, `obingslibrary`), un par un ; `obiapat` reste jusqu'à la fin.
-5. Question ouverte : `X` dans une séquence (traité comme ni IUPAC ni joker). Piste de gain à mesurer : une variante des noyaux sans le masque `allow` quand le motif n'a aucun `#` (une opération de moins par niveau).
+5. Question ouverte : `X` dans une séquence (traité comme ni IUPAC ni joker). (La variante sans masque `allow` a été essayée et abandonnée, voir « Essais écartés ».)
