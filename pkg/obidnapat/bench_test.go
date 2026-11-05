@@ -3,9 +3,11 @@ package obidnapat
 import (
 	"fmt"
 	"math/rand"
+	"strings"
 	"testing"
 
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiapat"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 )
 
 const benchCore = "ACGTTGCATGCAAGTCGATC"
@@ -190,4 +192,58 @@ func BenchmarkIndel(b *testing.B) {
 			}
 		})
 	}
+}
+
+// BenchmarkRefine is the cost per read of BestMatch with indels (1000 reads of
+// 150 bases, the pattern planted with up to two indels, 3 errors allowed): the
+// forward search alone, then with the realignment by obialign.LocatePattern, then
+// with the backward bit-parallel search for the start.
+func BenchmarkRefine(b *testing.B) {
+	rng := rand.New(rand.NewSource(5))
+	p, _ := MakeApatPattern(benchCore, 3, true)
+	var reads []*obiseq.BioSequence
+	for i := 0; i < 1000; i++ {
+		r := randomSequence(rng, "acgt", 150, "")
+		m := []byte(mutate(rng, strings.ToLower(benchCore)))
+		copy(r[40+rng.Intn(60):], m)
+		reads = append(reads, newSeq(r))
+	}
+	b.Run("forward only", func(b *testing.B) {
+		var dst [][3]int
+		for i := 0; i < b.N; i++ {
+			for _, r := range reads {
+				dst = p.AppendAllIndex(dst[:0], r, 0, -1)
+			}
+		}
+	})
+	b.Run("LocatePattern", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			for _, r := range reads {
+				p.BestMatch(r, 0, -1)
+			}
+		}
+	})
+	b.Run("backward", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			for _, r := range reads {
+				p.BestMatchBackward(r, 0, -1)
+			}
+		}
+	})
+	lp, _ := obiapat.MakeApatPattern(benchCore, 3, true)
+	b.Run("AllMatches obiapat (LocatePattern)", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			for _, r := range reads {
+				ls, _ := obiapat.MakeApatSequence(r, false)
+				lp.AllMatches(ls, 0, -1)
+			}
+		}
+	})
+	b.Run("AllMatches backward", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			for _, r := range reads {
+				p.AllMatches(r, 0, -1)
+			}
+		}
+	})
 }

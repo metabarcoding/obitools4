@@ -84,11 +84,52 @@ func (p ApatPattern) BestMatch(seq *obiseq.BioSequence, begin, length int) (star
 	return fragStart + from, fragStart + to, score, true
 }
 
+// BestMatchBackward is BestMatch with the realignment done by the bit-parallel
+// search run backwards from the end of the window (see scan_backward.go) instead
+// of the dynamic programming of obialign.LocatePattern: the end of the match is the
+// one the search found, its start is the latest one of an alignment of the whole
+// pattern with that many errors (the shortest window). There is no match when no
+// such start exists.
+func (p ApatPattern) BestMatchBackward(seq *obiseq.BioSequence, begin, length int) (start int, end int, nerr int, matched bool) {
+	begin = max(begin, 0)
+	var res [][3]int
+	if p.c.indel {
+		res = p.c.indelHits(nil, seq.Sequence(), begin, length, false) // the real start decides of the region
+	} else {
+		res = p.AppendAllIndex(nil, seq, begin, length)
+	}
+	best := -1
+	for i, m := range res {
+		if best < 0 || m[2] < res[best][2] {
+			best = i
+		}
+	}
+	if best < 0 {
+		return 0, 0, 0, false
+	}
+	start, end, nerr = res[best][0], res[best][1], res[best][2]
+	if nerr == 0 || !p.c.allowsIndel {
+		return start, end, nerr, true
+	}
+	start, ok := p.c.backwardStart(seq.Sequence(), end-1, nerr, begin)
+	if !ok {
+		return 0, 0, 0, false
+	}
+	return start, end, nerr, true
+}
+
 // FilterBestMatch keeps, of the matches that overlap, the one with the fewest
-// errors (the first one when they tie).
+// errors (the first one when they tie). The windows are the nominal ones of
+// AppendAllIndex; see AllMatches for the real start of a window with indels.
 func (p ApatPattern) FilterBestMatch(seq *obiseq.BioSequence, begin, length int) [][3]int {
+	return nilIfEmpty(bestOfOverlaps(p.AppendAllIndex(nil, seq, begin, length)))
+}
+
+// bestOfOverlaps keeps, of the windows that overlap (by their ends and starts, the
+// errors included), the one with the fewest errors, the first when they tie. The
+// windows come by increasing end.
+func bestOfOverlaps(res [][3]int) [][3]int {
 	const none = 10000
-	res := p.AppendAllIndex(nil, seq, begin, length)
 	filtered := make([][3]int, 0, len(res))
 	best := [3]int{0, 0, none}
 	for _, m := range res {
@@ -104,10 +145,36 @@ func (p ApatPattern) FilterBestMatch(seq *obiseq.BioSequence, begin, length int)
 	if best[2] < none {
 		filtered = append(filtered, best)
 	}
-	return nilIfEmpty(filtered)
+	return filtered
 }
 
-// AllMatches returns the matches that do not overlap a better one.
+// AllMatches returns the matches that do not overlap a better one (FilterBestMatch).
+//
+// For a pattern compiled with allowsIndel the start of a match with errors is its
+// real one: the end of a window is exact, and its start is found by the backward
+// search of scan_backward.go (the latest start of an alignment of the whole pattern
+// with that many errors, the shortest window), instead of the nominal
+// end - Len(), which is off by the number of insertions and deletions. A window
+// whose real start cannot be found (only with # in the first positions of the
+// pattern) and the matches of a circular sequence keep the nominal start.
+// A match belongs to the region when its real start does.
 func (p ApatPattern) AllMatches(seq *obiseq.BioSequence, begin, length int) [][3]int {
-	return p.FilterBestMatch(seq, begin, length)
+	if !p.c.indel {
+		return p.FilterBestMatch(seq, begin, length)
+	}
+	begin = max(begin, 0)
+	res := bestOfOverlaps(p.c.indelHits(nil, seq.Sequence(), begin, length, false))
+	k := 0
+	for _, w := range res {
+		if w[2] > 0 {
+			if s, ok := p.c.backwardStart(seq.Sequence(), w[1]-1, w[2], begin); ok {
+				w[0] = s
+			}
+		}
+		if w[0] >= begin {
+			res[k] = w
+			k++
+		}
+	}
+	return nilIfEmpty(res[:k])
 }

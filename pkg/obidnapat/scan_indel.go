@@ -73,10 +73,29 @@ func (c *compiled) runIndelN(dst [][3]int, text []byte, base int, st *state) [][
 // region as in search: for a linear sequence the whole (nominal) window must lie
 // in it; for a circular one its start must, and it may cross the junction.
 func (c *compiled) searchIndel(dst [][3]int, seq []byte, begin, length int, circular bool) [][3]int {
-	n, m := len(seq), len(c.positions)
 	if begin < 0 {
 		begin = 0
 	}
+	first := len(dst)
+	dst = c.indelHits(dst, seq, begin, length, circular)
+
+	// the windows that start before the region come first
+	k := first
+	for _, w := range dst[first:] {
+		if w[0] >= begin {
+			dst[k] = w
+			k++
+		}
+	}
+	return dst[:k]
+}
+
+// indelHits appends the nominal windows of every end that the forward search
+// reports in the region, those whose nominal start falls before the region
+// included (a window with deletions is shorter than the pattern: its real start can
+// lie in the region when its nominal start does not). begin must not be negative.
+func (c *compiled) indelHits(dst [][3]int, seq []byte, begin, length int, circular bool) [][3]int {
+	n, m := len(seq), len(c.positions)
 	if begin >= n || m > n && circular {
 		return dst
 	}
@@ -88,27 +107,17 @@ func (c *compiled) searchIndel(dst [][3]int, seq []byte, begin, length int, circ
 	if circular {
 		to = limit - 1 + m
 	}
-	if to-begin < m {
+	if to-begin < 1 {
 		return dst
 	}
 
 	var st state
 	c.initIndel(&st)
-	first := len(dst)
 	for v := begin; v < to; {
 		p := v % n
 		take := min(to-v, n-p)
 		dst = c.runIndel(dst, seq[p:p+take], v, &st)
 		v += take
 	}
-
-	// the windows that start before the region come first
-	k := first
-	for _, w := range dst[first:] {
-		if w[0] >= begin {
-			dst[k] = w
-			k++
-		}
-	}
-	return dst[:k]
+	return dst
 }
