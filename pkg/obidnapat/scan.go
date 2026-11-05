@@ -108,6 +108,9 @@ func (c *compiled) span(n, begin, length int, circular bool) (first, last int, o
 // must lie in the region. For a circular one the start must, and the window may
 // cross the junction. Each place is reported once.
 func (c *compiled) search(dst [][3]int, seq []byte, begin, length int, circular bool) [][3]int {
+	if c.indel {
+		return c.searchIndel(dst, seq, begin, length, circular)
+	}
 	m := len(c.positions)
 	begin, lastStart, ok := c.span(len(seq), begin, length, circular)
 	if !ok {

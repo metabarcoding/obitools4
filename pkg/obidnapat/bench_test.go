@@ -166,3 +166,28 @@ func BenchmarkStrict(b *testing.B) {
 		}
 	}
 }
+
+// BenchmarkIndel reads 1 Mb for a pattern of 20 positions with 1 to 5 errors
+// where insertions and deletions count, with obiapat (ManberIndel) and with this package.
+func BenchmarkIndel(b *testing.B) {
+	seq := benchSeq(1 << 20)
+	bs := newSeq(seq)
+	ls, _ := obiapat.MakeApatSequence(newSeq(append([]byte(nil), seq...)), false)
+	for _, e := range []int{1, 2, 3, 5} {
+		lp, _ := obiapat.MakeApatPattern(benchCore, e, true)
+		p, _ := MakeApatPattern(benchCore, e, true)
+		b.Run(fmt.Sprintf("obiapat/e=%d", e), func(b *testing.B) {
+			b.SetBytes(int64(len(seq)))
+			for i := 0; i < b.N; i++ {
+				lp.FindAllIndex(ls, 0, -1)
+			}
+		})
+		b.Run(fmt.Sprintf("new/e=%d", e), func(b *testing.B) {
+			b.SetBytes(int64(len(seq)))
+			var dst [][3]int
+			for i := 0; i < b.N; i++ {
+				dst = p.AppendAllIndex(dst[:0], bs, 0, -1)
+			}
+		})
+	}
+}

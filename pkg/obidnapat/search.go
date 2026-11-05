@@ -1,6 +1,9 @@
 package obidnapat
 
-import "git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
+import (
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obialign"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
+)
 
 // The matches are [3]int{start, end, errors}: end is not included in the match.
 // begin and length delimit the region of the search (length < 0: up to the end
@@ -47,6 +50,12 @@ func (p ApatPattern) IsMatchingCircular(seq *obiseq.BioSequence, begin, length i
 }
 
 // BestMatch returns the first match with the fewest errors.
+//
+// For a pattern compiled with allowsIndel, a match with errors is only a nominal
+// window (see scan_indel.go): it is realigned, as obiapat does, by
+// obialign.LocatePattern on the part of the sequence around it, which gives its
+// real start, end and number of errors. When that alignment cannot be
+// reconstructed (the fragment is too short for the pattern), there is no match.
 func (p ApatPattern) BestMatch(seq *obiseq.BioSequence, begin, length int) (start int, end int, nerr int, matched bool) {
 	best := -1
 	res := p.AppendAllIndex(nil, seq, begin, length)
@@ -58,7 +67,21 @@ func (p ApatPattern) BestMatch(seq *obiseq.BioSequence, begin, length int) (star
 	if best < 0 {
 		return 0, 0, 0, false
 	}
-	return res[best][0], res[best][1], res[best][2], true
+	start, end, nerr = res[best][0], res[best][1], res[best][2]
+	if nerr == 0 || !p.c.allowsIndel {
+		return start, end, nerr, true
+	}
+
+	patlen := len(p.c.positions)
+	n := seq.Len()
+	fragStart := max(start-nerr, 0)
+	fragEnd := min(start+patlen+nerr, n)
+	pattern := p.c.raw[:min(patlen, len(p.c.raw))]
+	from, to, score := obialign.LocatePattern(seq.Id(), []byte(pattern), seq.Sequence()[fragStart:fragEnd])
+	if from < 0 {
+		return 0, 0, 0, false
+	}
+	return fragStart + from, fragStart + to, score, true
 }
 
 // FilterBestMatch keeps, of the matches that overlap, the one with the fewest

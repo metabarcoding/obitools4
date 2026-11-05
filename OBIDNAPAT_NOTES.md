@@ -19,7 +19,7 @@ Paquet `pkg/obidnapat`. Dernière mise à jour : 2026-11-05. Contexte et semanti
 
 Fichiers : `syntax.go` (IUPAC, classes `[AG]`, négation `!`, `#`), `pattern.go` (`MakeApatPattern`, `ReverseComplement`, `String`, `Len`),
 `scan.go` (noyaux), `search.go` (`AppendAllIndex[Circular]`, `FindAllIndex[Circular]`, `IsMatching[Circular]`, `BestMatch`, `FilterBestMatch`, `AllMatches`).
-`MakeApatPattern(..., allowsIndel=true)` renvoie une erreur (non disponible).
+`MakeApatPattern(..., allowsIndel=true)` : voir « Indels » plus bas.
 
 Sémantique : un octet qui n'est pas un code IUPAC ne représente aucune base (il ne correspond qu'à une position joker) ; une position qui accepte
 les quatre bases est un joker (`N`, `X`, `[ACGT]`) et accepte **tout octet** ; la région `[begin, begin+length)` est stricte pour une séquence linéaire
@@ -219,6 +219,21 @@ Réglage : `batchFor` = 3 mots jusqu'à 3 niveaux, 2 à 4-5 niveaux (5 non mesur
 `BenchmarkSet` après entrelacement (Mo/s de séquence, jeu / scans séparés) : e = 0 : N = 1 ×1,6 ; N = 2 ×3,4 ; N ≥ 4 ×6 ; e = 2 : N = 1 ×2,0 ; N = 2 ×3,0 ; N ≥ 4 ×4,4 à ×4,9. `BenchmarkSetLen` (8 motifs, deux brins) : e = 0 : longueur 10 / 20 / 32 : ×12,8 / ×6,1 / ×2,6, 33 et plus ×1,0 (solo BNDM) ; e = 2 : 10 / 20 / 32 : ×4,0 / ×3,8 / ×3,2 ; 33 à 63 : ×1,6 (un mot par cœur, seul l'entrelacement joue).
 Tests : `TestPatternSetBatches` (e = 0..10, tailles de lot 1 à 3 imposées, flancs de `N` pour que les fenêtres des mots d'un lot diffèrent), suite complète verte, `-race` vert (`OBIDNAPAT_ITER=6000`, 233 s ; en build simd `OBIDNAPAT_ITER=3000`, 117 s). **Mutations** (`fs[1]` → `fs[0]` dans `run0x2`, `run2x2`, `run2x3`) : détectées à chaque fois. (Un premier essai de mutation n'avait rien modifié : `sed` BSD n'accepte pas l'adresse `0,/re/`.)
 Reste : voie stricte multi-motifs (e = 0, motifs ≥ 33), comparaison avec `MatchWords`, mesure sur x86, réévaluation du SIMD avec entrelacement de vecteurs, optimisation du remplissage (bin packing), BNDM circulaire, `ManberIndel`, migration des appelants.
+
+### Indels : port de `ManberIndel` (2026-11-05, scan_indel.go, scan_indel_unrolled.go, indel_test.go)
+
+`MakeApatPattern(..., allowsIndel=true)` n'est plus refusé. `compiled.indel = allowsIndel && errormax > 0` (sans erreur permise, c'est la voie stricte, comme `ManberAll`) ; `allowsIndel` est gardé pour `ReverseComplement` et `BestMatch`.
+Récurrence (Wu-Manber, même convention de bits que `scan.go`) : `n_0 = ((o_0<<1)|1) & mask[b]` ; `n_j = (((o_j<<1)|1) & mask[b]) | ((o_{j-1} | (o_{j-1}<<1) | 1 | (n_{j-1}<<1)) & allow)` (insertion, substitution, suppression, toutes soumises à `#`) ;
+état initial `o_j = 2^j - 1` (j suppressions de tête, non soumises à `#`, comme obiapat). Noyau à tableau (`runIndelN`) pour 9 niveaux et plus, noyaux déroulés générés pour 1 à 8. Le terme `| (j > 1)` de l'écriture d'obiapat est redondant avec la substitution (la mutation qui le retirait ne faisait échouer aucun test) : supprimé.
+Décisions / écarts (**à valider par l'utilisateur**) :
+- **Fenêtre nominale** `[pos-len+1, pos+1)` comme obiapat ("may return shifted pos") ; `BestMatch` la réaligne par `obialign.LocatePattern` (logique inchangée : fragment `[start-nerr, start+len+nerr)`, `from < 0` = pas de match, comme l'`obiapat` actuel).
+- **Région stricte** : la fenêtre nominale doit tenir dans la région (obiapat laissait passer des fenêtres de début négatif et dépassait de 64 octets). Circulaire : le début est dans la région, comme en substitution. Conséquence : `BestMatch` ne peut plus choisir un meilleur candidat de début négatif puis le rejeter.
+- **Pas de retrait des jokers `N` de tête et de queue** avec indels (la sémantique d'obiapat les traite comme des positions) : la limite de 63 compte alors le motif entier. Sans erreur permise, retrait comme avant.
+- **Le nombre d'erreurs peut dépasser la longueur du motif** (insertions) : `levels = min(errormax, 63)`, pas `min(errormax, longueur)` (premier essai faux, trouvé par les deux tests).
+- `PatternSet` ne porte **pas** les indels (non fait).
+Tests : `TestIndelAgainstOracle` (programmation dynamique de Sellers, indépendante, linéaire/circulaire, régions, `#`, ambiguïtés, e de 1 à 10), `TestIndelAgainstObiapat` (fenêtre par fenêtre, début nominal compris), `TestIndelBestMatchAgainstObiapat` (2 213 cas comparés, 533 réalignés) ; verts, `-race` vert (`OBIDNAPAT_ITER=6000` suite complète 236 s ; `Indel` seul à 60 000 : 26 s). Mutations détectées (suppression des insertions, mauvais niveau dans la suppression de `runIndel3`).
+Mesure (`BenchmarkIndel`, motif de 20, 1 Mb, Mo/s, `ManberIndel` contre ce paquet) : e = 1 : 300 → 880 (×2,9) ; e = 2 : 317 → 685 (×2,2) ; e = 3 : 272 → 510 (×1,9) ; e = 5 : 187 → 328 (×1,75). Noyau à tableau seul : ×1,1 à ×1,3.
+Reste : `PatternSet` avec indels ; migration d'`obiannotate`, `obingslibrary`.
 
 ## Suite
 

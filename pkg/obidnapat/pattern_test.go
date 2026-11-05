@@ -72,8 +72,22 @@ func TestLengthLimit(t *testing.T) {
 			t.Errorf("pattern of %d symbols: error %v, want ok=%v", len(tc.pat), err, tc.ok)
 		}
 	}
-	if _, err := MakeApatPattern("ACGT", 1, true); err == nil {
-		t.Error("indels must be refused for now")
+	// with indels the pattern is searched whole: the limit counts its wildcards
+	// at the ends, and a pattern with no error allowed is the strict search
+	for _, tc := range []struct {
+		pat    string
+		errors int
+		ok     bool
+	}{
+		{strings.Repeat("A", 63), 1, true},
+		{strings.Repeat("A", 64), 1, false},
+		{"NNNN" + strings.Repeat("A", 60), 1, false}, // 64 positions: the wildcards count
+		{"NNNN" + strings.Repeat("A", 60), 0, true},  // no error: set aside as ever
+	} {
+		_, err := MakeApatPattern(tc.pat, tc.errors, true)
+		if (err == nil) != tc.ok {
+			t.Errorf("indel pattern of %d symbols, %d errors: error %v, want ok=%v", len(tc.pat), tc.errors, err, tc.ok)
+		}
 	}
 }
 
