@@ -43,8 +43,8 @@ avec des multiplexes, c'est un gain réel »), mais voir §6 : propose l'API et 
 
 ## 2. Ce qui existe (état de `pkg/obidnapat`)
 
-Remplaçant Go pur, spécialisé ADN, d'`pkg/obiapat` (cgo). Migrés et vérifiés : `obiannotate`, `obingslibrary`/`obimultiplex`. À migrer : `obipcr` (+ `pkg/obiapat/pcr.go`,
-circulaire), `obisplit`, `obigrep`. `obiapat` reste en place jusqu'à la fin.
+Remplaçant Go pur, spécialisé ADN, d'`pkg/obiapat` (cgo). Migrés et vérifiés : `obiannotate`, `obigrep`, `obingslibrary`/`obimultiplex`. `obisplit` a été supprimé
+(décision de l'utilisateur). À migrer : seulement `obipcr` (+ `pkg/obiapat/pcr.go`, séquences circulaires), le dernier programme qui dépende d'`obiapat` ; `obiapat` reste en place jusqu'à la fin.
 
 - `pattern.go` : `MakeApatPattern(pattern, errormax, allowsIndel)`. `compiled.indel = allowsIndel && errormax > 0` ; avec indels le **motif entier** est le cœur (pas de retrait des `N` de tête
   et de queue), limite de 63 positions ; `levels = min(errormax, 63)` (les erreurs peuvent dépasser la longueur du motif à cause des insertions) ; sans indels le cœur exclut les `N` de tête/queue (`left`, `right`), `levels = min(errormax, coreLen)`.
