@@ -38,8 +38,14 @@ func nilIfEmpty(loc [][3]int) [][3]int {
 	return loc
 }
 
-// IsMatching tells whether the pattern matches somewhere in the region.
+// IsMatching tells whether the pattern matches somewhere in the region. For a
+// pattern with indels any occurrence found counts, even one whose nominal start
+// falls before the region (a match with deletions, at the very beginning of the
+// sequence): the search starts at the beginning of the region, so the match lies in it.
 func (p ApatPattern) IsMatching(seq *obiseq.BioSequence, begin, length int) bool {
+	if p.c.indel {
+		return len(p.c.indelHits(nil, seq.Sequence(), max(begin, 0), length, false)) > 0
+	}
 	return len(p.AppendAllIndex(nil, seq, begin, length)) > 0
 }
 
