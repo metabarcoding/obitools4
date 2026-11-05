@@ -2,7 +2,9 @@ package obingslibrary
 
 import (
 	"fmt"
+	"slices"
 	"strings"
+	"sync/atomic"
 
 	log "github.com/sirupsen/logrus"
 
@@ -36,6 +38,7 @@ type Marker struct {
 	Forward_tag_mismatches int
 	Reverse_tag_mismatches int
 	samples                map[TagPair]*PCR
+	tags                   atomic.Pointer[tagSets] // the distinct tags of samples, built when needed
 }
 
 func (marker *Marker) Compile(forward, reverse string, maxError int, allowsIndel bool) error {
@@ -255,6 +258,7 @@ func (marker *Marker) GetPCR(forward, reverse string) (*PCR, bool) {
 
 	ipcr := PCR{}
 	marker.samples[pair] = &ipcr
+	marker.tags.Store(nil) // the distinct tags have to be listed again
 
 	return &ipcr, false
 }
@@ -433,4 +437,42 @@ func (marker *Marker) SetMatching(matching string) error {
 		return err
 	}
 	return nil
+}
+
+// tagSets holds the distinct forward tags and the distinct reverse tags of the
+// samples of a marker. There are far fewer of them than samples (a 96 well plate
+// has 12 tags of each side for 96 samples), and only they are compared to the tags
+// observed on the reads.
+type tagSets struct {
+	forward []string
+	reverse []string
+}
+
+// distinctTags lists the distinct tags of the samples, building the lists the first
+// time they are needed (and again once a sample has been added). It can be called by
+// several goroutines at once; they may build the lists twice, which does no harm.
+func (marker *Marker) distinctTags() *tagSets {
+	if t := marker.tags.Load(); t != nil {
+		return t
+	}
+
+	forward := make(map[string]struct{})
+	reverse := make(map[string]struct{})
+	for tags := range marker.samples {
+		forward[tags.Forward] = struct{}{}
+		reverse[tags.Reverse] = struct{}{}
+	}
+
+	t := &tagSets{forward: sortedKeys(forward), reverse: sortedKeys(reverse)}
+	marker.tags.Store(t)
+	return t
+}
+
+func sortedKeys(set map[string]struct{}) []string {
+	keys := make([]string, 0, len(set))
+	for k := range set {
+		keys = append(keys, k)
+	}
+	slices.Sort(keys)
+	return keys
 }

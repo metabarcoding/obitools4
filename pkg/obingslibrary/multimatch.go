@@ -50,9 +50,14 @@ func Levenshtein(s1, s2 string) int {
 		return lenS1
 	}
 
-	// Create two slices to store the distances
-	prev := make([]int, lenS2+1)
-	curr := make([]int, lenS2+1)
+	// Two rows to store the distances, on the stack for the short strings (the tags)
+	var prevRow, currRow [65]int
+	var prev, curr []int
+	if lenS2+1 <= len(prevRow) {
+		prev, curr = prevRow[:lenS2+1], currRow[:lenS2+1]
+	} else {
+		prev, curr = make([]int, lenS2+1), make([]int, lenS2+1)
+	}
 
 	// Initialize the previous row of the matrix
 	for j := 0; j <= lenS2; j++ {
@@ -455,50 +460,49 @@ func (library *NGSLibrary) TagExtractor(
 	return &TagPair{forward_tag, reverse_tag}
 }
 
-func (marker *Marker) ClosestForwardTag(
-	tag string,
-	dist func(string, string) int,
-) (string, int) {
+// closestTag returns the tag of tags the closest to tag for the distance dist, and
+// that distance. If several different tags are at the same smallest distance, no tag
+// is returned (the empty string): the tag is not identified. tags holds each tag once,
+// so a distance of 0 can only be that of one tag and ends the search.
+func closestTag(tags []string, tag string, dist func(string, string) int) (string, int) {
 	mindist := math.MaxInt
 	mintag := ""
 
-	for ts := range marker.samples {
-		d := dist(ts.Forward, tag)
+	for _, t := range tags {
+		d := dist(t, tag)
 
-		if d == mindist && mintag != "" && ts.Forward != mintag {
+		if d == 0 {
+			return t, 0
+		}
+
+		if d == mindist && mintag != "" && t != mintag {
 			mintag = ""
 		}
 
 		if d < mindist {
 			mindist = d
-			mintag = ts.Forward
+			mintag = t
 		}
 	}
 
 	return mintag, mindist
 }
 
+// ClosestForwardTag returns the forward tag of the samples the closest to tag, and
+// its distance (see closestTag).
+func (marker *Marker) ClosestForwardTag(
+	tag string,
+	dist func(string, string) int,
+) (string, int) {
+	return closestTag(marker.distinctTags().forward, tag, dist)
+}
+
+// ClosestReverseTag is ClosestForwardTag for the reverse tags.
 func (marker *Marker) ClosestReverseTag(
 	tag string,
 	dist func(string, string) int,
 ) (string, int) {
-	mindist := math.MaxInt
-	mintag := ""
-
-	for ts := range marker.samples {
-		d := dist(ts.Reverse, tag)
-
-		if d == mindist && mintag != "" && ts.Reverse != mintag {
-			mintag = ""
-		}
-
-		if d < mindist {
-			mindist = d
-			mintag = ts.Reverse
-		}
-	}
-
-	return mintag, mindist
+	return closestTag(marker.distinctTags().reverse, tag, dist)
 }
 
 func (library *NGSLibrary) SampleIdentifier(
