@@ -55,7 +55,8 @@ type PatternSet struct {
 	n       int
 }
 
-// MakePatternSet compiles the search of patterns. With bothStrands, the reverse
+// MakePatternSet compiles the search of patterns, which must not allow indels
+// (compiled with allowsIndel and at least one error): it refuses them. With bothStrands, the reverse
 // complement of every pattern is searched as well (a palindrome is found once
 // per strand).
 func MakePatternSet(patterns []ApatPattern, bothStrands bool) (*PatternSet, error) {
@@ -70,6 +71,10 @@ func makePatternSet(patterns []ApatPattern, bothStrands, vector bool) (*PatternS
 	for i, p := range patterns {
 		if p.c == nil {
 			return nil, fmt.Errorf("obidnapat: pattern %d of the set is not compiled", i)
+		}
+		if p.c.indel {
+			// the packed words run the recurrence of the substitutions only
+			return nil, fmt.Errorf("obidnapat: pattern %d (%s) allows indels, which a PatternSet does not search", i, p.c.text)
 		}
 		entries = append(entries, member{c: p.c, pattern: i, strand: 1})
 		if bothStrands {

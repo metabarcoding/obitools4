@@ -60,7 +60,10 @@ func (library *NGSLibrary) GetMarker(forward, reverse string) (*Marker, bool) {
 		Reverse_allows_indels: false,
 		Forward_tag_indels:    0,
 		Reverse_tag_indels:    0,
-		samples:               make(map[TagPair]*PCR, 1000),
+		// no limit on the distance of a tag to the closest tag of the library
+		Forward_tag_mismatches: -1,
+		Reverse_tag_mismatches: -1,
+		samples:                make(map[TagPair]*PCR, 1000),
 	}
 
 	(library.Markers)[pair] = &m
@@ -154,6 +157,40 @@ func (library *NGSLibrary) SetTagIndelsFor(primer string, indels int) {
 				marker.SetForwardTagIndels(indels)
 			} else {
 				marker.SetReverseTagIndels(indels)
+			}
+		}
+	}
+}
+
+func (library *NGSLibrary) SetForwardTagMismatches(mismatches int) {
+	for _, marker := range library.Markers {
+		marker.SetForwardTagMismatches(mismatches)
+	}
+}
+
+func (library *NGSLibrary) SetReverseTagMismatches(mismatches int) {
+	for _, marker := range library.Markers {
+		marker.SetReverseTagMismatches(mismatches)
+	}
+}
+
+func (library *NGSLibrary) SetTagMismatches(mismatches int) {
+	library.SetForwardTagMismatches(mismatches)
+	library.SetReverseTagMismatches(mismatches)
+}
+
+func (library *NGSLibrary) SetTagMismatchesFor(primer string, mismatches int) {
+	primer = strings.ToLower(primer)
+	primers, ok := library.Primers[primer]
+
+	if ok {
+		marker, ok := library.Markers[primers]
+
+		if ok {
+			if primer == primers.Forward {
+				marker.SetForwardTagMismatches(mismatches)
+			} else {
+				marker.SetReverseTagMismatches(mismatches)
 			}
 		}
 	}

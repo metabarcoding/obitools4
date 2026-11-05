@@ -30,7 +30,12 @@ type Marker struct {
 	Reverse_tag_delimiter byte
 	Forward_tag_indels    int
 	Reverse_tag_indels    int
-	samples               map[TagPair]*PCR
+	// Forward_tag_mismatches and Reverse_tag_mismatches are the largest distance
+	// between a tag found and the closest tag of the library for which the tag is
+	// kept (matching hamming or indel); a negative value is no limit.
+	Forward_tag_mismatches int
+	Reverse_tag_mismatches int
+	samples                map[TagPair]*PCR
 }
 
 func (marker *Marker) Compile(forward, reverse string, maxError int, allowsIndel bool) error {
@@ -355,6 +360,19 @@ func (marker *Marker) SetReverseTagIndels(indels int) {
 func (marker *Marker) SetTagIndels(indels int) {
 	marker.SetForwardTagIndels(indels)
 	marker.SetReverseTagIndels(indels)
+}
+
+func (marker *Marker) SetForwardTagMismatches(mismatches int) {
+	marker.Forward_tag_mismatches = mismatches
+}
+
+func (marker *Marker) SetReverseTagMismatches(mismatches int) {
+	marker.Reverse_tag_mismatches = mismatches
+}
+
+func (marker *Marker) SetTagMismatches(mismatches int) {
+	marker.SetForwardTagMismatches(mismatches)
+	marker.SetReverseTagMismatches(mismatches)
 }
 
 func (marker *Marker) SetForwardAllowedMismatches(allowed_mismatches int) {

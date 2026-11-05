@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"slices"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 
@@ -516,6 +517,7 @@ func (library *NGSLibrary) SampleIdentifier(
 
 	fdistance := int(0)
 	rdistance := int(0)
+	var tooFar []string // the tags found too far from the closest tag of the library
 
 	if tags.Forward != "" {
 		switch marker.Forward_matching {
@@ -531,6 +533,11 @@ func (library *NGSLibrary) SampleIdentifier(
 			annotations["obimultiplex_forward_matching"] = "indel"
 		}
 		annotations["obimultiplex_forward_tag_dist"] = fdistance
+		if marker.Forward_tag_mismatches >= 0 && fdistance > marker.Forward_tag_mismatches {
+			// the closest tag of the library is too far: the tag found is not valid
+			forward = ""
+			tooFar = append(tooFar, fmt.Sprintf("forward tag %s is at distance %d of the closest tag, %d mismatches allowed", tags.Forward, fdistance, marker.Forward_tag_mismatches))
+		}
 		annotations["obimultiplex_forward_proposed_tag"] = forward
 	}
 
@@ -548,7 +555,16 @@ func (library *NGSLibrary) SampleIdentifier(
 			annotations["obimultiplex_reverse_matching"] = "indel"
 		}
 		annotations["obimultiplex_reverse_tag_dist"] = rdistance
+		if marker.Reverse_tag_mismatches >= 0 && rdistance > marker.Reverse_tag_mismatches {
+			reverse = ""
+			tooFar = append(tooFar, fmt.Sprintf("reverse tag %s is at distance %d of the closest tag, %d mismatches allowed", tags.Reverse, rdistance, marker.Reverse_tag_mismatches))
+		}
 		annotations["obimultiplex_reverse_proposed_tag"] = reverse
+	}
+
+	if len(tooFar) > 0 {
+		annotations["obimultiplex_error"] = "Invalid tag: " + strings.Join(tooFar, "; ")
+		return nil
 	}
 
 	proposed := TagPair{forward, reverse}

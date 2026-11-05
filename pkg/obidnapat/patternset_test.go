@@ -328,3 +328,20 @@ func TestPatternSetBatches(t *testing.T) {
 		t.Errorf("only %d batches of several words", batched)
 	}
 }
+
+// TestPatternSetRefusesIndels: a pattern that allows indels would be searched by the
+// recurrence of the substitutions, with wrong results: it is refused. A pattern
+// compiled with allowsIndel but no error allowed is a strict one and is accepted.
+func TestPatternSetRefusesIndels(t *testing.T) {
+	withIndels, err := MakeApatPattern("ACGTACGTAC", 2, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := MakePatternSet([]ApatPattern{withIndels}, false); err == nil {
+		t.Error("a pattern with indels must be refused")
+	}
+	strict, _ := MakeApatPattern("ACGTACGTAC", 0, true)
+	if _, err := MakePatternSet([]ApatPattern{strict}, true); err != nil {
+		t.Errorf("a strict pattern must be accepted: %v", err)
+	}
+}
