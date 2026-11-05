@@ -76,6 +76,28 @@ func (c *compiled) runN(dst [][3]int, text []byte, base int, st *state) [][3]int
 	return dst
 }
 
+// span gives, for a sequence of n bytes, the first and the last start of a
+// window of the pattern (begin is brought back to 0 if negative); ok is false
+// when no window can exist.
+func (c *compiled) span(n, begin, length int, circular bool) (first, last int, ok bool) {
+	m := len(c.positions)
+	if begin < 0 {
+		begin = 0
+	}
+	if begin >= n || m > n && circular {
+		return 0, 0, false
+	}
+	limit := n
+	if length >= 0 && length < n-begin {
+		limit = begin + length
+	}
+	last = limit - m
+	if circular {
+		last = limit - 1
+	}
+	return begin, last, last >= begin
+}
+
 // search appends to dst the windows of the pattern found in seq. A window is
 // reported by its start, its end (start + Len(), which may go past the end of a
 // circular sequence) and its number of errors; the windows come by increasing
@@ -86,24 +108,9 @@ func (c *compiled) runN(dst [][3]int, text []byte, base int, st *state) [][3]int
 // must lie in the region. For a circular one the start must, and the window may
 // cross the junction. Each place is reported once.
 func (c *compiled) search(dst [][3]int, seq []byte, begin, length int, circular bool) [][3]int {
-	n, m := len(seq), len(c.positions)
-	if begin < 0 {
-		begin = 0
-	}
-	if begin >= n || m > n && circular {
-		return dst
-	}
-	limit := n
-	if length >= 0 && length < n-begin {
-		limit = begin + length
-	}
-
-	// lastStart is the last start of a window
-	lastStart := limit - m
-	if circular {
-		lastStart = limit - 1
-	}
-	if lastStart < begin {
+	m := len(c.positions)
+	begin, lastStart, ok := c.span(len(seq), begin, length, circular)
+	if !ok {
 		return dst
 	}
 	if c.coreLen == 0 { // nothing but wildcards: every window matches
@@ -115,6 +122,7 @@ func (c *compiled) search(dst [][3]int, seq []byte, begin, length int, circular 
 
 	// the core text, in positions of the unrolled sequence
 	var st state
+	n := len(seq)
 	from, to := begin+c.left, lastStart+c.left+c.coreLen
 	if c.bndm && !circular {
 		return c.runBNDM(dst, seq[from:to], from)
