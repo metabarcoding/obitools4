@@ -96,7 +96,7 @@ func TestAmbiguityOfTheStart(t *testing.T) {
 			copy(seq[at:], site)
 			total++
 
-			start, end, nerr, ok := p.BestMatchBackward(newSeq(seq), 0, -1)
+			start, end, nerr, ok := p.BestMatch(newSeq(seq), 0, -1)
 			if !ok {
 				continue
 			}

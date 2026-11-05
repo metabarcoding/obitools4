@@ -181,68 +181,6 @@ func TestIndelAgainstObiapat(t *testing.T) {
 	}
 }
 
-// TestIndelBestMatchAgainstObiapat compares BestMatch, with its realignment by
-// obialign.LocatePattern, with obiapat's, on sequences over acgt. The cases where
-// obiapat lists windows outside the region (before it, or past its end), which
-// this package leaves out, are skipped: the two start from different lists.
-func TestIndelBestMatchAgainstObiapat(t *testing.T) {
-	rng := rand.New(rand.NewSource(33))
-	compared, refined, unmatched := 0, 0, 0
-	for iter := 0; iter < iterations(5000); iter++ {
-		pat := randomPattern(rng, 1+rng.Intn(30), false)
-		e := 1 + rng.Intn(5)
-		p, err := MakeApatPattern(pat, e, true)
-		if err != nil {
-			continue
-		}
-		legacy, err := obiapat.MakeApatPattern(pat, e, true)
-		if err != nil {
-			t.Fatalf("obiapat refuses %q: %v", pat, err)
-		}
-		seq := randomSequence(rng, "acgt", 1+rng.Intn(120), concrete(rng, p))
-		bs := newSeq(seq)
-		begin, length := rng.Intn(20), -1
-		if rng.Intn(2) == 0 {
-			length = rng.Intn(100)
-		}
-		ls, err := obiapat.MakeApatSequence(newSeq(append([]byte(nil), seq...)), false)
-		if err != nil {
-			t.Fatal(err)
-		}
-		n := len(seq)
-		limit := n
-		if length >= 0 && begin+length < n {
-			limit = begin + length
-		}
-		clean := true
-		for _, m := range legacy.FindAllIndex(ls, begin, length) {
-			if m[0] < begin || m[1] > limit {
-				clean = false
-			}
-		}
-		if !clean {
-			continue
-		}
-		ws, we, wn, wm := legacy.BestMatch(ls, begin, length)
-		gs, ge, gn, gm := p.BestMatch(bs, begin, length)
-		if gm != wm || gm && (gs != ws || ge != we || gn != wn) {
-			t.Fatalf("pattern %q e=%d begin=%d length=%d seq=%q\n new     %d %d %d %v\n obiapat %d %d %d %v",
-				pat, e, begin, length, seq, gs, ge, gn, gm, ws, we, wn, wm)
-		}
-		compared++
-		if gm && gn > 0 {
-			refined++
-		}
-		if !gm {
-			unmatched++
-		}
-	}
-	if compared < 1000 || refined < 200 {
-		t.Errorf("the draws are not varied enough: %d compared, %d realigned, %d without match", compared, refined, unmatched)
-	}
-	t.Logf("%d compared, %d realigned, %d without match", compared, refined, unmatched)
-}
-
 // truthStart is the reference for the start of a window: the latest start s >= lo
 // such that the bases seq[s..pos] are aligned with the whole pattern for at most e
 // errors, by a global dynamic programming for each s (an insertion before the
@@ -323,62 +261,6 @@ func TestBackwardStartAgainstTruth(t *testing.T) {
 		t.Errorf("the draws are not varied enough: %d windows, %d starts found", checked, found)
 	}
 	t.Logf("%d windows with errors, %d starts found", checked, found)
-}
-
-// TestBackwardAgainstLocatePattern compares BestMatchBackward with BestMatch (the
-// realignment of obialign.LocatePattern) and tells how they differ; the backward
-// start is checked against the dynamic programming of truthStart. They differ by
-// the choice among alignments of the same cost (measured: LocatePattern always
-// takes the longer window, but neither the earliest start nor the latest), which
-// is not asserted.
-func TestBackwardAgainstLocatePattern(t *testing.T) {
-	rng := rand.New(rand.NewSource(35))
-	var same, startOnly, endDiff, locNone, backNone, total int
-	for iter := 0; iter < iterations(6000); iter++ {
-		// plain IUPAC letters: LocatePattern reads the text of the pattern
-		pat := exactPattern(rng, 8+rng.Intn(20))
-		e := 1 + rng.Intn(4)
-		p, err := MakeApatPattern(pat, e, true)
-		if err != nil {
-			continue
-		}
-		seq := randomSequence(rng, "acgt", 20+rng.Intn(150), mutate(rng, concrete(rng, p)))
-		bs := newSeq(seq)
-		begin := rng.Intn(10)
-		ls, le, ln, lm := p.BestMatch(bs, begin, -1)
-		bs0, be, bn, bm := p.BestMatchBackward(bs, begin, -1)
-		if !lm && !bm {
-			continue
-		}
-		if hits := p.c.indelHits(nil, seq, begin, -1, false); len(hits) == 0 && (bm || lm) {
-			t.Fatalf("pattern %q: no hit but a match", pat)
-		}
-		total++
-		if bm {
-			// the backward start is the truth
-			if want, ok := truthStart(p, seq, be-1, bn, begin); bn > 0 && (!ok || want != bs0) {
-				t.Fatalf("pattern %q e=%d begin=%d seq=%q: backward start %d, truth %d,%v", pat, e, begin, seq, bs0, want, ok)
-			}
-		} else {
-			backNone++
-		}
-		switch {
-		case !lm:
-			locNone++
-		case !bm:
-		case ls == bs0 && le == be && ln == bn:
-			same++
-		case le == be && ln == bn:
-			startOnly++
-		default:
-			endDiff++
-		}
-	}
-	t.Logf("%d matches: same %d, only the start differs %d, the end or the errors differ %d, LocatePattern finds none %d, backward finds none %d",
-		total, same, startOnly, endDiff, locNone, backNone)
-	if total < 500 {
-		t.Errorf("only %d cases", total)
-	}
 }
 
 // mutate applies one or two random insertions, deletions or substitutions.
@@ -523,5 +405,60 @@ func TestIndelAllMatchesAgainstObiapat(t *testing.T) {
 	}
 	if compared < 1500 {
 		t.Errorf("only %d windows compared", compared)
+	}
+}
+
+// TestBestMatch: BestMatch is the first window with the fewest errors of AllMatches,
+// which the reference expectedAllMatches gives for a pattern with indels; for a
+// pattern without, it is obiapat's BestMatch.
+func TestBestMatch(t *testing.T) {
+	rng := rand.New(rand.NewSource(41))
+	withErrors, plain := 0, 0
+	for iter := 0; iter < iterations(6000); iter++ {
+		indel := rng.Intn(3) > 0
+		pat := randomPattern(rng, 1+rng.Intn(25), true)
+		e := rng.Intn(5)
+		p, err := MakeApatPattern(pat, e, indel)
+		if err != nil {
+			continue
+		}
+		seq := randomSequence(rng, "acgt", rng.Intn(200), mutate(rng, concrete(rng, p)))
+		begin, length := rng.Intn(30), -1
+		if rng.Intn(3) == 0 {
+			length = rng.Intn(150)
+		}
+		gs, ge, gn, gm := p.BestMatch(newSeq(seq), begin, length)
+		if p.c.indel {
+			all := expectedAllMatches(p, seq, begin, length)
+			best := -1
+			for i, w := range all {
+				if best < 0 || w[2] < all[best][2] {
+					best = i
+				}
+			}
+			if gm != (best >= 0) || gm && [3]int{gs, ge, gn} != all[best] {
+				t.Fatalf("pattern %q e=%d begin=%d length=%d seq=%q: BestMatch %v %v, reference %v", pat, e, begin, length, seq, [3]int{gs, ge, gn}, gm, all)
+			}
+			if gm && gn > 0 {
+				withErrors++
+			}
+			continue
+		}
+		legacy, err := obiapat.MakeApatPattern(pat, e, false)
+		if err != nil {
+			t.Fatal(err)
+		}
+		ls, _ := obiapat.MakeApatSequence(newSeq(append([]byte(nil), seq...)), false)
+		ws, we, wn, wm := legacy.BestMatch(ls, begin, length)
+		// obiapat looks 64 bases past the end of the region, this package does not
+		if len(seq) > 0 && (length < 0 || begin+length >= len(seq)) {
+			if gm != wm || gm && (gs != ws || ge != we || gn != wn) {
+				t.Fatalf("pattern %q e=%d begin=%d seq=%q: BestMatch %d %d %d %v, obiapat %d %d %d %v", pat, e, begin, seq, gs, ge, gn, gm, ws, we, wn, wm)
+			}
+			plain++
+		}
+	}
+	if withErrors < 300 || plain < 300 {
+		t.Errorf("the draws are not varied enough: %d matches with errors (indels), %d without indels", withErrors, plain)
 	}
 }

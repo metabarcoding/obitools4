@@ -6,16 +6,16 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiapat"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidnapat"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 )
 
 type Marker struct {
-	forward               obiapat.ApatPattern
-	cforward              obiapat.ApatPattern
-	reverse               obiapat.ApatPattern
-	creverse              obiapat.ApatPattern
+	forward               obidnapat.ApatPattern
+	cforward              obidnapat.ApatPattern
+	reverse               obidnapat.ApatPattern
+	creverse              obidnapat.ApatPattern
 	Forward_tag_length    int
 	Reverse_tag_length    int
 	Forward_spacer        int
@@ -38,11 +38,11 @@ func (marker *Marker) Compile(forward, reverse string, maxError int, allowsIndel
 
 	marker.CheckTagLength()
 
-	marker.forward, err = obiapat.MakeApatPattern(forward, maxError, allowsIndel)
+	marker.forward, err = obidnapat.MakeApatPattern(forward, maxError, allowsIndel)
 	if err != nil {
 		return err
 	}
-	marker.reverse, err = obiapat.MakeApatPattern(reverse, maxError, allowsIndel)
+	marker.reverse, err = obidnapat.MakeApatPattern(reverse, maxError, allowsIndel)
 	if err != nil {
 		return err
 	}
@@ -63,14 +63,14 @@ func (marker *Marker) Compile2(forward, reverse string) error {
 
 	marker.CheckTagLength()
 
-	marker.forward, err = obiapat.MakeApatPattern(
+	marker.forward, err = obidnapat.MakeApatPattern(
 		forward,
 		marker.Forward_error,
 		marker.Forward_allows_indels)
 	if err != nil {
 		return err
 	}
-	marker.reverse, err = obiapat.MakeApatPattern(
+	marker.reverse, err = obidnapat.MakeApatPattern(
 		reverse,
 		marker.Reverse_error,
 		marker.Reverse_allows_indels)
@@ -101,9 +101,7 @@ func (marker *Marker) Compile2(forward, reverse string) error {
 //
 //	A pointer to a DemultiplexMatch struct that contains the best matching demultiplex.
 func (marker *Marker) Match(sequence *obiseq.BioSequence) *DemultiplexMatch {
-	aseq, _ := obiapat.MakeApatSequence(sequence, false)
-
-	start, end, nerr, matched := marker.forward.BestMatch(aseq, marker.Forward_tag_length, -1)
+	start, end, nerr, matched := marker.forward.BestMatch(sequence, marker.Forward_tag_length, -1)
 
 	if matched {
 		if start < 0 {
@@ -128,7 +126,7 @@ func (marker *Marker) Match(sequence *obiseq.BioSequence) *DemultiplexMatch {
 			Error:             nil,
 		}
 
-		start, end, nerr, matched = marker.creverse.BestMatch(aseq, start, -1)
+		start, end, nerr, matched = marker.creverse.BestMatch(sequence, start, -1)
 
 		if matched {
 
@@ -173,7 +171,7 @@ func (marker *Marker) Match(sequence *obiseq.BioSequence) *DemultiplexMatch {
 	// We try now with the reverse primer
 	//
 
-	start, end, nerr, matched = marker.reverse.BestMatch(aseq, marker.Reverse_tag_length, -1)
+	start, end, nerr, matched = marker.reverse.BestMatch(sequence, marker.Reverse_tag_length, -1)
 
 	if matched {
 		if start < 0 {
@@ -199,7 +197,7 @@ func (marker *Marker) Match(sequence *obiseq.BioSequence) *DemultiplexMatch {
 			Error:             nil,
 		}
 
-		start, end, nerr, matched = marker.cforward.BestMatch(aseq, end, -1)
+		start, end, nerr, matched = marker.cforward.BestMatch(sequence, end, -1)
 
 		if matched {
 

@@ -75,7 +75,7 @@ func TestAmbiguityOnRealReads(t *testing.T) {
 		}{{"forward", fwd}, {"reverse complement of reverse", crev}, {"reverse", rev}, {"reverse complement of forward", cfwd}} {
 			var found, withErr, ambStart, ambEnd, ambAny, widthSum, noStart int
 			for _, r := range reads {
-				start, end, nerr, ok := pc.p.BestMatchBackward(newSeq(r), 0, -1)
+				start, end, nerr, ok := pc.p.BestMatch(newSeq(r), 0, -1)
 				_ = start
 				if !ok {
 					continue

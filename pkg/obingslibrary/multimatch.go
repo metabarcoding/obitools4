@@ -7,7 +7,6 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiapat"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 )
@@ -575,18 +574,13 @@ func (library *NGSLibrary) ExtractMultiBarcode(sequence *obiseq.BioSequence) (ob
 	markers := make([]*Marker, len(library.Markers)+1)
 	primerseqs := make([]PrimerPair, len(library.Markers)+1)
 	matches := make([]PrimerMatch, 0, len(library.Markers)+1)
-	aseq, err := obiapat.MakeApatSequence(sequence, false)
 
 	results := obiseq.MakeBioSequenceSlice()
-
-	if err != nil {
-		log.Fatalf("error in building apat sequence : %v\n", err)
-	}
 
 	for primers, marker := range library.Markers {
 		markers[i] = marker
 		primerseqs[i] = primers
-		locs := marker.forward.AllMatches(aseq, 0, -1)
+		locs := marker.forward.AllMatches(sequence, 0, -1)
 		if len(locs) > 0 {
 			for _, loc := range locs {
 				matches = append(matches, PrimerMatch{
@@ -599,7 +593,7 @@ func (library *NGSLibrary) ExtractMultiBarcode(sequence *obiseq.BioSequence) (ob
 
 			}
 
-			locs = marker.creverse.AllMatches(aseq, locs[0][0]+1, -1)
+			locs = marker.creverse.AllMatches(sequence, locs[0][0]+1, -1)
 
 			if len(locs) > 0 {
 				for _, loc := range locs {
@@ -614,7 +608,7 @@ func (library *NGSLibrary) ExtractMultiBarcode(sequence *obiseq.BioSequence) (ob
 			}
 		}
 
-		locs = marker.reverse.AllMatches(aseq, 0, -1)
+		locs = marker.reverse.AllMatches(sequence, 0, -1)
 		if len(locs) > 0 {
 			for _, loc := range locs {
 				matches = append(matches, PrimerMatch{
@@ -626,7 +620,7 @@ func (library *NGSLibrary) ExtractMultiBarcode(sequence *obiseq.BioSequence) (ob
 				})
 			}
 
-			locs = marker.cforward.AllMatches(aseq, locs[0][0]+1, -1)
+			locs = marker.cforward.AllMatches(sequence, locs[0][0]+1, -1)
 
 			if len(locs) > 0 {
 				for _, loc := range locs {

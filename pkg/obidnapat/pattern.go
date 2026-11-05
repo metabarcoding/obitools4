@@ -1,9 +1,6 @@
 package obidnapat
 
-import (
-	"fmt"
-	"strings"
-)
+import "fmt"
 
 // MaxCoreLength is the longest pattern accepted, the wildcards at both ends
 // (NNNN...) set aside (but not with indels): the state of the search is one 64 bit word, with a guard
@@ -17,7 +14,6 @@ const maxLevels = MaxCoreLength + 1
 // compiled is the immutable result of the compilation of a pattern.
 type compiled struct {
 	text      string
-	raw       string // the pattern as given, in upper case: what obialign.LocatePattern realigns (BestMatch)
 	positions []position
 	maxErr    int
 
@@ -32,7 +28,7 @@ type compiled struct {
 	// allowsIndel and at least one error). The whole pattern is then the core: no
 	// wildcard is set aside at its ends (see scan_indel.go).
 	indel       bool
-	allowsIndel bool // the flag given to MakeApatPattern, kept for the reverse complement and BestMatch
+	allowsIndel bool // the flag given to MakeApatPattern, kept for the reverse complement
 
 	mask  [256]uint64 // mask[b] has bit i when byte b matches the core position i
 	end   uint64      // bit of the last core position
@@ -60,7 +56,7 @@ func MakeApatPattern(pattern string, errormax int, allowsIndel bool) (ApatPatter
 		return ApatPattern{}, err
 	}
 
-	c := &compiled{raw: strings.ToUpper(pattern), positions: ps, maxErr: errormax, allowsIndel: allowsIndel, indel: allowsIndel && errormax > 0}
+	c := &compiled{positions: ps, maxErr: errormax, allowsIndel: allowsIndel, indel: allowsIndel && errormax > 0}
 	for _, p := range ps {
 		c.text += p.text
 	}

@@ -194,13 +194,15 @@ func BenchmarkIndel(b *testing.B) {
 	}
 }
 
-// BenchmarkRefine is the cost per read of BestMatch with indels (1000 reads of
-// 150 bases, the pattern planted with up to two indels, 3 errors allowed): the
-// forward search alone, then with the realignment by obialign.LocatePattern, then
-// with the backward bit-parallel search for the start.
+// BenchmarkRefine is the cost per read of the search with indels (1000 reads of 150
+// bases, the pattern planted with up to two indels, 3 errors allowed): the forward
+// search alone, BestMatch and AllMatches of this package (which add the backward
+// search for the start), and obiapat's BestMatch and AllMatches (which realign each
+// window with obialign.LocatePattern).
 func BenchmarkRefine(b *testing.B) {
 	rng := rand.New(rand.NewSource(5))
 	p, _ := MakeApatPattern(benchCore, 3, true)
+	lp, _ := obiapat.MakeApatPattern(benchCore, 3, true)
 	var reads []*obiseq.BioSequence
 	for i := 0; i < 1000; i++ {
 		r := randomSequence(rng, "acgt", 150, "")
@@ -216,33 +218,33 @@ func BenchmarkRefine(b *testing.B) {
 			}
 		}
 	})
-	b.Run("LocatePattern", func(b *testing.B) {
+	b.Run("BestMatch", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			for _, r := range reads {
 				p.BestMatch(r, 0, -1)
 			}
 		}
 	})
-	b.Run("backward", func(b *testing.B) {
+	b.Run("BestMatch obiapat (LocatePattern)", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			for _, r := range reads {
-				p.BestMatchBackward(r, 0, -1)
+				ls, _ := obiapat.MakeApatSequence(r, false)
+				lp.BestMatch(ls, 0, -1)
 			}
 		}
 	})
-	lp, _ := obiapat.MakeApatPattern(benchCore, 3, true)
+	b.Run("AllMatches", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			for _, r := range reads {
+				p.AllMatches(r, 0, -1)
+			}
+		}
+	})
 	b.Run("AllMatches obiapat (LocatePattern)", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			for _, r := range reads {
 				ls, _ := obiapat.MakeApatSequence(r, false)
 				lp.AllMatches(ls, 0, -1)
-			}
-		}
-	})
-	b.Run("AllMatches backward", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			for _, r := range reads {
-				p.AllMatches(r, 0, -1)
 			}
 		}
 	})

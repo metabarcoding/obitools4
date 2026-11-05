@@ -1,7 +1,6 @@
 package obidnapat
 
 import (
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obialign"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 )
 
@@ -49,55 +48,11 @@ func (p ApatPattern) IsMatchingCircular(seq *obiseq.BioSequence, begin, length i
 	return len(p.AppendAllIndexCircular(nil, seq, begin, length)) > 0
 }
 
-// BestMatch returns the first match with the fewest errors.
-//
-// For a pattern compiled with allowsIndel, a match with errors is only a nominal
-// window (see scan_indel.go): it is realigned, as obiapat does, by
-// obialign.LocatePattern on the part of the sequence around it, which gives its
-// real start, end and number of errors. When that alignment cannot be
-// reconstructed (the fragment is too short for the pattern), there is no match.
+// BestMatch returns the first match with the fewest errors: the first window of
+// AllMatches with the fewest errors (see AllMatches for the start of a window
+// with indels).
 func (p ApatPattern) BestMatch(seq *obiseq.BioSequence, begin, length int) (start int, end int, nerr int, matched bool) {
-	best := -1
-	res := p.AppendAllIndex(nil, seq, begin, length)
-	for i, m := range res {
-		if best < 0 || m[2] < res[best][2] {
-			best = i
-		}
-	}
-	if best < 0 {
-		return 0, 0, 0, false
-	}
-	start, end, nerr = res[best][0], res[best][1], res[best][2]
-	if nerr == 0 || !p.c.allowsIndel {
-		return start, end, nerr, true
-	}
-
-	patlen := len(p.c.positions)
-	n := seq.Len()
-	fragStart := max(start-nerr, 0)
-	fragEnd := min(start+patlen+nerr, n)
-	pattern := p.c.raw[:min(patlen, len(p.c.raw))]
-	from, to, score := obialign.LocatePattern(seq.Id(), []byte(pattern), seq.Sequence()[fragStart:fragEnd])
-	if from < 0 {
-		return 0, 0, 0, false
-	}
-	return fragStart + from, fragStart + to, score, true
-}
-
-// BestMatchBackward is BestMatch with the realignment done by the bit-parallel
-// search run backwards from the end of the window (see scan_backward.go) instead
-// of the dynamic programming of obialign.LocatePattern: the end of the match is the
-// one the search found, its start is the latest one of an alignment of the whole
-// pattern with that many errors (the shortest window). There is no match when no
-// such start exists.
-func (p ApatPattern) BestMatchBackward(seq *obiseq.BioSequence, begin, length int) (start int, end int, nerr int, matched bool) {
-	begin = max(begin, 0)
-	var res [][3]int
-	if p.c.indel {
-		res = p.c.indelHits(nil, seq.Sequence(), begin, length, false) // the real start decides of the region
-	} else {
-		res = p.AppendAllIndex(nil, seq, begin, length)
-	}
+	res := p.AllMatches(seq, begin, length)
 	best := -1
 	for i, m := range res {
 		if best < 0 || m[2] < res[best][2] {
@@ -107,15 +62,7 @@ func (p ApatPattern) BestMatchBackward(seq *obiseq.BioSequence, begin, length in
 	if best < 0 {
 		return 0, 0, 0, false
 	}
-	start, end, nerr = res[best][0], res[best][1], res[best][2]
-	if nerr == 0 || !p.c.allowsIndel {
-		return start, end, nerr, true
-	}
-	start, ok := p.c.backwardStart(seq.Sequence(), end-1, nerr, begin)
-	if !ok {
-		return 0, 0, 0, false
-	}
-	return start, end, nerr, true
+	return res[best][0], res[best][1], res[best][2], true
 }
 
 // FilterBestMatch keeps, of the matches that overlap, the one with the fewest
@@ -151,13 +98,15 @@ func bestOfOverlaps(res [][3]int) [][3]int {
 // AllMatches returns the matches that do not overlap a better one (FilterBestMatch).
 //
 // For a pattern compiled with allowsIndel the start of a match with errors is its
-// real one: the end of a window is exact, and its start is found by the backward
-// search of scan_backward.go (the latest start of an alignment of the whole pattern
-// with that many errors, the shortest window), instead of the nominal
-// end - Len(), which is off by the number of insertions and deletions. A window
-// whose real start cannot be found (only with # in the first positions of the
-// pattern) and the matches of a circular sequence keep the nominal start.
-// A match belongs to the region when its real start does.
+// real one: the end of a window is the first position, going right, where an
+// alignment of that cost ends (an end that ties with the next ones, see
+// scan_indel.go), and its start is found by the backward search of
+// scan_backward.go (the latest start of an alignment of the whole pattern with
+// that many errors, the shortest window), instead of the nominal end - Len(), which
+// is off by the number of insertions and deletions. A window whose real start
+// cannot be found (only with # in the first positions of the pattern) and the
+// matches of a circular sequence keep the nominal start. A match belongs to the
+// region when its real start does.
 func (p ApatPattern) AllMatches(seq *obiseq.BioSequence, begin, length int) [][3]int {
 	if !p.c.indel {
 		return p.FilterBestMatch(seq, begin, length)
