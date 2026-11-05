@@ -5,9 +5,9 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiapat"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obicorazick"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidnapat"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
@@ -26,7 +26,7 @@ func DeleteAttributesWorker(toBeDeleted []string) obiseq.SeqWorker {
 }
 
 func MatchPatternWorker(pattern, name string, errormax int, bothStrand, allowsIndel bool) obiseq.SeqWorker {
-	pat, err := obiapat.MakeApatPattern(pattern, errormax, allowsIndel)
+	pat, err := obidnapat.MakeApatPattern(pattern, errormax, allowsIndel)
 	if err != nil {
 		log.Fatalf("error in compiling pattern (%s) : %v", pattern, err)
 	}
@@ -49,12 +49,7 @@ func MatchPatternWorker(pattern, name string, errormax int, bothStrand, allowsIn
 	slot_location := fmt.Sprintf("%s_location", name)
 
 	f := func(s *obiseq.BioSequence) (obiseq.BioSequenceSlice, error) {
-		apats, err := obiapat.MakeApatSequence(s, false)
-		if err != nil {
-			log.Fatalf("error in preparing sequence %s : %v", s.Id(), err)
-		}
-
-		start, end, nerr, matched := pat.BestMatch(apats, 0, s.Len())
+		start, end, nerr, matched := pat.BestMatch(s, 0, s.Len())
 
 		if matched && start >= 0 && end <= s.Len() {
 			annot := s.Annotations()
@@ -73,7 +68,7 @@ func MatchPatternWorker(pattern, name string, errormax int, bothStrand, allowsIn
 			annot[slot_error] = nerr
 			annot[slot_location] = fmt.Sprintf("%d..%d", start+1, end)
 		} else {
-			start, end, nerr, matched := cpat.BestMatch(apats, 0, s.Len())
+			start, end, nerr, matched := cpat.BestMatch(s, 0, s.Len())
 
 			if matched && start >= 0 && end <= s.Len() {
 				annot := s.Annotations()
