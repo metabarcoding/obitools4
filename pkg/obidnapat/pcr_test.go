@@ -7,7 +7,6 @@ import (
 	"strings"
 	"testing"
 
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiapat"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 )
 
@@ -196,40 +195,5 @@ func TestPCRAgainstOracle(t *testing.T) {
 	}
 	if total < 1000 || wrapped < 500 {
 		t.Errorf("the draws are not varied enough: %d amplicons, %d on circular sequences", total, wrapped)
-	}
-}
-
-// TestPCRAgainstObiapat compares with obiapat's PCR on primers of the same length.
-// (With primers of different lengths obiapat is wrong in two places: see the test below.)
-func TestPCRAgainstObiapat(t *testing.T) {
-	rng := rand.New(rand.NewSource(72))
-	total := 0
-	for iter := 0; iter < iterations(5000); iter++ {
-		_, _, _, _, setters, seq, circ := randomPCRCase(rng, true)
-		o := makePCROptions(setters)
-		pcr, _ := NewPCR(setters...)
-		if circ && o.extension >= 0 {
-			continue // obiapat stops ("from out of bounds") when a flank crosses the junction on the left
-		}
-		legacy := []obiapat.WithOption{
-			obiapat.OptionForwardPrimer(o.forwardPrimer, o.forwardErrors),
-			obiapat.OptionReversePrimer(o.reversePrimer, o.reverseErrors),
-			obiapat.OptionMinLength(o.minLength), obiapat.OptionMaxLength(o.maxLength),
-			obiapat.OptionCircular(circ), obiapat.OptionOnlyFullExtension(o.fullExtension),
-		}
-		if o.extension >= 0 {
-			legacy = append(legacy, obiapat.OptionWithExtension(o.extension))
-		}
-		a := obiseq.NewBioSequence("s", append([]byte(nil), seq...), "")
-		b := obiseq.NewBioSequence("s", append([]byte(nil), seq...), "")
-		want := fromSlice(obiapat.PCRSlice(obiseq.BioSequenceSlice{a}, legacy...))
-		got := fromSlice(pcr.Slice(obiseq.BioSequenceSlice{b}))
-		if !sameAmplicons(got, want) {
-			t.Fatalf("circular=%v seq=%q options %+v\n got      %v\n obiapat  %v", circ, seq, o, got, want)
-		}
-		total += len(got)
-	}
-	if total < 1000 {
-		t.Errorf("only %d amplicons compared", total)
 	}
 }

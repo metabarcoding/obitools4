@@ -7,8 +7,6 @@ import (
 	"strconv"
 	"strings"
 	"testing"
-
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiapat"
 )
 
 // loadRealReads reads the sequences of the FASTQ file OBIDNAPAT_FASTQ (gzip or
@@ -285,110 +283,5 @@ func TestTagAnchoredStartOnRealReads(t *testing.T) {
 			pc.name, windows, exact, exactTag, 100*float64(exactTag)/float64(max(exact, 1)), exactHit, 100*float64(exactHit)/float64(max(exactTag, 1)),
 			[]int{offsets[-3], offsets[-2], offsets[-1], offsets[0], offsets[1], offsets[2], offsets[3]},
 			amb, ambTag, ambIn, ambInEarliest, ambInLatest, ambIn-ambInEarliest-ambInLatest)
-	}
-}
-
-// TestAllMatchesAgainstObiapatOnRealReads compares AllMatches of this package (the
-// end found by the search, the latest start of that cost) with obiapat's, which
-// realigns every window with errors by obialign.LocatePattern, on the reads of the
-// FASTQ file. Windows are paired when they overlap.
-func TestAllMatchesAgainstObiapatOnRealReads(t *testing.T) {
-	reads, primers := loadRealReads(t)
-	const e = 3
-	for _, name := range []string{"forward", "reverse"} {
-		primer := primers[0]
-		if name == "reverse" {
-			primer = primers[1]
-		}
-		base, _ := MakeApatPattern(primer, e, true)
-		for _, rc := range []bool{false, true} {
-			p := base
-			lp, _ := obiapat.MakeApatPattern(primer, e, true)
-			label := name
-			if rc {
-				p, _ = base.ReverseComplement()
-				lp, _ = obiapat.MakeApatPattern(primer, e, true)
-				lp, _ = lp.ReverseComplement()
-				label += " (reverse complement)"
-			}
-			var ours, theirs, paired, sameAll, sameEnd, sameEndStartDiff, endDiff, errDiff, onlyOurs, onlyTheirs int
-			var startLater, startEarlier, inInterval, startDiffTotal int
-			var worse, equal, better, endLater, endEarlier int
-			for _, r := range reads {
-				ls, err := obiapat.MakeApatSequence(newSeq(append([]byte(nil), r...)), false)
-				if err != nil {
-					t.Fatal(err)
-				}
-				mine := p.AllMatches(newSeq(r), 0, -1)
-				their := lp.AllMatches(ls, 0, -1)
-				ours += len(mine)
-				theirs += len(their)
-				used := make([]bool, len(their))
-				for _, w := range mine {
-					found := -1
-					for j, x := range their {
-						if !used[j] && x[0] < w[1] && w[0] < x[1] {
-							found = j
-							break
-						}
-					}
-					if found < 0 {
-						onlyOurs++
-						continue
-					}
-					used[found] = true
-					x := their[found]
-					paired++
-					switch {
-					case x == w:
-						sameAll++
-					case x[1] == w[1]:
-						sameEnd++
-						if x[0] != w[0] {
-							sameEndStartDiff++
-							startDiffTotal++
-							if x[0] < w[0] {
-								startEarlier++
-							} else {
-								startLater++
-							}
-							if w[2] > 0 {
-								earliest, latest, ok := startRange(p, r, w[1]-1, w[2], max(0, w[1]-1-(p.Len()+w[2])))
-								if ok && x[0] >= earliest && x[0] <= latest {
-									inInterval++
-								}
-							}
-						}
-						if x[2] != w[2] {
-							errDiff++
-						}
-					default:
-						endDiff++
-						// the cost of obiapat's window under this package's costs, against ours
-						c := globalCost(p, r[x[0]:x[1]])
-						switch {
-						case c > w[2]:
-							worse++
-						case c == w[2]:
-							equal++
-						default:
-							better++
-						}
-						if x[1] > w[1] {
-							endLater++
-						} else {
-							endEarlier++
-						}
-					}
-				}
-				for _, u := range used {
-					if !u {
-						onlyTheirs++
-					}
-				}
-			}
-			t.Logf("%-30s windows: ours %d, obiapat %d; paired %d: identical %d, same end %d (start differs %d: obiapat's earlier %d, later %d, inside our interval of minimal cost %d; errors differ %d), different end %d (obiapat's window costs more than ours: %d, the same: %d, less: %d; its end later %d, earlier %d); only ours %d, only obiapat's %d",
-				label, ours, theirs, paired, sameAll, sameEnd, sameEndStartDiff, startEarlier, startLater, inInterval, errDiff, endDiff, worse, equal, better, endLater, endEarlier, onlyOurs, onlyTheirs)
-		}
 	}
 }

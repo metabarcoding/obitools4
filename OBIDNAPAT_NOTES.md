@@ -441,6 +441,8 @@ Vérification de bout en bout (`obipcr`, les 4 000 premiers génomes de `/tmp/mi
 
 **Pas fait** : profil CPU de référence refait ; `batchFor` remesuré pour les indels ; `sync.Pool` pour les tampons de `primerMatches` (le tableau `first`/`firstEnd` et `occ` sont alloués par lecture) ; bibliothèques multi-marqueurs réelles (il n'en existe pas).
 
+**`pkg/obiapat` supprimé (2026-11-06, demande de l'utilisateur)** : plus aucun programme ni paquet ne l'importait. Retirés avec lui : les tests différentiels contre `obiapat` (`diff_test.go`, `TestIndelAgainstObiapat`, `TestIndelAllMatchesAgainstObiapat`, `TestIsPatternMatchSequenceAgainstObiapat`, `TestPCRAgainstObiapat`, `TestAllMatchesAgainstObiapatOnRealReads`) et les sous-bancs `obiapat` de `bench_test.go`. `TestBestMatch` compare désormais, pour un motif sans indels, à l'oracle naïf groupé par `groupBest` (règle de `FilterBestMatch` réécrite dans les tests, partagée avec `expectedAllMatches`). Les chiffres de comparaison avec `obiapat` des sections précédentes restent comme historique. Les mentions restantes dans le code sont des commentaires.
+
 ## Suite
 
 1. ~~Voie stricte~~ faite (BNDM). Reste : strict multi-motifs (Wu-Manber avec décalage par q-gramme, ou Aho-Corasick), BNDM sur séquence circulaire, Shift-And à plusieurs flux pour les motifs courts.

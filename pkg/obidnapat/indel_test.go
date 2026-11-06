@@ -2,11 +2,8 @@ package obidnapat
 
 import (
 	"math/rand"
-	"sort"
 	"strings"
 	"testing"
-
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiapat"
 )
 
 // oracleIndel is the definition of the search with indels, by dynamic
@@ -111,85 +108,6 @@ func TestIndelAgainstOracle(t *testing.T) {
 	}
 }
 
-// TestIndelAgainstObiapat compares the search with indels with obiapat's
-// ManberIndel on sequences over acgt, brought to the conventions of this package
-// (the nominal window must lie in the region; a circular sequence reports each
-// start once). The two must agree window by window, nominal starts included.
-func TestIndelAgainstObiapat(t *testing.T) {
-	rng := rand.New(rand.NewSource(32))
-	found := 0
-	for iter := 0; iter < iterations(5000); iter++ {
-		pat := randomPattern(rng, 1+rng.Intn(30), true)
-		e := 1 + rng.Intn(8)
-		p, err := MakeApatPattern(pat, e, true)
-		if err != nil {
-			continue
-		}
-		legacy, err := obiapat.MakeApatPattern(pat, e, true)
-		if err != nil {
-			t.Fatalf("obiapat refuses %q: %v", pat, err)
-		}
-		if e >= p.Len() {
-			continue // obiapat has no rule on the real bases of a window (see noise.go)
-		}
-		seq := randomSequence(rng, "acgt", rng.Intn(250), concrete(rng, p))
-		bs := newSeq(seq)
-
-		for _, circular := range []bool{false, true} {
-			if circular && p.Len() > len(seq) {
-				continue
-			}
-			begin, length := 0, -1
-			if !circular {
-				begin = rng.Intn(40)
-				if rng.Intn(2) == 0 {
-					length = rng.Intn(200)
-				}
-			}
-			ls, err := obiapat.MakeApatSequence(newSeq(append([]byte(nil), seq...)), circular)
-			if err != nil {
-				t.Fatal(err)
-			}
-			n := len(seq)
-			limit := n
-			if length >= 0 && begin+length < n {
-				limit = begin + length
-			}
-			var want [][3]int
-			for _, m := range legacy.FindAllIndex(ls, begin, length) {
-				switch {
-				case circular && m[0] >= 0 && m[0] < n:
-					want = append(want, m)
-				case !circular && m[0] >= begin && m[1] <= limit:
-					want = append(want, m)
-				}
-			}
-			sort.Slice(want, func(i, j int) bool { return want[i][0] < want[j][0] })
-
-			var got [][3]int
-			if circular {
-				got = p.FindAllIndexCircular(bs, begin, length)
-			} else {
-				got = p.FindAllIndex(bs, begin, length)
-			}
-			if !sameMatches(got, nilIfEmpty(want)) {
-				t.Fatalf("pattern %q e=%d circular=%v begin=%d length=%d seq=%q\n new     %v\n obiapat %v",
-					pat, e, circular, begin, length, seq, got, want)
-			}
-			found += len(got)
-		}
-	}
-	if found < 3000 {
-		t.Errorf("the draws hold only %d matches", found)
-	}
-}
-
-// truthStart is the reference for the start of a window: the latest start s >= lo
-// such that the bases seq[s..pos] are aligned with the whole pattern for at most e
-// errors, by a global dynamic programming for each s (an insertion before the
-// first position is not allowed: the first base is then the start). Same costs as
-// the search: a substitution, a deletion or an insertion after a position costs 1
-// and is forbidden at a position marked #.
 func truthStart(p ApatPattern, seq []byte, pos, e, lo int) (start int, ok bool) {
 	const inf = 1 << 20
 	ps := p.c.positions
@@ -288,25 +206,7 @@ func mutate(rng *rand.Rand, s string) string {
 // reduced to the best (the rule of FilterBestMatch, written again here), then the
 // real start of each window with errors from truthStart.
 func expectedAllMatches(p ApatPattern, seq []byte, begin, length int) [][3]int {
-	var picked [][3]int
-	var best [3]int
-	have := false
-	for _, w := range oracleIndelRaw(p, seq, begin, length, false, false) {
-		switch {
-		case !have:
-			best, have = w, true
-		case w[0]-w[2] < best[1]+best[2]: // overlaps the best one so far
-			if w[2] < best[2] {
-				best = w
-			}
-		default:
-			picked = append(picked, best)
-			best = w
-		}
-	}
-	if have {
-		picked = append(picked, best)
-	}
+	picked := groupBest(oracleIndelRaw(p, seq, begin, length, false, false))
 	var res [][3]int
 	for _, w := range picked {
 		if w[2] > 0 {
@@ -359,64 +259,6 @@ func TestIndelAllMatchesAgainstOracle(t *testing.T) {
 	}
 }
 
-// TestIndelAllMatchesAgainstObiapat compares the ends and the errors of AllMatches
-// with obiapat's FilterBestMatch (the grouping of the overlapping windows, whose
-// starts are the nominal ones), on sequences over acgt and where none of obiapat's
-// windows falls partly outside the region. (obiapat's own AllMatches realigns each
-// window with obialign.LocatePattern, which moves its end and changes its errors,
-// and drops it when that fails: it is compared on real reads, see realdata_test.go.)
-func TestIndelAllMatchesAgainstObiapat(t *testing.T) {
-	rng := rand.New(rand.NewSource(37))
-	compared := 0
-	for iter := 0; iter < iterations(5000); iter++ {
-		pat := randomPattern(rng, 1+rng.Intn(25), true)
-		e := 1 + rng.Intn(5)
-		p, err := MakeApatPattern(pat, e, true)
-		if err != nil {
-			continue
-		}
-		legacy, err := obiapat.MakeApatPattern(pat, e, true)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if e >= p.Len() {
-			continue // obiapat has no rule on the real bases of a window (see noise.go)
-		}
-		seq := randomSequence(rng, "acgt", 20+rng.Intn(200), concrete(rng, p))
-		begin := rng.Intn(20)
-		ls, err := obiapat.MakeApatSequence(newSeq(append([]byte(nil), seq...)), false)
-		if err != nil {
-			t.Fatal(err)
-		}
-		clean := true
-		for _, m := range legacy.FindAllIndex(ls, begin, -1) {
-			if m[0] < begin {
-				clean = false
-			}
-		}
-		if !clean {
-			continue
-		}
-		want := legacy.FilterBestMatch(ls, begin, -1)
-		got := p.AllMatches(newSeq(seq), begin, -1)
-		if len(got) != len(want) {
-			t.Fatalf("pattern %q e=%d begin=%d seq=%q\n got  %v\n obiapat %v", pat, e, begin, seq, got, want)
-		}
-		for i := range got {
-			if got[i][1] != want[i][1] || got[i][2] != want[i][2] {
-				t.Fatalf("pattern %q e=%d begin=%d seq=%q\n got  %v\n obiapat %v", pat, e, begin, seq, got, want)
-			}
-		}
-		compared += len(got)
-	}
-	if compared < 1500 {
-		t.Errorf("only %d windows compared", compared)
-	}
-}
-
-// TestBestMatch: BestMatch is the first window with the fewest errors of AllMatches,
-// which the reference expectedAllMatches gives for a pattern with indels; for a
-// pattern without, it is obiapat's BestMatch.
 func TestBestMatch(t *testing.T) {
 	rng := rand.New(rand.NewSource(41))
 	withErrors, plain := 0, 0
@@ -451,21 +293,19 @@ func TestBestMatch(t *testing.T) {
 			continue
 		}
 		if e >= p.Len() {
-			continue // obiapat has no rule on the real bases of a window (see noise.go)
+			continue // the rule on the real bases (noise.go) is not in the plain oracle's grouping
 		}
-		legacy, err := obiapat.MakeApatPattern(pat, e, false)
-		if err != nil {
-			t.Fatal(err)
-		}
-		ls, _ := obiapat.MakeApatSequence(newSeq(append([]byte(nil), seq...)), false)
-		ws, we, wn, wm := legacy.BestMatch(ls, begin, length)
-		// obiapat looks 64 bases past the end of the region, this package does not
-		if len(seq) > 0 && (length < 0 || begin+length >= len(seq)) {
-			if gm != wm || gm && (gs != ws || ge != we || gn != wn) {
-				t.Fatalf("pattern %q e=%d begin=%d seq=%q: BestMatch %d %d %d %v, obiapat %d %d %d %v", pat, e, begin, seq, gs, ge, gn, gm, ws, we, wn, wm)
+		all := groupBest(oracle(p, seq, begin, length, false))
+		best := -1
+		for i, w := range all {
+			if best < 0 || w[2] < all[best][2] {
+				best = i
 			}
-			plain++
 		}
+		if gm != (best >= 0) || gm && [3]int{gs, ge, gn} != all[best] {
+			t.Fatalf("pattern %q e=%d begin=%d length=%d seq=%q: BestMatch %v %v, reference %v", pat, e, begin, length, seq, [3]int{gs, ge, gn}, gm, all)
+		}
+		plain++
 	}
 	if withErrors < 300 || plain < 300 {
 		t.Errorf("the draws are not varied enough: %d matches with errors (indels), %d without indels", withErrors, plain)
@@ -489,4 +329,30 @@ func naiveRealBases(seq []byte, s, e int, circular bool) int {
 		}
 	}
 	return count
+}
+
+// groupBest keeps, of the windows that overlap, the one with the fewest errors, the
+// first when they tie (the rule of FilterBestMatch, written again here). The windows
+// come by increasing end.
+func groupBest(ws [][3]int) [][3]int {
+	var picked [][3]int
+	var best [3]int
+	have := false
+	for _, w := range ws {
+		switch {
+		case !have:
+			best, have = w, true
+		case w[0]-w[2] < best[1]+best[2]: // overlaps the best one so far
+			if w[2] < best[2] {
+				best = w
+			}
+		default:
+			picked = append(picked, best)
+			best = w
+		}
+	}
+	if have {
+		picked = append(picked, best)
+	}
+	return picked
 }

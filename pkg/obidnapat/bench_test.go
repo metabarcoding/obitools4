@@ -6,7 +6,6 @@ import (
 	"strings"
 	"testing"
 
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiapat"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 )
 
@@ -17,21 +16,12 @@ func benchSeq(n int) []byte {
 }
 
 // BenchmarkScan reads a sequence of 1 Mb for a pattern of 20 positions, with 0 to
-// 5 errors allowed, with obiapat (the sequence is encoded once, outside of the
-// measure) and with this package. MB/s is millions of bases per second.
+// 5 errors allowed, with this package. MB/s is millions of bases per second.
 func BenchmarkScan(b *testing.B) {
 	seq := benchSeq(1 << 20)
 	bs := newSeq(seq)
-	ls, _ := obiapat.MakeApatSequence(newSeq(append([]byte(nil), seq...)), false)
 	for _, e := range []int{0, 1, 2, 3, 4, 5, 6, 8} {
-		lp, _ := obiapat.MakeApatPattern(benchCore, e, false)
 		p, _ := MakeApatPattern(benchCore, e, false)
-		b.Run(fmt.Sprintf("obiapat/e=%d", e), func(b *testing.B) {
-			b.SetBytes(int64(len(seq)))
-			for i := 0; i < b.N; i++ {
-				lp.FindAllIndex(ls, 0, -1)
-			}
-		})
 		b.Run(fmt.Sprintf("new/e=%d", e), func(b *testing.B) {
 			b.SetBytes(int64(len(seq)))
 			var dst [][3]int
@@ -43,7 +33,7 @@ func BenchmarkScan(b *testing.B) {
 }
 
 // BenchmarkReads is the cost per sequence for short sequences (reads of 150
-// bases), where obiapat pays its encoding and its cgo call for every one.
+// bases), (including the creation of the sequence object).
 func BenchmarkReads(b *testing.B) {
 	rng := rand.New(rand.NewSource(5))
 	var reads [][]byte
@@ -51,17 +41,7 @@ func BenchmarkReads(b *testing.B) {
 		reads = append(reads, randomSequence(rng, "acgt", 150, ""))
 	}
 	for _, e := range []int{0, 3} {
-		lp, _ := obiapat.MakeApatPattern(benchCore, e, false)
 		p, _ := MakeApatPattern(benchCore, e, false)
-		b.Run(fmt.Sprintf("obiapat/e=%d", e), func(b *testing.B) {
-			b.SetBytes(150 * 1000)
-			for i := 0; i < b.N; i++ {
-				for _, r := range reads {
-					ls, _ := obiapat.MakeApatSequence(newSeq(r), false)
-					lp.FindAllIndex(ls, 0, -1)
-				}
-			}
-		})
 		b.Run(fmt.Sprintf("new/e=%d", e), func(b *testing.B) {
 			b.SetBytes(150 * 1000)
 			var dst [][3]int
@@ -79,16 +59,8 @@ func BenchmarkReads(b *testing.B) {
 func BenchmarkFlanks(b *testing.B) {
 	seq := benchSeq(1 << 20)
 	bs := newSeq(seq)
-	ls, _ := obiapat.MakeApatSequence(newSeq(append([]byte(nil), seq...)), false)
 	framed := "NNNNNNNNNNN" + benchCore + "NNNNNNNNNNNNN" // 44 positions
-	lp, _ := obiapat.MakeApatPattern(framed, 3, false)
 	p, _ := MakeApatPattern(framed, 3, false)
-	b.Run("obiapat", func(b *testing.B) {
-		b.SetBytes(int64(len(seq)))
-		for i := 0; i < b.N; i++ {
-			lp.FindAllIndex(ls, 0, -1)
-		}
-	})
 	b.Run("new", func(b *testing.B) {
 		b.SetBytes(int64(len(seq)))
 		var dst [][3]int
@@ -105,13 +77,12 @@ func withBNDM(p ApatPattern, on bool) ApatPattern {
 	return q
 }
 
-// BenchmarkStrict compares, for no error allowed, obiapat, the Shift-And and the
+// BenchmarkStrict compares, for no error allowed, the Shift-And and the
 // BNDM, on 1 Mb, by length of the core and by number of degenerate positions.
 func BenchmarkStrict(b *testing.B) {
 	rng := rand.New(rand.NewSource(9))
 	seq := benchSeq(1 << 20)
 	bs := newSeq(seq)
-	ls, _ := obiapat.MakeApatSequence(newSeq(append([]byte(nil), seq...)), false)
 	random := func(n int) string {
 		out := make([]byte, n)
 		for i := range out {
@@ -145,14 +116,7 @@ func BenchmarkStrict(b *testing.B) {
 	add("len=12/06 two-base codes", degenerate(random(12), 6, "RYSWKM"))
 	for _, name := range names {
 		pat := cases[name]
-		lp, _ := obiapat.MakeApatPattern(pat, 0, false)
 		p, _ := MakeApatPattern(pat, 0, false)
-		b.Run(name+"/obiapat", func(b *testing.B) {
-			b.SetBytes(int64(len(seq)))
-			for i := 0; i < b.N; i++ {
-				lp.FindAllIndex(ls, 0, -1)
-			}
-		})
 		for _, v := range []struct {
 			name string
 			on   bool
@@ -170,20 +134,12 @@ func BenchmarkStrict(b *testing.B) {
 }
 
 // BenchmarkIndel reads 1 Mb for a pattern of 20 positions with 1 to 5 errors
-// where insertions and deletions count, with obiapat (ManberIndel) and with this package.
+// where insertions and deletions count.
 func BenchmarkIndel(b *testing.B) {
 	seq := benchSeq(1 << 20)
 	bs := newSeq(seq)
-	ls, _ := obiapat.MakeApatSequence(newSeq(append([]byte(nil), seq...)), false)
 	for _, e := range []int{1, 2, 3, 5} {
-		lp, _ := obiapat.MakeApatPattern(benchCore, e, true)
 		p, _ := MakeApatPattern(benchCore, e, true)
-		b.Run(fmt.Sprintf("obiapat/e=%d", e), func(b *testing.B) {
-			b.SetBytes(int64(len(seq)))
-			for i := 0; i < b.N; i++ {
-				lp.FindAllIndex(ls, 0, -1)
-			}
-		})
 		b.Run(fmt.Sprintf("new/e=%d", e), func(b *testing.B) {
 			b.SetBytes(int64(len(seq)))
 			var dst [][3]int
@@ -197,12 +153,10 @@ func BenchmarkIndel(b *testing.B) {
 // BenchmarkRefine is the cost per read of the search with indels (1000 reads of 150
 // bases, the pattern planted with up to two indels, 3 errors allowed): the forward
 // search alone, BestMatch and AllMatches of this package (which add the backward
-// search for the start), and obiapat's BestMatch and AllMatches (which realign each
-// window with obialign.LocatePattern).
+// search for the start).
 func BenchmarkRefine(b *testing.B) {
 	rng := rand.New(rand.NewSource(5))
 	p, _ := MakeApatPattern(benchCore, 3, true)
-	lp, _ := obiapat.MakeApatPattern(benchCore, 3, true)
 	var reads []*obiseq.BioSequence
 	for i := 0; i < 1000; i++ {
 		r := randomSequence(rng, "acgt", 150, "")
@@ -225,26 +179,10 @@ func BenchmarkRefine(b *testing.B) {
 			}
 		}
 	})
-	b.Run("BestMatch obiapat (LocatePattern)", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			for _, r := range reads {
-				ls, _ := obiapat.MakeApatSequence(r, false)
-				lp.BestMatch(ls, 0, -1)
-			}
-		}
-	})
 	b.Run("AllMatches", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			for _, r := range reads {
 				p.AllMatches(r, 0, -1)
-			}
-		}
-	})
-	b.Run("AllMatches obiapat (LocatePattern)", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			for _, r := range reads {
-				ls, _ := obiapat.MakeApatSequence(r, false)
-				lp.AllMatches(ls, 0, -1)
 			}
 		}
 	})
