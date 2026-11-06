@@ -5,7 +5,7 @@ package obipcr
 import (
 	log "github.com/sirupsen/logrus"
 
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiapat"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidnapat"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
 	"github.com/DavidGamba/go-getoptions"
 )
@@ -74,13 +74,9 @@ func OptionSet(options *getoptions.GetOpt) {
 // CLIForwardPrimer returns the sequence of the forward primer as indicated by the
 // --forward command line option
 func CLIForwardPrimer() string {
-	pattern, err := obiapat.MakeApatPattern(_ForwardPrimer, _AllowedMismatch, false)
-
-	if err != nil {
+	if _, err := obidnapat.MakeApatPattern(_ForwardPrimer, _AllowedMismatch, false); err != nil {
 		log.Fatalf("%+v", err)
 	}
-
-	pattern.Free()
 
 	return _ForwardPrimer
 }
@@ -88,13 +84,9 @@ func CLIForwardPrimer() string {
 // CLIReversePrimer returns the sequence of the reverse primer as indicated by the
 // --reverse command line option
 func CLIReversePrimer() string {
-	pattern, err := obiapat.MakeApatPattern(_ReversePrimer, _AllowedMismatch, false)
-
-	if err != nil {
+	if _, err := obidnapat.MakeApatPattern(_ReversePrimer, _AllowedMismatch, false); err != nil {
 		log.Fatalf("%+v", err)
 	}
-
-	pattern.Free()
 
 	return _ReversePrimer
 }

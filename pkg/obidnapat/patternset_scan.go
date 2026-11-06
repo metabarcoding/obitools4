@@ -49,27 +49,44 @@ func compareOccurrences(a, b Occurrence) int {
 
 func (s *PatternSet) appendAll(dst []Occurrence, seq []byte, begin, length int, circular bool) []Occurrence {
 	first := len(dst)
-	for _, m := range s.solo {
-		for _, loc := range m.c.search(nil, seq, begin, length, circular) {
-			dst = append(dst, Occurrence{m.pattern, m.strand, loc[0], loc[1], loc[2]})
-		}
-	}
-	for _, b := range s.batches {
-		dst = s.scanBatch(dst, b, seq, begin, length, circular)
-	}
-	for i := range s.groups {
-		dst = s.groups[i].scan(s, dst, seq, begin, length, circular)
-	}
+	dst = s.collect(dst, seq, begin, length, circular, false)
 	// The words come one after the other, and the ends of the windows in the
 	// order of the scan: the occurrences are sorted by their start here.
 	slices.SortFunc(dst[first:], compareOccurrences)
 	return dst
 }
 
+// collect appends the occurrences, in no particular order. keepEarly: see
+// scanIndelWords.
+func (s *PatternSet) collect(dst []Occurrence, seq []byte, begin, length int, circular, keepEarly bool) []Occurrence {
+	noisy := hasN(seq) // the windows are then checked (see noise.go)
+	if circular {
+		for _, m := range s.imems { // the words with indels read linear sequences only
+			for _, loc := range m.c.search(nil, seq, begin, length, true) {
+				dst = append(dst, Occurrence{m.pattern, m.strand, loc[0], loc[1], loc[2]})
+			}
+		}
+	} else {
+		dst = s.scanIndelWords(dst, seq, begin, length, keepEarly)
+	}
+	for _, m := range s.solo {
+		for _, loc := range m.c.search(nil, seq, begin, length, circular) {
+			dst = append(dst, Occurrence{m.pattern, m.strand, loc[0], loc[1], loc[2]})
+		}
+	}
+	for _, b := range s.batches {
+		dst = s.scanBatch(dst, b, seq, noisy, begin, length, circular)
+	}
+	for i := range s.groups {
+		dst = s.groups[i].scan(s, dst, seq, noisy, begin, length, circular)
+	}
+	return dst
+}
+
 // scanBatch runs the words of a batch (the same number of levels) together over
 // the part of the sequence where one of their cores can match, and appends the
 // occurrences.
-func (s *PatternSet) scanBatch(dst []Occurrence, idx []int, seq []byte, begin, length int, circular bool) []Occurrence {
+func (s *PatternSet) scanBatch(dst []Occurrence, idx []int, seq []byte, noisy bool, begin, length int, circular bool) []Occurrence {
 	n := len(seq)
 	var ws [maxBatchWords]*word
 	var fs [maxBatchWords]windows
@@ -79,7 +96,7 @@ func (s *PatternSet) scanBatch(dst []Occurrence, idx []int, seq []byte, begin, l
 	lo, hi := -1, -1
 	for k, wi := range idx {
 		ws[k], fp[k], sp[k] = &s.words[wi], &fs[k], &sts[k]
-		f, l0, h0 := ws[k].windows(n, begin, length, circular)
+		f, l0, h0 := ws[k].windows(seq, noisy, begin, length, circular)
 		if l0 < 0 {
 			continue
 		}
@@ -117,7 +134,9 @@ const maxBatchWords = 3
 // windows computes, for a sequence of n bytes, where each member of the word is
 // searched, and the part [lo, hi) of the unrolled sequence that holds them all
 // (lo < 0: nothing to search).
-func (w *word) windows(n, begin, length int, circular bool) (f windows, lo, hi int) {
+func (w *word) windows(seq []byte, noisy bool, begin, length int, circular bool) (f windows, lo, hi int) {
+	n := len(seq)
+	f.seq, f.noisy, f.circular = seq, noisy, circular
 	// f.from[k], f.to[k]: the part of the unrolled sequence where the core of the
 	// member k is searched (as in compiled.search); to[k] <= from[k] when the
 	// member cannot match.
@@ -141,6 +160,9 @@ func (w *word) windows(n, begin, length int, circular bool) (f windows, lo, hi i
 // searched, for one call.
 type windows struct {
 	from, to [wordBits]int
+	seq      []byte // the sequence, to check the windows (see noise.go)
+	noisy    bool   // the sequence holds an N
+	circular bool
 }
 
 // run scans text, whose first byte stands for the position pos of the unrolled
@@ -194,6 +216,9 @@ func (w *word) emit(dst []Occurrence, pos int, hit uint64, r *state, f *windows)
 			continue
 		}
 		st := c.offset(pos)
+		if (f.noisy || e >= len(c.positions)) && realBases(f.seq, st, st+len(c.positions), f.circular) <= e {
+			continue // matched by its errors and its N alone
+		}
 		dst = append(dst, Occurrence{m.pattern, m.strand, st, st + len(c.positions), e})
 	}
 	return dst

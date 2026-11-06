@@ -111,12 +111,20 @@ func (c *compiled) indelHits(dst [][3]int, seq []byte, begin, length int, circul
 		return dst
 	}
 
+	noisy := c.needsCheck(hasN(seq))
 	var st state
 	c.initIndel(&st)
 	for v := begin; v < to; {
 		p := v % n
 		take := min(to-v, n-p)
+		if noisy {
+			take = min(take, noiseChunk)
+		}
+		mark := len(dst)
 		dst = c.runIndel(dst, seq[p:p+take], v, &st)
+		if noisy {
+			dst = dropNoise(dst, mark, seq, circular)
+		}
 		v += take
 	}
 	return dst

@@ -116,8 +116,12 @@ func (c *compiled) search(dst [][3]int, seq []byte, begin, length int, circular 
 	if !ok {
 		return dst
 	}
+	noisy := c.needsCheck(hasN(seq))
 	if c.coreLen == 0 { // nothing but wildcards: every window matches
 		for s := begin; s <= lastStart; s++ {
+			if noisy && realBases(seq, s, s+m, circular) == 0 {
+				continue
+			}
 			dst = append(dst, [3]int{s, s + m, 0})
 		}
 		return dst
@@ -127,13 +131,20 @@ func (c *compiled) search(dst [][3]int, seq []byte, begin, length int, circular 
 	var st state
 	n := len(seq)
 	from, to := begin+c.left, lastStart+c.left+c.coreLen
-	if c.bndm && !circular {
+	if c.bndm && !circular && !noisy {
 		return c.runBNDM(dst, seq[from:to], from)
 	}
 	for v := from; v < to; {
 		p := v % n
 		take := min(to-v, n-p)
+		if noisy {
+			take = min(take, noiseChunk)
+		}
+		mark := len(dst)
 		dst = c.run(dst, seq[p:p+take], v, &st)
+		if noisy {
+			dst = dropNoise(dst, mark, seq, circular)
+		}
 		v += take
 	}
 	return dst

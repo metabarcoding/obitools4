@@ -82,8 +82,13 @@ func (p ApatPattern) FilterBestMatch(seq *obiseq.BioSequence, begin, length int)
 // errors included), the one with the fewest errors, the first when they tie. The
 // windows come by increasing end.
 func bestOfOverlaps(res [][3]int) [][3]int {
+	return appendBestOfOverlaps(make([][3]int, 0, len(res)), res)
+}
+
+// appendBestOfOverlaps is bestOfOverlaps appending to dst (which must not share
+// its memory with res).
+func appendBestOfOverlaps(filtered, res [][3]int) [][3]int {
 	const none = 10000
-	filtered := make([][3]int, 0, len(res))
 	best := [3]int{0, 0, none}
 	for _, m := range res {
 		if (m[0] - m[2]) < best[1]+best[2] { // overlapping matches

@@ -42,7 +42,7 @@ Paquet `pkg/obidnapat` : remplaçant Go pur, spécialisé ADN, d'`pkg/obiapat` (
 
 Décisions de l'utilisateur : cœur de 63 positions au plus (jokers `N` de tête et de queue mis à part, un motif plus long est
 **refusé**) ; moteur ADN ; règle de **recoupement** pour les lettres ambiguës de la séquence (`n` correspond à tout, `r` à
-A ou G, `u` = `t`) et pas de mode « ancien » (l'ancienne règle est un défaut) ; un octet hors IUPAC ne correspond qu'à une
+A ou G, `u` = `t`) et pas de mode « ancien » (l'ancienne règle est un défaut) ; **règle des bases réelles** (2026-11-06) : une fenêtre n'est rapportée que si ses bases non-`N` sont **plus nombreuses que ses erreurs** (le motif ne doit pas être apparié par ses seules erreurs), appliquée à chaque occurrence avant tout regroupement, dans `noise.go` (voir `OBIDNAPAT_NOTES.md`, « Règle des bases réelles ») ; un octet hors IUPAC ne correspond qu'à une
 position joker ; plus d'`ApatSequence` : méthodes sur `*obiseq.BioSequence`, variantes `...Circular`, formes `Append...` ;
 `NNNNmotifNNNN` recodé (cœur + flancs) ; circulaire : une occurrence par site, `start ∈ [0, n)`, `end` pouvant dépasser `n`,
 motif plus long que la séquence circulaire = aucun résultat ; SIMD **réservé au multi-motifs** ; garder une voie stricte.

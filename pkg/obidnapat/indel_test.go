@@ -66,7 +66,7 @@ func oracleIndelRaw(p ApatPattern, seq []byte, begin, length int, circular, stri
 			cur[i] = min(sub, prev[i]+cost(i-1), cur[i-1]+cost(i-1))
 		}
 		if e := cur[m]; e <= p.c.maxErr {
-			if s := v - m + 1; s >= begin || !strict {
+			if s := v - m + 1; (s >= begin || !strict) && naiveRealBases(seq, s, s+m, circular) > e {
 				res = append(res, [3]int{s, s + m, e})
 			}
 		}
@@ -128,6 +128,9 @@ func TestIndelAgainstObiapat(t *testing.T) {
 		legacy, err := obiapat.MakeApatPattern(pat, e, true)
 		if err != nil {
 			t.Fatalf("obiapat refuses %q: %v", pat, err)
+		}
+		if e >= p.Len() {
+			continue // obiapat has no rule on the real bases of a window (see noise.go)
 		}
 		seq := randomSequence(rng, "acgt", rng.Intn(250), concrete(rng, p))
 		bs := newSeq(seq)
@@ -376,6 +379,9 @@ func TestIndelAllMatchesAgainstObiapat(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
+		if e >= p.Len() {
+			continue // obiapat has no rule on the real bases of a window (see noise.go)
+		}
 		seq := randomSequence(rng, "acgt", 20+rng.Intn(200), concrete(rng, p))
 		begin := rng.Intn(20)
 		ls, err := obiapat.MakeApatSequence(newSeq(append([]byte(nil), seq...)), false)
@@ -444,6 +450,9 @@ func TestBestMatch(t *testing.T) {
 			}
 			continue
 		}
+		if e >= p.Len() {
+			continue // obiapat has no rule on the real bases of a window (see noise.go)
+		}
 		legacy, err := obiapat.MakeApatPattern(pat, e, false)
 		if err != nil {
 			t.Fatal(err)
@@ -461,4 +470,23 @@ func TestBestMatch(t *testing.T) {
 	if withErrors < 300 || plain < 300 {
 		t.Errorf("the draws are not varied enough: %d matches with errors (indels), %d without indels", withErrors, plain)
 	}
+}
+
+// naiveRealBases counts, base by base, the bases of the nominal window [s, e)
+// that are not N (the part outside a linear sequence does not count): a window
+// must hold more of them than errors.
+func naiveRealBases(seq []byte, s, e int, circular bool) int {
+	n, count := len(seq), 0
+	for i := s; i < e; i++ {
+		j := i
+		if circular {
+			j = ((i % n) + n) % n
+		} else if i < 0 || i >= n {
+			continue
+		}
+		if seq[j] != 'n' && seq[j] != 'N' {
+			count++
+		}
+	}
+	return count
 }

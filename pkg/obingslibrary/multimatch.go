@@ -3,7 +3,6 @@ package obingslibrary
 import (
 	"fmt"
 	"math"
-	"slices"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -590,76 +589,12 @@ func (library *NGSLibrary) SampleIdentifier(
 }
 
 func (library *NGSLibrary) ExtractMultiBarcode(sequence *obiseq.BioSequence) (obiseq.BioSequenceSlice, error) {
-	i := 1
-	markers := make([]*Marker, len(library.Markers)+1)
-	primerseqs := make([]PrimerPair, len(library.Markers)+1)
-	matches := make([]PrimerMatch, 0, len(library.Markers)+1)
+	primerseqs := library.search.pairs
+	matches := library.search.primerMatches(nil, sequence)
 
 	results := obiseq.MakeBioSequenceSlice()
 
-	for primers, marker := range library.Markers {
-		markers[i] = marker
-		primerseqs[i] = primers
-		locs := marker.forward.AllMatches(sequence, 0, -1)
-		if len(locs) > 0 {
-			for _, loc := range locs {
-				matches = append(matches, PrimerMatch{
-					Begin:      loc[0],
-					End:        loc[1],
-					Mismatches: loc[2],
-					Marker:     i,
-					Forward:    true,
-				})
-
-			}
-
-			locs = marker.creverse.AllMatches(sequence, locs[0][0]+1, -1)
-
-			if len(locs) > 0 {
-				for _, loc := range locs {
-					matches = append(matches, PrimerMatch{
-						Begin:      loc[0],
-						End:        loc[1],
-						Mismatches: loc[2],
-						Marker:     -i,
-						Forward:    true,
-					})
-				}
-			}
-		}
-
-		locs = marker.reverse.AllMatches(sequence, 0, -1)
-		if len(locs) > 0 {
-			for _, loc := range locs {
-				matches = append(matches, PrimerMatch{
-					Begin:      loc[0],
-					End:        loc[1],
-					Mismatches: loc[2],
-					Marker:     i,
-					Forward:    false,
-				})
-			}
-
-			locs = marker.cforward.AllMatches(sequence, locs[0][0]+1, -1)
-
-			if len(locs) > 0 {
-				for _, loc := range locs {
-					matches = append(matches, PrimerMatch{
-						Begin:      loc[0],
-						End:        loc[1],
-						Mismatches: loc[2],
-						Marker:     -i,
-						Forward:    false,
-					})
-				}
-			}
-		}
-		i++
-	}
-
 	if len(matches) > 0 {
-		slices.SortFunc(matches, func(a, b PrimerMatch) int { return a.Begin - b.Begin })
-
 		state := 0
 		var from PrimerMatch
 		q := 0

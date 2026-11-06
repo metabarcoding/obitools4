@@ -60,8 +60,8 @@ func TestIsPatternMatchSequenceAgainstObiapat(t *testing.T) {
 			// obiapat reverse complements a negation badly ("!C#" becomes "g!#"): not compared
 			pat = strings.ReplaceAll(pat, "!", "")
 		}
-		if _, err := MakeApatPattern(pat, e, indel); err != nil {
-			continue
+		if q, err := MakeApatPattern(pat, e, indel); err != nil || e >= q.Len() {
+			continue // (obiapat has no rule on the real bases of a window, see noise.go)
 		}
 		mine := IsPatternMatchSequence(pat, e, both, indel)
 		theirs := obiapat.IsPatternMatchSequence(pat, e, both, indel)
@@ -72,6 +72,9 @@ func TestIsPatternMatchSequenceAgainstObiapat(t *testing.T) {
 			site = concrete(rng, rc)
 		}
 		seq := newSeq(randomSequence(rng, "acgt", rng.Intn(150), mutate(rng, site)))
+		if indel && seq.Len() < p.Len()+e {
+			continue // too short: a nominal window hangs over the start, and its missing bases are not real ones (see noise.go)
+		}
 		if got, want := mine(seq), theirs(seq); got != want {
 			t.Fatalf("pattern %q e=%d indels=%v both=%v seq=%q: %v, obiapat %v", pat, e, indel, both, seq.String(), got, want)
 		}

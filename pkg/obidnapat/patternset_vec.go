@@ -54,12 +54,12 @@ func (s *PatternSet) vectorize() {
 
 // scan runs the group over the part of the sequence where one of its words can
 // match, and appends the occurrences.
-func (g *vgroup) scan(s *PatternSet, dst []Occurrence, seq []byte, begin, length int, circular bool) []Occurrence {
+func (g *vgroup) scan(s *PatternSet, dst []Occurrence, seq []byte, noisy bool, begin, length int, circular bool) []Occurrence {
 	n, lanes := len(seq), g.lanes
 	fs := make([]windows, lanes)
 	lo, hi := -1, -1
 	for l, wi := range g.words {
-		f, l0, h0 := s.words[wi].windows(n, begin, length, circular)
+		f, l0, h0 := s.words[wi].windows(seq, noisy, begin, length, circular)
 		if l0 < 0 {
 			continue
 		}

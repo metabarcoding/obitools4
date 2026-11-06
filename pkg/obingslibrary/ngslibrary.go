@@ -26,6 +26,7 @@ type PCR struct {
 type NGSLibrary struct {
 	Primers map[string]PrimerPair
 	Markers map[PrimerPair]*Marker
+	search  *primerSearch // the primers of all the markers, built by Compile2
 }
 
 func MakeNGSLibrary() NGSLibrary {
@@ -91,7 +92,7 @@ func (library *NGSLibrary) Compile2() error {
 			return err
 		}
 	}
-	return nil
+	return library.compileSearch()
 }
 
 func (library *NGSLibrary) SetForwardTagSpacer(spacer int) {

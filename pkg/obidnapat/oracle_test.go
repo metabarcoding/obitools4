@@ -32,11 +32,14 @@ func oracle(p ApatPattern, seq []byte, begin, length int, circular bool) [][3]in
 		if !circular && s+m > limit {
 			break
 		}
-		errs, ok := 0, true
+		errs, real, ok := 0, 0, true
 		for i, pos := range ps {
 			j := s + i
 			if circular {
 				j %= n
+			}
+			if seq[j] != 'n' && seq[j] != 'N' {
+				real++
 			}
 			if pos.wildcard || letterSet[seq[j]]&pos.set != 0 {
 				continue
@@ -47,7 +50,8 @@ func oracle(p ApatPattern, seq []byte, begin, length int, circular bool) [][3]in
 			}
 			errs++
 		}
-		if ok && errs <= p.c.maxErr {
+		// a window must hold more real bases (not N) than errors
+		if ok && errs <= p.c.maxErr && real > errs {
 			res = append(res, [3]int{s, s + m, errs})
 		}
 	}

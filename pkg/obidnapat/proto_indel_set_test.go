@@ -79,7 +79,9 @@ func TestProtoPackedIndel(t *testing.T) {
 			for k, m := range members {
 				for j := 0; j <= m.c.levels; j++ {
 					if n[j]&m.end != 0 {
-						got[k] = append(got[k], [3]int{pos - len(m.c.positions) + 1, pos + 1, j})
+						if st := pos - len(m.c.positions) + 1; naiveRealBases(seq, st, pos+1, false) > j {
+							got[k] = append(got[k], [3]int{st, pos + 1, j})
+						}
 						break
 					}
 				}

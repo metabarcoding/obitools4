@@ -3,6 +3,7 @@ package obidnapat
 import (
 	"fmt"
 	"slices"
+	"sync"
 )
 
 // wordBits is the number of positions a packed word can hold. It is only the
@@ -42,6 +43,7 @@ type word struct {
 	members []member
 	owner   [wordBits]int8 // owner[i]: index in members of the core that ends at bit i
 	vector  bool           // run by a vgroup (patternset_vec.go), not on its own
+	indel   bool           // the cores allow insertions and deletions (patternset_indel.go)
 }
 
 // PatternSet looks for several patterns, and optionally their reverse
@@ -49,14 +51,18 @@ type word struct {
 // several goroutines at once.
 type PatternSet struct {
 	words   []word
+	iwords  []word      // the words of the patterns with indels (patternset_indel.go)
+	imems   []member    // the members of iwords, for the circular sequences
+	cs      []*compiled // cs[2*pattern + (0: strand +1, 1: strand -1)]
 	groups  []vgroup
 	batches [][]int  // indices of the words advanced in one loop: same levels, at most batchSize
 	solo    []member // searched on their own: the patterns made of wildcards only (no core), and the strict ones that BNDM reads faster than a word
 	n       int
+	scratch sync.Pool // *matchScratch
 }
 
-// MakePatternSet compiles the search of patterns, which must not allow indels
-// (compiled with allowsIndel and at least one error): it refuses them. With bothStrands, the reverse
+// MakePatternSet compiles the search of patterns, which may allow indels or not
+// (they are packed in different words). With bothStrands, the reverse
 // complement of every pattern is searched as well (a palindrome is found once
 // per strand).
 func MakePatternSet(patterns []ApatPattern, bothStrands bool) (*PatternSet, error) {
@@ -72,10 +78,6 @@ func makePatternSet(patterns []ApatPattern, bothStrands, vector bool) (*PatternS
 		if p.c == nil {
 			return nil, fmt.Errorf("obidnapat: pattern %d of the set is not compiled", i)
 		}
-		if p.c.indel {
-			// the packed words run the recurrence of the substitutions only
-			return nil, fmt.Errorf("obidnapat: pattern %d (%s) allows indels, which a PatternSet does not search", i, p.c.text)
-		}
 		entries = append(entries, member{c: p.c, pattern: i, strand: 1})
 		if bothStrands {
 			rc, err := p.ReverseComplement()
@@ -86,41 +88,30 @@ func makePatternSet(patterns []ApatPattern, bothStrands, vector bool) (*PatternS
 		}
 	}
 
-	s := &PatternSet{n: len(patterns)}
+	s := &PatternSet{n: len(patterns), cs: make([]*compiled, 2*len(patterns))}
+	s.scratch.New = func() any { return new(matchScratch) }
+	for _, e := range entries {
+		s.cs[2*e.pattern+int(1-e.strand)/2] = e.c
+	}
 
 	// The cores are packed by first fit decreasing, among the ones that search
 	// the same number of levels: a pattern without error does not pay for the
 	// levels of its neighbours.
 	byLevels := map[int][]member{}
+	byLevelsIndel := map[int][]member{}
 	for _, e := range entries {
-		if e.c.coreLen == 0 {
+		switch {
+		case e.c.coreLen == 0:
 			s.solo = append(s.solo, e)
-		} else {
+		case e.c.indel:
+			byLevelsIndel[e.c.levels] = append(byLevelsIndel[e.c.levels], e)
+			s.imems = append(s.imems, e)
+		default:
 			byLevels[e.c.levels] = append(byLevels[e.c.levels], e)
 		}
 	}
-	levels := make([]int, 0, len(byLevels))
-	for l := range byLevels {
-		levels = append(levels, l)
-	}
-	slices.Sort(levels)
-	for _, l := range levels {
-		group := byLevels[l]
-		slices.SortStableFunc(group, func(a, b member) int { return b.c.coreLen - a.c.coreLen })
-		var used []int
-		first := len(s.words)
-		for _, e := range group {
-			k := first
-			for ; k < len(s.words) && used[k-first]+e.c.coreLen > wordBits; k++ {
-			}
-			if k == len(s.words) {
-				s.words = append(s.words, word{levels: l})
-				used = append(used, 0)
-			}
-			s.words[k].add(e, uint(used[k-first]))
-			used[k-first] += e.c.coreLen
-		}
-	}
+	s.words = packWords(byLevels, false)
+	s.iwords = packWords(byLevelsIndel, true)
 
 	// A word with a single strict core is no gain over its own search, and BNDM
 	// skips bytes where the word reads them all (BenchmarkSetLen: 148-288 Mo/s
@@ -139,6 +130,34 @@ func makePatternSet(patterns []ApatPattern, bothStrands, vector bool) (*PatternS
 	}
 	s.makeBatches()
 	return s, nil
+}
+
+// packWords packs the cores, class of levels after class of levels (increasing).
+func packWords(byLevels map[int][]member, indel bool) []word {
+	levels := make([]int, 0, len(byLevels))
+	for l := range byLevels {
+		levels = append(levels, l)
+	}
+	slices.Sort(levels)
+	var words []word
+	for _, l := range levels {
+		group := byLevels[l]
+		slices.SortStableFunc(group, func(a, b member) int { return b.c.coreLen - a.c.coreLen })
+		var used []int
+		first := len(words)
+		for _, e := range group {
+			k := first
+			for ; k < len(words) && used[k-first]+e.c.coreLen > wordBits; k++ {
+			}
+			if k == len(words) {
+				words = append(words, word{levels: l, indel: indel})
+				used = append(used, 0)
+			}
+			words[k].add(e, uint(used[k-first]))
+			used[k-first] += e.c.coreLen
+		}
+	}
+	return words
 }
 
 // add packs the core of e from the bit shift.
@@ -160,7 +179,7 @@ func (s *PatternSet) Len() int { return s.n }
 
 // Words returns the number of 64 bit words the search runs on (the patterns
 // searched on their own are not counted).
-func (s *PatternSet) Words() int { return len(s.words) }
+func (s *PatternSet) Words() int { return len(s.words) + len(s.iwords) }
 
 // forcedBatch, when not 0, is the number of words advanced in one loop whatever
 // their levels (1 to maxBatch of gen_kernels.go). A variable for the tests and benchmarks.

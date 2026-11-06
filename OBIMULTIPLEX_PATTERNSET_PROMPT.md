@@ -44,7 +44,7 @@ avec des multiplexes, c'est un gain réel »), mais voir §6 : propose l'API et 
 ## 2. Ce qui existe (état de `pkg/obidnapat`)
 
 Remplaçant Go pur, spécialisé ADN, d'`pkg/obiapat` (cgo). Migrés et vérifiés : `obiannotate`, `obigrep`, `obingslibrary`/`obimultiplex`. `obisplit` a été supprimé
-(décision de l'utilisateur). À migrer : seulement `obipcr` (+ `pkg/obiapat/pcr.go`, séquences circulaires), le dernier programme qui dépende d'`obiapat` ; `obiapat` reste en place jusqu'à la fin.
+(décision de l'utilisateur). `obipcr` est migré aussi (moteur dans `pkg/obidnapat/pcr.go`) : plus aucun programme ne dépend d'`obiapat`, qui n'est plus importé que par des tests différentiels ; sa suppression se fait sur demande de l'utilisateur. Décision en attente : le traitement d'un `n` de la séquence (voir `OBIDNAPAT_NOTES.md`, « Migration d'`obipcr` »).
 
 - `pattern.go` : `MakeApatPattern(pattern, errormax, allowsIndel)`. `compiled.indel = allowsIndel && errormax > 0` ; avec indels le **motif entier** est le cœur (pas de retrait des `N` de tête
   et de queue), limite de 63 positions ; `levels = min(errormax, 63)` (les erreurs peuvent dépasser la longueur du motif à cause des insertions) ; sans indels le cœur exclut les `N` de tête/queue (`left`, `right`), `levels = min(errormax, coreLen)`.
@@ -55,6 +55,7 @@ Remplaçant Go pur, spécialisé ADN, d'`pkg/obiapat` (cgo). Migrés et vérifi�
 - `search.go` : **un seul chemin** pour trouver une fenêtre : `AllMatches(seq, begin, length)` (pour un motif à indels : `bestOfOverlaps(indelHits(...))`, puis pour chaque fenêtre avec erreurs `backwardStart` ; la région s'applique au
   **vrai** début ; début nominal conservé si le vrai est introuvable, ce qui n'arrive qu'avec `#` en tête de motif ; `AllMatches` ne traite que les séquences linéaires ; sans indels : `FilterBestMatch`). `BestMatch` = première fenêtre de plus petit nombre d'erreurs d'`AllMatches`.
   `bestOfOverlaps` : deux fenêtres se chevauchent si `(m.début - m.err) < best.fin + best.err` ; garde la première de plus petit nombre d'erreurs. `obialign.LocatePattern` n'est plus utilisé par ce paquet (supprimé, décision de l'utilisateur).
+- `noise.go` : **règle des bases réelles** (2026-11-06) : une fenêtre n'est rapportée que si ses bases non-`N` sont **plus nombreuses que ses erreurs** (le motif ne doit pas être apparié par ses seules erreurs), appliquée à chaque occurrence avant tout regroupement, dans `noise.go` (voir `OBIDNAPAT_NOTES.md`, « Règle des bases réelles »). Un motif seul : `hasN` puis filtre par blocs de 4096 octets (`dropNoise`), actif seulement si la séquence a un `N`, si le motif a des indels ou si `levels >= Len()` ; `PatternSet` : filtre dans `word.emit`. Les tests qui comparent à `obiapat` (sans cette règle) écartent les motifs avec `e >= Len()`.
 - `patternset.go`, `patternset_scan.go`, `patternset_unrolled.go`, `patternset_il*.go`, `gen_kernels.go` : `PatternSet` pour les motifs **sans indels** : mots de 64 bits contenant plusieurs cœurs (empaquetage first-fit decreasing, **par classe de
   niveaux**), récurrence avec `| start` (bit de départ de chaque cœur) à la place de `| 1`, masque de fin par cœur, `Occurrence{Pattern, Strand, Start, End, Errors}`, tri final par `(Start, Pattern, brin +1 d'abord)`, liste « solo » (un cœur
   seul à e = 0 avec BNDM reste un scan autonome), noyaux déroulés de 0 à 8 niveaux, noyaux **entrelacés** (2 ou 3 mots de même niveau dans une boucle : ×1,5 à ×1,65 ; `batchFor` : 3 mots jusqu'à 3 niveaux, 2 à 4-5, 1 au-delà), prototype SIMD
@@ -148,6 +149,7 @@ $G test -run '^$' -bench 'Set|Batch' -benchtime 5x -count 2 ./pkg/obidnapat/
 
 ## 9. Pièges déjà rencontrés
 
+- La règle des bases réelles (`noise.go`) rejette des fenêtres que les noyaux produisent : tout nouveau chemin d'émission d'occurrences doit l'appliquer (`word.emit` pour `PatternSet`, `dropNoise` pour un motif seul), sinon une suite de `N` redonne une occurrence par position. Ne pas modifier les noyaux générés pour cela.
 - Les comptes de séquences par `grep -c '^@'` sont faux (lignes de qualité commençant par `@`).
 - Le `.ngsfilter` change pendant que tu travailles : copie figée.
 - `go build` hors du dépôt échoue (et un `grep` de filtre peut masquer l'erreur) : toujours depuis le dépôt.

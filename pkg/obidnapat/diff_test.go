@@ -27,6 +27,9 @@ func TestAgainstObiapat(t *testing.T) {
 		if err != nil {
 			t.Fatalf("pattern %q: %v", pat, err)
 		}
+		if e >= p.Len() {
+			continue // obiapat has no rule on the real bases of a window (see noise.go)
+		}
 		seq := randomSequence(rng, "acgt", rng.Intn(300), concrete(rng, p))
 		bs := newSeq(seq)
 
