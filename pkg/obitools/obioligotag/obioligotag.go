@@ -2,6 +2,8 @@ package obioligotag
 
 import (
 	"context"
+	crand "crypto/rand"
+	"encoding/binary"
 	"fmt"
 	"math"
 	"slices"
@@ -133,6 +135,15 @@ func checkFeasibility(size int, metric obikmer.KmerMetric) error {
 	return nil
 }
 
+// randomSeed draws a strictly positive seed from the system entropy source.
+func randomSeed() int64 {
+	var b [8]byte
+	if _, err := crand.Read(b[:]); err != nil {
+		return time.Now().UnixNano()
+	}
+	return int64(binary.LittleEndian.Uint64(b[:])>>1) + 1
+}
+
 // CLIOligoFamily builds the family of oligonucleotides described by the
 // command line options: it returns oligonucleotides, sorted, at a distance of at
 // least --distance from each other. If no family of the required size is
@@ -168,14 +179,21 @@ func CLIOligoFamily() ([]string, error) {
 		defer cancel()
 	}
 
+	seed := int64(CLIRandomSeed())
+	if seed == 0 {
+		seed = randomSeed()
+	}
+	log.Infof("random seed: %d", seed)
+
 	filter := obikmer.NewKmerDissimilarityFilter(kmers, size, metric, dmin)
 	progress := startCliqueProgress(target)
 	result := obigraph.FindClique(ctx, len(kmers), filter, target,
 		obigraph.CliqueOptions{
-			Workers:    obidefault.ParallelWorkers(),
-			Seed:       1,
-			ColorLimit: cliqueColorLimit,
-			Progress:   progress.Update,
+			Workers:      obidefault.ParallelWorkers(),
+			Seed:         seed,
+			ShuffleFirst: true,
+			ColorLimit:   cliqueColorLimit,
+			Progress:     progress.Update,
 		})
 	progress.Stop(result.Reached)
 

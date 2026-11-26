@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obikmer"
 )
 
@@ -23,6 +24,7 @@ func defaults() {
 	SetHomopolymerMax(-1)
 	SetHomopolymerMin(0)
 	SetTimeout(60)
+	SetRandomSeed(0)
 }
 
 // reset starts a test from the default options and restores them at its end.
@@ -173,5 +175,32 @@ func TestOligoIsPlainLine(t *testing.T) {
 		if got := isPlainOligoLine(line); got != want {
 			t.Errorf("isPlainOligoLine(%q) = %v, want %v", line, got, want)
 		}
+	}
+}
+
+func TestOligoFamilyRandomSeed(t *testing.T) {
+	reset(t)
+	previous := obidefault.MaxCPU()
+	obidefault.SetMaxCPU(1)
+	t.Cleanup(func() { obidefault.SetMaxCPU(previous) })
+
+	SetOligoSize(5)
+	SetFamilySize(20)
+	SetDistance(3)
+
+	run := func(seed int) string {
+		SetRandomSeed(seed)
+		family, err := CLIOligoFamily()
+		if err != nil {
+			t.Fatal(err)
+		}
+		return strings.Join(family, " ")
+	}
+
+	if a, b := run(42), run(42); a != b {
+		t.Errorf("same seed, different families:\n%s\n%s", a, b)
+	}
+	if a, b := run(1), run(2); a == b {
+		t.Errorf("different seeds gave the same family: %s", a)
 	}
 }
