@@ -3,6 +3,8 @@ package obiprimer
 import (
 	"fmt"
 
+	log "github.com/sirupsen/logrus"
+
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obithermo"
 )
 
@@ -13,6 +15,8 @@ type SearchParams struct {
 	MaxErrors      int     // -e: substitutions allowed between a primer and its sites (default 3)
 	MinLength      int     // -l: the amplicon (primers excluded) must be longer than this
 	MaxLength      int     // -L: and shorter than this
+	MinLengthNeg   int     // --min-length-neg: counterexample amplicons must be longer than this (0 = no bound)
+	MaxLengthNeg   int     // --max-length-neg: and shorter than this (0 or below MaxLength: MaxLength)
 	ThreePrime     int     // -3: number of 3' bases that must match exactly
 	StrictQuorum   float64 // -q: fraction of the examples containing the exact word (0.7)
 	Sensitivity    float64 // -s: fraction of the examples a primer must match (0.9)
@@ -75,8 +79,10 @@ func Search(c *Corpus, taxa *Taxa, p SearchParams) ([]PairStats, *SearchInfo, er
 		return nil, nil, err
 	}
 	info := &SearchInfo{Counts: sw.Counts, StrictWords: len(sw.Words), MinStrict: sw.MinSequences}
+	log.Infof("%d strict words (found without error in at least %d examples)", info.StrictWords, info.MinStrict)
 	if p.NoMultiMatch {
 		sw.Words, info.Repeated = DropRepeatedWords(sw.Words)
+		log.Infof("no multi-match: %d strict words dropped as repeated", info.Repeated)
 	}
 
 	refIndex := -1
@@ -99,15 +105,19 @@ func Search(c *Corpus, taxa *Taxa, p SearchParams) ([]PairStats, *SearchInfo, er
 	}
 	if p.NoMultiMatch {
 		wm, info.MultiMatch = DropMultiMatch(wm, c)
+		log.Infof("no multi-match: %d words dropped for matching several times in a sequence", info.MultiMatch)
 	}
 	for _, w := range wm {
 		info.Matches += len(w.Matches)
 	}
+	log.Infof("%d approximate occurrences of %d words", info.Matches, len(wm))
 
 	pairs, pinfo, err := FindPairs(c, taxa, wm, PairParams{
 		PrimerLength:   p.PrimerLength,
 		MinLength:      p.MinLength,
 		MaxLength:      p.MaxLength,
+		MinLengthNeg:   p.MinLengthNeg,
+		MaxLengthNeg:   p.MaxLengthNeg,
 		ThreePrime:     p.ThreePrime,
 		Sensitivity:    p.Sensitivity,
 		FalsePositive:  p.FalsePositive,

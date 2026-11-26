@@ -38,6 +38,24 @@ func ampHash(raw []byte, from, to int, reverse bool) uint64 {
 	return h
 }
 
+// barcodeHash hashes the barcode of the amplicon o of the sequence raw (lp is
+// the size of the primers), see ampHash.
+//
+// The barcode is read from the side of the first primer of the pair. When the
+// two primers are the same one, in opposite directions (P, rc(P)), the pair is
+// its own mirror image: there is no first primer, and P BARCODE rc(P) given on
+// the other strand reads P rc(BARCODE) rc(P). The two are one barcode, so the
+// smaller of the two hashes stands for it; otherwise they would count as two
+// barcodes, a barcode shared by two taxa would go unseen and Bs would be
+// overestimated.
+func (o occurrence) barcodeHash(raw []byte, lp int) uint64 {
+	from, to := int(o.up.pos())+lp, int(o.down.pos())
+	if o.key.p1 == o.key.p2 && o.key.a1 == o.key.a2 {
+		return min(ampHash(raw, from, to, false), ampHash(raw, from, to, true))
+	}
+	return ampHash(raw, from, to, o.swapped)
+}
+
 // eachAmplicon runs forEachOccurrence over the sequences of the corpus (the
 // examples only, or all of them) in parallel, and calls visit for every
 // amplicon of a pair of index. Every worker gets its own visit function, from
@@ -46,7 +64,7 @@ func ampHash(raw []byte, from, to int, reverse bool) uint64 {
 // Without a plan the sequences are handed to the workers as they get free, and
 // the assignment is recorded in record. With one, every worker scans the
 // sequences that the plan gave it.
-func (ps *primerSet) eachAmplicon(c *Corpus, p PairParams, index map[pairKey]int32, examplesOnly bool, plan *ampPlan, record []uint16,
+func (ps *primerSet) eachAmplicon(label string, c *Corpus, p PairParams, index map[pairKey]int32, examplesOnly bool, plan *ampPlan, record []uint16,
 	newVisit func(worker int) (visit func(s int, raw []byte, o occurrence, pair int32), done func())) {
 
 	workers := obidefault.ParallelWorkers()
@@ -77,13 +95,17 @@ func (ps *primerSet) eachAmplicon(c *Corpus, p PairParams, index map[pairKey]int
 		}
 		var raw []byte
 		raw, sc.bases = c.bases(s, sc.bases)
-		ps.forEachOccurrenceIn(raw, ms, p, func(o occurrence) {
+		// Bs and Bd compare barcodes, which are identical only if their lengths
+		// are: the window of the targets is enough, whatever the role
+		ps.forEachOccurrenceIn(raw, ms, p, p.MinLength, p.MaxLength, func(o occurrence) {
 			if pi, ok := index[o.key]; ok {
 				visit(s, raw, o, pi)
 			}
 		})
 	}
 
+	bar := newStageBar(label, c.Len())
+	defer bar.Done()
 	var wg sync.WaitGroup
 	if plan != nil {
 		mine := make([][]int, workers)
@@ -98,6 +120,7 @@ func (ps *primerSet) eachAmplicon(c *Corpus, p PairParams, index map[pairKey]int
 				var sc scratch
 				for _, s := range mine[w] {
 					scan(&sc, visit, s)
+					bar.Add(1)
 				}
 				if done != nil {
 					done()
@@ -118,6 +141,7 @@ func (ps *primerSet) eachAmplicon(c *Corpus, p PairParams, index map[pairKey]int
 			for s := range jobs {
 				record[s] = uint16(w)
 				scan(&sc, visit, s)
+				bar.Add(1)
 			}
 			if done != nil {
 				done()
@@ -133,13 +157,13 @@ func (ps *primerSet) eachAmplicon(c *Corpus, p PairParams, index map[pairKey]int
 
 // planAmplicons counts the amplicons of every pair of index in the sequences
 // of the corpus (all of them, or the examples only), by worker.
-func (ps *primerSet) planAmplicons(c *Corpus, p PairParams, index map[pairKey]int32, examplesOnly bool) *ampPlan {
+func (ps *primerSet) planAmplicons(label string, c *Corpus, p PairParams, index map[pairKey]int32, examplesOnly bool) *ampPlan {
 	workers := obidefault.ParallelWorkers()
 	plan := &ampPlan{owner: make([]uint16, c.Len()), count: make([][]uint32, workers)}
 	for w := range plan.count {
 		plan.count[w] = make([]uint32, len(index))
 	}
-	ps.eachAmplicon(c, p, index, examplesOnly, nil, plan.owner, func(w int) (func(int, []byte, occurrence, int32), func()) {
+	ps.eachAmplicon(label, c, p, index, examplesOnly, nil, plan.owner, func(w int) (func(int, []byte, occurrence, int32), func()) {
 		row := plan.count[w]
 		return func(_ int, _ []byte, _ occurrence, pi int32) { row[pi]++ }, nil
 	})
@@ -159,6 +183,7 @@ type collectOptions struct {
 	examplesOnly bool             // skip the counterexamples and the other sequences
 	model        *obithermo.Model // melting temperatures of the example sites (nil: none)
 	reference    bool             // record the amplicons on the reference sequence
+	label        string           // title of the progress bar
 }
 
 // collectAmplicons writes into store, in parallel, one record per amplicon of
@@ -191,7 +216,7 @@ func (ps *primerSet) collectAmplicons(c *Corpus, taxa *Taxa, p PairParams, index
 		oriented[i][1] = []byte(orientedWord(pr.Word, lp, true))
 	}
 
-	ps.eachAmplicon(c, p, index, opt.examplesOnly, plan, nil, func(w int) (func(int, []byte, occurrence, int32), func()) {
+	ps.eachAmplicon(opt.label, c, p, index, opt.examplesOnly, plan, nil, func(w int) (func(int, []byte, occurrence, int32), func()) {
 		site1, site2 := make([]byte, lp), make([]byte, lp)
 		lowTm1, lowTm2 := map[int32]float32{}, map[int32]float32{}
 
@@ -203,7 +228,7 @@ func (ps *primerSet) collectAmplicons(c *Corpus, taxa *Taxa, p PairParams, index
 					res.refs[pi] = refHit{o.up, o.down, o.swapped}
 				}
 			}
-			store.add(w, pi, ampHash(raw, int(o.up.pos())+lp, int(o.down.pos()), o.swapped), packTaxon(taxa.Of[s], role))
+			store.add(w, pi, o.barcodeHash(raw, lp), packTaxon(taxa.Of[s], role))
 
 			if role != Example || model == nil {
 				return

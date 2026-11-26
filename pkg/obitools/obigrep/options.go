@@ -5,8 +5,8 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiapat"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidnapat"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitax"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obitools/obiconvert"
@@ -380,7 +380,7 @@ func CLISequencePatternPredicate() obiseq.SequencePredicate {
 
 func CLISequenceAgrep() obiseq.SequencePredicate {
 	if len(_approx_pattern) > 0 {
-		p := obiapat.IsPatternMatchSequence(
+		p := obidnapat.IsPatternMatchSequence(
 			_approx_pattern[0],
 			CLIPatternError(),
 			CLIPatternBothStrand(),
@@ -388,7 +388,7 @@ func CLISequenceAgrep() obiseq.SequencePredicate {
 		)
 
 		for _, pattern := range _approx_pattern[1:] {
-			p = p.And(obiapat.IsPatternMatchSequence(
+			p = p.And(obidnapat.IsPatternMatchSequence(
 				pattern,
 				CLIPatternError(),
 				CLIPatternBothStrand(),

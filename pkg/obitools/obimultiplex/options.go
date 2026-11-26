@@ -183,6 +183,21 @@ func CLIConfigTemplate() string {
 #
 @param,primer_mismatches,2
 #
+# The tag_mismatches parameter allows to specify the number of errors allowed
+# between a tag found in a sequence and the closest tag of the library. It only
+# matters when the matching is hamming or indel: with the strict matching a tag is
+# either exactly one of the library or not. When the distance to the closest tag
+# is larger than this number, the tag is not valid and the sequence is not
+# assigned to a sample (obimultiplex_error tells why). There is no limit by
+# default, which a negative value also means. The same declination exist :
+# forward_tag_mismatches and
+# reverse_tag_mismatches, and tag_mismatches with two arguments for a specific
+# primer:
+#
+#       @param,tag_mismatches,TTAGATACCCCACTATGC,1
+#
+@param,tag_mismatches,-1
+#
 # The @indel parameter allows to specify if indel are allowed during the matching
 # of the primers to the sequence. The default value is false. forward_indel and
 # reverse_indel can be used to specify the value for each primer.

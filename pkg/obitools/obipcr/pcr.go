@@ -1,8 +1,8 @@
 package obipcr
 
 import (
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiapat"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidefault"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidnapat"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiiter"
 	log "github.com/sirupsen/logrus"
 )
@@ -12,35 +12,27 @@ import (
 // obiseq.BioSequenceBatch containing the selected amplicon sequences.
 func CLIPCR(iterator obiiter.IBioSequence) (obiiter.IBioSequence, error) {
 
-	opts := make([]obiapat.WithOption, 0, 10)
-
-	opts = append(opts,
-		obiapat.OptionForwardPrimer(
-			CLIForwardPrimer(),
-			CLIAllowedMismatch(),
+	opts := []obidnapat.PCROption{
+		obidnapat.PCRPrimers(
+			CLIForwardPrimer(), CLIAllowedMismatch(),
+			CLIReversePrimer(), CLIAllowedMismatch(),
 		),
-		obiapat.OptionReversePrimer(
-			CLIReversePrimer(),
-			CLIAllowedMismatch(),
-		),
-		obiapat.OptionOnlyFullExtension(CLIOnlyFull()),
-	)
-
-	if CLIMinLength() > 0 {
-		opts = append(opts, obiapat.OptionMinLength(CLIMinLength()))
+		obidnapat.PCRFullExtension(CLIOnlyFull()),
+		obidnapat.PCRMinLength(CLIMinLength()),
+		obidnapat.PCRMaxLength(CLIMaxLength()),
+		obidnapat.PCRCircular(CLICircular()),
 	}
 
 	if CLIWithExtension() {
-		opts = append(opts, obiapat.OptionWithExtension(CLIExtension()))
+		opts = append(opts, obidnapat.PCRExtension(CLIExtension()))
 	}
 
-	opts = append(opts, obiapat.OptionMaxLength(CLIMaxLength()))
-
-	if CLICircular() {
-		opts = append(opts, obiapat.OptionCircular(CLICircular()))
+	pcr, err := obidnapat.NewPCR(opts...)
+	if err != nil {
+		return obiiter.NilIBioSequence, err
 	}
 
-	worker := obiapat.PCRSliceWorker(opts...)
+	worker := pcr.SliceWorker()
 
 	if CLIFragmented() {
 		frags := obiiter.IFragments(

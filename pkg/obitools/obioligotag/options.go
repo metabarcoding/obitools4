@@ -21,6 +21,7 @@ var __rejected__ = ""
 var __homopolymer__ = -1
 var __homopolymer_min__ = 0
 var __timeout__ = 60
+var __random_seed__ = 0
 
 // OligoTagOptionSet registers the options specific to obioligotag.
 func OligoTagOptionSet(options *getoptions.GetOpt) {
@@ -89,6 +90,14 @@ func OligoTagOptionSet(options *getoptions.GetOpt) {
 		options.ArgName("SECONDS"),
 		options.Description("Time limit, in seconds, for finding a family of the required size "+
 			"(0 for no limit). When it is reached, the best family found is returned with a warning."))
+
+	options.IntVar(&__random_seed__, "random-seed", __random_seed__,
+		options.ArgName("INT"),
+		options.Description("Seed of the random number generator used by the search. "+
+			"By default (0) a new seed is drawn at each run, so that successive runs give different families; "+
+			"the seed used is reported in the log. Fixing it makes the search start identically, "+
+			"but the family returned is guaranteed identical only with a single worker (--max-cpu 1) "+
+			"and a family found before the time limit."))
 }
 
 // OptionSet registers every option of obioligotag.
@@ -134,6 +143,9 @@ func CLIHomopolymerMin() int { return __homopolymer_min__ }
 // CLITimeout returns the time limit in seconds (0 if none).
 func CLITimeout() int { return __timeout__ }
 
+// CLIRandomSeed returns the seed of the random number generator (0 to draw one at random).
+func CLIRandomSeed() int { return __random_seed__ }
+
 // Setters, mainly for testing.
 
 func SetOligoSize(v int)       { __oligo_size__ = v }
@@ -148,3 +160,4 @@ func SetRejected(v string)     { __rejected__ = v }
 func SetHomopolymerMax(v int)  { __homopolymer__ = v }
 func SetHomopolymerMin(v int)  { __homopolymer_min__ = v }
 func SetTimeout(v int)         { __timeout__ = v }
+func SetRandomSeed(v int)      { __random_seed__ = v }

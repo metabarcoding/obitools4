@@ -2,20 +2,22 @@ package obingslibrary
 
 import (
 	"fmt"
+	"slices"
 	"strings"
+	"sync/atomic"
 
 	log "github.com/sirupsen/logrus"
 
-	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiapat"
+	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obidnapat"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiseq"
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obiutils"
 )
 
 type Marker struct {
-	forward               obiapat.ApatPattern
-	cforward              obiapat.ApatPattern
-	reverse               obiapat.ApatPattern
-	creverse              obiapat.ApatPattern
+	forward               obidnapat.ApatPattern
+	cforward              obidnapat.ApatPattern
+	reverse               obidnapat.ApatPattern
+	creverse              obidnapat.ApatPattern
 	Forward_tag_length    int
 	Reverse_tag_length    int
 	Forward_spacer        int
@@ -30,7 +32,13 @@ type Marker struct {
 	Reverse_tag_delimiter byte
 	Forward_tag_indels    int
 	Reverse_tag_indels    int
-	samples               map[TagPair]*PCR
+	// Forward_tag_mismatches and Reverse_tag_mismatches are the largest distance
+	// between a tag found and the closest tag of the library for which the tag is
+	// kept (matching hamming or indel); a negative value is no limit.
+	Forward_tag_mismatches int
+	Reverse_tag_mismatches int
+	samples                map[TagPair]*PCR
+	tags                   atomic.Pointer[tagSets] // the distinct tags of samples, built when needed
 }
 
 func (marker *Marker) Compile(forward, reverse string, maxError int, allowsIndel bool) error {
@@ -38,11 +46,11 @@ func (marker *Marker) Compile(forward, reverse string, maxError int, allowsIndel
 
 	marker.CheckTagLength()
 
-	marker.forward, err = obiapat.MakeApatPattern(forward, maxError, allowsIndel)
+	marker.forward, err = obidnapat.MakeApatPattern(forward, maxError, allowsIndel)
 	if err != nil {
 		return err
 	}
-	marker.reverse, err = obiapat.MakeApatPattern(reverse, maxError, allowsIndel)
+	marker.reverse, err = obidnapat.MakeApatPattern(reverse, maxError, allowsIndel)
 	if err != nil {
 		return err
 	}
@@ -63,14 +71,14 @@ func (marker *Marker) Compile2(forward, reverse string) error {
 
 	marker.CheckTagLength()
 
-	marker.forward, err = obiapat.MakeApatPattern(
+	marker.forward, err = obidnapat.MakeApatPattern(
 		forward,
 		marker.Forward_error,
 		marker.Forward_allows_indels)
 	if err != nil {
 		return err
 	}
-	marker.reverse, err = obiapat.MakeApatPattern(
+	marker.reverse, err = obidnapat.MakeApatPattern(
 		reverse,
 		marker.Reverse_error,
 		marker.Reverse_allows_indels)
@@ -101,9 +109,7 @@ func (marker *Marker) Compile2(forward, reverse string) error {
 //
 //	A pointer to a DemultiplexMatch struct that contains the best matching demultiplex.
 func (marker *Marker) Match(sequence *obiseq.BioSequence) *DemultiplexMatch {
-	aseq, _ := obiapat.MakeApatSequence(sequence, false)
-
-	start, end, nerr, matched := marker.forward.BestMatch(aseq, marker.Forward_tag_length, -1)
+	start, end, nerr, matched := marker.forward.BestMatch(sequence, marker.Forward_tag_length, -1)
 
 	if matched {
 		if start < 0 {
@@ -128,7 +134,7 @@ func (marker *Marker) Match(sequence *obiseq.BioSequence) *DemultiplexMatch {
 			Error:             nil,
 		}
 
-		start, end, nerr, matched = marker.creverse.BestMatch(aseq, start, -1)
+		start, end, nerr, matched = marker.creverse.BestMatch(sequence, start, -1)
 
 		if matched {
 
@@ -173,7 +179,7 @@ func (marker *Marker) Match(sequence *obiseq.BioSequence) *DemultiplexMatch {
 	// We try now with the reverse primer
 	//
 
-	start, end, nerr, matched = marker.reverse.BestMatch(aseq, marker.Reverse_tag_length, -1)
+	start, end, nerr, matched = marker.reverse.BestMatch(sequence, marker.Reverse_tag_length, -1)
 
 	if matched {
 		if start < 0 {
@@ -199,7 +205,7 @@ func (marker *Marker) Match(sequence *obiseq.BioSequence) *DemultiplexMatch {
 			Error:             nil,
 		}
 
-		start, end, nerr, matched = marker.cforward.BestMatch(aseq, end, -1)
+		start, end, nerr, matched = marker.cforward.BestMatch(sequence, end, -1)
 
 		if matched {
 
@@ -252,6 +258,7 @@ func (marker *Marker) GetPCR(forward, reverse string) (*PCR, bool) {
 
 	ipcr := PCR{}
 	marker.samples[pair] = &ipcr
+	marker.tags.Store(nil) // the distinct tags have to be listed again
 
 	return &ipcr, false
 }
@@ -359,6 +366,19 @@ func (marker *Marker) SetTagIndels(indels int) {
 	marker.SetReverseTagIndels(indels)
 }
 
+func (marker *Marker) SetForwardTagMismatches(mismatches int) {
+	marker.Forward_tag_mismatches = mismatches
+}
+
+func (marker *Marker) SetReverseTagMismatches(mismatches int) {
+	marker.Reverse_tag_mismatches = mismatches
+}
+
+func (marker *Marker) SetTagMismatches(mismatches int) {
+	marker.SetForwardTagMismatches(mismatches)
+	marker.SetReverseTagMismatches(mismatches)
+}
+
 func (marker *Marker) SetForwardAllowedMismatches(allowed_mismatches int) {
 	marker.Forward_error = allowed_mismatches
 }
@@ -417,4 +437,42 @@ func (marker *Marker) SetMatching(matching string) error {
 		return err
 	}
 	return nil
+}
+
+// tagSets holds the distinct forward tags and the distinct reverse tags of the
+// samples of a marker. There are far fewer of them than samples (a 96 well plate
+// has 12 tags of each side for 96 samples), and only they are compared to the tags
+// observed on the reads.
+type tagSets struct {
+	forward []string
+	reverse []string
+}
+
+// distinctTags lists the distinct tags of the samples, building the lists the first
+// time they are needed (and again once a sample has been added). It can be called by
+// several goroutines at once; they may build the lists twice, which does no harm.
+func (marker *Marker) distinctTags() *tagSets {
+	if t := marker.tags.Load(); t != nil {
+		return t
+	}
+
+	forward := make(map[string]struct{})
+	reverse := make(map[string]struct{})
+	for tags := range marker.samples {
+		forward[tags.Forward] = struct{}{}
+		reverse[tags.Reverse] = struct{}{}
+	}
+
+	t := &tagSets{forward: sortedKeys(forward), reverse: sortedKeys(reverse)}
+	marker.tags.Store(t)
+	return t
+}
+
+func sortedKeys(set map[string]struct{}) []string {
+	keys := make([]string, 0, len(set))
+	for k := range set {
+		keys = append(keys, k)
+	}
+	slices.Sort(keys)
+	return keys
 }

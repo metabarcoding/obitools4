@@ -6,6 +6,8 @@ import (
 	"math"
 	"slices"
 
+	log "github.com/sirupsen/logrus"
+
 	"git.metabarcoding.org/obitools/obitools4/obitools4/pkg/obithermo"
 )
 
@@ -47,7 +49,7 @@ func (p PairStats) Score() float32 { return p.Yule * p.Bs }
 type PairInfo struct {
 	Primers        int // conserved words kept as candidate primers
 	GoodPrimers    int // of which good ones
-	CandidatePairs int // pairs delimiting an amplicon in at least one sequence
+	CandidatePairs int // pairs delimiting an amplicon in enough example sequences to possibly pass the sensitivity quorum (see countPairs)
 	RetainedPairs  int // pairs passing the sensitivity and false positive quorums, before the Bs filter
 	Candidates     int // of which pairs whose Bs upper bound reaches the threshold (their amplicons are gathered in full)
 }
@@ -78,6 +80,7 @@ func FindPairs(c *Corpus, taxa *Taxa, wm []WordMatches, p PairParams, model *obi
 			info.GoodPrimers++
 		}
 	}
+	log.Infof("%d conserved primers, %d good", info.Primers, info.GoodPrimers)
 	if len(ps.primers) == 0 {
 		return nil, info, nil
 	}
@@ -99,6 +102,7 @@ func FindPairs(c *Corpus, taxa *Taxa, wm []WordMatches, p PairParams, model *obi
 		}
 	}
 	info.RetainedPairs = len(kept)
+	log.Infof("%d candidate pairs (found in the first examples), %d amplifying enough examples and few enough counterexamples", info.CandidatePairs, info.RetainedPairs)
 	slices.SortFunc(kept, func(a, b pairKey) int {
 		return cmp.Or(cmp.Compare(a.p1, b.p1), cmp.Compare(a.p2, b.p2),
 			boolCmp(a.a1, b.a1), boolCmp(a.a2, b.a2))
@@ -115,6 +119,7 @@ func FindPairs(c *Corpus, taxa *Taxa, wm []WordMatches, p PairParams, model *obi
 		}
 	}
 	info.Candidates = len(survivors)
+	log.Infof("%d pairs possibly specific enough (Bs upper bound >= %g)", info.Candidates, p.MinSpecificity)
 
 	// Phase 2b: for the survivors only, the amplicons of every sequence, whatever
 	// its role: they decide which target taxa are identified.

@@ -22,6 +22,10 @@ type CliqueOptions struct {
 	Workers int
 	// Seed seeds the random vertex orders of the restarts.
 	Seed int64
+	// ShuffleFirst also randomizes the first pass of the first worker, which
+	// otherwise follows the natural order of the vertices: the clique found
+	// then depends on Seed instead of always being the lexicographic one.
+	ShuffleFirst bool
 	// Progress, if set, is called with the size of the best clique each time a
 	// larger one is found. Calls are serialized and made while a lock is held:
 	// it must return quickly and must not call FindClique.
@@ -82,8 +86,8 @@ type CliqueResult struct {
 // prunes the branches that cannot be large enough, and orders the vertices so
 // that the most constrained ones are tried first.
 //
-// The first pass of the first worker follows the natural order of the vertices
-// (greedy "lexicographic" construction); every other pass restarts from a
+// Unless ShuffleFirst is set, the first pass of the first worker follows the
+// natural order of the vertices (greedy "lexicographic" construction); every other pass restarts from a
 // random order, with a work budget that doubles at each restart, so that the
 // search is complete in the long run.
 func FindClique(ctx context.Context, n int, filter NeighborFilter, target int, opts CliqueOptions) CliqueResult {
@@ -146,7 +150,7 @@ func FindClique(ctx context.Context, n int, filter NeighborFilter, target int, o
 			}
 
 			for restart := 0; ctx.Err() == nil; restart++ {
-				if w > 0 || restart > 0 {
+				if w > 0 || restart > 0 || opts.ShuffleFirst {
 					rng.Shuffle(n, func(i, j int) { candidates[i], candidates[j] = candidates[j], candidates[i] })
 				}
 				switch opts.mode {

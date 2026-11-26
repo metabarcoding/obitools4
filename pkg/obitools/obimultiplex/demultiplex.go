@@ -24,8 +24,8 @@ func IExtractBarcode(iterator obiiter.IBioSequence) (obiiter.IBioSequence, error
 
 	// Only propagate the CLI --allowed-mismatches value if the user
 	// explicitly set it: otherwise the per-primer values defined in
-	// the NGSFilter config file (@primer_mismatches, @forward_mismatches,
-	// @reverse_mismatches) must be preserved.
+	// the NGSFilter config file (@primer_mismatches, @forward_primer_mismatches,
+	// @reverse_primer_mismatches) must be preserved.
 	if CLIAllowedMismatchIsSet() {
 		opts = append(opts, obingslibrary.OptionAllowedMismatches(CLIAllowedMismatch()))
 	}

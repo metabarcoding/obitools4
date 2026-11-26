@@ -352,12 +352,12 @@ var library_parameter = map[string]func(library *obingslibrary.NGSLibrary, value
 	"primer_mismatches": func(library *obingslibrary.NGSLibrary, values ...string) {
 		switch len(values) {
 		case 0:
-			log.Fatalln("Missing value for @primer_error parameter")
+			log.Fatalln("Missing value for @primer_mismatches parameter")
 		case 1:
 			dist, err := strconv.Atoi(values[0])
 
 			if err != nil {
-				log.Fatalf("Invalid value %s for @primer_error parameter", values[0])
+				log.Fatalf("Invalid value %s for @primer_mismatches parameter", values[0])
 			}
 
 			log.Infof("Set global allowed primer mismatches to %d", dist)
@@ -367,47 +367,107 @@ var library_parameter = map[string]func(library *obingslibrary.NGSLibrary, value
 			dist, err := strconv.Atoi(values[1])
 
 			if err != nil {
-				log.Fatalf("Invalid value %s for @primer_error parameter", values[1])
+				log.Fatalf("Invalid value %s for @primer_mismatches parameter", values[1])
 			}
 
 			log.Infof("Set allowed primer mismatches for primer %s to %d", primer, dist)
 			library.SetAllowedMismatchesFor(primer, dist)
 		default:
-			log.Fatalln("Invalid value for @primer_error parameter")
+			log.Fatalln("Invalid value for @primer_mismatches parameter")
 		}
 	},
-	"forward_mismatches": func(library *obingslibrary.NGSLibrary, values ...string) {
+	"forward_primer_mismatches": func(library *obingslibrary.NGSLibrary, values ...string) {
 		switch len(values) {
 		case 0:
-			log.Fatalln("Missing value for @forward_primer_error parameter")
+			log.Fatalln("Missing value for @forward_primer_mismatches parameter")
 		case 1:
 			dist, err := strconv.Atoi(values[0])
 
 			if err != nil {
-				log.Fatalf("Invalid value %s for @forward_primer_error parameter", values[0])
+				log.Fatalf("Invalid value %s for @forward_primer_mismatches parameter", values[0])
 			}
 
 			log.Infof("Set allowed mismatches for forward primer to %d", dist)
 			library.SetForwardAllowedMismatches(dist)
 		default:
-			log.Fatalln("Invalid value for @forward_primer_error parameter")
+			log.Fatalln("Invalid value for @forward_primer_mismatches parameter")
 		}
 	},
-	"reverse_mismatches": func(library *obingslibrary.NGSLibrary, values ...string) {
+	"reverse_primer_mismatches": func(library *obingslibrary.NGSLibrary, values ...string) {
 		switch len(values) {
 		case 0:
-			log.Fatalln("Missing value for @reverse_primer_error parameter")
+			log.Fatalln("Missing value for @reverse_primer_mismatches parameter")
 		case 1:
 			dist, err := strconv.Atoi(values[0])
 
 			if err != nil {
-				log.Fatalf("Invalid value %s for @reverse_primer_error parameter", values[0])
+				log.Fatalf("Invalid value %s for @reverse_primer_mismatches parameter", values[0])
 			}
 
 			log.Infof("Set allowed mismatches for reverse primer to %d", dist)
 			library.SetReverseAllowedMismatches(dist)
 		default:
-			log.Fatalln("Invalid value for @reverse_primer_error parameter")
+			log.Fatalln("Invalid value for @reverse_primer_mismatches parameter")
+		}
+	},
+	"tag_mismatches": func(library *obingslibrary.NGSLibrary, values ...string) {
+		switch len(values) {
+		case 0:
+			log.Fatalln("Missing value for @tag_mismatches parameter")
+		case 1:
+			dist, err := strconv.Atoi(values[0])
+
+			if err != nil {
+				log.Fatalf("Invalid value %s for @tag_mismatches parameter", values[0])
+			}
+
+			log.Infof("Set global allowed tag mismatches to %d", dist)
+			library.SetTagMismatches(dist)
+		case 2:
+			dist, err := strconv.Atoi(values[1])
+
+			if err != nil {
+				log.Fatalf("Invalid value %s for @tag_mismatches parameter", values[1])
+			}
+
+			log.Infof("Set allowed tag mismatches for primer %s to %d", values[0], dist)
+			library.SetTagMismatchesFor(values[0], dist)
+		default:
+			log.Fatalln("Invalid value for @tag_mismatches parameter")
+		}
+	},
+	"forward_tag_mismatches": func(library *obingslibrary.NGSLibrary, values ...string) {
+		switch len(values) {
+		case 0:
+			log.Fatalln("Missing value for @forward_tag_mismatches parameter")
+		case 1:
+			dist, err := strconv.Atoi(values[0])
+
+			if err != nil {
+				log.Fatalf("Invalid value %s for @forward_tag_mismatches parameter", values[0])
+			}
+
+			log.Infof("Set allowed tag mismatches for forward primer to %d", dist)
+			library.SetForwardTagMismatches(dist)
+		default:
+			log.Fatalln("Invalid value for @forward_tag_mismatches parameter")
+		}
+	},
+	"reverse_tag_mismatches": func(library *obingslibrary.NGSLibrary, values ...string) {
+		switch len(values) {
+		case 0:
+			log.Fatalln("Missing value for @reverse_tag_mismatches parameter")
+		case 1:
+			dist, err := strconv.Atoi(values[0])
+
+			if err != nil {
+				log.Fatalf("Invalid value %s for @reverse_tag_mismatches parameter", values[0])
+			}
+
+			log.Infof("Set allowed tag mismatches for reverse primer to %d", dist)
+			library.SetReverseTagMismatches(dist)
+		default:
+			log.Fatalln("Invalid value for @reverse_tag_mismatches parameter")
 		}
 	},
 	"tag_indels": func(library *obingslibrary.NGSLibrary, values ...string) {
